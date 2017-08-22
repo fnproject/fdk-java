@@ -1,0 +1,4 @@
+name: example/resize512
+version: 0.0.1
+entrypoint: convert - -resize 512x512 -
+path: /resize512

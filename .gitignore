@@ -1,0 +1,10 @@
+.idea/
+*.iml
+.DS_Store
+*/dependency-reduced-pom.xml
+target/
+*.log
+\#*
+.\#*
+logs/
+/headrevtag.txt

@@ -1,0 +1,6 @@
+name: fn-test/java-function
+version: 0.0.1
+runtime: java
+cmd: com.fnproject.fn.integration.test2.PlainFunction::handleRequest
+path: /java-function
+format: http

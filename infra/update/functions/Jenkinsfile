@@ -1,0 +1,23 @@
+pipeline {
+    agent any
+    parameters {
+        string(name: 'IMAGE', defaultValue: 'registry.oracledx.com/skeppare/functions-service:latest', description: 'Which image to use (full repository:tag, e.g. fnproject/functions:latest)')
+        string(name: 'SOURCE_REPO', defaultValue: 'git@github.com:fnproject/fn.git', description: 'Which git repo to use to build the CLI tool')
+        string(name: 'SOURCE_BRANCH', defaultValue: 'master', description: 'Which git repo branch to use to build the CLI tool')
+    }
+    stages {
+        stage('Update functions deployment image') {
+            steps {
+                sh ". /home/mjg/proxy ; kubectl set image deployment/fn-service fn-service=${params.IMAGE}"
+            }
+        }
+        stage('Update fn cli tool') {
+            steps {
+                dir('cli') {
+                    git url: "${params.SOURCE_REPO}", branch: "${params.SOURCE_BRANCH}"
+                    sh 'docker run --rm -v "$PWD":/go/src/github.com/fnproject/fn -v /usr/local/bin:/go/bin -w /go/src/github.com/fnproject/fn/cli golang:1.8 go build -o /go/bin/fn'
+                }
+            }
+        }
+    }
+}

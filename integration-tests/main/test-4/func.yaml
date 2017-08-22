@@ -1,0 +1,11 @@
+name: fn-test/new-api-test
+version: 0.0.1
+runtime: java
+
+path: /test
+timeout: 450
+
+build:
+  - mvn package dependency:copy-dependencies -DincludeScope=runtime -DskipTests=true -Dmdep.prependGroupId=true -DoutputDirectory=target
+
+cmd: com.fnproject.fn.integration.ExerciseEverything::handleRequest

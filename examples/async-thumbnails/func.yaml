@@ -1,0 +1,7 @@
+name: fn-example/async-thumbnails
+version: 0.0.1
+runtime: java
+cmd: com.fnproject.fn.examples.ThumbnailsFunction::handleRequest
+path: /async-thumbnails
+format: http
+timeout: 30s

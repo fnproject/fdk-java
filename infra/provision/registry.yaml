@@ -1,0 +1,22 @@
+# This is run once, at cluster creation time and it creates a deployment and a
+# service based on the latest functions image.
+#
+# The created server is configured so that it does NOT have persistent storage.
+# It is only intended to be used as a test server and data can be thrown away.
+#
+# Updates are done by:
+#    $ kubectl set image deployment/functions-master functions=NEW_IMAGE_FULL_PATH
+
+---
+# This may or may not be repeatable. Apparently registry.oracledx.com hands
+# out the same auth token every time for the same combination of user/pass, 
+# so this should work, but we have no guarantees. The problem is that if we
+# don't create the secret in a yaml file we have to have a manual process to
+# create it, which is not ideal.
+kind: Secret
+apiVersion: v1
+metadata:
+  name: odx-registry-secret
+type: kubernetes.io/dockercfg
+data:
+  .dockercfg: eyJyZWdpc3RyeS5vcmFjbGVkeC5jb20iOnsidXNlcm5hbWUiOiJhZ2VudCIsInBhc3N3b3JkIjoiZ2YyMVx1MDAyNjU0RyIsImVtYWlsIjoiZGFyaW8uZG9taXppb2xpQG9yYWNsZS5jb20iLCJhdXRoIjoiWVdkbGJuUTZaMll5TVNZMU5FYz0ifX0=

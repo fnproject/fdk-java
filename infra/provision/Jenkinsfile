@@ -1,0 +1,35 @@
+pipeline {
+    agent any
+
+    stages {
+        stage ('Get the infra files from functions-service') {
+            steps {
+                sh ". /home/mjg/proxy ; rm -rf functions-service ; git clone git@gitlab-odx.oracle.com:odx/functions-service.git functions-service"
+            }
+        }
+        stage ('Validate the infra files from functions-service so we do not get surprises when running them for real') {
+            steps {
+                sh ". /home/mjg/proxy ; infra/provision/validate-functions-files.sh functions-service"
+            }
+        }
+        stage ('Delete existing k8s entities') {
+            steps {
+                sh ". /home/mjg/proxy ; infra/provision/delete-k8s-entities.sh infra/provision functions-service"
+            }
+        }
+        stage ('Provision the whole infrastructure') {
+            steps {
+                sh ". /home/mjg/proxy ; infra/provision/create-k8s-entities.sh infra/provision functions-service"
+            }
+        }
+    }
+
+    post {
+        success {
+                mattermostSend color: 'good', endpoint: 'https://odx.stengpoc.ucfc2z3b.usdv1.oraclecloud.com/hooks/eqxe7mqgrbrqiryu47wnrjzppy', message: ":poodle: :camel:  Provisioned dev environment: ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>) :camel: :poodle:"
+        }
+        failure {
+                mattermostSend color: 'danger', endpoint: 'https://odx.stengpoc.ucfc2z3b.usdv1.oraclecloud.com/hooks/eqxe7mqgrbrqiryu47wnrjzppy', message: ":boom: :boom:  Failed to provision dev environment: ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>) :boom: :boom:"
+        }
+    }
+}
