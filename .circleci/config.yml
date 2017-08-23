@@ -33,11 +33,10 @@ jobs:
           name: Push to maven repo
           command: |
             mvn -s ./settings-deploy.xml \
-                -X deploy \
                 -DskipTests \
                 -DaltDeploymentRepository="bmcs-faas-snapshot-repo::default::https://swiftobjectstorage.us-phoenix-1.oraclecloud.com/v1/opc0002/mvnrepo/snapshots" \
-                                                                                                                                                                  -Dbmcs-faas-snapshot-repo.username="$MVN_SNAPSHOT_USER" \
-                                                                                                                                                                  -Dbmcs-faas-snapshot-repo.password="$MVN_PASSWORD" \
+                -Dbmcs-faas-snapshot-repo.username="$MVN_SNAPSHOT_USER" \
+                -Dbmcs-faas-snapshot-repo.password="$MVN_PASSWORD" \
                 deploy
 
       - run:
