@@ -13,8 +13,11 @@ jobs:
       - run:
           name: Build, Test and Package.
           command: mvn package
+
       - store_test_results:
-          path: target/surefire-reports
+          path: runtime/target/surefire-reports
+      - store_test_results:
+          path: testing/target/surefire-reports
 
       - store_artifacts:
           name: Upload API artefacts
