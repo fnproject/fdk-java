@@ -43,6 +43,9 @@ jobs:
           name: Update go to 1.8.3
           command: ./integration-tests/install-go.sh
       - run:
+         name: Update Docker to latests
+         command: ./integration-tests/install-docker.sh
+      - run:
           name: Install fn binary (as it is needed for the integration tests)
           command: ./integration-tests/install-fn.sh
       - run:
