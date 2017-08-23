@@ -10,7 +10,9 @@ jobs:
       - restore_cache:
           key: mvn-cache
 
-      - run: mvn package
+      - run:
+          name: Build, Test and Package.
+          command: mvn package
       - store_test_results:
           path: target/surefire-reports
 
@@ -23,6 +25,10 @@ jobs:
       - store_artifacts:
           name: Upload testing artefacts
           path: testing/target/
+
+      - run:
+          name: Run integration tests
+          command: ./integration-tests/run-local.sh
 
       - save_cache:
           paths:
