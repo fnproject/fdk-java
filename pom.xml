@@ -114,7 +114,7 @@
         </extensions>
     </build>
 
-    <distributionManagement>
+    <!--<distributionManagement>
         <repository>
             <uniqueVersion>false</uniqueVersion>
             <id>nexus-box</id>
@@ -127,6 +127,6 @@
             <url>http://10.167.103.241:8081/repository/maven-snapshots/</url>
             <layout>default</layout>
         </snapshotRepository>
-    </distributionManagement>
+    </distributionManagement>-->
 
 </project>

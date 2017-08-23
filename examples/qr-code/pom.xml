@@ -66,6 +66,7 @@
             <id>jitpack.io</id>
             <url>https://jitpack.io</url>
         </repository>
+        <!--
         <repository>
             <id>nexus-box-releases</id>
             <url>http://10.167.103.241:8081/repository/maven-releases/</url>
@@ -74,5 +75,6 @@
             <id>nexus-box-snapshots</id>
             <url>http://10.167.103.241:8081/repository/maven-snapshots/</url>
         </repository>
+        -->
     </repositories>
 </project>

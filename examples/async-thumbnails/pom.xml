@@ -72,10 +72,10 @@
         </plugins>
     </build>
 
-    <repositories>
+    <!--<repositories>
         <repository>
             <id>nexus-box</id>
             <url>http://10.167.103.241:8081/repository/maven-snapshots/</url>
         </repository>
-    </repositories>
+    </repositories>-->
 </project>
