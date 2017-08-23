@@ -11,7 +11,11 @@ set -ex
 go version
 go env GOROOT
 
-pushd /tmp/go-$GOVERSION.$OS.$ARCH
+BUILD_DIR="/tmp/go-$GOVERSION.$OS.$ARCH"
+
+mkdir -p "$BUILD_DIR"
+
+pushd "$BUILD_DIR"
     wget https://storage.googleapis.com/golang/go$GOVERSION.$OS-$ARCH.tar.gz
     sudo tar -C /usr/local -xzf go$GOVERSION.$OS-$ARCH.tar.gz
     go get -u github.com/golang/dep/...
