@@ -1,0 +1,30 @@
+version: 2
+jobs:
+  build:
+    working_directory: ~/fn-java-fdk
+    machine:
+      java:
+        version: oraclejdk8
+    steps:
+      - checkout
+      - restore_cache:
+          key: mvn-cache
+
+      - run: mvn package
+      - store_test_results:
+          path: target/surefire-reports
+
+      - name: Upload API artefacts
+        store_artifacts:
+          path: api/target/
+      - name: Upload runtime artefacts
+        store_artifacts:
+          path: runtime/target/
+      - name: Upload testing artefacts
+        store_artifacts:
+          path: testing/target/
+
+      - save_cache:
+          paths:
+            - ~/.m2
+          key: mvn-cache
