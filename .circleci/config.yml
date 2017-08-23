@@ -51,6 +51,7 @@ jobs:
       - run:
           name: Run integration tests
           command: COMPLETER_DOCKER_IMAGE=willprice/completer ./integration-tests/run-local.sh
+          timeout: 1200
 
       - save_cache:
           paths:
