@@ -4,8 +4,8 @@
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.fnproject.fn</groupId>
     <artifactId>fdk</artifactId>
+    <groupId>com.fnproject.fn</groupId>
     <packaging>pom</packaging>
     <version>1.0.0-SNAPSHOT</version>
     <modules>
@@ -114,19 +114,14 @@
         </extensions>
     </build>
 
-    <!--<distributionManagement>
-        <repository>
-            <uniqueVersion>false</uniqueVersion>
-            <id>nexus-box</id>
-            <url>http://10.167.103.241:8081/repository/maven-releases/</url>
-            <layout>default</layout>
-        </repository>
+    <distributionManagement>
         <snapshotRepository>
             <uniqueVersion>true</uniqueVersion>
-            <id>nexus-box</id>
-            <url>http://10.167.103.241:8081/repository/maven-snapshots/</url>
+            <id>bmcs-faas-snapshot-repo</id>
+            <url>https://swiftobjectstorage.us-phoenix-1.oraclecloud.com/v1/opc0002/mvnrepo/snapshots</url>
             <layout>default</layout>
         </snapshotRepository>
-    </distributionManagement>-->
+    </distributionManagement>
+
 
 </project>
