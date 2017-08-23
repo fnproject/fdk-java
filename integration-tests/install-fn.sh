@@ -30,5 +30,5 @@ pushd "${FN_SRC_DIR}/cli"
         -w "/go/src/github.com/fnproject/fn/cli" \
         funcy/go:dev \
         go build -o fn
-    cp fn "$FN_INSTALL_PATH"
+    sudo cp fn "$FN_INSTALL_PATH"
 popd
