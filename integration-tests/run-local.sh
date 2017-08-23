@@ -14,9 +14,6 @@ set -ex
 : ${FUNCTIONS_DOCKER_IMAGE:=funcy/functions}
 : ${SUFFIX:=$(git rev-parse HEAD)}
 : ${COMPLETER_DOCKER_IMAGE:=fnproject/completer}
-if [[ -f ~/.fn-token ]]; then
-    export FN_TOKEN=${FN_TOKEN:-$(cat ~/.fn-token)}
-fi
 
 
 # ----------------------------------------------------------------------
