@@ -31,7 +31,7 @@ FUNCTIONS_CONTAINER_ID=$(
         -v /var/run/docker.sock:/var/run/docker.sock \
         --name functions-$SUFFIX \
         -e LOG_LEVEL=debug \
-        $FUNCTIONS_DOCKER_IMAGE
+        $FUNCTIONS_DOCKER_IMAGE  || { echo "Cannot pull functions runtime"; exit 1 }
     )
 defer docker rm -f $FUNCTIONS_CONTAINER_ID
 defer docker logs functions-$SUFFIX
@@ -72,7 +72,7 @@ COMPLETER_CONTAINER_ID=$(
         --env API_URL=http://${FUNCTIONS_INTERNAL_IP}:8080 \
         --env no_proxy=$no_proxy,${FUNCTIONS_INTERNAL_IP} \
         --name completer-$SUFFIX \
-        $COMPLETER_DOCKER_IMAGE
+        $COMPLETER_DOCKER_IMAGE || { echo "Cannot pull completer"; exit 1 }
     )
 defer docker rm -f $COMPLETER_CONTAINER_ID
 defer docker logs $COMPLETER_CONTAINER_ID
