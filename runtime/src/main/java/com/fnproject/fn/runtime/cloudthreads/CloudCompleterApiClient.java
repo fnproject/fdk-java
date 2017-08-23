@@ -223,6 +223,8 @@ public class CloudCompleterApiClient implements CompleterClient {
                 if (resultingInException(response)) {
                     if (resultingFromExternalFunctionInvocation(response)) {
                         throw new FunctionInvocationException((com.fnproject.fn.api.cloudthreads.HttpResponse) result.get());
+                    } else if (resultingFromExternallyCompletedStage(response)) {
+                        throw new ExternalCompletionException((com.fnproject.fn.api.cloudthreads.HttpRequest) result.get());
                     } else if (resultingFromUserException(response)) {
                         Throwable userException = (Throwable) result.get();
                         throw new CloudCompletionException(userException);
@@ -232,7 +234,7 @@ public class CloudCompleterApiClient implements CompleterClient {
                 }
 
                 return result.get();
-            } catch (CloudCompletionException | FunctionInvocationException e) {
+            } catch (CloudCompletionException | FunctionInvocationException | ExternalCompletionException e) {
                 throw e;
             } catch (ClassNotFoundException | IOException e) {
                 throw new ResultSerializationException("Unable to deserialize result received from the completer service", e);
@@ -249,6 +251,10 @@ public class CloudCompleterApiClient implements CompleterClient {
 
     private boolean resultingFromExternalFunctionInvocation(HttpClient.HttpResponse response) {
         return response.getHeaderValue(DATUM_TYPE_HEADER).get().equalsIgnoreCase(DATUM_TYPE_HTTP_RESP);
+    }
+
+    private boolean resultingFromExternallyCompletedStage(HttpClient.HttpResponse response) {
+        return response.getHeaderValue(DATUM_TYPE_HEADER).get().equalsIgnoreCase(DATUM_TYPE_HTTP_REQ);
     }
 
     private boolean resultingFromPlatformError(HttpClient.HttpResponse response) {

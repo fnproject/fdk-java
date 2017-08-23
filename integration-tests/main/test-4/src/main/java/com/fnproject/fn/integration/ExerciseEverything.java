@@ -3,6 +3,7 @@ package com.fnproject.fn.integration;
 import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.InputEvent;
 import com.fnproject.fn.api.cloudthreads.*;
+import com.fnproject.fn.runtime.cloudthreads.HttpClient;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.TeeOutputStream;
 
@@ -118,7 +119,7 @@ public class ExerciseEverything {
 
     @Test(11)
     @Test.Catch(FunctionInvocationException.class)
-    public CloudFuture<FunctionResponse> nonexistentExternalEvaluation(CloudThreadRuntime rt) {
+    public CloudFuture<HttpResponse> nonexistentExternalEvaluation(CloudThreadRuntime rt) {
         return rt.invokeFunction("nonexistent", HttpMethod.POST, Headers.emptyHeaders(), new byte[0]);
     }
 
@@ -135,7 +136,7 @@ public class ExerciseEverything {
     // This test will only work in default mode.
     @Test(13)
     @Test.Catch(FunctionInvocationException.class)
-    public CloudFuture<FunctionResponse> checkFailingExternalInvocation(CloudThreadRuntime rt) {
+    public CloudFuture<HttpResponse> checkFailingExternalInvocation(CloudThreadRuntime rt) {
         return rt.invokeFunction(inputEvent.getAppName() + inputEvent.getRoute(), HttpMethod.POST, Headers.emptyHeaders(), "FAIL".getBytes());
     }
 
@@ -288,6 +289,38 @@ public class ExerciseEverything {
         return rt.supply(() -> { if (true) throw new MyException("bar"); else return ""; })
                 .whenComplete((v, e) -> { throw new MyException(e.getMessage()); })
                 .exceptionally(Throwable::getMessage);
+    }
+
+    @Test(31)
+    @Test.Expect("foobar")
+    public CloudFuture<String> externallyCompletable(CloudThreadRuntime rt) throws IOException {
+        ExternalCloudFuture<HttpRequest> cf = rt.createExternalFuture();
+        HttpClient httpClient = new HttpClient();
+        httpClient.execute(httpClient
+                .preparePost(cf.completionUrl().toString())
+                .withHeader("My-Header", "foo")
+                .withHeader("FnProject-Method", "post")
+                .withBody("bar".getBytes()));
+        return cf.thenApply((req) ->
+                req.getHeaders().get("my-header").get() + new String(req.getBodyAsBytes())
+        );
+    }
+
+    @Test(32)
+    @Test.Expect("foobar")
+    public CloudFuture<String> externallyCompletableFailure(CloudThreadRuntime rt) throws IOException {
+        ExternalCloudFuture<HttpRequest> cf = rt.createExternalFuture();
+        HttpClient httpClient = new HttpClient();
+        httpClient.execute(httpClient
+                .preparePost(cf.failUrl().toString())
+                .withHeader("My-Header", "foo")
+                .withHeader("FnProject-Method", "post")
+                .withBody("bar".getBytes()));
+        return cf.thenApply((req) -> "failed")
+                .exceptionally(e ->
+                        ((ExternalCompletionException)e).getExternalRequest().getHeaders().get("my-header").get() +
+                        new String(((ExternalCompletionException)e).getExternalRequest().getBodyAsBytes())
+        );
     }
 
     private int id;

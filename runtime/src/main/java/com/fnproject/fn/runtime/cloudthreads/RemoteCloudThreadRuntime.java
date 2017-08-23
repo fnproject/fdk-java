@@ -164,7 +164,7 @@ final class RemoteCloudThreadRuntime implements CloudThreadRuntime, Serializable
     }
 
     @Override
-    public ExternalCloudFuture<byte[]> createExternalFuture() {
+    public ExternalCloudFuture<HttpRequest> createExternalFuture() {
         CompleterClient.ExternalCompletion ext = getClient().createExternalCompletion(threadId);
         return new RemoteExternalCloudFuture<>(ext.completionId(), ext.completeURI(), ext.failureURI());
     }

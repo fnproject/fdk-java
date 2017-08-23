@@ -37,7 +37,6 @@ public interface CloudThreadRuntime extends Serializable {
      * @param data       input data to function as a byte array -
      * @return a future which completes normally if the function succeeded and fails if it fails
      */
-    // TODO: convert method from string to HttpMethod enum
     CloudFuture<HttpResponse> invokeFunction(String functionId, HttpMethod method, Headers headers, byte[] data);
 
     default CloudFuture<HttpResponse> invokeFunction(String functionId, HttpMethod method, Headers headers) {
