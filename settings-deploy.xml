@@ -5,8 +5,8 @@
     <servers>
         <server>
             <id>bmcs-faas-snapshot-repo</id>
-            <username>${bcms-faas-snapshot-repo.username}</username>
-            <password>${bcms-faas-snapshot-repo.password}</password>
+            <username>${bmcs-faas-snapshot-repo.username}</username>
+            <password>${bmcs-faas-snapshot-repo.password}</password>
         </server>
     </servers>
 </settings>
