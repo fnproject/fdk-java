@@ -3,6 +3,7 @@ package com.fnproject.fn.runtime.cloudthreads;
 import com.fnproject.fn.api.cloudthreads.*;
 import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.runtime.exception.FunctionInputHandlingException;
+import com.sun.xml.internal.ws.encoding.soap.DeserializationException;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.NullOutputStream;
 import org.apache.http.Header;
@@ -111,7 +112,7 @@ final class SerUtils {
             byte[] body = IOUtils.toByteArray(is);
 
             String contentType = h.getHeaderValue(CONTENT_TYPE_HEADER).orElse(null);
-            FunctionResponse functionResponse = new FunctionResponse() {
+            HttpResponse functionResponse = new HttpResponse() {
                 @Override
                 public int getStatusCode() {
                     return statusCode;
@@ -131,6 +132,8 @@ final class SerUtils {
         });
 
         registerDeserializer(DATUM_TYPE_HTTP_REQ, (dt, h, is) -> {
+            HttpMethod method = h.getHeaderValue(REQUEST_METHOD_HEADER).map(HttpMethod::valueOf)
+                    .orElseThrow(() -> new DeserializationException(REQUEST_METHOD_HEADER + " mandatory field was not present on response from external completion"));
             Map<String, String> userHeaders = h.getHeaders().entrySet().stream()
                     .filter((entry) -> entry.getKey().toLowerCase().startsWith(USER_HEADER_PREFIX.toLowerCase()))
                     .collect(Collectors.toMap(
@@ -139,12 +142,29 @@ final class SerUtils {
                     ));
             h.getHeaderValue(CONTENT_TYPE_HEADER)
                     .map((contentType) -> userHeaders.put(CONTENT_TYPE_HEADER, contentType));
+            Headers headers = Headers.fromMap(userHeaders);
 
             byte[] body = IOUtils.toByteArray(is);
 
             String contentType = h.getHeaderValue(CONTENT_TYPE_HEADER).orElse(null);
 
-            return new ContentPart(dt, contentType, body);
+            com.fnproject.fn.api.cloudthreads.HttpRequest req = new com.fnproject.fn.api.cloudthreads.HttpRequest() {
+                @Override
+                public HttpMethod getMethod() {
+                    return method;
+                }
+
+                @Override
+                public Headers getHeaders() {
+                    return headers;
+                }
+
+                @Override
+                public byte[] getBodyAsBytes() {
+                    return body;
+                }
+            };
+            return new ContentPart(dt, contentType, req);
 
         });
     }

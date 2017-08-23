@@ -14,8 +14,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static com.fnproject.fn.runtime.cloudthreads.HttpClient.HttpRequest;
-import static com.fnproject.fn.runtime.cloudthreads.HttpClient.HttpResponse;
+import com.fnproject.fn.runtime.cloudthreads.HttpClient;
 
 public class CloudCompleterApiClient implements CompleterClient {
     private transient final HttpClient httpClient;
@@ -45,6 +44,8 @@ public class CloudCompleterApiClient implements CompleterClient {
     public static final String RESULT_STATUS_SUCCESS = "success";
     public static final String RESULT_STATUS_FAILURE = "failure";
 
+    public static final String REQUEST_METHOD_HEADER = HEADER_PREFIX + "Method";
+
     public static final String RESULT_CODE_HEADER = HEADER_PREFIX + "ResultCode";
 
     public static final String ERROR_TYPE_HEADER = HEADER_PREFIX + "ErrorType";
@@ -65,8 +66,8 @@ public class CloudCompleterApiClient implements CompleterClient {
 
     @Override
     public ThreadId createThread(String functionId) {
-        HttpRequest request = httpClient.preparePost(apiUrlBase + "/graph?functionId=" + functionId);
-        try (HttpResponse resp = httpClient.execute(request)) {
+        HttpClient.HttpRequest request = HttpClient.preparePost(apiUrlBase + "/graph?functionId=" + functionId);
+        try (HttpClient.HttpResponse resp = httpClient.execute(request)) {
             validateSuccessful(resp);
             return new ThreadId(resp.getHeader(THREAD_ID_HEADER));
         } catch (Exception e) {
@@ -201,7 +202,7 @@ public class CloudCompleterApiClient implements CompleterClient {
     public Object waitForCompletion(ThreadId threadId, CompletionId id) {
         while (true) {
             long time = System.currentTimeMillis();
-            try (HttpResponse response = httpClient.execute(httpClient
+            try (HttpClient.HttpResponse response = httpClient.execute(HttpClient
                     .prepareGet(apiUrlBase + "/graph/" + threadId.getId() + "/stage/" + id.getId()))
             ) {
                 if (response.getStatusCode() == HTTP_CODE_REQUEST_TIMEOUT) {
@@ -221,7 +222,7 @@ public class CloudCompleterApiClient implements CompleterClient {
                 // TODO: Add comment to API doc saying that error datum type responses always have failure result status
                 if (resultingInException(response)) {
                     if (resultingFromExternalFunctionInvocation(response)) {
-                        throw new FunctionInvocationException((FunctionResponse) result.get());
+                        throw new FunctionInvocationException((com.fnproject.fn.api.cloudthreads.HttpResponse) result.get());
                     } else if (resultingFromUserException(response)) {
                         Throwable userException = (Throwable) result.get();
                         throw new CloudCompletionException(userException);
@@ -241,25 +242,25 @@ public class CloudCompleterApiClient implements CompleterClient {
         }
     }
 
-    private boolean resultingInException(HttpResponse response) {
+    private boolean resultingInException(HttpClient.HttpResponse response) {
         return response.getHeaderValue(RESULT_STATUS_HEADER).get().equalsIgnoreCase(RESULT_STATUS_FAILURE) ||
                 response.getHeaderValue(DATUM_TYPE_HEADER).get().equalsIgnoreCase(DATUM_TYPE_ERROR);
     }
 
-    private boolean resultingFromExternalFunctionInvocation(HttpResponse response) {
+    private boolean resultingFromExternalFunctionInvocation(HttpClient.HttpResponse response) {
         return response.getHeaderValue(DATUM_TYPE_HEADER).get().equalsIgnoreCase(DATUM_TYPE_HTTP_RESP);
     }
 
-    private boolean resultingFromPlatformError(HttpResponse response) {
+    private boolean resultingFromPlatformError(HttpClient.HttpResponse response) {
         return response.getHeaderValue(DATUM_TYPE_HEADER).get().equalsIgnoreCase(DATUM_TYPE_ERROR);
     }
 
-    private boolean resultingFromUserException(HttpResponse response) {
+    private boolean resultingFromUserException(HttpClient.HttpResponse response) {
         return response.getHeaderValue(DATUM_TYPE_HEADER).get().equalsIgnoreCase(DATUM_TYPE_BLOB);
     }
 
     public void commit(ThreadId threadId) {
-        try (HttpResponse response = httpClient.execute(httpClient.preparePost(apiUrlBase + "/graph/" + threadId.getId() + "/commit"))) {
+        try (HttpClient.HttpResponse response = httpClient.execute(httpClient.preparePost(apiUrlBase + "/graph/" + threadId.getId() + "/commit"))) {
             validateSuccessful(response);
         } catch (Exception e) {
             throw new PlatformException(e);
@@ -275,7 +276,7 @@ public class CloudCompleterApiClient implements CompleterClient {
                 req -> req.withQueryParam("other", other.getId()), fn);
     }
 
-    private static void validateSuccessful(HttpResponse response) {
+    private static void validateSuccessful(HttpClient.HttpResponse response) {
         if (!isSuccessful(response)) {
             try {
                 throw new PlatformException(String.format("Received unexpected response (%d) from " +
@@ -287,14 +288,14 @@ public class CloudCompleterApiClient implements CompleterClient {
         }
     }
 
-     private static boolean isSuccessful(HttpResponse response) {
+     private static boolean isSuccessful(HttpClient.HttpResponse response) {
          return response.getStatusCode() == 200 || response.getStatusCode() == 201;
      }
 
-    private CompletionId requestCompletion(String url, Function<HttpRequest, HttpRequest> fn) {
-        HttpRequest req = fn.apply(httpClient.preparePost(apiUrlBase + url));
+    private CompletionId requestCompletion(String url, Function<HttpClient.HttpRequest, HttpClient.HttpRequest> fn) {
+        HttpClient.HttpRequest req = fn.apply(HttpClient.preparePost(apiUrlBase + url));
 
-        try (HttpResponse resp = httpClient.execute(req)) {
+        try (com.fnproject.fn.runtime.cloudthreads.HttpClient.HttpResponse resp = httpClient.execute(req)) {
             validateSuccessful(resp);
             String completionId = resp.getHeader(STAGE_ID_HEADER);
             return new CompletionId(completionId);
@@ -305,7 +306,7 @@ public class CloudCompleterApiClient implements CompleterClient {
         }
     }
 
-    private CompletionId requestCompletionWithBody(String url, Function<HttpRequest, HttpRequest> fn, Serializable ser) {
+    private CompletionId requestCompletionWithBody(String url, Function<HttpClient.HttpRequest, HttpClient.HttpRequest> fn, Serializable ser) {
         try {
             byte[] serBytes = SerUtils.serialize(ser);
             return requestCompletion(url, req -> fn.apply(req

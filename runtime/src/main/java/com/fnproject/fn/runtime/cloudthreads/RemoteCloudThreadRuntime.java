@@ -132,7 +132,7 @@ final class RemoteCloudThreadRuntime implements CloudThreadRuntime, Serializable
     }
 
     @Override
-    public CloudFuture<FunctionResponse> invokeFunction(String functionId, HttpMethod method, Headers headers, byte[] data) {
+    public CloudFuture<HttpResponse> invokeFunction(String functionId, HttpMethod method, Headers headers, byte[] data) {
         CompletionId cid = getClient().invokeFunction(threadId, functionId, data, method, headers);
         return new RemoteCloudFuture<>(cid);
     }

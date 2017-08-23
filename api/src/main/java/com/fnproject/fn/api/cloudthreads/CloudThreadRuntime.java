@@ -38,9 +38,9 @@ public interface CloudThreadRuntime extends Serializable {
      * @return a future which completes normally if the function succeeded and fails if it fails
      */
     // TODO: convert method from string to HttpMethod enum
-    CloudFuture<FunctionResponse> invokeFunction(String functionId, HttpMethod method, Headers headers, byte[] data);
+    CloudFuture<HttpResponse> invokeFunction(String functionId, HttpMethod method, Headers headers, byte[] data);
 
-    default CloudFuture<FunctionResponse> invokeFunction(String functionId, HttpMethod method, Headers headers) {
+    default CloudFuture<HttpResponse> invokeFunction(String functionId, HttpMethod method, Headers headers) {
         return invokeFunction(functionId, method, headers, new byte[]{});
     }
 

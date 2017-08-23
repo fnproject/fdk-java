@@ -242,7 +242,7 @@ public class CloudThreadsContinuationInvokerTest {
 
         String functionResponse = "{ \"some\": \"json\" }";
         HttpMultipartSerialization ser = new HttpMultipartSerialization()
-                .addJavaEntity((CloudThreads.SerFunction<FunctionResponse, Boolean>) (result) -> {
+                .addJavaEntity((CloudThreads.SerFunction<HttpResponse, Boolean>) (result) -> {
                     // Expect
                     assertThat(result.getStatusCode()).isEqualTo(200);
                     assertThat(new String(result.getBodyAsBytes())).isEqualTo(functionResponse);
@@ -268,7 +268,7 @@ public class CloudThreadsContinuationInvokerTest {
 
         String functionResponse = "{ \"some\": \"json\" }";
         HttpMultipartSerialization ser = new HttpMultipartSerialization()
-                .addJavaEntity((CloudThreads.SerFunction<FunctionResponse, Boolean>) (result) -> {
+                .addJavaEntity((CloudThreads.SerFunction<HttpResponse, Boolean>) (result) -> {
                     // Then
                     assertThat(result.getStatusCode()).isEqualTo(500);
                     assertThat(new String(result.getBodyAsBytes())).isEqualTo(functionResponse);
