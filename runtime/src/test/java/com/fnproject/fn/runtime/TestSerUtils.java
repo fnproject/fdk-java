@@ -100,6 +100,15 @@ public class TestSerUtils {
             return addEntity(contentType, body.getBytes(), hs);
         }
 
+        public HttpMultipartSerialization addExternalCompletionEntity(String method, Map<String, String> customHeaders, String contentType, String body) throws IOException {
+            Map<String, String> hs = new HashMap<>();
+            hs.putAll(customHeaders);
+            hs.put(DATUM_TYPE_HEADER, DATUM_TYPE_HTTP_REQ);
+            hs.put(REQUEST_METHOD_HEADER, method);
+
+            return addEntity(contentType, body.getBytes(), hs);
+        }
+
         public Map<String, String> getHeaders() {
             build();
             return headers.stream().collect(Collectors.toMap(Header::getName, Header::getValue));

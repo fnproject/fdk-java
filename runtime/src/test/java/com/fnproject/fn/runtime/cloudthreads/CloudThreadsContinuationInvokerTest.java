@@ -287,6 +287,35 @@ public class CloudThreadsContinuationInvokerTest {
     }
 
     @Test
+    public void externallyCompletableResultPopulatesHttpRequest() throws Exception {
+        // Given
+        Map<String, String> headers = new HashMap<>();
+        headers.put("FnProject-Header-Custom-Header", "customValue");
+
+        String postedResult = "{ \"some\": \"json\" }";
+        HttpMultipartSerialization ser = new HttpMultipartSerialization()
+                .addJavaEntity((CloudThreads.SerFunction<HttpRequest, Boolean>) (result) -> {
+                    // Expect
+                    assertThat(result.getMethod()).isEqualTo(HttpMethod.POST);
+                    assertThat(new String(result.getBodyAsBytes())).isEqualTo(postedResult);
+                    assertThat(result.getHeaders().get("Content-Type"))
+                            .isPresent()
+                            .contains("application/json");
+                    assertThat(result.getHeaders().get("Custom-Header"))
+                            .isPresent()
+                            .contains("customValue");
+                    return true;
+                })
+                .addExternalCompletionEntity("POST", headers, "application/json", postedResult);
+
+        InputEvent event = constructContinuationInputEvent(ser);
+
+        // When
+        CloudThreadsContinuationInvoker invoker = new CloudThreadsContinuationInvoker();
+        Optional<OutputEvent> result = invoker.tryInvoke(new EmptyInvocationContext(), event);
+    }
+
+    @Test
     public void deserializationSkipsExtraPadding() throws IOException, ClassNotFoundException {
         // Given
         final Integer testValue = 3;
