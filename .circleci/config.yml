@@ -28,13 +28,13 @@ jobs:
 
       - run:
           name: Push to maven repo
-          command: >
-            mvn -s ./settings-deploy.xml
-                -X deploy
-                -DskipTests
-                -DaltDeploymentRepository="snapshotrepo::default::https://swiftobjectstorage.us-phoenix-1.oraclecloud.com/v1/opc0002/mvnrepo/snapshots"
-                -Dsnapshotrepo.username="$MVN_SNAPSHOT_USER"
-                -Dsnapshotrepo.password="$MVN_PASSWORD"
+          command: |
+            mvn -s ./settings-deploy.xml \
+                -X deploy \
+                -DskipTests \
+                -DaltDeploymentRepository="snapshotrepo::default::https://swiftobjectstorage.us-phoenix-1.oraclecloud.com/v1/opc0002/mvnrepo/snapshots" \
+                -Dsnapshotrepo.username="$MVN_SNAPSHOT_USER" \
+                -Dsnapshotrepo.password="$MVN_PASSWORD" \
                 deploy
 
       - run:
