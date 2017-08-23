@@ -25,10 +25,6 @@ else
 fi
 
 pushd "${FN_SRC_DIR}/cli"
-    docker run --rm -it \
-        -v "${PWD}:/go/src/github.com/fnproject/fn/cli" \
-        -w "/go/src/github.com/fnproject/fn/cli" \
-        funcy/go:dev \
-        go build -o fn
+    go build -o fn
     sudo cp fn "$FN_INSTALL_PATH"
 popd
