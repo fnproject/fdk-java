@@ -3,6 +3,8 @@ jobs:
   build:
     working_directory: ~/fn-java-fdk
     machine:
+      environment:
+        COMPLETER_DOCKER_IMAGE: willprice/completer
       java:
         version: oraclejdk8
     steps:
@@ -38,10 +40,6 @@ jobs:
                 -Dbmcs-faas-snapshot-repo.username="$MVN_SNAPSHOT_USER" \
                 -Dbmcs-faas-snapshot-repo.password="$MVN_SNAPSHOT_PASSWORD" \
                 deploy
-      - run:
-          # This can go away once we can pull from fnproject/completer on Dockerhub
-          name: "[FIXME] Build completer"
-          command: ./integration-tests/build-completer.sh
 
       - run:
           name: Run integration tests
