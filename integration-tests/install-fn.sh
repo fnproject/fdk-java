@@ -25,10 +25,10 @@ else
 fi
 
 pushd "${FN_SRC_DIR}/cli"
-    make build
-    if [ -f fn ]; then
-        cp -a fn "$FN_INSTALL_PATH"
-    else
-        error "fn binary not built, so can't install"
-    fi
+    docker run --rm -it \
+        -v "${PWD}:/go/src/github.com/fnproject/fn/cli" \
+        -w "/go/src/github.com/fnproject/fn/cli" \
+        funcy/go:dev \
+        go build -o fn
+    cp fn "$FN_INSTALL_PATH"
 popd
