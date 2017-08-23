@@ -14,14 +14,14 @@ jobs:
       - store_test_results:
           path: target/surefire-reports
 
-      - name: Upload API artefacts
-        store_artifacts:
+      - store_artifacts:
+          name: Upload API artefacts
           path: api/target/
-      - name: Upload runtime artefacts
-        store_artifacts:
+      - store_artifacts:
+          name: Upload runtime artefacts
           path: runtime/target/
-      - name: Upload testing artefacts
-        store_artifacts:
+      - store_artifacts:
+          name: Upload testing artefacts
           path: testing/target/
 
       - save_cache:
