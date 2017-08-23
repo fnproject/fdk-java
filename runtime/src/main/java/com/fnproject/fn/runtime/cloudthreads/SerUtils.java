@@ -3,7 +3,6 @@ package com.fnproject.fn.runtime.cloudthreads;
 import com.fnproject.fn.api.cloudthreads.*;
 import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.runtime.exception.FunctionInputHandlingException;
-import com.sun.xml.internal.ws.encoding.soap.DeserializationException;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.NullOutputStream;
 import org.apache.http.Header;
@@ -133,7 +132,7 @@ final class SerUtils {
 
         registerDeserializer(DATUM_TYPE_HTTP_REQ, (dt, h, is) -> {
             HttpMethod method = h.getHeaderValue(REQUEST_METHOD_HEADER).map(HttpMethod::valueOf)
-                    .orElseThrow(() -> new DeserializationException(REQUEST_METHOD_HEADER + " mandatory field was not present on response from external completion"));
+                    .orElseThrow(() -> new Deserializer.DeserializeException(REQUEST_METHOD_HEADER + " mandatory field was not present on response from external completion"));
             Map<String, String> userHeaders = h.getHeaders().entrySet().stream()
                     .filter((entry) -> entry.getKey().toLowerCase().startsWith(USER_HEADER_PREFIX.toLowerCase()))
                     .collect(Collectors.toMap(

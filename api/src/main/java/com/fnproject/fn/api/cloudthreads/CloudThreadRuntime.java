@@ -124,7 +124,7 @@ public interface CloudThreadRuntime extends Serializable {
      * @return an external future
      * @see ExternalCloudFuture for details of how to complete external futures.
      */
-    ExternalCloudFuture<byte[]> createExternalFuture();
+    ExternalCloudFuture<HttpRequest> createExternalFuture();
 
     /**
      * Wait for all a list of tasks to complete
