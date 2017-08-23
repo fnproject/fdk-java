@@ -3,8 +3,6 @@ jobs:
   build:
     working_directory: ~/fn-java-fdk
     machine:
-      environment:
-        COMPLETER_DOCKER_IMAGE: willprice/completer
       java:
         version: oraclejdk8
     steps:
@@ -43,7 +41,7 @@ jobs:
 
       - run:
           name: Run integration tests
-          command: ./integration-tests/run-local.sh
+          command: COMPLETER_DOCKER_IMAGE=willprice/completer ./integration-tests/run-local.sh
 
       - save_cache:
           paths:
