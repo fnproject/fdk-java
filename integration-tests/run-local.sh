@@ -17,6 +17,17 @@ set -ex
 
 
 # ----------------------------------------------------------------------
+# Stand up a local staging maven directory, if needed
+# ----------------------------------------------------------------------
+
+if [[ -n "$REPOSITORY_LOCATION" ]]; then
+    export MAVEN_REPOSITORY_LOCATION="http://172.17.0.1:18080"
+    cd "$REPOSITORY_LOCATION" && python -mSimpleHTTPServer 18080 1>>/tmp/http-logs 2>&1 &
+    defer kill -9 "$!"
+fi
+
+
+# ----------------------------------------------------------------------
 # Stand up the functions platform
 # ----------------------------------------------------------------------
 

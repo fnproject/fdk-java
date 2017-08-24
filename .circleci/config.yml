@@ -7,6 +7,7 @@ jobs:
         version: oraclejdk8
     environment:
       ARTIFACT_DIR: /tmp/artifacts
+      STAGING_DIR: /tmp/staging-repository
     steps:
       - checkout
       - restore_cache:
@@ -19,7 +20,6 @@ jobs:
           path: runtime/target/surefire-reports
       - store_test_results:
           path: testing/target/surefire-reports
-
       - run:
           name: Copy FDK artifacts to upload folder
           command: |
@@ -29,6 +29,11 @@ jobs:
       - store_artifacts:
           name: Upload FDK artifacts
           path: $ARTIFACT_DIR
+      - run:
+          name: Perform a local staging deploy of the maven artifacts
+          command: |
+            mkdir -p "$STAGING_DIR"
+            mvn deploy -DskipTests -DaltDeploymentRepository=localStagingDir::default::file://"$STAGING_DIR"
 
       - run:
          name: Update Docker to latest
@@ -51,7 +56,7 @@ jobs:
           command: ./.circleci/install-fn.sh
       - run:
           name: Run integration tests
-          command: ./integration-tests/run-local.sh
+          command: REPOSITORY_LOCATION="$STAGING_DIR" ./integration-tests/run-local.sh
           timeout: 1200
 
       - deploy:
