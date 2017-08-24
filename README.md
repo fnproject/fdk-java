@@ -13,6 +13,7 @@ Before you get started you will need the following things:
 
 * [The `fn` CLI](https://github.com/fnproject/fn#install-cli-tool)
 * [Docker-ce 17.06+ installed locally](https://docs.docker.com/engine/installation/)
+* A [Docker Hub](http://hub.docker.com) account
 
 ## Your first Function
 
@@ -20,7 +21,7 @@ Before you get started you will need the following things:
 
 ```bash
 $ mkdir hello-java-function && cd hello-java-function
-$ fn init --runtime=java jbloggs/hello
+$ fn init --runtime=java your_dockerhub_account/hello
 Runtime: java
 function boilerplate generated.
 func.yaml created
@@ -28,7 +29,7 @@ func.yaml created
 
 This creates a new Maven based Java Function which includes some boilerplate to get you started. The `pom.xml` includes a dependency on the latest version of the `fn` Java FDK that is useful for developing your Java functions.
 
-Note that the `jbloggs/hello` name follows the format of a Docker image name. In this tutorial you will be running locally, so you will not need to push images to a Docker registry, but in a real scenario you would deploy to a remote registry and therefore you should replace `jbloggs` with your user name.
+Note that the `your_dockerhub_account/hello` name follows the format of a Docker image name. The `fn` platform relies on docker images implementing functions and these will be deployed to a Docker registry. By default Docker Hub is used, hence the requirement for a Docker Hub account. You should replace `your_dockerhub_account` with your account name.
 
 You can now import this project into your favourite IDE as normal.
 
@@ -37,7 +38,7 @@ We'll now take a look at what makes up our new Java Function. First, lets take a
 
 ```bash
 $ cat func.yaml
-name: jbloggs/hello
+name: your_dockerhub_account/hello
 version: 0.0.1
 runtime: java
 cmd: com.example.fn.HelloFunction::handleRequest
@@ -49,7 +50,7 @@ path: /hello
 
 The `cmd` field determines which method is called when your funciton is invoked. In the generated Function, the `func.yaml` references `com.example.fn.HelloFunction::handleRequest`.
 
-Open the file: `src/main/java/com.example.fn/HelloFunction.java`:
+Open the file: `src/main/java/com/example/fn/HelloFunction.java`:
 
 ```java
 package com.example.fn;
@@ -66,13 +67,13 @@ public class HelloFunction {
 ```
 
 ### 3. Run your first Java Function:
-You are now ready to run your Function using the `fn` CLI tool.
+You are now ready to run your Function locally using the `fn` CLI tool.
 
 This may take a minute the first time as you will need pull in some new dependencies in order to build your Function.
 
 ```bash
 $ fn run
-Building image jbloggs/hello:0.0.1
+Building image your_dockerhub_account/hello:0.0.1
 Sending build context to Docker daemon  14.34kB
 Step 1/11 : FROM maven:3.5-jdk-8-alpine as build-stage
  ---> 5435658a63ac
@@ -99,7 +100,7 @@ Downloaded: https://repo.maven.apache.org/maven2/org/apache/maven/plugins/maven-
 
 ...
 
-Function jbloggs/hello:0.0.1 built successfully.
+Function your_dockerhub_account/hello:0.0.1 built successfully.
 Hello, world!
 ```
 
@@ -115,7 +116,7 @@ Hello, Michael Faasbender!
 Making code changes and trying them out is simple. For example, lets change our greeting from English to Spanish:
 
 ```bash
-$ mv src/main/java/com.example.fn/HelloFunction.java src/main/java/com.example.fn/HolaFunction.java
+$ mv src/main/java/com/example/fn/HelloFunction.java src/main/java/com/example/fn/HolaFunction.java
 ```
 
 Update the function class to match:
@@ -181,10 +182,10 @@ $ fn run
 Hola, mundo!
 ```
 
-### 6. Test using HTTP and the local `functions` server
-The previous example used `fn run` to run a function directly via docker, you can also  use the `functions` server locally to test HTTP calls to your functions.
+### 6. Test using HTTP and the local `fn` server
+The previous example used `fn run` to run a function directly via docker, you can also  use the `fn` server locally to test the deployment of your function and the HTTP calls to your functions.
 
-Open another terminal and start the `functions` server:
+Open another terminal and start the `fn` server:
 
 ```bash
 $ fn start
@@ -197,29 +198,46 @@ $ fn apps create java-app
 Successfully created app: java-app
 ```
 
-Bind your Function to a `route`:
+Now deploy your Function using the `fn deploy` command. This will bump the function's version up, rebuild it, and push the image to the Docker registry, ready to be used in the function deployment. Finally it will create a route on the local `fn` server, corresponding to your function.
 
 ```bash
-$ fn routes create java-app /hola
-/hola created with jbloggs/hello:0.0.1
+$ fn deploy java-app
+...
+Bumped to version 0.0.2
+Building image your_dockerhub_account/hello:0.0.2
+Sending build context to Docker daemon  14.34kB
+
+...
+
+Successfully built bf2b7fa55520
+Successfully tagged your_dockerhub_account/hello:0.0.2
+Pushing to docker registry...
+The push refers to a repository [docker.io/your_dockerhub_account/hello]
+d641fa720e99: Pushed
+9f961bc46650: Pushed
+24972d67929a: Pushed
+e18e511b41d6: Pushed
+a8cf2f688ac8: Pushed
+0.0.2: digest: sha256:9a585899aa5c705172f8a798169a86534048b55ec2f47851938103ffbe9cfba5 size: 1368
+Updating route /hello using image your_dockerhub_account/hello:0.0.2...
 ```
 
 Call the Function via the `fn` CLI:
 
 ```bash
-$ fn call java-app /hola
+$ fn call java-app /hello
 Hola, mundo!
 ```
 
 You can also call the Function via curl:
 
 ```bash
-$ curl http://localhost:8080/r/java-app/hola
+$ curl http://localhost:8080/r/java-app/hello
 Hola, mundo!
 ```
 
 ### 7. Something more interesting
-The fn Java FDK supports [flexible data binding](docs/DataBinding.md)  to make it easier for you to map function input and output data to Fava objects.
+The `fn` Java FDK supports [flexible data binding](docs/DataBinding.md)  to make it easier for you to map function input and output data to Java objects.
 
 Below is an example to of a Function that returns a POJO which will be serialized to JSON using Jackson:
 
@@ -248,7 +266,6 @@ public class PojoFunction {
 }
 ```
 
-
 Update your `func.yaml` to reference the new method:
 
 ```yaml
@@ -269,7 +286,7 @@ $ echo -n Michael | fn run
 
 ## 8. Where do I go from here?
 
-Learn more about the `fn` Java FDK by reading the next tutorials in the series. Check out the examples in the [`examples` directory](examples) for some functions demonstrating different features of the `fn` Java FDK.
+Learn more about the `fn` Java FDK by reading the next tutorials in the series. Also check out the examples in the [`examples` directory](examples) for some functions demonstrating different features of the `fn` Java FDK.
 
 ### Configuring your function
 

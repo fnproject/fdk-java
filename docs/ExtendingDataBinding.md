@@ -15,7 +15,7 @@ Similarly, an [OutputCoercion](../api/src/main/java/com/fnproject/fn/api/OutputC
 
 To make use of a custom coercion, you have to write a class that implements the appropriate interface, and then instruct your function to use it. This tutorial will explain how to do this.
 
-First of all, let's create a new function project. If you haven't done it already, start a local functions server and create an app:
+First of all, let's create a new function project. If you haven't done it already, start a local `fn` server and create an app:
 
 ```shell
 $ fn start &
@@ -27,17 +27,19 @@ Then create a new project for the custom I/O tutorial.
 
 ```shell
 $ mkdir custom-io && cd custom-io
-$ fn init --runtime=java jbloggs/custom-io
+$ fn init --runtime=java your_dockerhub_account/custom-io
 Runtime: java
 function boilerplate generated.
 func.yaml created
 $ mv src/main/java/com.example.fn/HelloFunction.java src/main/java/com.example.fn/CustomIO.java
 ```
 
-And set the name, path and cmd accordingly in `func.yaml`:
+Again, you will have to provide your Docker Hub account name.
+
+Set the name, path and cmd accordingly in `func.yaml`:
 
 ```
-name: jbloggs/custom-io
+name: your_dockerhub_account/custom-io
 version: 0.0.1
 runtime: java
 cmd: com.example.fn.CustomIO::handleRequest
@@ -56,15 +58,12 @@ public class CustomIO {
 }
 ```
 
-Then build the function, create a route and test it with `curl`:
+Then build and deploy the function, and test it with `curl`:
 
 ```shell
-$ fn build
+$ fn deploy java-app
 ...
-Function jbloggs/custom-io:0.0.1 built successfully.
-
-$ fn routes create java-app /custom-io
-/custom-io created with jbloggs/custom-io:0.0.1
+Updating route /custom-io using image your_dockerhub_account/custom-io:0.0.2...
 
 $ curl -X POST --data-ascii "ABCDE" -H "Content-type: text/plain" http://localhost:8080/r/java-app/custom-io
 ABCDE
@@ -169,12 +168,12 @@ public class CustomIO {
 }
 ```
 
-Now rebuild the function and test it with `curl`:
+Now redeploy the function and test it with `curl`:
 
 ```shell
-$ fn build
+$ fn deploy java-app
 ...
-Function jbloggs/custom-io:0.0.1 built successfully.
+Updating route /custom-io using image your_dockerhub_account/custom-io:0.0.3...
 
 $ curl -X POST --data-ascii "ABCDE" -H "Content-type: text/plain" http://localhost:8080/r/java-app/custom-io
 EDCBA
@@ -251,9 +250,9 @@ public class CustomIO {
 The input and output coercion should neutralize each other, therefore the combination of the two functionalities should revert back to being a simple echo of the input. Let's test this:
 
 ```shell
-$ fn build
+$ fn deploy java-app
 ...
-Function jbloggs/custom-io:0.0.1 built successfully.
+Updating route /custom-io using image your_dockerhub_account/custom-io:0.0.4...
 
 $ curl -X POST --data-ascii "ABCDE" -H "Content-type: text/plain" http://localhost:8080/r/java-app/custom-io
 ABCDE
@@ -292,9 +291,9 @@ We have removed the input and output binding annotations, but we have provided o
 Let's test that this new code has the same effect (a double reversal, i.e. a simple echo).
 
 ```shell
-$ fn build
+$ fn deploy java-app
 ...
-Function jbloggs/custom-io:0.0.1 built successfully.
+Updating route /custom-io using image your_dockerhub_account/custom-io:0.0.5...
 
 $ curl -X POST --data-ascii "ABCDE" -H "Content-type: text/plain" http://localhost:8080/r/java-app/custom-io
 ABCDE

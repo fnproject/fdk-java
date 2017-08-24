@@ -14,6 +14,7 @@ Before you get started, you will need to be familiar with the [`fn` Java FDK](..
 * [`fn` Java FDK](https://github.com/fnproject/fn-java-sdk)
 * [`fn` completer](https://github.com/fnproject/completer)
 * [Docker-ce 17.06+ installed locally](https://docs.docker.com/engine/installation/)
+* A [Docker Hub](http://hub.docker.com) account
 
 ## Your first Cloud Thread
 
@@ -23,7 +24,7 @@ Create a Maven-based Java Function using the instructions from the `fn` Java FDK
 
 ```
 $ mkdir example-cloudthreads-function && cd example-cloudthreads-function
-$ fn init --runtime=java jbloggs/cloudthreads-example
+$ fn init --runtime=java your_dockerhub_account/cloudthreads-example
 Runtime: java
 function boilerplate generated.
 func.yaml created
@@ -76,14 +77,14 @@ public class PrimeFunction {
 Edit your `func.yaml` to point to your function's entrypoint:
 
 ```
-name: jbloggs/cloudthreads
+name: your_dockerhub_account/cloudthreads
 version: 0.0.1
 runtime: java
 cmd: com.example.fn.PrimeFunction::handleRequest
-path: /cloudthreads-example
+path: /primes
 ```
 
-### 3. Start a local fn server and completer server
+### 3. Start a local `fn` server and completer server
 
 In a terminal, start the functions server by running its docker image locally:
 
@@ -99,20 +100,14 @@ $ docker run -p 8081:8081 -d --name completer --link=functions -e API_URL=http:/
 
 ### 4. Build and Configure your application
 
-Build your app:
-
-```
-$ fn build
-```
-
-Create your app and bind your function to a route:
+Create your app and deploy your function:
 
 ```
 $ fn apps create cloudthreads-example
 Successfully created app: cloudthreads-example
 
-$ fn routes create cloudthreads-example /primes
-/primes created with jbloggs/cloudthreads:0.0.1
+$ fn deploy cloudthreads-example
+Updating route /primes using image your_dockerhub_account/cloudthreads::0.0.2...
 ```
 
 Configure your function to talk to the local completer endpoint:
