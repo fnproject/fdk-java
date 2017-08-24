@@ -35,14 +35,6 @@
         </dependency>
     </dependencies>
 
-    <repositories>
-        <repository>
-            <id>internal</id>
-            <name>internal nexus</name>
-            <url>http://10.167.103.241:8081/repository/maven-releases/</url>
-        </repository>
-    </repositories>
-
     <build>
         <plugins>
             <plugin>

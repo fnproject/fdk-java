@@ -67,12 +67,12 @@
             <url>https://jitpack.io</url>
         </repository>
         <repository>
-            <id>nexus-box-releases</id>
-            <url>http://10.167.103.241:8081/repository/maven-releases/</url>
+            <id>fn-maven-snapshots</id>
+            <url>https://swiftobjectstorage.us-phoenix-1.oraclecloud.com/v1/opc0002/mvnrepo/snapshots</url>
         </repository>
         <repository>
-            <id>nexus-box-snapshots</id>
-            <url>http://10.167.103.241:8081/repository/maven-snapshots/</url>
+            <id>fn-maven-releases</id>
+            <url>https://swiftobjectstorage.us-phoenix-1.oraclecloud.com/v1/opc0002/mvnrepo/releases</url>
         </repository>
     </repositories>
 </project>

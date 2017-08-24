@@ -11,7 +11,6 @@ set -ex
 # The following variables need to be set
 # ----------------------------------------------------------------------
 
-export FN_TOKEN=${FN_TOKEN:-$(cat ~/.fn-token)}
 # This is an awful bashism
 if [[ -z "${API_URL+x}" ]]; then echo "Please set API_URL"; exit 1; fi
 if [[ -z "${COMPLETER_BASE_URL+x}" ]]; then echo "Please set COMPLETER_BASE_URL"; exit 1; fi
