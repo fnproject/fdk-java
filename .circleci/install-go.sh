@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-source "$(dirname "$0")/lib.sh"
-
 : ${GOVERSION:=1.8.3}
 : ${OS:=linux}
 : ${ARCH:=amd64}

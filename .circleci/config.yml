@@ -45,7 +45,7 @@ jobs:
 
       - run:
           name: Update go to 1.8.3
-          command: ./integration-tests/install-go.sh
+          command: ./.circleci/install-go.sh
       - run:
           name: Install fn binary (as it is needed for the integration tests)
           command: ./integration-tests/install-fn.sh
