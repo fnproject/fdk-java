@@ -21,7 +21,6 @@
         <module>string-reverse</module>
         <module>regex-query</module>
         <module>qr-code</module>
-
         <module>async-thumbnails</module>
     </modules>
 

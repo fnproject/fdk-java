@@ -30,8 +30,6 @@
         <junit.version>4.12</junit.version>
     </properties>
 
-
-
     <build>
         <plugins>
             <plugin>
