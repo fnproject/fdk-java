@@ -26,27 +26,36 @@ function boilerplate generated.
 func.yaml created
 ```
 
-This creates a new Maven based Java Function which includes some boilerplate to get you started. The `pom.xml` includes a dependency on the latest version of the fn Java FDK that is useful for developing your Java functions.
+This creates a new Maven based Java Function which includes some
+boilerplate to get you started. The `pom.xml` includes a dependency on
+the latest version of the fn Java FDK that is useful for developing your
+Java functions.
 
-Note that the `jbloggs/hello` name follows the format of a Docker image name. These tutorials are running locally, so you will not need to push images to a Docker registry, but in a real scenario you would deploy to a remote registry and therefore you should replace `jbloggs` with your user name.
+Note that the `jbloggs/hello` name follows the format of a Docker image
+name. These tutorials are running locally, so you will not need to push
+images to a Docker registry, but in a real scenario you would deploy to
+a remote registry and therefore you should replace `jbloggs` with your
+user name.
 
 You can now import this project into your favourite IDE as normal.
 
 ### 2. Deep dive into your first Java Function:
-We'll now take a look at what makes up our new Java Function. First, lets take a look at the `func.yaml`:
+
+We'll now take a look at what makes up our new Java Function. First,
+lets take a look at the `func.yaml`:
 
 ```bash
 $ cat func.yaml
 name: jbloggs/hello
 version: 0.0.1
 runtime: java
-cmd: com.fnproject.fn.examples.HelloFunction::handleRequest
+cmd: com.example.faas.HelloFunction::handleRequest
 path: /hello
 ```
 
-The `cmd` field determines which method is called when your funciton is invoked. In the generated Function, the `func.yaml` references `com.fnproject.fn.examples.HelloFunction::handleRequest`.
+The `cmd` field determines which method is called when your funciton is invoked. In the generated Function, the `func.yaml` references `com.example.faas.HelloFunction::handleRequest`.
 
-Open the file: `src/main/java/com.fnproject.fn.examples/HelloFunction.java`:
+Open the file: `src/main/java/com/example/faas/HelloFunction.java`:
 
 ```java
 package com.fnproject.fn.examples;
@@ -68,7 +77,7 @@ This may take a minute the first time as you will need pull in some new dependen
 
 *FIXME: Oracle Internal*:
 
-1. Ensure you have the `http_proxy` and `https_proxy` set and also add `10.167.103.241` to your `no_proxy`.
+1. Ensure you have the `http_proxy` and `https_proxy` set and also add `10.167.103.241` to your `no_proxy`.  Make sure your docker settings also include the proper proxies.
 2. Log in to `registry.oracledx.com`: `docker login -u agent -p gf21\&54G registry.oracledx.com`
 
 ```bash
@@ -107,33 +116,72 @@ Hello, Michael Faasbender!
 ```
 
 ### 4. Making changes to your Function
-Making code changes and trying them out is simple. For example, lets change our greeting from English to Spanish:
 
-```bash
-$ mv src/main/java/com.fnproject.fn.examples/HelloFunction.java src/main/java/com.fnproject.fn.examples/HolaFunction.java
-```
+Making code changes and trying them out is simple. For example, lets
+localize our function.
 
 Update the function class to match:
 
 ```java
-package com.fnproject.fn.examples;
+package com.example.faas;
 
-public class HolaFunction {
+import java.util.Locale;
+import java.util.ResourceBundle;
+
+public class HelloFunction {
 
     public String handleRequest(String input) {
-        String name = (input == null || input.isEmpty()) ? "mundo"  : input;
+        String name = (input == null || input.isEmpty()) ? "world"  : input;
+        Locale.setDefault(new Locale((null == System.getenv("LANG")) ?
+                          Locale.getDefault().toString() :
+                                     System.getenv("LANG")));
+        ResourceBundle bundle =
+            ResourceBundle.getBundle("com.example.faas.HelloFunction");
 
-        return "Hola, " + name + "!";
+        return bundle.getString("greeting") + ", " + name + "!";
     }
 
 }
 ```
 
-As the name of your function class has changed you will also need to update the `cmd` property in the `func.yaml` to:
+And you need to create the properties files for some locales.  We'll do
+`HelloFunction.properties` and `HelloFunction_de.properties`,
+respectively.
 
-```yaml
-cmd: com.fnproject.fn.examples.HolaFunction::handleRequest
+```bash
+greeting=Hello
 ```
+
+```bash
+greeting=Guten Tag
+```
+
+Now we can run this, passing the LANG env var, like so
+
+```bash
+echo -n "Michael Faasbender" | fn run --env LANG=en
+```
+
+We will see the same output as before,
+
+```bash
+Function jbloggs/hello:0.0.1 built successfully.
+Hello, Michael Faasbender!
+```
+
+But we can localize it by changing the `LANG` env var.
+
+```bash
+echo -n "Michael Faasbender" | fn run --env LANG=de
+```
+
+```bash
+Function jbloggs/hello:0.0.1 built successfully.
+Guten Tag, Michael Faasbender!
+```
+
+This brings up an interesting point.  The auto-generated test
+
 
 Before running this, we also need to update the corresponding function test class:
 
