@@ -48,7 +48,7 @@ jobs:
           command: ./.circleci/install-go.sh
       - run:
           name: Install fn binary (as it is needed for the integration tests)
-          command: ./integration-tests/install-fn.sh
+          command: ./.circleci/install-fn.sh
       - run:
           name: Run integration tests
           command: COMPLETER_DOCKER_IMAGE=willprice/completer ./integration-tests/run-local.sh

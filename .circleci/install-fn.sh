@@ -1,10 +1,5 @@
 #!/usr/bin/env bash
 
-# Set up a local test environment in order to run integration tests,
-# then execute them.
-
-source "$(dirname "$0")/lib.sh"
-
 set -ex
 
 export GOPATH=/tmp/go
