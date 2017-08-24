@@ -64,7 +64,6 @@ jobs:
                   -Dbmcs-faas-snapshot-repo.username="$MVN_SNAPSHOT_USER" \
                   -Dbmcs-faas-snapshot-repo.password="$MVN_SNAPSHOT_PASSWORD" \
                   -DdeployAtEnd=true \
-                  -e
                   deploy
             fi
       - deploy:
