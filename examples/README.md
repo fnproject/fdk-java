@@ -1,7 +1,7 @@
-# fn Example Projects
+# `fn` Java FDK Example Projects
 
-In this directory you will find 3 example projects demonstrating different
-features of the fn Java FDK:
+In this directory you will find some example projects demonstrating different
+features of the `fn` Java FDK:
 
 * Plain java code support (`string-reverse`)
 * Functional testing of your functions (`regex-query` and `qr-code`)
@@ -11,8 +11,8 @@ features of the fn Java FDK:
 ## 1. String reverse
 
 This function takes a string and returns the reverse of the string.
-The fn Java FDK runtime will handle marshalling data into your
-functions without the function having to have any knowledge of the SDK.
+The `fn` Java FDK runtime will handle marshalling data into your
+functions without the function having to have any knowledge of the FDK API.
 
 ## 2. Regex query
 
@@ -27,4 +27,10 @@ of POJO return values.
 This function parses the query parameters of a GET request (through the
 `InputEvent` passed into the function) to generate a QR code. It demonstrates
 the `InputEvent` and `OutputEvent` interfaces which provide low level
-access to data entering the fn Java FDK.
+access to data entering the `fn` Java FDK.
+
+## 4. Asynchronous thumbnails generation
+
+This example showcases the Cloud Threads asynchronous execution API, by
+creating a workflow that takes an image and asynchronously generates three
+thumbnails for it, then uploads them to an object storage.
