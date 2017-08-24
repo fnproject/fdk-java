@@ -1,4 +1,4 @@
-name: fn-test/java-function
+name: fn-test/test-2
 version: 0.0.1
 runtime: java
 cmd: com.fnproject.fn.integration.test2.PlainFunction::handleRequest
