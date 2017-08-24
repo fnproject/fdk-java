@@ -113,15 +113,4 @@
             </extension>
         </extensions>
     </build>
-
-    <distributionManagement>
-        <snapshotRepository>
-            <uniqueVersion>true</uniqueVersion>
-            <id>bmcs-faas-snapshot-repo</id>
-            <url>https://swiftobjectstorage.us-phoenix-1.oraclecloud.com/v1/opc0002/mvnrepo/snapshots</url>
-            <layout>default</layout>
-        </snapshotRepository>
-    </distributionManagement>
-
-
 </project>
