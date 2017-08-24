@@ -49,7 +49,7 @@ jobs:
           name: Deploy fn-java-fdk Docker image
           command: docker push fnproject/fn-java-fdk
 
-     - run:
+      - run:
           name: Update go to 1.8.3
           command: ./integration-tests/install-go.sh
       - run:
