@@ -1,4 +1,3 @@
-# serverjre base image built by Jan Grant
 FROM fnproject/fn-java-fdk:jrebase
 COPY target/runtime-*.jar target/dependency/*.jar /function/runtime/
 WORKDIR /function
