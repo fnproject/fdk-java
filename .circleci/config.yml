@@ -15,13 +15,6 @@ jobs:
       - run:
           name: Build, Test and Package.
           command: mvn package
-      - run:
-         name: Update Docker to latest
-         command: ./.circleci/install-docker.sh
-      - run:
-         name: Login to Docker
-         command: docker login -u $DOCKER_USER -p $DOCKER_PASS
-
       - store_test_results:
           path: runtime/target/surefire-reports
       - store_test_results:
@@ -38,22 +31,17 @@ jobs:
           path: $ARTIFACT_DIR
 
       - run:
-          name: Push to maven repo
-          command: |
-            mvn -s ./settings-deploy.xml \
-                -DskipTests \
-                -DaltDeploymentRepository="bmcs-faas-snapshot-repo::default::https://swiftobjectstorage.us-phoenix-1.oraclecloud.com/v1/opc0002/mvnrepo/snapshots" \
-                -Dbmcs-faas-snapshot-repo.username="$MVN_SNAPSHOT_USER" \
-                -Dbmcs-faas-snapshot-repo.password="$MVN_SNAPSHOT_PASSWORD" \
-                deploy
+         name: Update Docker to latest
+         command: ./.circleci/install-docker.sh
+      - run:
+         name: Login to Docker
+         command: docker login -u $DOCKER_USER -p $DOCKER_PASS
+
       - run:
           name: Build fn-java-fdk Docker image
           command: |
             cd runtime
             docker build -t fnproject/fn-java-fdk .
-      - run:
-          name: Deploy fn-java-fdk Docker image
-          command: docker push fnproject/fn-java-fdk
 
       - run:
           name: Update go to 1.8.3
@@ -65,6 +53,25 @@ jobs:
           name: Run integration tests
           command: COMPLETER_DOCKER_IMAGE=willprice/completer ./integration-tests/run-local.sh
           timeout: 1200
+
+      - deploy:
+          name: Push to maven repo
+          command: |
+            if [ "${CIRCLE_BRANCH}" == "master" ]; then
+              mvn -s ./settings-deploy.xml \
+                  -DskipTests \
+                  -DaltDeploymentRepository="bmcs-faas-snapshot-repo::default::https://swiftobjectstorage.us-phoenix-1.oraclecloud.com/v1/opc0002/mvnrepo/snapshots" \
+                  -Dbmcs-faas-snapshot-repo.username="$MVN_SNAPSHOT_USER" \
+                  -Dbmcs-faas-snapshot-repo.password="$MVN_SNAPSHOT_PASSWORD" \
+                  -e
+                  deploy
+            fi
+      - deploy:
+          name: Deploy fn-java-fdk Docker image
+          command: |
+            if [ "${CIRCLE_BRANCH}" == "master" ]; then
+              docker push fnproject/fn-java-fdk
+            fi
 
       - save_cache:
           paths:
