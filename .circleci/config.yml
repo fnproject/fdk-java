@@ -18,6 +18,9 @@ jobs:
       - run:
          name: Update Docker to latest
          command: ./.circleci/install-docker.sh
+      - run:
+         name: Login to Docker
+         command: docker login -u $DOCKER_USER -p $DOCKER_PASS
 
       - store_test_results:
           path: runtime/target/surefire-reports
