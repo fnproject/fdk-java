@@ -307,11 +307,40 @@ public class ExerciseEverything {
     }
 
     @Test(32)
+    @Test.Expect("bar")
+    public CloudFuture<HttpRequest> externallyCompletableDirectGet(CloudThreadRuntime rt) throws IOException {
+        ExternalCloudFuture<HttpRequest> cf = rt.createExternalFuture();
+        HttpClient httpClient = new HttpClient();
+        httpClient.execute(HttpClient
+                .preparePost(cf.completionUrl().toString())
+                .withHeader("My-Header", "foo")
+                .withHeader("FnProject-Method", "post")
+                .withBody("bar".getBytes()));
+        return cf;
+    }
+
+
+    @Test(33)
+    @Test.Catch(ExternalCompletionException.class)
+    @Test.Expect("bar")
+    public CloudFuture<HttpRequest> externalFutureFailureAndGet(CloudThreadRuntime rt) throws IOException {
+        ExternalCloudFuture<HttpRequest> cf = rt.createExternalFuture();
+        HttpClient httpClient = new HttpClient();
+        httpClient.execute(HttpClient
+                .preparePost(cf.failUrl().toString())
+                .withHeader("My-Header", "foo")
+                .withHeader("FnProject-Method", "post")
+                .withBody("bar".getBytes()));
+        return cf;
+    }
+
+
+    @Test(34)
     @Test.Expect("foobar")
     public CloudFuture<String> externallyCompletableFailure(CloudThreadRuntime rt) throws IOException {
         ExternalCloudFuture<HttpRequest> cf = rt.createExternalFuture();
         HttpClient httpClient = new HttpClient();
-        httpClient.execute(httpClient
+        httpClient.execute(HttpClient
                 .preparePost(cf.failUrl().toString())
                 .withHeader("My-Header", "foo")
                 .withHeader("FnProject-Method", "post")
@@ -364,8 +393,6 @@ public class ExerciseEverything {
 
                 CloudFuture<Object> cf = (CloudFuture<Object>) m.invoke(this, rt);
                 Object r = cf.get();
-
-                boolean found = false;
 
                 // Coerce returned value to string
                 String rv = coerceToString(r);
@@ -427,6 +454,10 @@ public class ExerciseEverything {
             return (String) r;
         } else if (r instanceof Throwable) {
             return ((Throwable) r).getMessage();
+        } else if (r instanceof HttpRequest) {
+            return new String(((HttpRequest) r).getBodyAsBytes());
+        } else if (r instanceof HttpResponse) {
+            return new String(((HttpResponse) r).getBodyAsBytes());
         } else {
             return r.toString();
         }

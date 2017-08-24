@@ -80,6 +80,12 @@ public class CloudThreads {
     }
 
     /**
+     * Version of {@link SerFunction} that signals an exception handler
+     */
+    @FunctionalInterface
+    public interface SerExFunction<T, V> extends SerFunction<T, V>, Serializable {}
+
+    /**
      * Version of {@link BiFunction} that is implicitly serializable.
      */
     @FunctionalInterface
@@ -87,10 +93,24 @@ public class CloudThreads {
     }
 
     /**
+     * Version of {@link SerBiFunction} that signals it handles exceptional cases.
+     */
+    @FunctionalInterface
+    public interface SerExBiFunction<T, U, R> extends SerBiFunction<T, U, R>, Serializable {
+    }
+
+    /**
      * Version of {@link BiConsumer} that is implicitly serializable.
      */
     @FunctionalInterface
     public interface SerBiConsumer<T, U> extends BiConsumer<T, U>, Serializable {
+    }
+
+    /**
+     * Version of {@link SerBiConsumer} that signals it handles exceptional cases.
+     */
+    @FunctionalInterface
+    public interface SerExBiConsumer<T, U> extends SerBiConsumer<T, U>, Serializable {
     }
 
     /**

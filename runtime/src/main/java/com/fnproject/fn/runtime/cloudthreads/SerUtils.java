@@ -133,7 +133,7 @@ final class SerUtils {
         registerDeserializer(DATUM_TYPE_HTTP_REQ, (dt, h, is) -> {
             Optional<String> methodName = h.getHeaderValue(REQUEST_METHOD_HEADER);
             try {
-                HttpMethod method = methodName.map(HttpMethod::valueOf)
+                HttpMethod method = methodName.map((m) -> HttpMethod.valueOf(m.toUpperCase()))
                         .orElseThrow(() -> new Deserializer.DeserializeException(REQUEST_METHOD_HEADER + " mandatory field was not present on response from external completion"));
                 Map<String, String> userHeaders = h.getHeaders().entrySet().stream()
                         .filter((entry) -> entry.getKey().toLowerCase().startsWith(USER_HEADER_PREFIX.toLowerCase()))

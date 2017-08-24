@@ -92,6 +92,48 @@ public class CloudCompleterApiClientTest {
     }
 
     @Test
+    public void waitForCompletionShouldReturnHttpRequestOnExternallyCompletable() throws Exception {
+        // Given
+        HttpClient.HttpResponse response = new HttpClient.HttpResponse(200);
+        response.addHeader(DATUM_TYPE_HEADER, DATUM_TYPE_HTTP_REQ);
+        response.addHeader(RESULT_STATUS_HEADER, RESULT_STATUS_SUCCESS);
+        response.addHeader(REQUEST_METHOD_HEADER, "POST");
+        response.addHeader(CONTENT_TYPE_HEADER, "application/json");
+        response.addHeader(USER_HEADER_PREFIX + "Custom-Header", "myValue");
+        response.setEntity(IOUtils.toInputStream("{ \"some\": \"json\" }", "utf-8"));
+        when((Object) mockHttpClient.execute(any())).thenReturn(response);
+
+        // When
+        CloudCompleterApiClient completerClient = new CloudCompleterApiClient("", mockHttpClient);
+        Object result = completerClient.waitForCompletion(new ThreadId("1"), new CompletionId("2"));
+
+        // Then
+        assertThat(result).isInstanceOf(HttpRequest.class);
+    }
+
+
+    @Test
+    public void waitForCompletionShouldThrowExternalCmopletionExceptionOnFailedExternalFuture() throws Exception {
+        // Given
+        HttpClient.HttpResponse response = new HttpClient.HttpResponse(200);
+        response.addHeader(DATUM_TYPE_HEADER, DATUM_TYPE_HTTP_REQ);
+        response.addHeader(RESULT_STATUS_HEADER, RESULT_STATUS_FAILURE);
+        response.addHeader(REQUEST_METHOD_HEADER, "POST");
+        response.addHeader(CONTENT_TYPE_HEADER, "application/json");
+        response.addHeader(USER_HEADER_PREFIX + "Custom-Header", "myValue");
+        response.setEntity(IOUtils.toInputStream("{ \"some\": \"json\" }", "utf-8"));
+        when((Object) mockHttpClient.execute(any())).thenReturn(response);
+
+        // Then
+        thrown.expect(ExternalCompletionException.class);
+
+        // When
+        CloudCompleterApiClient completerClient = new CloudCompleterApiClient("", mockHttpClient);
+        Object result = completerClient.waitForCompletion(new ThreadId("1"), new CompletionId("2"));
+    }
+
+
+    @Test
     public void waitForCompletionShouldThrowExceptionIfValidationFails() throws Exception {
         int responseCode = 500;
         String errorResponse = "Internal server error";

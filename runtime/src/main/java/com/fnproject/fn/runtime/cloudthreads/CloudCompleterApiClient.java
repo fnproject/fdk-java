@@ -236,7 +236,7 @@ public class CloudCompleterApiClient implements CompleterClient {
                 return result.get();
             } catch (CloudCompletionException | FunctionInvocationException | ExternalCompletionException e) {
                 throw e;
-            } catch (ClassNotFoundException | IOException e) {
+            } catch (ClassNotFoundException | IOException | SerUtils.Deserializer.DeserializeException e) {
                 throw new ResultSerializationException("Unable to deserialize result received from the completer service", e);
             } catch (Exception e) {
                 throw new PlatformException("Request to completer service failed");
