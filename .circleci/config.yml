@@ -5,6 +5,8 @@ jobs:
     machine:
       java:
         version: oraclejdk8
+    environment:
+      ARTIFACT_DIR: /tmp/artifacts
     steps:
       - checkout
       - restore_cache:
@@ -20,10 +22,14 @@ jobs:
           path: testing/target/surefire-reports
 
       - run:
-          name: Upload FDK artefacts
-          command: |
-            cp api/target/*.jar $CIRCLE_ARTIFACTS
-            cp runtime/target/*.jar $CIRCLE_ARTIFACTS
+          name: Copy FDK artifacts to upload folder
+          command:
+            - mkdir $ARTIFACT_DIR
+            - cp api/target/*.jar $ARTIFACT_DIR
+            - cp runtime/target/*.jar $ARTIFACT_DIR
+      - store_artifacts:
+          name: Upload FDK artifacts
+          path: $ARTIFACT_DIR
 
       - run:
           name: Push to maven repo
@@ -37,8 +43,8 @@ jobs:
       - run:
           name: Build fn-java-fdk Docker image
           command: |
-            cd runtime
-            docker build -t fnproject/fn-java-fdk:latest .
+            - cd runtime
+            - docker build -t fnproject/fn-java-fdk .
       - run:
           name: Deploy fn-java-fdk Docker image
           command:
