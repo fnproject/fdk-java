@@ -1,32 +1,24 @@
 # Extending the Data Binding functionality
 
-By following this step-by-step guide you will learn to configure custom handling for input and output types of a simple Java function running on fn.
-
-
-## Pre-requisites
-
-Before you get started you will need the following things:
-
-* [The fn Functions CLI](https://github.com/fnproject/fn#install-cli-tool)
-* [Docker-ce 17.06+ installed locally](https://docs.docker.com/engine/installation/)
+By following this step-by-step guide you will learn to configure custom handling for input and output types of a simple Java function running on the `fn` platform.
 
 
 ## Overview
 
-In the [Data Binding](DataBinding.md) tutorial you have seen how the raw data received and returned by the function is represented by [InputEvent](../api/src/main/java/com.fnproject.fn/api/InputEvent.java)s and [OutputEvent](../api/src/main/java/com.fnproject.fn/api/OutputEvent.java)s. The fn Java FDK provides out-of-the-box functionality to convert these to some simple types and POJOs, but you might want to customize the way your input and output data is marshalled from the HTTP request and to the HTTP response.
+In the [Data Binding](DataBinding.md) tutorial you have seen how the raw data received and returned by the function is represented by [InputEvent](../api/src/main/java/com.fnproject.fn/api/InputEvent.java)s and [OutputEvent](../api/src/main/java/com.fnproject.fn/api/OutputEvent.java)s. The `fn` Java FDK provides out-of-the-box functionality to convert these to some simple types and POJOs, but you might want to customize the way your input and output data is marshalled from the HTTP request and to the HTTP response.
 
 This is done through the *Coercion* abstractions.
 
-An [InputCoercion](../api/src/main/java/com.fnproject.fn/api/InputCoercion.java) is used to process an [InputEvent](../api/src/main/java/com.fnproject.fn/api/InputEvent.java) and turn it into the custom type required by a user function parameter.
+An [InputCoercion](../api/src/main/java/com/fnproject/fn/api/InputCoercion.java) is used to process an [InputEvent](../api/src/main/java/com/fnproject/fn/api/InputEvent.java) and turn it into the custom type required by a user function parameter.
 
-Similarly, an [OutputCoercion](../api/src/main/java/com.fnproject.fn/api/OutputCoercion.java) is the abstraction used to take the return value of the user function and create an [OutputEvent](../api/src/main/java/com.fnproject.fn/api/OutputEvent.java) from it.
+Similarly, an [OutputCoercion](../api/src/main/java/com/fnproject/fn/api/OutputCoercion.java) is the abstraction used to take the return value of the user function and create an [OutputEvent](../api/src/main/java/com/fnproject/fn/api/OutputEvent.java) from it.
 
 To make use of a custom coercion, you have to write a class that implements the appropriate interface, and then instruct your function to use it. This tutorial will explain how to do this.
 
 First of all, let's create a new function project. If you haven't done it already, start a local functions server and create an app:
 
 ```shell
-$ docker run -p8080:8080 -d -v /var/run/docker.sock:/var/run/docker.sock fnproject/functions:latest
+$ fn start &
 $ fn apps create java-app
 Successfully created app:  java-app
 ```
@@ -39,23 +31,23 @@ $ fn init --runtime=java jbloggs/custom-io
 Runtime: java
 function boilerplate generated.
 func.yaml created
-$ mv src/main/java/com.fnproject.fn.examples/HelloFunction.java src/main/java/com.fnproject.fn.examples/CustomIO.java
+$ mv src/main/java/com.example.fn/HelloFunction.java src/main/java/com.example.fn/CustomIO.java
 ```
 
-And remember to set the name, path and cmd accordingly in `func.yaml`:
+And set the name, path and cmd accordingly in `func.yaml`:
 
 ```
 name: jbloggs/custom-io
 version: 0.0.1
 runtime: java
-cmd: com.fnproject.fn.examples.CustomIO::handleRequest
+cmd: com.example.fn.CustomIO::handleRequest
 path: /custom-io
 ```
 
-Let's edit `CustomIO.java` and create a function that merely echoes the input to the output:
+Edit `CustomIO.java` and create a function that merely echoes the input to the output:
 
 ```java
-package com.fnproject.fn.examples;
+package com.example.fn;
 
 public class CustomIO {
     public String handleRequest(String input) {
@@ -88,13 +80,13 @@ Both these methods return a `java.util.Optional`. The contract for this return v
 
 - If an empty `Optional` is returned, the coercion is not the appropriate coercion to be used for the provided data, and the runtime is allowed to attempt to use another coercion.
 - If the `Optional` contains an object, the coercion has successfully performed the required conversion.
-- If a `RuntimeException` is thrown, the coercion was supposed to work with the provided data but some kind of error has occurred. Because the data may have been partially consumed it is not safe to continue so the function invocation will be complete unsucessfully and no further action will be attempted.
+- If a `RuntimeException` is thrown, the coercion was supposed to work with the provided data but some kind of error has occurred. Because the data may have been partially consumed it is not safe to continue so the function invocation will be completed unsucessfully and no further action will be attempted.
 
 A common pattern for coercions is to first check that they can process the provided data into the required type, and return an empty `Optional` if they cannot. Then they can try to perform the conversion and wrap any exception (for example I/O exceptions) into an input/output handling exception.
 
 ### Creating an input coercion
 
-Let us write our first input coercion, which takes the body of the HTTP request and converts it to a String, but then reverses the order of the characters in the string.
+We will write our first input coercion, which takes the body of the HTTP request and converts it to a String, but then reverses the order of the characters in the string.
 
 We're going to use an Apache Commons library so let's add it to our `pom.xml`:
 
@@ -106,10 +98,10 @@ We're going to use an Apache Commons library so let's add it to our `pom.xml`:
 </dependency>
 ```
 
-Create and edit `src/main/java/com.fnproject.fn.examples/ReverseStringInputCoercion.java`:
+Create and edit `src/main/java/com/example/fn/ReverseStringInputCoercion.java`:
 
 ```java
-package com.fnproject.fn.examples;
+package com.example.fn;
 
 import com.fnproject.fn.api.InvocationContext;
 import com.fnproject.fn.api.InputCoercion;
@@ -166,7 +158,7 @@ To apply a specific coercion to a given input parameter, you can use an [@InputB
 Edit `CustomIO.java` and add this annotation:
 
 ```java
-package com.fnproject.fn.examples;
+package com.example.fn;
 
 import com.fnproject.fn.api.InputBinding;
 
@@ -192,12 +184,12 @@ The input was reversed!
 
 ### Creating an output coercion
 
-Let us now write an output coercion, which reverses the string result again before returning it as the body of the HTTP response.
+We will now write an output coercion, which reverses the string result again before returning it as the body of the HTTP response.
 
-Create and edit `src/main/java/com.fnproject.fn.examples/ReverseStringOutputCoercion.java`:
+Create and edit `src/main/java/com.example.fn/ReverseStringOutputCoercion.java`:
 
 ```java
-package com.fnproject.fn.examples;
+package com.example.fn;
 
 import com.fnproject.fn.api.InvocationContext;
 import com.fnproject.fn.api.OutputCoercion;
@@ -243,7 +235,7 @@ To apply a specific coercion from the return type of the function, you can provi
 Let's edit `CustomIO.java` again:
 
 ```java
-package com.fnproject.fn.examples;
+package com.example.fn;
 
 import com.fnproject.fn.api.InputBinding;
 import com.fnproject.fn.api.OutputBinding;
@@ -277,7 +269,7 @@ That same method can be used to specify input and output coercions by using the 
 Let's edit our `CustomIO.java` again:
 
 ```java
-package com.fnproject.fn.examples;
+package com.example.fn;
 
 import com.fnproject.fn.api.FnConfiguration;
 import com.fnproject.fn.api.RuntimeContext;
@@ -312,7 +304,7 @@ ABCDE
 
 There is a difference in using the function configuration method to specify coercions compared to the annotations.
 
-When directly annotating the function method with the [@InputBinding](../api/src/main/java/com.fnproject.fn/api/InputBinding.java) and [@OutputBinding](../api/src/main/java/com.fnproject.fn/api/OutputBinding.java) annotations, only the specified coercion will be tried_.
+When directly annotating the function method with the [@InputBinding](../api/src/main/java/com.fnproject.fn/api/InputBinding.java) and [@OutputBinding](../api/src/main/java/com.fnproject.fn/api/OutputBinding.java) annotations, _only the specified coercion will be tried_.
 
 In other words, the annotations are an explicit requirement on the input and output conversions to perform.
 
