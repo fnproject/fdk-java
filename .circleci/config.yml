@@ -63,6 +63,7 @@ jobs:
                   -DaltDeploymentRepository="bmcs-faas-snapshot-repo::default::https://swiftobjectstorage.us-phoenix-1.oraclecloud.com/v1/opc0002/mvnrepo/snapshots" \
                   -Dbmcs-faas-snapshot-repo.username="$MVN_SNAPSHOT_USER" \
                   -Dbmcs-faas-snapshot-repo.password="$MVN_SNAPSHOT_PASSWORD" \
+                  -DdeployAtEnd=true \
                   -e
                   deploy
             fi
