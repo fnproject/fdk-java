@@ -33,12 +33,20 @@ jobs:
           name: Push to maven repo
           command: |
             mvn -s ./settings-deploy.xml \
-                -Pci-user \
                 -DskipTests \
                 -DaltDeploymentRepository="bmcs-faas-snapshot-repo::default::https://swiftobjectstorage.us-phoenix-1.oraclecloud.com/v1/opc0002/mvnrepo/snapshots" \
                 -Dbmcs-faas-snapshot-repo.username="$MVN_SNAPSHOT_USER" \
                 -Dbmcs-faas-snapshot-repo.password="$MVN_SNAPSHOT_PASSWORD" \
                 deploy
+      - run:
+          name: Build fn-java-fdk Docker image
+          command:
+            cd runtime
+            docker build -t fnproject/fn-java-fdk:latest .
+      - run:
+          name: Deploy fn-java-fdk Docker image
+          command:
+            docker push fnproject/fn-java-fdk
 
       - run:
           name: Update go to 1.8.3
