@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-source "$(dirname "$0")/lib.sh"
-
 set -ex
 
 docker version || true
