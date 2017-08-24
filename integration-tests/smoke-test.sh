@@ -50,7 +50,7 @@ if [[ -x expected.sh ]]
 then
     ./expected.sh && touch success || touch failure
 else
-    diff -u expected actual && touch success || touch failure
+    diff --ignore-all-space -u expected actual && touch success || touch failure
 fi
 
 set +x

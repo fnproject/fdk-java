@@ -10,12 +10,12 @@
     <artifactId>integration-test-2</artifactId>
     <version>1.0.0</version>
 
-    <!--<repositories>
+    <repositories>
         <repository>
-            <id>nexus-box</id>
-            <url>http://10.167.103.241:8081/repository/maven-snapshots/</url>
+            <id>temp-maven</id>
+            <url>https://swiftobjectstorage.us-phoenix-1.oraclecloud.com/v1/opc0002/mvnrepo/snapshots</url>
         </repository>
-    </repositories>-->
+    </repositories>
 
     <dependencies>
         <dependency>
