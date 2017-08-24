@@ -41,7 +41,7 @@ line() {
 }
 
 error() {
-    echo "$1"
+    echo "$1" 1>&2
     exit "${2:-1}"
 }
 
