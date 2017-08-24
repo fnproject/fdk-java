@@ -1,25 +1,25 @@
-# Cloud Threads for fn Java - User Guide
+# Cloud Threads for `fn` Java FDK - User Guide
 
-By following this step-by-step guide you will learn to create, run and deploy a simple Java app in fn that leverages the Cloud Threads asynchronous execution APIs.
+By following this step-by-step guide you will learn to create, run and deploy a simple Java app in `fn` that leverages the Cloud Threads asynchronous execution APIs.
 
 
 ## What are Cloud Threads?
 
-Cloud Threads consists of a set of client-side APIs for you to use within your fn apps, as well as a long-running server component (the _completer_) that orchestrates computation beyond the life-cycle of your functions. Together, these components enable non-blocking asynchronous execution flows, where your function only runs when it has useful work to perform. If you have been exposed to the Java 8 [CompletionStage](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletionStage.html) and [CompletableFuture](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletableFuture.html) APIs, a lot of the concepts will already be familiar to you.
+Cloud Threads consists of a set of client-side APIs for you to use within your `fn` apps, as well as a long-running server component (the _completer_) that orchestrates computation beyond the life-cycle of your functions. Together, these components enable non-blocking asynchronous execution flows, where your function only runs when it has useful work to perform. If you have been exposed to the Java 8 [CompletionStage](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletionStage.html) and [CompletableFuture](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletableFuture.html) APIs, a lot of the concepts will already be familiar to you.
 
 ## Pre-requisites
-Before you get started, you will need to be familiar with the [fn Java FDK](../README.md) and have the following things:
+Before you get started, you will need to be familiar with the [`fn` Java FDK](../README.md) and have the following things:
 
-* [fn CLI](https://github.com/fnproject/fn#install-cli-tool)
-* [fn Java FDK](https://github.com/fnproject/fn-java-sdk)
-* [fn completer](https://github.com/fnproject/completer)
+* [`fn` CLI](https://github.com/fnproject/fn#install-cli-tool)
+* [`fn` Java FDK](https://github.com/fnproject/fn-java-sdk)
+* [`fn` completer](https://github.com/fnproject/completer)
 * [Docker-ce 17.06+ installed locally](https://docs.docker.com/engine/installation/)
 
 ## Your first Cloud Thread
 
 ### 1. Create your first Cloud Thread application
 
-Create a Maven-based Java Function using the instructions from the fn Java FDK [Quickstart](../README.md). For example:
+Create a Maven-based Java Function using the instructions from the `fn` Java FDK [Quickstart](../README.md). For example:
 
 ```
 $ mkdir example-cloudthreads-function && cd example-cloudthreads-function
@@ -34,10 +34,10 @@ func.yaml created
 
 You will create a function that produces the nth prime number and then returns an informational message once the prime number has been computed. In this example, we have chosen to block for the computation graph to complete by calling `get()`. This allows you to see the return value when invoking your function over HTTP. In a production application, you should avoid blocking, since your function will continue to run while waiting for a computation result, even though it has no useful work to do.
 
-Edit the file: `src/main/java/com.fnproject.fn.examples/PrimeFunction.java` and add the following contents:
+Edit the file: `src/main/java/com/example/fn/PrimeFunction.java` and add the following contents:
 
 ```java
-package com.fnproject.fn.examples;
+package com.example.fn;
 
 import java.util.function.Supplier;
 import com.fnproject.fn.api.cloudthreads.CloudThreadRuntime;
@@ -79,19 +79,19 @@ Edit your `func.yaml` to point to your function's entrypoint:
 name: jbloggs/cloudthreads
 version: 0.0.1
 runtime: java
-cmd: com.fnproject.fn.examples.PrimeFunction::handleRequest
+cmd: com.example.fn.PrimeFunction::handleRequest
 path: /cloudthreads-example
 ```
 
 ### 3. Start a local fn server and completer server
 
-Start the functions server by running its docker image locally:
+In a terminal, start the functions server by running its docker image locally:
 
 ```
 $ docker run -p8080:8080 -d --name functions -v /var/run/docker.sock:/var/run/docker.sock fnproject/functions:latest
 ```
 
-Similarly, start the completer server by running its docker image locally and linking it to the functions server:
+Similarly, start the Cloud Threads completer server by running its docker image locally and linking it to the functions server:
 
 ```
 $ docker run -p 8081:8081 -d --name completer --link=functions -e API_URL=http://functions:8080/r -e NO_PROXY=functions fnproject/completer:latest
@@ -137,9 +137,9 @@ For a more realistic application that leverages the non-blocking functionality o
 
 # Passing data between completion stages
 
-Cloud threads executes your code asynchronously and where possible in parallel in a distributed environment on the fn platform - you should assume that each Cloud Threads *stage* (a lambda attached to a step of the computation) may execute on a different machine within the network.
+Cloud threads executes your code asynchronously and where possible in parallel in a distributed environment on the `fn` platform - you should assume that each Cloud Threads *stage* (a lambda attached to a step of the computation) may execute on a different machine within the network.
 
-In order to facilitate this, the fn Java FDK will serialize each of the stage lambdas (and any captured variables) using [Java Serialization](https://docs.oracle.com/javase/8/docs/api/java/io/Serializable.html) and store them remotely on the completer before executing them on the functions platform. In order to write Cloud Threads applications, you should be aware of the impact of this within your code, and how this might differ from your experience of programming within a single JVM.
+In order to facilitate this, the `fn` Java FDK will serialize each of the stage lambdas (and any captured variables) using [Java Serialization](https://docs.oracle.com/javase/8/docs/api/java/io/Serializable.html) and store them remotely on the completer before executing them on the functions platform. In order to write Cloud Threads applications, you should be aware of the impact of this within your code, and how this might differ from your experience of programming within a single JVM.
 
 The following lists the key areas that you should be aware of:
 
@@ -405,4 +405,3 @@ public class MyFunction{
 }
 
 ```
-
