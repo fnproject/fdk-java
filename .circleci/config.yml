@@ -51,9 +51,9 @@ jobs:
           command: |
             cd runtime
             docker build -t fnproject/fn-java-fdk .
-      #- run:
-      #    name: Deploy fn-java-fdk Docker image
-      #    command: docker push fnproject/fn-java-fdk
+      - run:
+          name: Deploy fn-java-fdk Docker image
+          command: docker push fnproject/fn-java-fdk
 
       - run:
           name: Update go to 1.8.3
