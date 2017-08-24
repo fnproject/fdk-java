@@ -19,15 +19,11 @@ jobs:
       - store_test_results:
           path: testing/target/surefire-reports
 
-      - store_artifacts:
-          name: Upload API artefacts
-          path: api/target/
-      - store_artifacts:
-          name: Upload runtime artefacts
-          path: runtime/target/
-      - store_artifacts:
-          name: Upload testing artefacts
-          path: testing/target/
+      - run:
+          name: Upload FDK artefacts
+          command: |
+            cp api/target/*.jar $CIRCLE_ARTIFACTS
+            cp runtime/target/*.jar $CIRCLE_ARTIFACTS
 
       - run:
           name: Push to maven repo
@@ -40,7 +36,7 @@ jobs:
                 deploy
       - run:
           name: Build fn-java-fdk Docker image
-          command:
+          command: |
             cd runtime
             docker build -t fnproject/fn-java-fdk:latest .
       - run:
