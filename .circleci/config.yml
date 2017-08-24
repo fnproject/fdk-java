@@ -23,10 +23,10 @@ jobs:
 
       - run:
           name: Copy FDK artifacts to upload folder
-          command:
-            - mkdir $ARTIFACT_DIR
-            - cp api/target/*.jar $ARTIFACT_DIR
-            - cp runtime/target/*.jar $ARTIFACT_DIR
+          command: |
+            mkdir $ARTIFACT_DIR
+            cp api/target/*.jar $ARTIFACT_DIR
+            cp runtime/target/*.jar $ARTIFACT_DIR
       - store_artifacts:
           name: Upload FDK artifacts
           path: $ARTIFACT_DIR
@@ -43,14 +43,13 @@ jobs:
       - run:
           name: Build fn-java-fdk Docker image
           command: |
-            - cd runtime
-            - docker build -t fnproject/fn-java-fdk .
+            cd runtime
+            docker build -t fnproject/fn-java-fdk .
       - run:
           name: Deploy fn-java-fdk Docker image
-          command:
-            docker push fnproject/fn-java-fdk
+          command: docker push fnproject/fn-java-fdk
 
-      - run:
+     - run:
           name: Update go to 1.8.3
           command: ./integration-tests/install-go.sh
       - run:
