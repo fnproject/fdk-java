@@ -12,6 +12,7 @@
 # - API_URL points to the functions platform endpoint
 # - any http_proxy, etc. settings are correct to permit access to that endpoint and any maven repos required by fn build
 # - COMPLETER_BASE_URL is set to a value that should be configured on the target function
+# - MAVEN_REPOSITORY_LOCATION, if set, corresponds to the URL that should be replaced in the test pom files.
 # - the runtime docker image is up-to-date
 
 rm -f success failure Dockerfile
@@ -20,6 +21,14 @@ set -ex
 
 if [ -f pre-test.sh ]; then
     ./pre-test.sh
+fi
+
+# Replace the maven repo with a staging location, if required
+if [ -n "$MAVEN_REPOSITORY_LOCATION" ]; then
+    sed -i \
+        -e "s|https://swiftobjectstorage.us-phoenix-1.oraclecloud.com/v1/opc0002/mvnrepo/snapshots|$MAVEN_REPOSITORY_LOCATION|g" \
+        -e "s|https://swiftobjectstorage.us-phoenix-1.oraclecloud.com/v1/opc0002/mvnrepo/releases|$MAVEN_REPOSITORY_LOCATION|g" \
+        pom.xml
 fi
 
 # Build the integration test
