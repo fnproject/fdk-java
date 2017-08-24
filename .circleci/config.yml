@@ -51,7 +51,7 @@ jobs:
           command: ./.circleci/install-fn.sh
       - run:
           name: Run integration tests
-          command: COMPLETER_DOCKER_IMAGE=willprice/completer ./integration-tests/run-local.sh
+          command: ./integration-tests/run-local.sh
           timeout: 1200
 
       - deploy:
