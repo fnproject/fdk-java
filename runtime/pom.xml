@@ -13,7 +13,6 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-
     </properties>
 
     <dependencies>
@@ -96,7 +95,7 @@
 
     <profiles>
         <profile>
-            <id>jenkins</id>
+            <id>ci-user</id>
             <build>
                 <plugins>
                     <plugin>
@@ -111,7 +110,7 @@
                                     <goal>push</goal>
                                 </goals>
                                 <configuration>
-                                    <repository>fnproject/fn-java-runtime</repository>
+                                    <repository>fnproject/fn-java-fdk</repository>
                                     <tag>latest</tag>
                                 </configuration>
                             </execution>
@@ -119,11 +118,10 @@
                                 <id>versioned</id>
                                 <goals>
                                     <goal>tag</goal>
-                                    <!-- FIXME: Push to dockerhub once we have the correct creds -->
-                                    <!--<goal>push</goal-->
+                                    <goal>push</goal>
                                 </goals>
                                 <configuration>
-                                    <repository>fnproject/fn-java-runtime</repository>
+                                    <repository>fnproject/fn-java-fdk</repository>
                                     <tag>${project.version}</tag>
                                 </configuration>
                             </execution>
