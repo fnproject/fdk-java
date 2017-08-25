@@ -11,11 +11,25 @@ By following this step-by-step guide you will learn to create, run and deploy a 
 
 Before you get started you will need the following things:
 
-* [The Fn CLI](https://github.com/fnproject/fn#install-cli-tool)
+* The [Fn CLI](https://github.com/fnproject/cli) tool
 * [Docker-ce 17.06+ installed locally](https://docs.docker.com/engine/installation/)
 * A [Docker Hub](http://hub.docker.com) account
 
-You will also need to be logged in to your Docker Hub account (with `docker login`).
+### Install the Fn CLI tool
+
+To install the Fn CLI tool, just run the following:
+
+curl -LSs https://raw.githubusercontent.com/fnproject/cli/master/install | sh
+
+This will download a shell script and execute it. If the script asks for a password, that is because it invokes sudo.
+
+### Log in to DockerHub
+
+You will also need to be logged in to your Docker Hub account in order to deploy functions.
+
+```shell
+docker login
+```
 
 ## Your first Function
 
@@ -52,6 +66,8 @@ The `cmd` field determines which method is called when your funciton is invoked.
 ```text
 cmd: <fully qualified class name>::<method name>
 ```
+
+For more information about the fields in `func.yaml`, refer to the [Fn platform documentation](https://github.com/fnproject/fn/blob/master/docs/function-file.md) about it.
 
 Let's also have a brief look at the source: `src/main/java/com/example/fn/HelloFunction.java`:
 

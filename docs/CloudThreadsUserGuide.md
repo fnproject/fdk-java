@@ -10,11 +10,42 @@ Cloud Threads consists of a set of client-side APIs for you to use within your F
 ## Pre-requisites
 Before you get started, you will need to be familiar with the [Fn Java FDK](../README.md) and have the following things:
 
-* [Fn CLI](https://github.com/fnproject/fn#install-cli-tool)
+* [Fn CLI](https://github.com/fnproject/cli)
 * [Fn Java FDK](https://github.com/fnproject/fn-java-sdk)
 * [Fn completer](https://github.com/fnproject/completer)
 * [Docker-ce 17.06+ installed locally](https://docs.docker.com/engine/installation/)
 * A [Docker Hub](http://hub.docker.com) account
+
+### Install the Fn CLI tool
+
+To install the Fn CLI tool, just run the following:
+
+curl -LSs https://raw.githubusercontent.com/fnproject/cli/master/install | sh
+
+This will download a shell script and execute it. If the script asks for a password, that is because it invokes sudo.
+
+### Log in to DockerHub
+
+You will also need to be logged in to your Docker Hub account in order to deploy functions.
+
+```
+docker login
+```
+
+### Start a local Fn server and completer server
+
+In a terminal, start the functions server:
+
+```
+$ fn start
+```
+
+Similarly, start the Cloud Threads completer server by running its docker image locally and linking it to the functions container:
+
+```
+$ docker run -p 8081:8081 -d --name completer --link=functions -e API_URL=http://functions:8080/r -e NO_PROXY=functions fnproject/completer:latest
+```
+
 
 ## Your first Cloud Thread
 
@@ -24,7 +55,7 @@ Create a Maven-based Java Function using the instructions from the Fn Java FDK [
 
 ```
 $ mkdir example-cloudthreads-function && cd example-cloudthreads-function
-$ fn init --runtime=java your_dockerhub_account/cloudthreads-example
+$ fn init --runtime=java your_dockerhub_account/cloudthread-primes
 Runtime: java
 function boilerplate generated.
 func.yaml created
@@ -77,28 +108,14 @@ public class PrimeFunction {
 Edit your `func.yaml` to point to your function's entrypoint:
 
 ```
-name: your_dockerhub_account/cloudthreads
+name: your_dockerhub_account/cloudthread-primes
 version: 0.0.1
 runtime: java
 cmd: com.example.fn.PrimeFunction::handleRequest
 path: /primes
 ```
 
-### 3. Start a local Fn server and completer server
-
-In a terminal, start the functions server by running its docker image locally:
-
-```
-$ docker run -p8080:8080 -d --name functions -v /var/run/docker.sock:/var/run/docker.sock fnproject/functions:latest
-```
-
-Similarly, start the Cloud Threads completer server by running its docker image locally and linking it to the functions server:
-
-```
-$ docker run -p 8081:8081 -d --name completer --link=functions -e API_URL=http://functions:8080/r -e NO_PROXY=functions fnproject/completer:latest
-```
-
-### 4. Build and Configure your application
+### 3. Build and Configure your application
 
 Create your app and deploy your function:
 
@@ -107,7 +124,7 @@ $ fn apps create cloudthreads-example
 Successfully created app: cloudthreads-example
 
 $ fn deploy cloudthreads-example
-Updating route /primes using image your_dockerhub_account/cloudthreads::0.0.2...
+Updating route /primes using image your_dockerhub_account/cloudthread-primes::0.0.2...
 ```
 
 Configure your function to talk to the local completer endpoint:
@@ -117,18 +134,24 @@ $ COMPLETER_SERVER_IP=`docker inspect --type container -f '{{range .NetworkSetti
 $ fn apps config set cloudthreads-example COMPLETER_BASE_URL http://${COMPLETER_SERVER_IP}:8081
 ```
 
+### 4. Run your Cloud Thread function
 
-### 5. Run your Cloud Thread function
+You can now run your function using `fn call` or HTTP and curl:
 
-You can now run your function using HTTP and curl:
+```
+$ fn call cloudthreads-example /primes
+The 10th prime number is 29
+```
 
 ```
 $ curl -XPOST -d "10" http://localhost:8080/r/cloudthreads-example/primes
+The 10th prime number is 29
 ```
 
-### 6. Where Do I Go from Here?
+### 5. Where Do I Go from Here?
 
 For a more realistic application that leverages the non-blocking functionality of Cloud Threads, please take a look at the asynchronous [thumbnail generation example](examples/async-thumbnails/README.md).
+
 
 # Passing data between completion stages
 
