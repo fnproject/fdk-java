@@ -91,6 +91,7 @@ public class HelloFunction {
 
 The function takes some optional input and returns a greeting dependent on it.
 
+### 3. Run your first Java Function:
 You are now ready to run your Function locally using the Fn CLI tool.
 
 ```bash
@@ -185,7 +186,7 @@ echo -n "Universe" | fn run --env LANG=en
 We will see the same output as before,
 
 ```bash
-Function jbloggs/hello:0.0.1 built successfully.
+Function your_dockerhub_account/hello:0.0.1 built successfully.
 Hello, Universe!
 ```
 
@@ -196,16 +197,11 @@ echo -n "Universe" | fn run --env LANG=de
 ```
 
 ```bash
-Function jbloggs/hello:0.0.1 built successfully.
+Function your_dockerhub_account/hello:0.0.1 built successfully.
 Guten Tag, Universe!
 ```
 
-This brings up an interesting point.  The auto-generated test
-
-
-Before running this, we also need to update the corresponding function test class:
-
-### 4. Testing your function
+### 5. Testing your function
 The Fn Java FDK includes a testing library providing useful [JUnit 4](http://junit.org/junit4/) rules to test functions. Look at the test in `src/test/java/com.example.fn/HelloFunctionTest.java`:
 
 ```java
@@ -237,7 +233,7 @@ This test is very simple: it just enqueues an event with empty input and then ru
 
 There is much more functionality to construct tests in the testing library. Testing functions is covered in more detail in [Testing Functions](docs/TestingFunctions.md).
 
-### 5. Run using HTTP and the local Fn server
+### 6. Run using HTTP and the local Fn server
 The previous example used `fn run` to run a function directly via docker, you can also  use the Fn server locally to test the deployment of your function and the HTTP calls to your functions.
 
 Open another terminal and start the Fn server:
@@ -294,7 +290,7 @@ Hello, world!
 ### 6. Something more interesting
 The Fn Java FDK supports [flexible data binding](docs/DataBinding.md)  to make it easier for you to map function input and output data to Java objects.
 
-Below is an example to of a Function that returns a POJO which will be serialized to JSON using Jackson:
+Below is an example of a Function that returns a POJO which will be serialized to JSON using Jackson:
 
 ```java
 package com.example.fn;
