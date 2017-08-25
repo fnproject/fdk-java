@@ -9,8 +9,10 @@ set -ex
 go version
 go env GOROOT
 
+# Remove previous Go version
 sudo rm -rf /usr/local/go
 
+# Install Go
 BUILD_DIR="/tmp/go-$GOVERSION.$OS.$ARCH"
 mkdir -p "$BUILD_DIR"
 pushd "$BUILD_DIR"
@@ -18,6 +20,11 @@ pushd "$BUILD_DIR"
     sudo tar -C /usr/local -xzf go$GOVERSION.$OS-$ARCH.tar.gz
     go get -u github.com/golang/dep/...
 popd
+
+# Install Glide
+if ! type glide > /dev/null; then
+    curl https://glide.sh/get | sh
+fi
 
 go version
 go env GOROOT
