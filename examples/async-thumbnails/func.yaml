@@ -4,4 +4,4 @@ runtime: java
 cmd: com.fnproject.fn.examples.ThumbnailsFunction::handleRequest
 path: /async-thumbnails
 format: http
-timeout: 30s
+timeout: 30

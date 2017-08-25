@@ -1,4 +1,4 @@
-# Example `fn` Java FDK / Cloud Threads Project: Asynchronous Thumbnails
+# Example Fn Java FDK / Cloud Threads Project: Asynchronous Thumbnails
 
 This example provides an HTTP endpoint for asynchronously creating three
 thumbnails of an image whose data is provided as the body of the HTTP request
@@ -15,7 +15,7 @@ its ID would be linked to the user's ID in a database somewhere.
 ## Demonstrated FDK features
 
 This example showcases how to use the Cloud Threads API to invoke other
-`fn` functions asynchronously in a workflow expressed in code.
+Fn functions asynchronously in a workflow expressed in code.
 
 
 ## Step by step
@@ -29,7 +29,7 @@ this example. Run:
 
 This will start a local functions service, a local cloud threads completion
 service, and will set up a `myapp` application and three routes: `/resize128`,
-`/resize256` and `/resize512`. The routes are implemented as `fn` functions
+`/resize256` and `/resize512`. The routes are implemented as Fn functions
 which just invoke `imagemagick` to convert the images to the specified sizes.
 
 The setup script also starts a docker container with an object storage daemon
