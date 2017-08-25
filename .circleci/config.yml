@@ -49,9 +49,6 @@ jobs:
             docker build -t fnproject/fn-java-fdk .
 
       - run:
-          name: Update go to 1.8.3
-          command: ./.circleci/install-go.sh
-      - run:
           name: Install fn binary (as it is needed for the integration tests)
           command: ./.circleci/install-fn.sh
       - run:
