@@ -118,7 +118,7 @@ public class ExerciseEverything {
     }
 
     @Test(11)
-    @Test.Catch({CloudCompletionException.class, FunctionInvocationException.class})
+    @Test.Catch({PlatformException.class})
     public CloudFuture<HttpResponse> nonexistentExternalEvaluation(CloudThreadRuntime rt) {
         return rt.invokeFunction("nonexistent", HttpMethod.POST, Headers.emptyHeaders(), new byte[0]);
     }
@@ -345,10 +345,12 @@ public class ExerciseEverything {
                 .withHeader("My-Header", "foo")
                 .withHeader("FnProject-Method", "post")
                 .withBody("bar".getBytes()));
-        return cf.thenApply((req) -> "failed")
-                .exceptionally(e ->
+        return cf.thenApply((req) -> { System.err.println("got here"); return "failed"; })
+                .exceptionally(e -> {
+                        System.err.println("Got into exception with e=" + e);
+                        return
                         ((ExternalCompletionException)e).getExternalRequest().getHeaders().get("my-header").get() +
-                        new String(((ExternalCompletionException)e).getExternalRequest().getBodyAsBytes())
+                        new String(((ExternalCompletionException)e).getExternalRequest().getBodyAsBytes()); }
         );
     }
 
