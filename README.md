@@ -19,7 +19,9 @@ Before you get started you will need the following things:
 
 To install the Fn CLI tool, just run the following:
 
+```
 curl -LSs https://raw.githubusercontent.com/fnproject/cli/master/install | sh
+```
 
 This will download a shell script and execute it. If the script asks for a password, that is because it invokes sudo.
 
