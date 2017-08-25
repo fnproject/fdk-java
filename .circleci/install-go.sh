@@ -13,16 +13,18 @@ go env GOROOT
 sudo rm -rf /usr/local/go
 
 # Install Go
-BUILD_DIR="/tmp/go-$GOVERSION.$OS.$ARCH"
+BUILD_DIR="/tmp/go-${GOVERSION}.${OS}.${ARCH}"
 mkdir -p "$BUILD_DIR"
 pushd "$BUILD_DIR"
-    wget https://storage.googleapis.com/golang/go$GOVERSION.$OS-$ARCH.tar.gz
-    sudo tar -C /usr/local -xzf go$GOVERSION.$OS-$ARCH.tar.gz
+    wget https://storage.googleapis.com/golang/go${GOVERSION}.${OS}-${ARCH}.tar.gz
+    sudo tar -C /usr/local -xzf go${GOVERSION}.${OS}-${ARCH}.tar.gz
     go get -u github.com/golang/dep/...
 popd
 
+mkdir -p "${GOPATH}/bin"
+
 # Install Glide
-if ! type glide > /dev/null; then
+if ! type glide 2>&1 > /dev/null; then
     curl https://glide.sh/get | sh
 fi
 
