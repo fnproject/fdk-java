@@ -1,19 +1,21 @@
-# `fn` Java Functions Developer Kit (FDK)
+# Fn Java Functions Developer Kit (FDK)
 
-This project adds support for writing functions in Java on the [`fn` platform](https://github.com/fnproject/fn).
+This project adds support for writing functions in Java on the [Fn platform](https://github.com/fnproject/fn).
 
 
 # Quick Start Tutorial
 
-By following this step-by-step guide you will learn to create, run and deploy a simple app written in Java on `fn`.
+By following this step-by-step guide you will learn to create, run and deploy a simple app written in Java on Fn.
 
 ## Pre-requisites
 
 Before you get started you will need the following things:
 
-* [The `fn` CLI](https://github.com/fnproject/fn#install-cli-tool)
+* [The Fn CLI](https://github.com/fnproject/fn#install-cli-tool)
 * [Docker-ce 17.06+ installed locally](https://docs.docker.com/engine/installation/)
 * A [Docker Hub](http://hub.docker.com) account
+
+You will also need to be logged in to your Docker Hub account (with `docker login`).
 
 ## Your first Function
 
@@ -27,9 +29,9 @@ function boilerplate generated.
 func.yaml created
 ```
 
-This creates a new Maven based Java Function which includes some boilerplate to get you started. The `pom.xml` includes a dependency on the latest version of the `fn` Java FDK that is useful for developing your Java functions.
+This creates the boilerplate for a new Java Function based on Maven and Oracle Java 8. The `pom.xml` includes a dependency on the latest version of the Fn Java FDK that is useful for developing your Java functions.
 
-Note that the `your_dockerhub_account/hello` name follows the format of a Docker image name. The `fn` platform relies on docker images implementing functions and these will be deployed to a Docker registry. By default Docker Hub is used, hence the requirement for a Docker Hub account. You should replace `your_dockerhub_account` with your account name.
+Note that the `your_dockerhub_account/hello` name follows the format of a Docker image name. The Fn platform relies on docker images implementing functions and these will be deployed to a Docker registry. By default Docker Hub is used, hence the requirement for a Docker Hub account. You should replace `your_dockerhub_account` with your account name.
 
 You can now import this project into your favourite IDE as normal.
 
@@ -42,15 +44,16 @@ name: your_dockerhub_account/hello
 version: 0.0.1
 runtime: java
 cmd: com.example.fn.HelloFunction::handleRequest
-memory: 128
-format: default
-timeout: 30
 path: /hello
 ```
 
-The `cmd` field determines which method is called when your funciton is invoked. In the generated Function, the `func.yaml` references `com.example.fn.HelloFunction::handleRequest`.
+The `cmd` field determines which method is called when your funciton is invoked. In the generated Function, the `func.yaml` references `com.example.fn.HelloFunction::handleRequest`. Your functions will likely live in different classes, and this field should always point to the method to execute, with the following syntax:
 
-Open the file: `src/main/java/com/example/fn/HelloFunction.java`:
+```text
+cmd: <fully qualified class name>::<method name>
+```
+
+Let's also have a brief look at the source: `src/main/java/com/example/fn/HelloFunction.java`:
 
 ```java
 package com.example.fn;
@@ -66,10 +69,10 @@ public class HelloFunction {
 }
 ```
 
-### 3. Run your first Java Function:
-You are now ready to run your Function locally using the `fn` CLI tool.
+The function takes some optional input and returns a greeting dependent on it.
 
-This may take a minute the first time as you will need pull in some new dependencies in order to build your Function.
+### 3. Run your first Java Function:
+You are now ready to run your Function locally using the Fn CLI tool.
 
 ```bash
 $ fn run
@@ -107,45 +110,13 @@ Hello, world!
 The next time you run this, it will execute much quicker as your dependencies are cached. Try passing in some input this time:
 
 ```bash
-$ echo -n "Michael Faasbender" | fn run
+$ echo -n "Universe" | fn run
 ...
-Hello, Michael Faasbender!
+Hello, Universe!
 ```
 
-### 4. Making changes to your Function
-Making code changes and trying them out is simple. For example, lets change our greeting from English to Spanish:
-
-```bash
-$ mv src/main/java/com/example/fn/HelloFunction.java src/main/java/com/example/fn/HolaFunction.java
-```
-
-Update the function class to match:
-
-```java
-package com.example.fn;
-
-public class HolaFunction {
-
-    public String handleRequest(String input) {
-        String name = (input == null || input.isEmpty()) ? "mundo"  : input;
-
-        return "Hola, " + name + "!";
-    }
-
-}
-```
-
-As the name of your function class has changed you will also need to update the `cmd` property in the `func.yaml` to:
-
-```yaml
-cmd: com.example.fn.HolaFunction::handleRequest
-```
-
-Before running this, we also need to update the corresponding function test class:
-
-```bash
-$ mv src/test/java/com.example.fn/HelloFunctionTest.java src/test/java/com.example.fn/HolaFunctionTest.java
-```
+### 4. Testing your function
+The Fn Java FDK includes a testing library providing useful [JUnit 4](http://junit.org/junit4/) rules to test functions. Look at the test in `src/test/java/com.example.fn/HelloFunctionTest.java`:
 
 ```java
 package com.example.fn;
@@ -155,7 +126,7 @@ import org.junit.*;
 
 import static org.junit.Assert.*;
 
-public class HolaFunctionTest {
+public class HelloFunctionTest {
 
     @Rule
     public final FnTestingRule testing = FnTestingRule.createDefault();
@@ -166,39 +137,33 @@ public class HolaFunctionTest {
         testing.thenRun(HelloFunction.class, "handleRequest");
 
         FnResult result = testing.getOnlyResult();
-        assertEquals("Hola, mundo!", result.getBodyAsString());
+        assertEquals("Hello, world!", result.getBodyAsString());
     }
 
 }
 ```
 
-Testing functions is covered in more detail in [Testing Functions](docs/TestingFunctions.md).
+This test is very simple: it just enqueues an event with empty input and then runs the function, checking its output. Under the hood, the `FnTestingRule` is actually instantiating the same runtime wrapping function invocations, so that during the test your function will be invoked in exactly the same way that it would when deployed.
 
-You can now run your updated function:
+There is much more functionality to construct tests in the testing library. Testing functions is covered in more detail in [Testing Functions](docs/TestingFunctions.md).
 
-```bash
-$ fn run
-...
-Hola, mundo!
-```
+### 5. Run using HTTP and the local Fn server
+The previous example used `fn run` to run a function directly via docker, you can also  use the Fn server locally to test the deployment of your function and the HTTP calls to your functions.
 
-### 6. Test using HTTP and the local `fn` server
-The previous example used `fn run` to run a function directly via docker, you can also  use the `fn` server locally to test the deployment of your function and the HTTP calls to your functions.
-
-Open another terminal and start the `fn` server:
+Open another terminal and start the Fn server:
 
 ```bash
 $ fn start
 ```
 
-Then in your original terminal create an `app`:
+Then in your original terminal create an app:
 
 ```bash
 $ fn apps create java-app
 Successfully created app: java-app
 ```
 
-Now deploy your Function using the `fn deploy` command. This will bump the function's version up, rebuild it, and push the image to the Docker registry, ready to be used in the function deployment. Finally it will create a route on the local `fn` server, corresponding to your function.
+Now deploy your Function using the `fn deploy` command. This will bump the function's version up, rebuild it, and push the image to the Docker registry, ready to be used in the function deployment. Finally it will create a route on the local Fn server, corresponding to your function.
 
 ```bash
 $ fn deploy java-app
@@ -222,22 +187,22 @@ a8cf2f688ac8: Pushed
 Updating route /hello using image your_dockerhub_account/hello:0.0.2...
 ```
 
-Call the Function via the `fn` CLI:
+Call the Function via the Fn CLI:
 
 ```bash
 $ fn call java-app /hello
-Hola, mundo!
+Hello, world!
 ```
 
 You can also call the Function via curl:
 
 ```bash
 $ curl http://localhost:8080/r/java-app/hello
-Hola, mundo!
+Hello, world!
 ```
 
-### 7. Something more interesting
-The `fn` Java FDK supports [flexible data binding](docs/DataBinding.md)  to make it easier for you to map function input and output data to Java objects.
+### 6. Something more interesting
+The Fn Java FDK supports [flexible data binding](docs/DataBinding.md)  to make it easier for you to map function input and output data to Java objects.
 
 Below is an example to of a Function that returns a POJO which will be serialized to JSON using Jackson:
 
@@ -284,13 +249,13 @@ $ echo -n Michael | fn run
 {"name":"Michael","salutation":"Hello"}
 ```
 
-## 8. Where do I go from here?
+## 7. Where do I go from here?
 
-Learn more about the `fn` Java FDK by reading the next tutorials in the series. Also check out the examples in the [`examples` directory](examples) for some functions demonstrating different features of the `fn` Java FDK.
+Learn more about the Fn Java FDK by reading the next tutorials in the series. Also check out the examples in the [`examples` directory](examples) for some functions demonstrating different features of the Fn Java FDK.
 
 ### Configuring your function
 
-If you want to set up the state of your function object before the function is invoked, and to use external configuration variables that you can set up with the `fn` tool, have a look at the [Function Configuration](docs/FunctionConfiguration.md) tutorial.
+If you want to set up the state of your function object before the function is invoked, and to use external configuration variables that you can set up with the Fn tool, have a look at the [Function Configuration](docs/FunctionConfiguration.md) tutorial.
 
 ### Input and output bindings
 

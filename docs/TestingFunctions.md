@@ -1,6 +1,6 @@
 # Testing your functions
 
-The `fn` Java FDK testing harness allows you to quickly build and test your Java functions in your IDE and test them in an emulated function runtime without uploading your functions to the cloud. The framework uses [JUnit 4](http://junit.org/junit4/) rules.
+The Fn Java FDK testing harness allows you to quickly build and test your Java functions in your IDE and test them in an emulated function runtime without uploading your functions to the cloud. The framework uses [JUnit 4](http://junit.org/junit4/) rules.
 
 ## Add the test module to your project
 

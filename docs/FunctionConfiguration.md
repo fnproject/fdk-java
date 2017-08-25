@@ -1,9 +1,9 @@
 # Function initialization and configuration
 
 Function objects and classes may be re-used for multiple function events in the same Java virtual machine depending on how your function is configured and how frequently it is called.
-The `fn` Java FDK allows you to perform once-per-runtime initialization behaviour that allows you to create long-lived objects such as static data, and database connections that can be re-used across multiple function events.
+The Fn Java FDK allows you to perform once-per-runtime initialization behaviour that allows you to create long-lived objects such as static data, and database connections that can be re-used across multiple function events.
 
-You can set configuration values on your function's routes and the function app  using the `fn` tool or in your `func.yaml`. This configuration can contain deployment-specific data which you do not want to store in your source code.
+You can set configuration values on your function's routes and the function app  using the Fn tool or in your `func.yaml`. This configuration can contain deployment-specific data which you do not want to store in your source code.
 
 The function runtime can provide you a [RuntimeContext](../api/src/main/java/com/fnproject/fn/api/RuntimeContext.java) instance that exposes an API to access these configuration variables or [configure data binding](DataBinding.md); this object can be used either in your class's constructor or via configuration methods, as described below.
 
