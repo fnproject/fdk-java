@@ -129,7 +129,7 @@ final class SerUtils {
                 }
             };
 
-            if (h.getHeaderValue(DATUM_EXCEPTIONAL_FLAG).orElse("false").equalsIgnoreCase("true")) {
+            if (h.getHeaderValue(RESULT_STATUS_HEADER).orElse(RESULT_STATUS_SUCCESS).equalsIgnoreCase(RESULT_STATUS_FAILURE)) {
                 return new ContentPart(dt, contentType, new FunctionInvocationException(functionResponse));
             } else {
                 return new ContentPart(dt, contentType, functionResponse);
@@ -172,7 +172,7 @@ final class SerUtils {
                     }
                 };
 
-                if (h.getHeaderValue(DATUM_EXCEPTIONAL_FLAG).orElse("false").equalsIgnoreCase("true")) {
+                if (h.getHeaderValue(RESULT_STATUS_HEADER).orElse(RESULT_STATUS_SUCCESS).equalsIgnoreCase(RESULT_STATUS_FAILURE)) {
                     return new ContentPart(dt, contentType, new ExternalCompletionException(req));
                 } else {
                     return new ContentPart(dt, contentType, req);

@@ -77,7 +77,6 @@ public class CloudCompleterApiClientTest {
         HttpClient.HttpResponse response = new HttpClient.HttpResponse(200);
         response.addHeader(DATUM_TYPE_HEADER, DATUM_TYPE_HTTP_RESP);
         response.addHeader(RESULT_STATUS_HEADER, RESULT_STATUS_FAILURE);
-        response.addHeader(DATUM_EXCEPTIONAL_FLAG, "true");
         response.addHeader(RESULT_CODE_HEADER, "500");
         response.addHeader(CONTENT_TYPE_HEADER, "application/json");
         response.addHeader(USER_HEADER_PREFIX + "Custom-Header", "myValue");
@@ -121,7 +120,6 @@ public class CloudCompleterApiClientTest {
         HttpClient.HttpResponse response = new HttpClient.HttpResponse(200);
         response.addHeader(DATUM_TYPE_HEADER, DATUM_TYPE_HTTP_REQ);
         response.addHeader(RESULT_STATUS_HEADER, RESULT_STATUS_FAILURE);
-        response.addHeader(DATUM_EXCEPTIONAL_FLAG, "true");
         response.addHeader(REQUEST_METHOD_HEADER, "POST");
         response.addHeader(CONTENT_TYPE_HEADER, "application/json");
         response.addHeader(USER_HEADER_PREFIX + "Custom-Header", "myValue");

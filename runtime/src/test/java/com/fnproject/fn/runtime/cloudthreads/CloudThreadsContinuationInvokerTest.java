@@ -7,6 +7,7 @@ import com.fnproject.fn.runtime.QueryParametersImpl;
 import com.fnproject.fn.runtime.ReadOnceInputEvent;
 import com.fnproject.fn.runtime.exception.FunctionInputHandlingException;
 import com.fnproject.fn.runtime.exception.InternalFunctionInvocationException;
+import com.sun.org.apache.regexp.internal.RE;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -292,7 +293,7 @@ public class CloudThreadsContinuationInvokerTest {
         // Given
         Map<String, String> headers = new HashMap<>();
         headers.put("FnProject-Header-Custom-Header", "customValue");
-        headers.put(DATUM_EXCEPTIONAL_FLAG, "true");
+        headers.put(RESULT_STATUS_HEADER, RESULT_STATUS_FAILURE);
 
 
         String postedResult = "{ \"some\": \"json\" }";
@@ -344,7 +345,7 @@ public class CloudThreadsContinuationInvokerTest {
         // Given
         Map<String, String> headers = new HashMap<>();
         headers.put("FnProject-Header-Custom-Header", "customValue");
-        headers.put(DATUM_EXCEPTIONAL_FLAG, "true");
+        headers.put(RESULT_STATUS_HEADER, RESULT_STATUS_FAILURE);
 
         String postedResult = "{ \"some\": \"json\" }";
         HttpMultipartSerialization ser = new HttpMultipartSerialization()

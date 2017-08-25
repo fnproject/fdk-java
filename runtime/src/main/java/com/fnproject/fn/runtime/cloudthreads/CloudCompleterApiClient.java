@@ -44,8 +44,6 @@ public class CloudCompleterApiClient implements CompleterClient {
     public static final String RESULT_STATUS_SUCCESS = "success";
     public static final String RESULT_STATUS_FAILURE = "failure";
 
-    public static final String DATUM_EXCEPTIONAL_FLAG = HEADER_PREFIX + "Exceptional";
-
     public static final String REQUEST_METHOD_HEADER = HEADER_PREFIX + "Method";
 
     public static final String RESULT_CODE_HEADER = HEADER_PREFIX + "ResultCode";
