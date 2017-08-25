@@ -29,7 +29,7 @@ FUNCTIONS_SERVER_IP=`docker inspect --type container -f '{{range .NetworkSetting
 
 # Start cloud-completer if not there
 if [[ -z `docker ps | grep "cloud-completer"` ]]; then
-    docker run -d --name cloud-completer -p 8081:8081 --env COMPLETER_HOST=0.0.0.0 --env COMPLETER_PORT=8081 --env FN_HOST=$FUNCTIONS_SERVER_IP --env FN_PORT=8080 cloud-completer
+    docker run -d --name cloud-completer -p 8081:8081 --env API_URL=http://$FUNCTIONS_SERVER_IP:8080/r fnproject/completer:latest
     # Give it time to start up
     sleep 3
 else
