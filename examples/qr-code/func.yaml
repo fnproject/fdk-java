@@ -1,5 +1,5 @@
 name: fn-example/qr-code-gen
-version: 0.0.2
+version: 0.0.1
 runtime: java
 cmd: com.fnproject.fn.examples.QRGen::create
 format: http
