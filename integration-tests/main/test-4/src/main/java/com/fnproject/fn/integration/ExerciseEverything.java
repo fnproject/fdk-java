@@ -11,6 +11,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -118,7 +119,7 @@ public class ExerciseEverything {
     }
 
     @Test(11)
-    @Test.Catch({PlatformException.class})
+    @Test.Catch({CloudCompletionException.class, FunctionInvocationException.class})
     public CloudFuture<HttpResponse> nonexistentExternalEvaluation(CloudThreadRuntime rt) {
         return rt.invokeFunction("nonexistent", HttpMethod.POST, Headers.emptyHeaders(), new byte[0]);
     }
@@ -382,6 +383,8 @@ public class ExerciseEverything {
         CloudThreadRuntime rt = CloudThreads.currentRuntime();
 
         out.println("In main function");
+        Map<Integer, CloudFuture<Object>> awaiting = new TreeMap<>();
+
         for (Map.Entry<Integer, Method> e: findTests(this).entrySet()) {
             id = e.getKey();
             Method m = e.getValue();
@@ -392,8 +395,27 @@ public class ExerciseEverything {
             String[] values = expectedValues(m);
 
             try {
+                awaiting.put(id, (CloudFuture<Object>) m.invoke(this, rt));
+            } catch (InvocationTargetException ex) {
+                out.println("Failure setting up test " + id + ": " + ex.getCause());
+                ex.printStackTrace(out);
+                fail();
+            } catch (IllegalAccessException e1) {}
+        }
 
-                CloudFuture<Object> cf = (CloudFuture<Object>) m.invoke(this, rt);
+        for (Map.Entry<Integer, Method> e: findTests(this).entrySet()) {
+            id = e.getKey();
+            Method m = e.getValue();
+
+            out.println("Running test " + id);
+
+            Test.Catch exWanted = m.getAnnotation(Test.Catch.class);
+            String[] values = expectedValues(m);
+            try {
+                CloudFuture<Object> cf = awaiting.get(id);
+                if (cf == null) {
+                    continue;
+                }
                 Object r = cf.get();
 
                 // Coerce returned value to string
