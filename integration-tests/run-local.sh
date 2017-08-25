@@ -11,7 +11,7 @@ set -ex
 # The following variables may be set to parameterise the operation of this script
 # ----------------------------------------------------------------------
 
-: ${FUNCTIONS_DOCKER_IMAGE:=funcy/functions}
+: ${FUNCTIONS_DOCKER_IMAGE:=fnproject/functions}
 : ${SUFFIX:=$(git rev-parse HEAD)}
 : ${COMPLETER_DOCKER_IMAGE:=fnproject/completer}
 

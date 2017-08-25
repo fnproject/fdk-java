@@ -1,6 +1,6 @@
 # Testing your functions
 
-The functions testing harness allows you to quickly build and test your Java functions in your IDE and test them in an emulated function runtime without uploading your functions to the cloud. The framework uses [JUnit 4](http://junit.org/junit4/) rules.
+The Fn Java FDK testing harness allows you to quickly build and test your Java functions in your IDE and test them in an emulated function runtime without uploading your functions to the cloud. The framework uses [JUnit 4](http://junit.org/junit4/) rules.
 
 ## Add the test module to your project
 
@@ -23,10 +23,10 @@ To import the testing library add the following dependency to your Maven project
 
 ## Writing your first test
 
-Suppose you have [written a simple function](QuickStart.md) as follows:
+Suppose you have [written a simple function](../README.md) as follows:
 
 ```java
-package com.fnproject.fn.examples;
+package com.example.fn;
 
 public class MyFn {
   public String handleRequest(String input){
@@ -40,7 +40,7 @@ The testing harness is a [JUnit Rule](https://github.com/junit-team/junit4/wiki/
 Create a test class that instantiates the testing rule as follows:
 
 ```java
-package com.fnproject.fn.examples;
+package com.example.fn;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -152,4 +152,3 @@ You can test that this is all handled correctly as follows:
     Assert.assertEquals("{\"c\":\"blah-foobar\"}", result.getBodyAsString());
   }
 ```
-

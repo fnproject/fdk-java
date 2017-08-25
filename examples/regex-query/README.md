@@ -37,7 +37,7 @@ $ fn apps create regex-query
 $ fn routes create regex-query /query
 ```
 
-Invoke the function to create a QR code
+Invoke the function to perform a regex search
 
 ```bash
 $ curl -d '{ "text": "One, 2, Three, 4, Five", "regex": "\\\\d" }' 'http://localhost:8080/r/regex-query/query'
