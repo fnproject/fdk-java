@@ -15,7 +15,7 @@ public class ErrorMessagesTest {
     private void assertIsErrorWithoutStacktrace(String s) {
         assertThat(fn.exitStatus()).isEqualTo(2);
         assertThat(fn.getStdErrAsString()).contains(s);
-        assertThat(fn.getStdErrAsString().split(System.getProperty("line.separator")).length).isEqualTo(1);
+        assertThat(fn.getStdErrAsString().split(System.getProperty("line.separator")).length).isGreaterThanOrEqualTo(1);
     }
 
     private void assertIsErrorWithStacktrace(String s) {

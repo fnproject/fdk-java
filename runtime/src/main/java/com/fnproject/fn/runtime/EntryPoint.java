@@ -182,6 +182,5 @@ public class EntryPoint {
         }
         return config;
     }
-
 }
 
