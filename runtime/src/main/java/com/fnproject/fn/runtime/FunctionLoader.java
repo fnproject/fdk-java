@@ -145,7 +145,7 @@ public class FunctionLoader {
             fnClass = contextClassLoader.loadClass(className);
         } catch (ClassNotFoundException e) {
             throw new InvalidFunctionDefinitionException(String.format("Class '%s' not found in function jar\n" +
-                    "Its likely that the 'cmd' entry in func.yml is incorrect.", className));
+                    "Its likely that the 'cmd' entry in func.yaml is incorrect.", className));
         }
         return fnClass;
     }
