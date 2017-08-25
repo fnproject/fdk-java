@@ -3,14 +3,6 @@
 By following this step-by-step guide you will learn to configure custom handling for input and output types of a simple Java function running on the Fn platform.
 
 
-## Pre-requisites
-
-Before you get started you will need the following things:
-
-* [The fn Functions CLI](https://github.com/fnproject/cli)
-* [Docker-ce 17.06+ installed locally](https://docs.docker.com/engine/installation/)
-
-
 ## Overview
 
 In the [Data Binding](DataBinding.md) tutorial you have seen how the raw data received and returned by the function is represented by [InputEvent](../api/src/main/java/com.fnproject.fn/api/InputEvent.java)s and [OutputEvent](../api/src/main/java/com.fnproject.fn/api/OutputEvent.java)s. The Fn Java FDK provides out-of-the-box functionality to convert these to some simple types and POJOs, but you might want to customize the way your input and output data is marshalled from the HTTP request and to the HTTP response.
