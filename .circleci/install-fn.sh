@@ -20,5 +20,5 @@ echo "Download fn from $FN_BINARY_LOCATION"
 # --location = follow redirects
 curl --location "$FN_BINARY_LOCATION" --output fn
 chmod +x fn
-./fn # show fn version
+./fn || true # show fn version
 sudo cp fn "${INSTALL_DIR}/fn"
