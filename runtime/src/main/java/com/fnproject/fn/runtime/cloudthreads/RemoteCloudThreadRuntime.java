@@ -75,7 +75,7 @@ final class RemoteCloudThreadRuntime implements CloudThreadRuntime, Serializable
         }
 
         @Override
-        public CloudFuture<T> whenComplete(CloudThreads.SerExBiConsumer<T, Throwable> fn) {
+        public CloudFuture<T> whenComplete(CloudThreads.SerBiConsumer<T, Throwable> fn) {
             return new RemoteCloudFuture<>(getClient().whenComplete(threadId, completionId, fn));
         }
 
@@ -106,12 +106,12 @@ final class RemoteCloudThreadRuntime implements CloudThreadRuntime, Serializable
         }
 
         @Override
-        public <X> CloudFuture<X> handle(CloudThreads.SerExBiFunction<? super T, Throwable, ? extends X> fn) {
+        public <X> CloudFuture<X> handle(CloudThreads.SerBiFunction<? super T, Throwable, ? extends X> fn) {
             return new RemoteCloudFuture<>(getClient().handle(threadId, completionId, fn));
         }
 
         @Override
-        public CloudFuture<T> exceptionally(CloudThreads.SerExFunction<Throwable, ? extends T> fn) {
+        public CloudFuture<T> exceptionally(CloudThreads.SerFunction<Throwable, ? extends T> fn) {
             return new RemoteCloudFuture<>(getClient().exceptionally(threadId, completionId, fn));
         }
 

@@ -44,6 +44,8 @@ public class CloudCompleterApiClient implements CompleterClient {
     public static final String RESULT_STATUS_SUCCESS = "success";
     public static final String RESULT_STATUS_FAILURE = "failure";
 
+    public static final String DATUM_EXCEPTIONAL_FLAG = HEADER_PREFIX + "Exceptional";
+
     public static final String REQUEST_METHOD_HEADER = HEADER_PREFIX + "Method";
 
     public static final String RESULT_CODE_HEADER = HEADER_PREFIX + "ResultCode";
@@ -212,20 +214,15 @@ public class CloudCompleterApiClient implements CompleterClient {
                 }
                 validateSuccessful(response);
 
-                String datumType = response.getHeaderValue(DATUM_TYPE_HEADER).orElseThrow(() ->
-                        new PlatformException("Request to completer service did not supply " + DATUM_TYPE_HEADER + " header"));
-
                 SerUtils.ContentPart result = SerUtils.ContentPart.readFromStream(response);
 
                 // check if the response headers indicate that the response body is an Exception/Error
                 // TODO: Check whether we're going to throw an exception then build and throw
                 // TODO: Add comment to API doc saying that error datum type responses always have failure result status
                 if (resultingInException(response)) {
-                    if (resultingFromExternalFunctionInvocation(response)) {
-                        throw new FunctionInvocationException((com.fnproject.fn.api.cloudthreads.HttpResponse) result.get());
-                    } else if (resultingFromExternallyCompletedStage(response)) {
-                        throw new ExternalCompletionException((com.fnproject.fn.api.cloudthreads.HttpRequest) result.get());
-                    } else if (resultingFromUserException(response)) {
+                    if (resultingFromExternalFunctionInvocation(response) ||
+                                resultingFromUserException(response) ||
+                                resultingFromExternallyCompletedStage(response)) {
                         Throwable userException = (Throwable) result.get();
                         throw new CloudCompletionException(userException);
                     } else if (resultingFromPlatformError(response)) {
@@ -234,7 +231,7 @@ public class CloudCompleterApiClient implements CompleterClient {
                 }
 
                 return result.get();
-            } catch (CloudCompletionException | FunctionInvocationException | ExternalCompletionException e) {
+            } catch (CloudCompletionException e) {
                 throw e;
             } catch (ClassNotFoundException | IOException | SerUtils.Deserializer.DeserializeException e) {
                 throw new ResultSerializationException("Unable to deserialize result received from the completer service", e);

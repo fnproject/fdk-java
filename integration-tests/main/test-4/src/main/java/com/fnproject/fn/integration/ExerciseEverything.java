@@ -118,7 +118,7 @@ public class ExerciseEverything {
     }
 
     @Test(11)
-    @Test.Catch(FunctionInvocationException.class)
+    @Test.Catch({CloudCompletionException.class, FunctionInvocationException.class})
     public CloudFuture<HttpResponse> nonexistentExternalEvaluation(CloudThreadRuntime rt) {
         return rt.invokeFunction("nonexistent", HttpMethod.POST, Headers.emptyHeaders(), new byte[0]);
     }
@@ -135,7 +135,7 @@ public class ExerciseEverything {
     // There is currently no way for a hot function to signal failure in the Fn platform.
     // This test will only work in default mode.
     @Test(13)
-    @Test.Catch(FunctionInvocationException.class)
+    @Test.Catch({CloudCompletionException.class, FunctionInvocationException.class})
     public CloudFuture<HttpResponse> checkFailingExternalInvocation(CloudThreadRuntime rt) {
         return rt.invokeFunction(inputEvent.getAppName() + inputEvent.getRoute(), HttpMethod.POST, Headers.emptyHeaders(), "FAIL".getBytes());
     }
@@ -321,7 +321,7 @@ public class ExerciseEverything {
 
 
     @Test(33)
-    @Test.Catch(ExternalCompletionException.class)
+    @Test.Catch({CloudCompletionException.class, ExternalCompletionException.class})
     @Test.Expect("bar")
     public CloudFuture<HttpRequest> externalFutureFailureAndGet(CloudThreadRuntime rt) throws IOException {
         ExternalCloudFuture<HttpRequest> cf = rt.createExternalFuture();

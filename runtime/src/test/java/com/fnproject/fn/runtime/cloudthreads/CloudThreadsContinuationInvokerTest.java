@@ -292,10 +292,12 @@ public class CloudThreadsContinuationInvokerTest {
         // Given
         Map<String, String> headers = new HashMap<>();
         headers.put("FnProject-Header-Custom-Header", "customValue");
+        headers.put(DATUM_EXCEPTIONAL_FLAG, "true");
+
 
         String postedResult = "{ \"some\": \"json\" }";
         HttpMultipartSerialization ser = new HttpMultipartSerialization()
-                .addJavaEntity((CloudThreads.SerExFunction<Throwable, String>) (result) ->
+                .addJavaEntity((CloudThreads.SerFunction<Throwable, String>) (result) ->
                         new String(((FunctionInvocationException) result).getFunctionResponse().getBodyAsBytes()))
                 .addFnResultEntity(500, headers, "application/json", postedResult);
 
@@ -342,10 +344,11 @@ public class CloudThreadsContinuationInvokerTest {
         // Given
         Map<String, String> headers = new HashMap<>();
         headers.put("FnProject-Header-Custom-Header", "customValue");
+        headers.put(DATUM_EXCEPTIONAL_FLAG, "true");
 
         String postedResult = "{ \"some\": \"json\" }";
         HttpMultipartSerialization ser = new HttpMultipartSerialization()
-                .addJavaEntity((CloudThreads.SerExBiFunction<Object, Throwable, String>) (result, error) ->
+                .addJavaEntity((CloudThreads.SerBiFunction<Object, Throwable, String>) (result, error) ->
                                 new String(((ExternalCompletionException) error).getExternalRequest().getBodyAsBytes()))
                 .addEmptyEntity()
                 .addExternalCompletionEntity("POST", headers, "application/json", postedResult);

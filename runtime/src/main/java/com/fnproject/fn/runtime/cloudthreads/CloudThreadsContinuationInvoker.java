@@ -133,22 +133,18 @@ public final class CloudThreadsContinuationInvoker implements FunctionInvoker {
                     for (DispatchPattern dp : Dispatchers.values()) {
                         if (dp.matches(continuation)) {
                             Object[] args = new Object[dp.numArguments()];
-                            Method method = dp.getInvokeMethod(continuation);
-                            Class<?>[] argTypes = dp.getParameterTypes();
                             for (int i = 0; i < args.length; i++) {
                                 try {
-                                    args[i] = wrapType(cs.readObject(), argTypes[i]);
+                                    args[i] = cs.readObject();
                                 } catch (IOException e) {
                                     throw new FunctionInputHandlingException("Error reading continuation content ", e);
                                 } catch (ClassNotFoundException e) {
                                     throw new FunctionInputHandlingException("Unable to extract closure argument", e);
                                 } catch (SerUtils.Deserializer.DeserializeException e) {
                                     throw new FunctionInputHandlingException("Error deserializing closure argument", e);
-                                } catch (ClassCastException e) {
-                                    throw new FunctionInputHandlingException("Cannot align incoming arguments to closure types", e);
                                 }
                             }
-                            OutputEvent result = invokeContinuation(continuation, method, args);
+                            OutputEvent result = invokeContinuation(continuation, dp.getInvokeMethod(continuation), args);
                             return Optional.of(result);
                         }
                     }
@@ -199,32 +195,6 @@ public final class CloudThreadsContinuationInvoker implements FunctionInvoker {
 
             return Optional.empty();
         }
-    }
-
-    /**
-     * In some cases, the completer will send error datums that are not exceptions to continuations
-     * whose type demands them.
-     * We need to trap those and wrap them in the appropriate containing exception.
-     * @param arg   The incoming argument
-     * @param neededType    The type demanded for the corresponding argument in
-     * @return
-     */
-    private Object wrapType(Object arg, Class<?> neededType) {
-        if (arg == null) {
-            return null;
-        }
-        if (neededType.isAssignableFrom(arg.getClass())) {
-            return arg;
-        }
-        // Perform a wrapping coercion if we know about one. This might be table-driven in the future;
-        // at the moment, there are only two cases.
-        if (arg instanceof HttpResponse && neededType.isAssignableFrom(FunctionInvocationException.class)) {
-            return new FunctionInvocationException((HttpResponse) arg);
-        }
-        if (arg instanceof HttpRequest && neededType.isAssignableFrom(ExternalCompletionException.class)) {
-            return new ExternalCompletionException((HttpRequest) arg);
-        }
-        throw new ClassCastException("Cannot convert " + arg.getClass() + " to " + neededType);
     }
 
     private static OutputEvent invokeContinuation(Object instance, Method m, Object[] args) {
@@ -374,24 +344,19 @@ public final class CloudThreadsContinuationInvoker implements FunctionInvoker {
         int numArguments();
 
         Method getInvokeMethod(Object instance);
-
-        Class<?>[] getParameterTypes();
     }
 
     /**
      * Calling conventions for different target objects
      */
     private enum Dispatchers implements DispatchPattern {
-        CallableDispatch(Callable.class, 0, "call", new Class<?>[]{Object.class}),
-        ExceptionalFunctionDispatch(CloudThreads.SerExFunction.class, 1, "apply", new Class<?>[]{Throwable.class}),
-        FunctionDispatch(Function.class, 1, "apply", new Class<?>[]{Object.class}),
-        ExceptionalBiFunctionDispatch(CloudThreads.SerExBiFunction.class, 2, "apply", new Class<?>[]{Object.class, Throwable.class}),
-        BiFunctionDispatch(BiFunction.class, 2, "apply", new Class<?>[]{Object.class, Object.class}),
-        RunnableDispatch(Runnable.class, 0, "run", new Class<?>[]{}),
-        ConsumerDispatch(Consumer.class, 1, "accept", new Class<?>[]{Object.class}),
-        ExceptionalBiConsumerDispatch(CloudThreads.SerExBiConsumer.class, 2, "accept", new Class<?>[]{Object.class, Throwable.class}),
-        BiConsumerDispatch(BiConsumer.class, 2, "accept", new Class<?>[]{Object.class, Object.class}),
-        SupplierDispatch(Supplier.class, 0, "get", new Class<?>[]{});
+        CallableDispatch(Callable.class, 0, "call"),
+        FunctionDispatch(Function.class, 1, "apply"),
+        BiFunctionDispatch(BiFunction.class, 2, "apply"),
+        RunnableDispatch(Runnable.class, 0, "run"),
+        ConsumerDispatch(Consumer.class, 1, "accept"),
+        BiConsumerDispatch(BiConsumer.class, 2, "accept"),
+        SupplierDispatch(Supplier.class, 0, "get");
 
 
         @Override
@@ -415,18 +380,14 @@ public final class CloudThreadsContinuationInvoker implements FunctionInvoker {
             }
         }
 
-        public Class<?>[] getParameterTypes() { return parameterTypes; }
-
         private final Class<?> matchType;
         private final int numArguments;
         private final String methodName;
-        private final Class<?>[] parameterTypes;
 
-        Dispatchers(Class<?> matchType, int numArguments, String methodName, Class<?>[] parameterTypes) {
+        Dispatchers(Class<?> matchType, int numArguments, String methodName) {
             this.matchType = matchType;
             this.numArguments = numArguments;
             this.methodName = methodName;
-            this.parameterTypes = parameterTypes;
         }
 
     }

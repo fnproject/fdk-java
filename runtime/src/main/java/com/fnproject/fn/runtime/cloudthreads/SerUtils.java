@@ -3,6 +3,7 @@ package com.fnproject.fn.runtime.cloudthreads;
 import com.fnproject.fn.api.cloudthreads.*;
 import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.runtime.exception.FunctionInputHandlingException;
+import com.sun.org.apache.regexp.internal.RE;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.NullOutputStream;
 import org.apache.http.Header;
@@ -127,7 +128,12 @@ final class SerUtils {
                     return body;
                 }
             };
-            return new ContentPart(dt, contentType, functionResponse);
+
+            if (h.getHeaderValue(DATUM_EXCEPTIONAL_FLAG).orElse("false").equalsIgnoreCase("true")) {
+                return new ContentPart(dt, contentType, new FunctionInvocationException(functionResponse));
+            } else {
+                return new ContentPart(dt, contentType, functionResponse);
+            }
         });
 
         registerDeserializer(DATUM_TYPE_HTTP_REQ, (dt, h, is) -> {
@@ -165,7 +171,12 @@ final class SerUtils {
                         return body;
                     }
                 };
-                return new ContentPart(dt, contentType, req);
+
+                if (h.getHeaderValue(DATUM_EXCEPTIONAL_FLAG).orElse("false").equalsIgnoreCase("true")) {
+                    return new ContentPart(dt, contentType, new ExternalCompletionException(req));
+                } else {
+                    return new ContentPart(dt, contentType, req);
+                }
             } catch (IllegalArgumentException e) {
                 throw new Deserializer.DeserializeException(REQUEST_METHOD_HEADER + " had unrecognised value: " + methodName.orElse("(missing)"));
             }

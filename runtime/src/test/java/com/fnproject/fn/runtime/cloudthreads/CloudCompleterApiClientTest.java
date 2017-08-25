@@ -77,18 +77,21 @@ public class CloudCompleterApiClientTest {
         HttpClient.HttpResponse response = new HttpClient.HttpResponse(200);
         response.addHeader(DATUM_TYPE_HEADER, DATUM_TYPE_HTTP_RESP);
         response.addHeader(RESULT_STATUS_HEADER, RESULT_STATUS_FAILURE);
+        response.addHeader(DATUM_EXCEPTIONAL_FLAG, "true");
         response.addHeader(RESULT_CODE_HEADER, "500");
         response.addHeader(CONTENT_TYPE_HEADER, "application/json");
         response.addHeader(USER_HEADER_PREFIX + "Custom-Header", "myValue");
         response.setEntity(IOUtils.toInputStream("{ \"some\": \"json\" }", "utf-8"));
         when((Object) mockHttpClient.execute(any())).thenReturn(response);
 
-        // Then
-        thrown.expect(FunctionInvocationException.class);
-
         // When
         CloudCompleterApiClient completerClient = new CloudCompleterApiClient("", mockHttpClient);
-        Object result = completerClient.waitForCompletion(new ThreadId("1"), new CompletionId("2"));
+        try {
+            Object result = completerClient.waitForCompletion(new ThreadId("1"), new CompletionId("2"));
+        } catch (CloudCompletionException e) {
+            assertThat(e.getCause()).isInstanceOfAny(FunctionInvocationException.class);
+            assertThat(((FunctionInvocationException)e.getCause()).getFunctionResponse().getStatusCode()).isEqualTo(500);
+        }
     }
 
     @Test
@@ -113,23 +116,27 @@ public class CloudCompleterApiClientTest {
 
 
     @Test
-    public void waitForCompletionShouldThrowExternalCmopletionExceptionOnFailedExternalFuture() throws Exception {
+    public void waitForCompletionShouldThrowExternalCompletionExceptionOnFailedExternalFuture() throws Exception {
         // Given
         HttpClient.HttpResponse response = new HttpClient.HttpResponse(200);
         response.addHeader(DATUM_TYPE_HEADER, DATUM_TYPE_HTTP_REQ);
         response.addHeader(RESULT_STATUS_HEADER, RESULT_STATUS_FAILURE);
+        response.addHeader(DATUM_EXCEPTIONAL_FLAG, "true");
         response.addHeader(REQUEST_METHOD_HEADER, "POST");
         response.addHeader(CONTENT_TYPE_HEADER, "application/json");
         response.addHeader(USER_HEADER_PREFIX + "Custom-Header", "myValue");
         response.setEntity(IOUtils.toInputStream("{ \"some\": \"json\" }", "utf-8"));
         when((Object) mockHttpClient.execute(any())).thenReturn(response);
 
-        // Then
-        thrown.expect(ExternalCompletionException.class);
-
         // When
         CloudCompleterApiClient completerClient = new CloudCompleterApiClient("", mockHttpClient);
-        Object result = completerClient.waitForCompletion(new ThreadId("1"), new CompletionId("2"));
+        try {
+            Object result = completerClient.waitForCompletion(new ThreadId("1"), new CompletionId("2"));
+        } catch (CloudCompletionException e) {
+            // Just as with thrown exceptions, the ECEx is wrapped in a CCEx on .get
+            assertThat(e.getCause()).isInstanceOfAny(ExternalCompletionException.class);
+            assertThat(((ExternalCompletionException)e.getCause()).getExternalRequest().getMethod()).isEqualTo(HttpMethod.POST);
+        }
     }
 
 

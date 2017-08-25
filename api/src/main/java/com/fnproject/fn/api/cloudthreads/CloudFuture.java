@@ -29,8 +29,8 @@ import java.util.function.Function;
  * <p>
  * For instance, in the above example, the variable {@code x} will be serialized and copied into the execution of the captured lambda.
  * <p>
- * Generally, if a CloudFuture completes exceptionally, it will propagate its exception to any chained dependencies, however {@link #handle(CloudThreads.SerExBiFunction)},
- * {@link #whenComplete(CloudThreads.SerExBiConsumer)} and {@link #exceptionally(CloudThreads.SerExFunction)} allow errors to be caught and handled and
+ * Generally, if a CloudFuture completes exceptionally, it will propagate its exception to any chained dependencies, however {@link #handle(CloudThreads.SerBiFunction)},
+ * {@link #whenComplete(CloudThreads.SerBiConsumer)} and {@link #exceptionally(CloudThreads.SerFunction)} allow errors to be caught and handled and
  * {@link #applyToEither(CloudFuture, CloudThreads.SerFunction)} and {@link #acceptEither(CloudFuture, CloudThreads.SerConsumer)} will only propagate errors if all
  * dependent futures fail with an error.
  *
@@ -146,13 +146,13 @@ public interface CloudFuture<T> extends Serializable {
      * }</pre></blockquote>
      * <p>
      * {@code whenComplete} is always called when the current stage is complete  and does not change the value of current
-     * future - to optionally change the value or to use {@link #handle(CloudThreads.SerExBiFunction)}
+     * future - to optionally change the value or to use {@link #handle(CloudThreads.SerBiFunction)}
      *
      * @param fn a handler  to call when this stage completes
      * @return a new future that completes as per this future once the action  has run.
      * @see java.util.concurrent.CompletionStage#whenComplete(BiConsumer)
      */
-    CloudFuture<T> whenComplete(CloudThreads.SerExBiConsumer<T, Throwable> fn);
+    CloudFuture<T> whenComplete(CloudThreads.SerBiConsumer<T, Throwable> fn);
 
     /**
      * Perform an action when this future completes successfully.
@@ -330,14 +330,14 @@ public interface CloudFuture<T> extends Serializable {
      * }</pre></blockquote>
      * <p>
      * {@code handle} is always called when the current stage is complete  and may change the value of the returned future -
-     * if you do not need to change this value use  {@link #whenComplete(CloudThreads.SerExBiConsumer)}
+     * if you do not need to change this value use  {@link #whenComplete(CloudThreads.SerBiConsumer)}
      *
      * @param fn a handler  to call when this stage completes successfully or with an error
      * @param <X> The type of the transformed output
      * @return a new future that completes as per this future once the action  has run.
      * @see java.util.concurrent.CompletionStage#handle(BiFunction)
      */
-    <X> CloudFuture<X> handle(CloudThreads.SerExBiFunction<? super T, Throwable, ? extends X> fn);
+    <X> CloudFuture<X> handle(CloudThreads.SerBiFunction<? super T, Throwable, ? extends X> fn);
 
     /**
      * Handle exceptional completion of this future and convert exceptions to the original type of this future.
@@ -345,7 +345,7 @@ public interface CloudFuture<T> extends Serializable {
      * When an exception occurs within this future (or in a dependent future) - this method allows you to trap and handle
      * that exception (similarly to a catch block) yeilding a new value to return in place of the error.
      * <p>
-     * Unlike {@link #handle(CloudThreads.SerExBiFunction)} and {@link #whenComplete(CloudThreads.SerExBiConsumer)} the handler
+     * Unlike {@link #handle(CloudThreads.SerBiFunction)} and {@link #whenComplete(CloudThreads.SerBiConsumer)} the handler
      * function is only called when an exception is raised, otherwise the returned future completes with the same value as
      * this future.
      *
@@ -366,7 +366,7 @@ public interface CloudFuture<T> extends Serializable {
      *         result of calling {@code fn} on the exception value if it completes exceptionally.
      * @see java.util.concurrent.CompletionStage#exceptionally(Function)
      */
-    CloudFuture<T> exceptionally(CloudThreads.SerExFunction<Throwable, ? extends T> fn);
+    CloudFuture<T> exceptionally(CloudThreads.SerFunction<Throwable, ? extends T> fn);
 
 
     /**
