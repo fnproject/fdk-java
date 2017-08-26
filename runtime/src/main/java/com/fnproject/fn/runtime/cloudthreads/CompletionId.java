@@ -6,10 +6,10 @@ import java.util.Objects;
 /**
  * Value type for a completion ID
  */
-final class CompletionId implements Serializable {
+public final class CompletionId implements Serializable {
     private final String id;
 
-    CompletionId(String id) {
+    public CompletionId(String id) {
         this.id = Objects.requireNonNull(id);
     }
 
