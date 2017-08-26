@@ -14,7 +14,6 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import com.fnproject.fn.runtime.cloudthreads.HttpClient;
 
 public class CloudCompleterApiClient implements CompleterClient {
     private transient final HttpClient httpClient;

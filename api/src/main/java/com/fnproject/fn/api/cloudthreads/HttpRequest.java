@@ -3,7 +3,7 @@ package com.fnproject.fn.api.cloudthreads;
 import com.fnproject.fn.api.Headers;
 
 /**
- * An externally completable future's value will be of this type.
+ * An abstract HTTP request details (without location)
  */
 public interface HttpRequest {
     /**

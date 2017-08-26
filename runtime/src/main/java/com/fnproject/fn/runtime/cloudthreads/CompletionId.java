@@ -1,8 +1,5 @@
 package com.fnproject.fn.runtime.cloudthreads;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.Objects;
 
@@ -33,12 +30,5 @@ final class CompletionId implements Serializable {
         return id;
     }
 
-    private void writeObject(ObjectOutputStream out) throws IOException {
-        RefCaptor.capture(this);
-        out.defaultWriteObject();
-    }
 
-    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-        in.defaultReadObject();
-    }
 }

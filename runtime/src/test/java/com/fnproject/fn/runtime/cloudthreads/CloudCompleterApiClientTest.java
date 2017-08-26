@@ -14,6 +14,7 @@ import java.util.Optional;
 
 import static com.fnproject.fn.runtime.cloudthreads.CloudCompleterApiClient.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -129,7 +130,8 @@ public class CloudCompleterApiClientTest {
         // When
         CloudCompleterApiClient completerClient = new CloudCompleterApiClient("", mockHttpClient);
         try {
-            Object result = completerClient.waitForCompletion(new ThreadId("1"), new CompletionId("2"));
+            completerClient.waitForCompletion(new ThreadId("1"), new CompletionId("2"));
+            fail("Should have thrown an exception");
         } catch (CloudCompletionException e) {
             // Just as with thrown exceptions, the ECEx is wrapped in a CCEx on .get
             assertThat(e.getCause()).isInstanceOfAny(ExternalCompletionException.class);
