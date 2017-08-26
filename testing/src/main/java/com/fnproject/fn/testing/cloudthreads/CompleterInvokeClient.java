@@ -7,8 +7,7 @@ import com.fnproject.fn.runtime.cloudthreads.CompletionId;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-public interface FaaSInvokeClient {
+public interface CompleterInvokeClient {
     CompletableFuture<Result> invokeStage(String fnId, CompletionId stageId, Datum.Blob closure, List<Result> args);
 
-    CompletableFuture<Result> invokeFunction(String fnId, HttpMethod method, Headers headers, Datum.Blob data);
 }

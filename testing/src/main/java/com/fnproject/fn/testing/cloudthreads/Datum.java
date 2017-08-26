@@ -1,11 +1,10 @@
 package com.fnproject.fn.testing.cloudthreads;
 
 import com.fnproject.fn.api.Headers;
-import com.fnproject.fn.runtime.cloudthreads.CompletionId;
+import com.fnproject.fn.runtime.cloudthreads.TestSupport;
 import com.fnproject.fn.testing.FnResult;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.util.Objects;
 
@@ -17,11 +16,11 @@ public abstract class Datum {
 
     public abstract Object toJava(boolean success);
 
-    public static class Blob {
+    static class Blob {
         private final String contentType;
         private final byte[] data;
 
-        public Blob(String contentType, byte[] data) {
+        Blob(String contentType, byte[] data) {
             this.contentType = contentType;
             this.data = data;
         }
@@ -39,7 +38,7 @@ public abstract class Datum {
     public static class BlobDatum extends Datum {
         private final Blob data;
 
-        private BlobDatum(Blob data) {
+         BlobDatum(Blob data) {
             this.data = data;
         }
 
@@ -86,7 +85,7 @@ public abstract class Datum {
         private final Headers headers;
         private final byte[] body;
 
-        private HttpReqDatum(String method, Headers headers, byte[] body) {
+        protected HttpReqDatum(String method, Headers headers, byte[] body) {
             this.method = Objects.requireNonNull(method);
             this.headers = Objects.requireNonNull(headers);
             this.body = body;
@@ -148,7 +147,7 @@ public abstract class Datum {
 
         @Override
         public Object toJava(boolean success) {
-            return new CompletionId(stageId);
+            return TestSupport.completionId(stageId);
         }
     }
 

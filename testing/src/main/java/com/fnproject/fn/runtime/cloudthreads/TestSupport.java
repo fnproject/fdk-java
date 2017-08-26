@@ -7,10 +7,15 @@ package com.fnproject.fn.runtime.cloudthreads;
  * (c) 2017 Oracle Corporation
  */
 public class TestSupport {
-    public static CompletionId completinoId(String id){
+    public static CompletionId completionId(String id) {
         return new CompletionId(id);
     }
-    public static ThreadId threadId(String id){
+
+    public static String completionIdString(CompletionId id) {
+        return id.getId();
+    }
+
+    public static ThreadId threadId(String id) {
         return new ThreadId(id);
     }
 }

@@ -167,7 +167,7 @@ public class ThumbnailsFunction {
 }
 ```
 
-The `objectUpload` method is private and just uses a `minio` client to perform the upload.
+The `objectUpload` method is private and just uses a `minio` completerInvokeClient to perform the upload.
 
 ```java
 public class ThumbnailsFunction {
