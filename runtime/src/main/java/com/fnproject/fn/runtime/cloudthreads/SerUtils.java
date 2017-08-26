@@ -3,7 +3,6 @@ package com.fnproject.fn.runtime.cloudthreads;
 import com.fnproject.fn.api.cloudthreads.*;
 import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.runtime.exception.FunctionInputHandlingException;
-import com.sun.org.apache.regexp.internal.RE;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.NullOutputStream;
 import org.apache.http.Header;

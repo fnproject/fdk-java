@@ -7,7 +7,6 @@ import com.fnproject.fn.runtime.QueryParametersImpl;
 import com.fnproject.fn.runtime.ReadOnceInputEvent;
 import com.fnproject.fn.runtime.exception.FunctionInputHandlingException;
 import com.fnproject.fn.runtime.exception.InternalFunctionInvocationException;
-import com.sun.org.apache.regexp.internal.RE;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
