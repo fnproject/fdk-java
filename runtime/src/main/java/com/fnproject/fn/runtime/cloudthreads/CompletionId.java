@@ -9,7 +9,7 @@ import java.util.Objects;
 public final class CompletionId implements Serializable {
     private final String id;
 
-    public CompletionId(String id) {
+    CompletionId(String id) {
         this.id = Objects.requireNonNull(id);
     }
 
@@ -26,7 +26,7 @@ public final class CompletionId implements Serializable {
         return Objects.hash(id);
     }
 
-    protected String getId(){
+    protected String getId() {
         return id;
     }
 

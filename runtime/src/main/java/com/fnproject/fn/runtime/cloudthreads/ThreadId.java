@@ -11,7 +11,7 @@ import java.util.Objects;
 public final class ThreadId implements Serializable {
     private final String id;
 
-    public ThreadId(String id) {
+    ThreadId(String id) {
         this.id = Objects.requireNonNull(id);
     }
 
