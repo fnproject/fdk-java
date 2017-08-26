@@ -118,11 +118,11 @@ public class ExerciseEverything {
                 .exceptionally((e) -> -3);
     }
 
-    @Test(11)
-    @Test.Catch({CloudCompletionException.class, FunctionInvocationException.class})
-    public CloudFuture<HttpResponse> nonexistentExternalEvaluation(CloudThreadRuntime rt) {
-        return rt.invokeFunction("nonexistent", HttpMethod.POST, Headers.emptyHeaders(), new byte[0]);
-    }
+//    @Test(11)
+//    @Test.Catch({CloudCompletionException.class, FunctionInvocationException.class})
+//    public CloudFuture<HttpResponse> nonexistentExternalEvaluation(CloudThreadRuntime rt) {
+//        return rt.invokeFunction("nonexistent", HttpMethod.POST, Headers.emptyHeaders(), new byte[0]);
+//    }
 
     @Test(12)
     @Test.Expect("okay")
