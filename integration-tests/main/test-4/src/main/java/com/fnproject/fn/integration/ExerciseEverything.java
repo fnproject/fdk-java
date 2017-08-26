@@ -323,7 +323,7 @@ public class ExerciseEverything {
 
     @Test(33)
     @Test.Catch({CloudCompletionException.class, ExternalCompletionException.class})
-    @Test.Expect("bar")
+    @Test.Expect("External completion failed")
     public CloudFuture<HttpRequest> externalFutureFailureAndGet(CloudThreadRuntime rt) throws IOException {
         ExternalCloudFuture<HttpRequest> cf = rt.createExternalFuture();
         HttpClient httpClient = new HttpClient();
