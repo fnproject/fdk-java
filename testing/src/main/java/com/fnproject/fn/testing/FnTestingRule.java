@@ -1,6 +1,7 @@
 package com.fnproject.fn.testing;
 
 import com.fnproject.fn.api.Headers;
+import com.fnproject.fn.api.cloudthreads.CloudThreads;
 import com.fnproject.fn.api.cloudthreads.HttpMethod;
 import com.fnproject.fn.runtime.EntryPoint;
 import com.fnproject.fn.runtime.FunctionLoader;
@@ -120,9 +121,6 @@ public final class FnTestingRule implements TestRule {
     }
 
 
-
-
-
     /**
      * Runs the function runtime with the specified class and method (and waits for Cloud Threads completions to finish
      * if the test spawns any Cloud Thread)
@@ -204,11 +202,11 @@ public final class FnTestingRule implements TestRule {
                 Result r;
                 try {
                     // Read wrapping result, and throw it away
-                    HttpResponse response = parser.parse();
+                    parser.parse();
                     IdentityInputStream iis = new IdentityInputStream(sib);
                     byte[] responseBody = IOUtils.toByteArray(iis);
 
-                   // System.err.println("Got Fn response body: \n" + new String(responseBody));
+                    // System.err.println("Got Fn response body: \n" + new String(responseBody));
                     // HTTP in HTTP :(
                     SessionInputBufferImpl sib2 = new SessionInputBufferImpl(new HttpTransportMetricsImpl(), 65535);
                     InputStream frameStream = new ByteArrayInputStream(responseBody);
@@ -227,14 +225,13 @@ public final class FnTestingRule implements TestRule {
                     oldSystemErr.println("Response  " + r);
 
 
-
                 } catch (Exception e) {
                     oldSystemErr.println("Err\n" + e);
                     e.printStackTrace(oldSystemErr);
-                     r = Result.failure(new Datum.ErrorDatum(Datum.ErrorType.unknown_error, "Error reading fn Response:" + e.getMessage()));
+                    r = Result.failure(new Datum.ErrorDatum(Datum.ErrorType.unknown_error, "Error reading fn Response:" + e.getMessage()));
                 }
 
-                if(!r.isSuccess()){
+                if (!r.isSuccess()) {
                     throw new ResultException(r.getDatum());
                 }
                 return r;
@@ -288,6 +285,7 @@ public final class FnTestingRule implements TestRule {
 
             CloudThreadsContinuationInvoker.resetCompleterClientFactory();
             CloudThreadsContinuationInvoker.setTestingMode(false);
+            CloudThreads.setCurrentRuntimeSource(null);
         }
     }
 

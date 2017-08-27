@@ -31,4 +31,8 @@ public final class ThreadId implements Serializable {
     public String getId() {
         return id;
     }
+
+    public String toString(){
+        return "thread." + getId();
+    }
 }

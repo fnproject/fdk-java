@@ -523,14 +523,15 @@ public class InMemCompleter implements CompleterClient {
             private final CompletionId id;
             private final CompletionStage<Result> outputFuture;
 
+
             private Node(CompletionStage<List<Result>> input,
                          BiFunction<Node, CompletionStage<List<Result>>, CompletionStage<Result>> invoke) {
 
                 this.id = newNodeId();
                 input.whenComplete((in, err) -> {
-                    System.err.printf("Node %s activated :  (%s) \n", id, err != null ? "error" : "success");
+                    System.err.printf("Node %s%s activated :  (%s) \n", graphId,id, err != null ? "error" : "success");
                     if (in != null) {
-                        System.err.printf("Node %s (%d) args:  (%s) \n", id, in.size(), in);
+                        System.err.printf("Node %s%s (%d) args:  (%s) \n", graphId,id, in.size(), in);
 
                     }
                     activeCount.incrementAndGet();
@@ -538,7 +539,7 @@ public class InMemCompleter implements CompleterClient {
                 this.outputFuture = invoke.apply(this, input);
                 outputFuture.whenComplete((in, err) -> {
                     activeCount.decrementAndGet();
-                    System.err.printf("Node %s complete : %s \n", id, err != null ? "error" : "succes");
+                    System.err.printf("Node %s%s complete : %s \n", graphId,id, err != null ? "error" : "succes");
                     checkCompletion();
                 });
             }

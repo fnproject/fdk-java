@@ -75,6 +75,7 @@ public class FnTestingRuleCloudThreadsTest {
             AllOf,
             InvokeFunctionEcho,
             AnyOf, Exceptionally,
+            ThenCompose,
             ThenComplete
         }
         static Result result = null;
@@ -145,6 +146,7 @@ public class FnTestingRuleCloudThreadsTest {
                     .exceptionally((ex) -> { result = Result.Exceptionally; return null; });
         }
 
+
         public void logToStdErrInContinuation() {
             CloudThreadRuntime rt = CloudThreads.currentRuntime();
             rt.completedValue(1)
@@ -205,6 +207,7 @@ public class FnTestingRuleCloudThreadsTest {
         assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
         assertThat(TestFn.result).isEqualTo(TestFn.Result.AllOf);
     }
+
 
     @Test
     public void anyOf() {
