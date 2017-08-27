@@ -93,7 +93,7 @@ public class FnTestingRuleCloudThreadsTest {
             CloudThreads.currentRuntime()
                     .supply(() ->{
                         return Result.Supply;
-                    } ).thenAccept((r) -> result = r).get();
+                    } ).thenAccept((r) -> result = r);
         }
 
         public void allOf() {

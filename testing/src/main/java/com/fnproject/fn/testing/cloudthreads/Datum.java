@@ -4,7 +4,6 @@ import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.cloudthreads.*;
 import com.fnproject.fn.runtime.cloudthreads.TestSupport;
 import com.fnproject.fn.testing.FnResult;
-import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
 
@@ -143,7 +142,7 @@ public abstract class Datum {
         private final ErrorType type;
         private final String message;
 
-        ErrorDatum(ErrorType type, String message) {
+        public ErrorDatum(ErrorType type, String message) {
             this.type = Objects.requireNonNull(type);
             this.message = Objects.requireNonNull(message);
         }

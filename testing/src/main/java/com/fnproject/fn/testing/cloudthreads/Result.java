@@ -31,7 +31,7 @@ public class Result {
 
     }
 
-    static Result failure(Datum d) {
+    public static Result failure(Datum d) {
         return new Result(false, d);
     }
 
@@ -76,4 +76,13 @@ public class Result {
         return new Result(success, datumType.reader.readDatum(response));
     }
 
+
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer("Result{");
+        sb.append("success=").append(success);
+        sb.append(", datum=").append(datum);
+        sb.append('}');
+        return sb.toString();
+    }
 }

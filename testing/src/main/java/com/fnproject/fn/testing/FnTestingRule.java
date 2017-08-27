@@ -10,10 +10,9 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.TeeOutputStream;
 import org.apache.http.HttpResponse;
 import org.apache.http.NoHttpResponseException;
-import org.apache.http.impl.io.ContentLengthInputStream;
-import org.apache.http.impl.io.DefaultHttpResponseParser;
-import org.apache.http.impl.io.HttpTransportMetricsImpl;
-import org.apache.http.impl.io.SessionInputBufferImpl;
+import org.apache.http.entity.ByteArrayEntity;
+import org.apache.http.entity.InputStreamEntity;
+import org.apache.http.impl.io.*;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
@@ -142,8 +141,11 @@ public final class FnTestingRule implements TestRule {
 
         CompleterInvokeClient client = new CompleterInvokeClient() {
             @Override
-            public CompletableFuture<HttpResponse> invokeStage(String fnId, ThreadId thread, CompletionId stageId, Datum.Blob closure, List<Result> input) {
-
+            public Result invokeStage(String fnId, ThreadId thread, CompletionId stageId, Datum.Blob closure, List<Result> input) {
+                // TODO avoid repeating MIME stuff (library-ise with CT/runtime? )
+                // TODO de-dupe shared env setup
+                // TODO Making up event details (app path?)
+                oldSystemErr.printf("Executing closure for %s with args \n ", stageId,input);
 
                 byte[] inputBody;
                 String boundary = UUID.randomUUID().toString().replaceAll("-", "");
@@ -151,10 +153,10 @@ public final class FnTestingRule implements TestRule {
                 try {
                     ByteArrayOutputStream bodyBytes = new ByteArrayOutputStream();
                     bodyBytes.write(("\r\n--" + boundary + "\r\n").getBytes(StandardCharsets.UTF_8));
-
                     new Datum.BlobDatum(closure).writePart(bodyBytes);
+
                     for (Result r : input) {
-                        bodyBytes.write(("\r\n" + boundary + "--\r\n").getBytes(StandardCharsets.UTF_8));
+                        bodyBytes.write(("\r\n--" + boundary + "\r\n").getBytes(StandardCharsets.UTF_8));
                         r.writePart(bodyBytes);
                     }
                     bodyBytes.write(("\r\n--" + boundary + "--\r\n").getBytes(StandardCharsets.UTF_8));
@@ -163,7 +165,7 @@ public final class FnTestingRule implements TestRule {
                     throw new RuntimeException("Failed to write inputBody", e);
                 }
 
-                oldSystemErr.println("Body\n" + new String(inputBody));
+                // oldSystemErr.println("Body\n" + new String(inputBody));
 
                 InputStream is = new FnHttpEventBuilder()
                         .withBody(inputBody)
@@ -199,24 +201,38 @@ public final class FnTestingRule implements TestRule {
                 DefaultHttpResponseParser parser = new DefaultHttpResponseParser(sib);
 
                 try {
+                    // Read wrapping result, and throw it away
                     HttpResponse response = parser.parse();
-                    ContentLengthInputStream cis = new ContentLengthInputStream(sib, Long.parseLong(response.getFirstHeader("Content-length").getValue()));
-                    SessionInputBufferImpl sib2 = new SessionInputBufferImpl(new HttpTransportMetricsImpl(), 65535);
-                    sib2.bind(cis);
-                    DefaultHttpResponseParser parser2 = new DefaultHttpResponseParser(sib);
-                    HttpResponse wrappedResponse = parser2.parse();
-                    oldSystemErr.println("Resp\n" + wrappedResponse);
+                    IdentityInputStream iis = new IdentityInputStream(sib);
+                    byte[] responseBody = IOUtils.toByteArray(iis);
 
-                    return CompletableFuture.completedFuture(wrappedResponse);
+                    System.err.println("Got Fn response body: \n" + new String(responseBody) );
+                    // HTTP in HTTP :(
+                    SessionInputBufferImpl sib2 = new SessionInputBufferImpl(new HttpTransportMetricsImpl(), 65535);
+                    InputStream frameStream = new ByteArrayInputStream(responseBody);
+                    sib2.bind(frameStream);
+
+                    DefaultHttpResponseParser parser2 = new DefaultHttpResponseParser(sib2);
+                    HttpResponse wrappedResponse = parser2.parse();
+
+                    IdentityInputStream frameBodyStream = new IdentityInputStream(sib2);
+
+                    wrappedResponse.setEntity(new InputStreamEntity(frameBodyStream));
+
+                    oldSystemErr.println("HTTP Resp " + wrappedResponse);
+
+                    Result r = Result.readResult(wrappedResponse);
+                    oldSystemErr.println("Response  " + r);
+
+                    return r;
 
                 } catch (Exception e) {
                     oldSystemErr.println("Err\n" + e);
                     e.printStackTrace(oldSystemErr);
-
-                    CompletableFuture<HttpResponse> respFuture = new CompletableFuture<>();
-                    respFuture.completeExceptionally(e);
-                    return respFuture;
+                    return Result.failure(new Datum.ErrorDatum(Datum.ErrorType.unknown_error, "Error reading fn Response:" + e.getMessage()));
                 }
+
+
             }
         };
 

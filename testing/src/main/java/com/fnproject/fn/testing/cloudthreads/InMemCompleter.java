@@ -498,17 +498,8 @@ public class InMemCompleter implements CompleterClient {
         }
 
         private BiFunction<Node, CompletionStage<List<Result>>, CompletionStage<Result>> chainInvocation(Datum.Blob closure) {
-            return (node, trigger) -> trigger.thenComposeAsync((input) -> {
-
-                return completerInvokeClient.invokeStage(functionId, graphId, node.id,closure,input)
-                        .thenApply((response) -> {
-                            try {
-                                return Result.readResult(response);
-                            } catch (IOException e) {
-
-                                throw new RuntimeException("failed to read function result", e);
-                            }
-                        });
+            return (node, trigger) -> trigger.thenApplyAsync((input) -> {
+                return completerInvokeClient.invokeStage(functionId, graphId, node.id, closure, input);
             }, faasExectuor);
         }
 
@@ -522,11 +513,17 @@ public class InMemCompleter implements CompleterClient {
 
                 this.id = newNodeId();
                 input.whenComplete((in, err) -> {
+                    System.err.printf("Node %s activated :  (%s) \n", id, err != null ? "error" : "success");
+                    if (in != null) {
+                        System.err.printf("Node %s (%d) args:  (%s) \n", id, in.size(), in);
+
+                    }
                     activeCount.incrementAndGet();
                 });
                 this.outputFuture = invoke.apply(this, input);
                 outputFuture.whenComplete((in, err) -> {
                     activeCount.decrementAndGet();
+                    System.err.printf("Node %s complete : %s \n", id, err != null ? "error" : "succes");
                 });
             }
 

@@ -30,5 +30,9 @@ public final class CompletionId implements Serializable {
         return id;
     }
 
+    @Override
+    public String toString(){
+        return "#" + getId();
+    }
 
 }
