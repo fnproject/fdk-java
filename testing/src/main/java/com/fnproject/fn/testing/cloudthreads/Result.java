@@ -44,17 +44,17 @@ public class Result {
     }
 
 
-    void writePart(OutputStream os) throws IOException {
-        HeaderWriter hw = (key, value) -> os.write((key + ": " + value + "\r\n").getBytes());
+    public void writePart(OutputStream os) throws IOException {
+        HeaderWriter hw = new HeaderWriter(os);
 
         hw.writeHeader(CloudCompleterApiClient.RESULT_STATUS_HEADER, success ? CloudCompleterApiClient.RESULT_STATUS_SUCCESS : CloudCompleterApiClient.RESULT_STATUS_FAILURE);
 
         datum.writeHeaders(hw);
-        os.write("\r\n".getBytes());
+        os.write(new byte[]{'\r','\n'});
         datum.writeBody(os);
     }
 
-    Result readResult(HttpResponse response) throws IOException {
+    public static Result readResult(HttpResponse response) throws IOException {
         String status = response.getFirstHeader(CloudCompleterApiClient.RESULT_STATUS_HEADER).getValue();
 
         boolean success;

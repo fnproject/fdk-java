@@ -1,13 +1,11 @@
 package com.fnproject.fn.testing;
 
 import com.fnproject.fn.api.Headers;
+import com.fnproject.fn.api.cloudthreads.HttpMethod;
 import com.fnproject.fn.runtime.EntryPoint;
 import com.fnproject.fn.runtime.FunctionLoader;
-import com.fnproject.fn.runtime.cloudthreads.CloudThreadsContinuationInvoker;
-import com.fnproject.fn.runtime.cloudthreads.CompleterClientFactory;
-import com.fnproject.fn.runtime.cloudthreads.CompletionId;
-import com.fnproject.fn.testing.cloudthreads.CompleterInvokeClient;
-import com.fnproject.fn.testing.cloudthreads.InMemCompleter;
+import com.fnproject.fn.runtime.cloudthreads.*;
+import com.fnproject.fn.testing.cloudthreads.*;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.TeeOutputStream;
 import org.apache.http.HttpResponse;
@@ -21,6 +19,7 @@ import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
@@ -122,6 +121,7 @@ public final class FnTestingRule implements TestRule {
         thenRun(cls.getName(), method);
     }
 
+
     /**
      * Runs the function runtime with the specified class and method (and waits for Cloud Threads completions to finish
      * if the test spawns any Cloud Thread)
@@ -142,10 +142,36 @@ public final class FnTestingRule implements TestRule {
 
         CompleterInvokeClient client = new CompleterInvokeClient() {
             @Override
-            public CompletableFuture<HttpResponse> invokeStage(String fnId, CompletionId stageId, byte[] body) {
+            public CompletableFuture<HttpResponse> invokeStage(String fnId, ThreadId thread, CompletionId stageId, Datum.Blob closure, List<Result> input) {
 
-                ByteArrayOutputStream input = new ByteArrayOutputStream();
 
+                byte[] inputBody;
+                String boundary = UUID.randomUUID().toString().replaceAll("-", "");
+
+                try {
+                    ByteArrayOutputStream bodyBytes = new ByteArrayOutputStream();
+                    bodyBytes.write(("\r\n--" + boundary + "\r\n").getBytes(StandardCharsets.UTF_8));
+
+                    new Datum.BlobDatum(closure).writePart(bodyBytes);
+                    for (Result r : input) {
+                        bodyBytes.write(("\r\n" + boundary + "--\r\n").getBytes(StandardCharsets.UTF_8));
+                        r.writePart(bodyBytes);
+                    }
+                    bodyBytes.write(("\r\n--" + boundary + "--\r\n").getBytes(StandardCharsets.UTF_8));
+                    inputBody = bodyBytes.toByteArray();
+                } catch (IOException e) {
+                    throw new RuntimeException("Failed to write inputBody", e);
+                }
+
+                oldSystemErr.println("Body\n" + new String(inputBody));
+
+                InputStream is = new FnHttpEventBuilder()
+                        .withBody(inputBody)
+                        .withAppName("appName")
+                        .withRoute("/route").withRequestUrl("http://some/url")
+                        .withMethod("POST")
+                        .withHeader(CloudCompleterApiClient.CONTENT_TYPE_HEADER, String.format("multipart/mixed; boundary=\"%s\"", boundary))
+                        .withHeader(CloudCompleterApiClient.THREAD_ID_HEADER, thread.getId()).withHeader(CloudCompleterApiClient.STAGE_ID_HEADER, TestSupport.completionIdString(stageId)).currentEventInputStream();
 
                 ByteArrayOutputStream output = new ByteArrayOutputStream();
                 Map<String, String> mutableEnv = new HashMap<>();
@@ -161,16 +187,48 @@ public final class FnTestingRule implements TestRule {
 
                 new EntryPoint().run(
                         mutableEnv,
-                        pendingInput,
+                        is,
                         functionOut,
                         functionErr,
                         cls + "::" + method);
 
-                return new CompletableFuture<>();
+
+                SessionInputBufferImpl sib = new SessionInputBufferImpl(new HttpTransportMetricsImpl(), 65535);
+                ByteArrayInputStream parseStream = new ByteArrayInputStream(output.toByteArray());
+                sib.bind(parseStream);
+                DefaultHttpResponseParser parser = new DefaultHttpResponseParser(sib);
+
+                try {
+                    HttpResponse response = parser.parse();
+                    ContentLengthInputStream cis = new ContentLengthInputStream(sib, Long.parseLong(response.getFirstHeader("Content-length").getValue()));
+                    SessionInputBufferImpl sib2 = new SessionInputBufferImpl(new HttpTransportMetricsImpl(), 65535);
+                    sib2.bind(cis);
+                    DefaultHttpResponseParser parser2 = new DefaultHttpResponseParser(sib);
+                    HttpResponse wrappedResponse = parser2.parse();
+                    oldSystemErr.println("Resp\n" + wrappedResponse);
+
+                    return CompletableFuture.completedFuture(wrappedResponse);
+
+                } catch (Exception e) {
+                    oldSystemErr.println("Err\n" + e);
+                    e.printStackTrace(oldSystemErr);
+
+                    CompletableFuture<HttpResponse> respFuture = new CompletableFuture<>();
+                    respFuture.completeExceptionally(e);
+                    return respFuture;
+                }
             }
         };
 
-        InMemCompleter completer = null;
+        FnInvokeClient fnInvokeClient = new FnInvokeClient() {
+            @Override
+            public CompletableFuture<Result> invokeFunction(String fnId, HttpMethod method, Headers headers, byte[] data) {
+                return null;
+            }
+        };
+
+        CloudThreadsContinuationInvoker.setTestingMode(true);
+        InMemCompleter completer = new InMemCompleter(client, fnInvokeClient);
         CloudThreadsContinuationInvoker.setCompleterClientFactory((CompleterClientFactory) () -> completer);
 
 
@@ -179,8 +237,8 @@ public final class FnTestingRule implements TestRule {
         try {
             PrintStream functionOut = new PrintStream(stdOut);
             PrintStream functionErr = new PrintStream(new TeeOutputStream(stdErr, oldSystemErr));
-            System.setOut(functionErr);
-            System.setErr(functionErr);
+//            System.setOut(functionErr);
+//            System.setErr(functionErr);
 
             mutableEnv.putAll(config);
             mutableEnv.putAll(eventEnv);
@@ -196,6 +254,8 @@ public final class FnTestingRule implements TestRule {
 
             stdOut.flush();
             stdErr.flush();
+
+            completer.awaitTermination();
         } catch (Exception e) {
             throw new RuntimeException("internal error raised by entry point or flushing the test streams", e);
         } finally {
@@ -231,7 +291,7 @@ public final class FnTestingRule implements TestRule {
      * @return a list of Parsed HTTP responses (as {@link FnResult}s) from the function runtime output
      */
     public List<FnResult> getResults() {
-        return parseHttpStreamForResults(stdOut);
+        return parseHttpStreamForResults(stdOut.toByteArray());
     }
 
     /**
@@ -248,9 +308,10 @@ public final class FnTestingRule implements TestRule {
         throw new IllegalStateException("One and only one response expected, but " + results.size() + " responses were generated.");
     }
 
-    private List<FnResult> parseHttpStreamForResults(ByteArrayOutputStream httpStream) {
+
+    private List<FnResult> parseHttpStreamForResults(byte[] httpStream) {
         SessionInputBufferImpl sib = new SessionInputBufferImpl(new HttpTransportMetricsImpl(), 65535);
-        ByteArrayInputStream parseStream = new ByteArrayInputStream(httpStream.toByteArray());
+        ByteArrayInputStream parseStream = new ByteArrayInputStream(httpStream);
         sib.bind(parseStream);
 
         DefaultHttpResponseParser parser = new DefaultHttpResponseParser(sib);
@@ -299,13 +360,6 @@ public final class FnTestingRule implements TestRule {
         return responses;
     }
 
-    private FnResult parseHttpStreamForResult(ByteArrayOutputStream httpStream) {
-        List<FnResult> continuationResults = parseHttpStreamForResults(httpStream);
-        if (continuationResults.size() != 1) {
-            throw new RuntimeException("Expected single HTTP response from the continuation invocation, received " + continuationResults.size());
-        }
-        return continuationResults.get(0);
-    }
 
     public FnFunctionStubBuilder givenFn(String id) {
         return new FnFunctionStubBuilder() {

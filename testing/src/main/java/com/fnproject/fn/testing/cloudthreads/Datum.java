@@ -4,6 +4,7 @@ import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.cloudthreads.*;
 import com.fnproject.fn.runtime.cloudthreads.TestSupport;
 import com.fnproject.fn.testing.FnResult;
+import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
 
@@ -31,6 +32,7 @@ public abstract class Datum {
 
     public abstract void writeBody(OutputStream os) throws IOException;
 
+
     enum DatumType {
         blob(BlobDatum::readFromHttp),
         empty((x) -> new EmptyDatum()),
@@ -48,6 +50,11 @@ public abstract class Datum {
         Datum readDatum(org.apache.http.HttpResponse message) throws IOException;
     }
 
+    public void writePart(OutputStream os ) throws IOException {
+        writeHeaders(new HeaderWriter(os));
+        os.write(new byte[]{'\r','\n'});
+        writeBody(os);
+    }
 
     public static class Blob {
         private final String contentType;
@@ -87,7 +94,7 @@ public abstract class Datum {
     public static class BlobDatum extends Datum {
         private final Blob data;
 
-        BlobDatum(Blob data) {
+        public BlobDatum(Blob data) {
             this.data = data;
         }
 

@@ -5,10 +5,7 @@ import com.fnproject.fn.api.cloudthreads.CloudCompletionException;
 import com.fnproject.fn.api.cloudthreads.HttpMethod;
 import com.fnproject.fn.api.cloudthreads.LambdaSerializationException;
 import com.fnproject.fn.api.cloudthreads.PlatformException;
-import com.fnproject.fn.runtime.cloudthreads.CompleterClient;
-import com.fnproject.fn.runtime.cloudthreads.CompletionId;
-import com.fnproject.fn.runtime.cloudthreads.TestSupport;
-import com.fnproject.fn.runtime.cloudthreads.ThreadId;
+import com.fnproject.fn.runtime.cloudthreads.*;
 import com.sun.net.httpserver.HttpServer;
 import org.apache.commons.io.IOUtils;
 
@@ -43,13 +40,34 @@ public class InMemCompleter implements CompleterClient {
     private static ScheduledThreadPoolExecutor spe = new ScheduledThreadPoolExecutor(1);
     private static ExecutorService faasExectuor = Executors.newCachedThreadPool();
 
-    InMemCompleter(CompleterInvokeClient completerInvokeClient, FnInvokeClient fnInvokeClient) {
+    public InMemCompleter(CompleterInvokeClient completerInvokeClient, FnInvokeClient fnInvokeClient) {
         this.completerInvokeClient = completerInvokeClient;
         this.fnInvokeClient = fnInvokeClient;
     }
 
 
     private ExternalCompletionServer externalCompletionServer = new ExternalCompletionServer();
+
+    public void awaitTermination() {
+        while (true) {
+            int aliveCount = 0;
+            for (Map.Entry<ThreadId, Graph> e : graphs.entrySet()) {
+                if (!e.getValue().isCompleted()) {
+                    aliveCount++;
+                }
+            }
+            if (aliveCount > 0) {
+                System.err.println("Alive count is " + aliveCount);
+                try {
+                    Thread.sleep(150);
+                } catch (InterruptedException e) {
+                }
+            } else {
+                break;
+            }
+        }
+        externalCompletionServer.ensureStopped();
+    }
 
     private static class ExternalCompletionServer {
         private static final int port = 11979;
@@ -159,7 +177,7 @@ public class InMemCompleter implements CompleterClient {
     @Override
     public ThreadId createThread(String functionId) {
         ThreadId id = TestSupport.threadId("thread-" + threadCount.incrementAndGet());
-        graphs.put(id, new Graph(functionId));
+        graphs.put(id, new Graph(functionId, id));
 
         return id;
     }
@@ -175,7 +193,7 @@ public class InMemCompleter implements CompleterClient {
             ObjectOutputStream oos = new ObjectOutputStream(bos);
             oos.writeObject(code);
             oos.close();
-            return new Datum.Blob("application/x-java-serialized-object", bos.toByteArray());
+            return new Datum.Blob(CloudCompleterApiClient.CONTENT_TYPE_JAVA_OBJECT, bos.toByteArray());
         } catch (Exception e) {
             throw new LambdaSerializationException("Error serializing closure ");
         }
@@ -363,14 +381,20 @@ public class InMemCompleter implements CompleterClient {
 
     class Graph {
         private final String functionId;
+        private final ThreadId graphId;
         private final AtomicBoolean committed = new AtomicBoolean(false);
         private final AtomicInteger nodeCount = new AtomicInteger();
         private final AtomicInteger activeCount = new AtomicInteger();
         private final Map<CompletionId, Node> nodes = new ConcurrentHashMap<>();
 
 
-        Graph(String functionId) {
+        Graph(String functionId, ThreadId graphId) {
             this.functionId = functionId;
+            this.graphId = graphId;
+        }
+
+        public boolean isCompleted() {
+            return committed.get() && activeCount.get() == 0;
         }
 
         private boolean commit() {
@@ -474,9 +498,20 @@ public class InMemCompleter implements CompleterClient {
         }
 
         private BiFunction<Node, CompletionStage<List<Result>>, CompletionStage<Result>> chainInvocation(Datum.Blob closure) {
-            return (node, trigger) -> trigger.thenComposeAsync((input) ->
-                    completerInvokeClient.invokeStage(functionId, node.id, closure, input), faasExectuor);
+            return (node, trigger) -> trigger.thenComposeAsync((input) -> {
+
+                return completerInvokeClient.invokeStage(functionId, graphId, node.id,closure,input)
+                        .thenApply((response) -> {
+                            try {
+                                return Result.readResult(response);
+                            } catch (IOException e) {
+
+                                throw new RuntimeException("failed to read function result", e);
+                            }
+                        });
+            }, faasExectuor);
         }
+
 
         private final class Node {
             private final CompletionId id;
@@ -486,10 +521,13 @@ public class InMemCompleter implements CompleterClient {
                          BiFunction<Node, CompletionStage<List<Result>>, CompletionStage<Result>> invoke) {
 
                 this.id = newNodeId();
-                input.whenComplete((in, err) -> activeCount.incrementAndGet());
-
+                input.whenComplete((in, err) -> {
+                    activeCount.incrementAndGet();
+                });
                 this.outputFuture = invoke.apply(this, input);
-                outputFuture.whenComplete((in, err) -> activeCount.decrementAndGet());
+                outputFuture.whenComplete((in, err) -> {
+                    activeCount.decrementAndGet();
+                });
             }
 
             private CompletionStage<Result> outputFuture() {
