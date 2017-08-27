@@ -1,7 +1,10 @@
 package com.fnproject.fn.testing.cloudthreads;
 
 import com.fnproject.fn.api.Headers;
+import com.fnproject.fn.api.cloudthreads.CloudCompletionException;
 import com.fnproject.fn.api.cloudthreads.HttpMethod;
+import com.fnproject.fn.api.cloudthreads.LambdaSerializationException;
+import com.fnproject.fn.api.cloudthreads.PlatformException;
 import com.fnproject.fn.runtime.cloudthreads.CompleterClient;
 import com.fnproject.fn.runtime.cloudthreads.CompletionId;
 import com.fnproject.fn.runtime.cloudthreads.TestSupport;
@@ -71,20 +74,20 @@ class InMemCompleter implements CompleterClient {
             try {
                 server = HttpServer.create(new InetSocketAddress(port), 0);
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new PlatformException("Failed to create external completer server on port " + port);
             }
             server.createContext(baseUrl, (t) -> {
                 URI uri = t.getRequestURI();
                 String path = uri.getPath().substring(baseUrl.length());
-                Matcher m = pathPattern.matcher(path);
-                if (m.matches()) {
-                    String action = m.group(2);
-                    String id = m.group(1);
+                Matcher match = pathPattern.matcher(path);
+                if (match.matches()) {
+                    String action = match.group(2);
+                    String id = match.group(1);
 
                     CompletableFuture<Result> completableFuture = knownCompletions.get(id);
                     if (null == completableFuture) {
                         t.sendResponseHeaders(404, 0);
-                        t.getResponseBody().close();
+                        t.close();
                         return;
                     }
 
@@ -99,7 +102,7 @@ class InMemCompleter implements CompleterClient {
                             break;
                         default:
                             t.sendResponseHeaders(404, 0);
-                            t.getResponseBody().close();
+                            t.close();
                             return;
                     }
 
@@ -110,15 +113,19 @@ class InMemCompleter implements CompleterClient {
 
 
                     byte[] body = IOUtils.toByteArray(t.getRequestBody());
-                    Datum.HttpReqDatum datum = new Datum.HttpReqDatum(t.getRequestMethod(), Headers.fromMap(headers), body);
+                    HttpMethod method = HttpMethod.valueOf(t.getRequestMethod().toUpperCase());
+
+                    Datum.HttpReqDatum datum = new Datum.HttpReqDatum(method, Headers.fromMap(headers), body);
                     if (success) {
                         completableFuture.complete(Result.success(datum));
                     } else {
                         completableFuture.completeExceptionally(new ResultException(datum));
                     }
+                    t.sendResponseHeaders(200, 0);
+                    t.close();
                 } else {
                     t.sendResponseHeaders(404, 0);
-                    t.getResponseBody().close();
+                    t.close();
                 }
             });
             server.start();
@@ -169,16 +176,15 @@ class InMemCompleter implements CompleterClient {
             oos.writeObject(code);
             oos.close();
             return new Datum.Blob("application/x-java-serialized-object", bos.toByteArray());
-
         } catch (Exception e) {
-            throw new RuntimeException("Error serializing closure ", e);
+            throw new LambdaSerializationException("Error serializing closure ");
         }
     }
 
     private <T> T withGraph(ThreadId t, Function<Graph, T> act) {
         Graph g = graphs.get(t);
         if (g == null) {
-            throw new RuntimeException("unknown graph " + t.getId());
+            throw new PlatformException("unknown graph " + t.getId());
         }
         return act.apply(g);
     }
@@ -210,9 +216,20 @@ class InMemCompleter implements CompleterClient {
         return withGraph(threadId, (graph) -> graph.withNode(completionId, (node) -> {
             try {
                 return node.outputFuture().toCompletableFuture().get().toJavaObject();
+            } catch (ExecutionException e) {
+                if (e.getCause() instanceof ResultException) {
+
+                    Result r = ((ResultException) e.getCause()).toResult();
+                    Object err = r.toJavaObject();
+                    if (err instanceof Throwable) {
+                        throw new CloudCompletionException((Throwable) err);
+                    }
+                    throw new PlatformException(e);
+                } else {
+                    throw new PlatformException(e);
+                }
             } catch (Exception e) {
-                // TODO: error handling
-                throw new RuntimeException(e);
+                throw new PlatformException(e);
             }
         }));
 
@@ -340,7 +357,7 @@ class InMemCompleter implements CompleterClient {
 
     @Override
     public void commit(ThreadId threadId) {
-
+        withGraph(threadId, Graph::commit);
     }
 
 
@@ -355,8 +372,9 @@ class InMemCompleter implements CompleterClient {
         Graph(String functionId) {
             this.functionId = functionId;
         }
-        private void commit(){
-            committed.set(true);
+
+        private boolean commit() {
+            return committed.compareAndSet(false, true);
         }
 
         private Optional<Node> findNode(CompletionId ref) {
@@ -382,7 +400,7 @@ class InMemCompleter implements CompleterClient {
         private <T> T withNode(CompletionId cid, Function<Node, T> function) {
             Node node = nodes.get(cid);
             if (node == null) {
-                throw new RuntimeException("Node not  found in graph :" + cid);
+                throw new PlatformException("Node not found in graph :" + cid);
             }
             return function.apply(node);
         }
@@ -392,7 +410,7 @@ class InMemCompleter implements CompleterClient {
             for (CompletionId cid : cids) {
                 Node node = this.nodes.get(cid);
                 if (node == null) {
-                    throw new RuntimeException("Node not  found in graph :" + cid);
+                    throw new PlatformException("Node not  found in graph :" + cid);
                 }
                 nodes.add(node);
             }
@@ -464,7 +482,6 @@ class InMemCompleter implements CompleterClient {
             private final CompletionId id;
             private final CompletionStage<Result> outputFuture;
 
-
             private Node(CompletionStage<List<Result>> input,
                          BiFunction<Node, CompletionStage<List<Result>>, CompletionStage<Result>> invoke) {
 
@@ -474,7 +491,6 @@ class InMemCompleter implements CompleterClient {
                 this.outputFuture = invoke.apply(this, input);
                 outputFuture.whenComplete((in, err) -> activeCount.decrementAndGet());
             }
-
 
             private CompletionStage<Result> outputFuture() {
                 return outputFuture;
@@ -504,7 +520,6 @@ class InMemCompleter implements CompleterClient {
                         chainInvocation(closure)
                 ));
             }
-
 
             private Node addThenComposeNode(Datum.Blob closure) {
                 BiFunction<Node, CompletionStage<List<Result>>, CompletionStage<Result>> invokefn =
@@ -581,7 +596,6 @@ class InMemCompleter implements CompleterClient {
                 ));
 
             }
-
 
             private Node addExceptionallyNode(Datum.Blob closure) {
                 return addNode(new Node(outputFuture().thenApply(Collections::singletonList),

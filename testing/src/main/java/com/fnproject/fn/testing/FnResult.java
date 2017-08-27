@@ -48,35 +48,5 @@ public interface FnResult {
      */
     int getStatus();
 
-    /**
-     * Returns the entire raw HTTP response as a byte array
-     *
-     * @return the raw HTTP response bytes
-     */
-    default byte[] getHttpResponse() {
-        byte[] data = getBodyAsBytes();
 
-        BasicHttpResponse response;
-
-        response = new BasicHttpResponse(new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), getStatus(), "Function invoked"));
-
-        response.setHeader("Content-type", "application/octet-stream");
-        response.setHeader("Content-length", String.valueOf(data.length));
-
-        ByteArrayOutputStream byteos = new ByteArrayOutputStream();
-        SessionOutputBufferImpl sob = new SessionOutputBufferImpl(new HttpTransportMetricsImpl(), 65535);
-        sob.bind(byteos);
-        DefaultHttpResponseWriter writer = new DefaultHttpResponseWriter(sob);
-        try {
-            writer.write(response);
-            ContentLengthOutputStream clos = new ContentLengthOutputStream(sob, data.length);
-            clos.write(data);
-            clos.flush();
-            clos.close();
-            sob.flush();
-        } catch (HttpException | IOException e) {
-            throw new FunctionOutputHandlingException("Failed to write response", e);
-        }
-        return byteos.toByteArray();
-    }
 }

@@ -1,5 +1,10 @@
 package com.fnproject.fn.testing.cloudthreads;
 
+import com.fnproject.fn.runtime.cloudthreads.CloudCompleterApiClient;
+import org.apache.http.HttpResponse;
+
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Objects;
 
 /**
@@ -8,6 +13,7 @@ import java.util.Objects;
  * (c) 2017 Oracle Corporation
  */
 public class Result {
+
     private final boolean success;
     private final Datum datum;
 
@@ -16,28 +22,58 @@ public class Result {
         this.datum = Objects.requireNonNull(datum);
     }
 
-    public boolean isSuccess() {
-        return success;
-    }
-
-    public Datum getDatum() {
+    Datum getDatum() {
         return datum;
     }
 
-    public static Result success(Datum d) {
+    static Result success(Datum d) {
         return new Result(true, d);
 
     }
 
-    public static Result failure(Datum d) {
+    static Result failure(Datum d) {
         return new Result(false, d);
     }
 
-    public  Result toEmpty() {
-        return new Result(success,new  Datum.EmptyDatum());
+    Result toEmpty() {
+        return new Result(success, new Datum.EmptyDatum());
     }
 
-    public Object toJavaObject() {
-        return datum.toJava(success);
+    Object toJavaObject() {
+        return datum.asJavaValue();
     }
+
+
+    void writePart(OutputStream os) throws IOException {
+        HeaderWriter hw = (key, value) -> os.write((key + ": " + value + "\r\n").getBytes());
+
+        hw.writeHeader(CloudCompleterApiClient.RESULT_STATUS_HEADER, success ? CloudCompleterApiClient.RESULT_STATUS_SUCCESS : CloudCompleterApiClient.RESULT_STATUS_FAILURE);
+
+        datum.writeHeaders(hw);
+        os.write("\r\n".getBytes());
+        datum.writeBody(os);
+    }
+
+    Result readResult(HttpResponse response) throws IOException {
+        String status = response.getFirstHeader(CloudCompleterApiClient.RESULT_STATUS_HEADER).getValue();
+
+        boolean success;
+        switch (status) {
+            case CloudCompleterApiClient.RESULT_STATUS_SUCCESS:
+                success = true;
+                break;
+            case CloudCompleterApiClient.RESULT_STATUS_FAILURE:
+                success = false;
+                break;
+            default:
+                throw new RuntimeException("Invalid status");
+
+        }
+        String datumTypeString = response.getFirstHeader(CloudCompleterApiClient.DATUM_TYPE_HEADER).getValue();
+
+        Datum.DatumType datumType = Datum.DatumType.valueOf(datumTypeString);
+
+        return new Result(success, datumType.reader.readDatum(response));
+    }
+
 }
