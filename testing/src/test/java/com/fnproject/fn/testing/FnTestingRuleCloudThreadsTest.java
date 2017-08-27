@@ -1,11 +1,12 @@
-package com.oracle.faas.testing;
+package com.fnproject.fn.testing;
 
-import com.oracle.faas.api.RuntimeContext;
-import com.oracle.faas.api.cloudthreads.CloudFuture;
-import com.oracle.faas.api.cloudthreads.CloudThreadRuntime;
-import com.oracle.faas.api.cloudthreads.CloudThreads;
+import com.fnproject.fn.api.Headers;
+import com.fnproject.fn.api.RuntimeContext;
+import com.fnproject.fn.api.cloudthreads.CloudFuture;
+import com.fnproject.fn.api.cloudthreads.CloudThreadRuntime;
+import com.fnproject.fn.api.cloudthreads.CloudThreads;
+import com.fnproject.fn.api.cloudthreads.HttpMethod;
 import org.junit.Before;
-import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -17,11 +18,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class FnTestingRuleCloudThreadsTest {
     private static final int HTTP_OK = 200;
 
-    @ClassRule
-    public static FnCompleterRule completer = FnTestingRule.createCompleter();
-
     @Rule
-    public FnTestingRule fn = FnTestingRule.createWithCompletions(completer);
+    public FnTestingRule fn = FnTestingRule.createDefault();
 
     public static class Loop {
 
@@ -127,8 +125,8 @@ public class FnTestingRuleCloudThreadsTest {
 
         public void invokeFunctionEcho() {
             CloudThreadRuntime rt = CloudThreads.currentRuntime();
-            rt.invokeFunction("user/echo", Result.InvokeFunctionEcho.name().getBytes())
-                .thenAccept((r) -> result = Result.valueOf(new String(r)));
+            rt.invokeFunction("user/echo", HttpMethod.GET, Headers.emptyHeaders(),Result.InvokeFunctionEcho.name().getBytes())
+                .thenAccept((r) -> result = Result.valueOf(new String(r.getBodyAsBytes())));
         }
 
         public void completeExceptionally() {

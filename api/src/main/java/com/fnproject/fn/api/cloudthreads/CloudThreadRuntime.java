@@ -43,6 +43,10 @@ public interface CloudThreadRuntime extends Serializable {
         return invokeFunction(functionId, method, headers, new byte[]{});
     }
 
+    default CloudFuture<HttpResponse> invokeFunction(String functionId, HttpMethod method) {
+        return invokeFunction(functionId, method, Headers.emptyHeaders(), new byte[]{});
+    }
+
 
 
     /**

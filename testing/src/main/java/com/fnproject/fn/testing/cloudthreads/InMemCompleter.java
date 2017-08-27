@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
  * <p>
  * (c) 2017 Oracle Corporation
  */
-class InMemCompleter implements CompleterClient {
+public class InMemCompleter implements CompleterClient {
     private final Map<ThreadId, Graph> graphs = new ConcurrentHashMap<>();
     private final AtomicInteger threadCount = new AtomicInteger();
     private final CompleterInvokeClient completerInvokeClient;

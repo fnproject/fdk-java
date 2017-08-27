@@ -1,10 +1,13 @@
 package com.fnproject.fn.testing;
 
+import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.runtime.EntryPoint;
 import com.fnproject.fn.runtime.FunctionLoader;
-import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.runtime.cloudthreads.CloudThreadsContinuationInvoker;
 import com.fnproject.fn.runtime.cloudthreads.CompleterClientFactory;
+import com.fnproject.fn.runtime.cloudthreads.CompletionId;
+import com.fnproject.fn.testing.cloudthreads.CompleterInvokeClient;
+import com.fnproject.fn.testing.cloudthreads.InMemCompleter;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.TeeOutputStream;
 import org.apache.http.HttpResponse;
@@ -19,6 +22,7 @@ import org.junit.runners.model.Statement;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Testing {@link org.junit.Rule} for fn Java FDK functions.
@@ -64,9 +68,9 @@ public final class FnTestingRule implements TestRule {
     private InputStream pendingInput = new ByteArrayInputStream(new byte[0]);
     private ByteArrayOutputStream stdOut = new ByteArrayOutputStream();
     private ByteArrayOutputStream stdErr = new ByteArrayOutputStream();
-    private String entryPoint = null;
 
-    private FnTestingRule() { }
+    private FnTestingRule() {
+    }
 
     /**
      * Create an instance of the testing {@link org.junit.Rule}, without Cloud Threads support
@@ -76,6 +80,7 @@ public final class FnTestingRule implements TestRule {
     public static FnTestingRule createDefault() {
         return new FnTestingRule();
     }
+
 
     /**
      * Add a config variable to the function for the test
@@ -132,12 +137,46 @@ public final class FnTestingRule implements TestRule {
             FunctionLoader.setContextClassLoader(c.getClassLoader());
         } catch (Exception ignored) {
         }
-
-        Map<String, String> mutableEnv = new HashMap<>();
         PrintStream oldSystemOut = System.out;
         PrintStream oldSystemErr = System.err;
+
+        CompleterInvokeClient client = new CompleterInvokeClient() {
+            @Override
+            public CompletableFuture<HttpResponse> invokeStage(String fnId, CompletionId stageId, byte[] body) {
+
+                ByteArrayOutputStream input = new ByteArrayOutputStream();
+
+
+                ByteArrayOutputStream output = new ByteArrayOutputStream();
+                Map<String, String> mutableEnv = new HashMap<>();
+                PrintStream functionOut = new PrintStream(output);
+                PrintStream functionErr = new PrintStream(oldSystemErr);
+//                System.setOut(functionErr);
+//                System.setErr(functionErr);
+
+                mutableEnv.putAll(config);
+                mutableEnv.putAll(eventEnv);
+                mutableEnv.put("FN_FORMAT", "http");
+
+
+                new EntryPoint().run(
+                        mutableEnv,
+                        pendingInput,
+                        functionOut,
+                        functionErr,
+                        cls + "::" + method);
+
+                return new CompletableFuture<>();
+            }
+        };
+
+        InMemCompleter completer = null;
+        CloudThreadsContinuationInvoker.setCompleterClientFactory((CompleterClientFactory) () -> completer);
+
+
+        Map<String, String> mutableEnv = new HashMap<>();
+
         try {
-            this.entryPoint = cls + "::" + method;
             PrintStream functionOut = new PrintStream(stdOut);
             PrintStream functionErr = new PrintStream(new TeeOutputStream(stdErr, oldSystemErr));
             System.setOut(functionErr);
@@ -147,9 +186,6 @@ public final class FnTestingRule implements TestRule {
             mutableEnv.putAll(eventEnv);
             mutableEnv.put("FN_FORMAT", "http");
 
-            CloudThreadsContinuationInvoker.setCompleterClientFactory((CompleterClientFactory) () -> {
-                throw new IllegalStateException("Cannot test a function using Cloud Threads without completion support: use FnTestingRule.createWithCompletions()?");
-            });
 
             new EntryPoint().run(
                     mutableEnv,
@@ -168,7 +204,6 @@ public final class FnTestingRule implements TestRule {
             System.setOut(oldSystemOut);
             System.setErr(oldSystemErr);
             CloudThreadsContinuationInvoker.resetCompleterClientFactory();
-            this.entryPoint = null;
         }
     }
 
@@ -270,6 +305,30 @@ public final class FnTestingRule implements TestRule {
             throw new RuntimeException("Expected single HTTP response from the continuation invocation, received " + continuationResults.size());
         }
         return continuationResults.get(0);
+    }
+
+    public FnFunctionStubBuilder givenFn(String id) {
+        return new FnFunctionStubBuilder() {
+            @Override
+            public FnTestingRule withResult(byte[] result) {
+                return null;
+            }
+
+            @Override
+            public FnTestingRule withFunctionError() {
+                return null;
+            }
+
+            @Override
+            public FnTestingRule withPlatformError() {
+                return null;
+            }
+
+            @Override
+            public FnTestingRule withAction(ExternalFunctionAction f) {
+                return null;
+            }
+        };
     }
 
     /**

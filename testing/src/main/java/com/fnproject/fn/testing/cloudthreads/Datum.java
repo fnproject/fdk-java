@@ -49,7 +49,7 @@ public abstract class Datum {
     }
 
 
-    static class Blob {
+    public static class Blob {
         private final String contentType;
         private final byte[] data;
 
