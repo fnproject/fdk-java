@@ -51,18 +51,21 @@ public class InMemCompleter implements CompleterClient {
     public void awaitTermination() {
         while (true) {
             int aliveCount = 0;
+
             for (Map.Entry<ThreadId, Graph> e : graphs.entrySet()) {
                 if (!e.getValue().isCompleted()) {
                     aliveCount++;
                 }
             }
             if (aliveCount > 0) {
-                System.err.println("Alive count is " + aliveCount);
+                System.err.println(graphs.size() + "graphs  alive count is " + aliveCount);
                 try {
                     Thread.sleep(150);
                 } catch (InterruptedException e) {
                 }
             } else {
+                System.err.println(graphs.size() + "graphs  Alive count is 0 , terminating");
+
                 break;
             }
         }
@@ -184,7 +187,7 @@ public class InMemCompleter implements CompleterClient {
 
     @Override
     public CompletionId supply(ThreadId threadID, Serializable code) {
-        return withGraph(threadID, graph -> graph.addSupplyNode(serializeClosure(code))).getId();
+        return withActiveGraph(threadID, graph -> graph.addSupplyNode(serializeClosure(code))).getId();
     }
 
     private Datum.Blob serializeClosure(Serializable code) {
@@ -199,24 +202,27 @@ public class InMemCompleter implements CompleterClient {
         }
     }
 
-    private <T> T withGraph(ThreadId t, Function<Graph, T> act) {
+    private <T> T withActiveGraph(ThreadId t, Function<Graph, T> act) {
         Graph g = graphs.get(t);
         if (g == null) {
             throw new PlatformException("unknown graph " + t.getId());
+        }
+        if(g.complete.get()){
+            throw new PlatformException("graph already completed");
         }
         return act.apply(g);
     }
 
     @Override
     public CompletionId thenApply(ThreadId threadID, CompletionId completionId, Serializable code) {
-        return withGraph(threadID,
+        return withActiveGraph(threadID,
                 (graph) -> graph.withNode(completionId,
                         (parent) -> parent.addThenApplyNode(serializeClosure(code)))).getId();
     }
 
     @Override
     public CompletionId whenComplete(ThreadId threadID, CompletionId completionId, Serializable code) {
-        return withGraph(threadID,
+        return withActiveGraph(threadID,
                 (graph) -> graph.withNode(completionId,
                         (parent) -> parent.addWhenCompleteNode(serializeClosure(code)))).getId();
 
@@ -224,14 +230,14 @@ public class InMemCompleter implements CompleterClient {
 
     @Override
     public CompletionId thenCompose(ThreadId threadId, CompletionId completionId, Serializable code) {
-        return withGraph(threadId,
+        return withActiveGraph(threadId,
                 (graph) -> graph.withNode(completionId,
                         (parent) -> parent.addThenComposeNode(serializeClosure(code)))).getId();
     }
 
     @Override
     public Object waitForCompletion(ThreadId threadId, CompletionId completionId) {
-        return withGraph(threadId, (graph) -> graph.withNode(completionId, (node) -> {
+        return withActiveGraph(threadId, (graph) -> graph.withNode(completionId, (node) -> {
             try {
                 return node.outputFuture().toCompletableFuture().get().toJavaObject();
             } catch (ExecutionException e) {
@@ -255,14 +261,14 @@ public class InMemCompleter implements CompleterClient {
 
     @Override
     public CompletionId thenAccept(ThreadId threadId, CompletionId completionId, Serializable code) {
-        return withGraph(threadId,
+        return withActiveGraph(threadId,
                 (graph) -> graph.withNode(completionId,
                         (parent) -> parent.addThenAcceptNode(serializeClosure(code)))).getId();
     }
 
     @Override
     public CompletionId thenRun(ThreadId threadId, CompletionId completionId, Serializable code) {
-        return withGraph(threadId,
+        return withActiveGraph(threadId,
                 (graph) -> graph.withNode(completionId,
                         (parent) -> parent.addThenRunNode(serializeClosure(code)))).getId();
 
@@ -270,7 +276,7 @@ public class InMemCompleter implements CompleterClient {
 
     @Override
     public CompletionId acceptEither(ThreadId threadId, CompletionId completionId, CompletionId alternate, Serializable code) {
-        return withGraph(threadId,
+        return withActiveGraph(threadId,
                 (graph) ->
                         graph.withNode(alternate,
                                 (other) ->
@@ -281,7 +287,7 @@ public class InMemCompleter implements CompleterClient {
 
     @Override
     public CompletionId applyToEither(ThreadId threadId, CompletionId completionId, CompletionId alternate, Serializable code) {
-        return withGraph(threadId,
+        return withActiveGraph(threadId,
                 (graph) ->
                         graph.withNode(alternate,
                                 (other) ->
@@ -291,7 +297,7 @@ public class InMemCompleter implements CompleterClient {
 
     @Override
     public CompletionId anyOf(ThreadId threadId, List<CompletionId> cids) {
-        return withGraph(threadId,
+        return withActiveGraph(threadId,
                 (graph) ->
                         graph.withNodes(cids, graph::addAnyOf).getId());
 
@@ -299,7 +305,7 @@ public class InMemCompleter implements CompleterClient {
 
     @Override
     public CompletionId delay(ThreadId threadId, long l) {
-        return withGraph(threadId,
+        return withActiveGraph(threadId,
                 (graph) -> graph.addDelayNode(l)).getId();
 
     }
@@ -307,7 +313,7 @@ public class InMemCompleter implements CompleterClient {
 
     @Override
     public CompletionId thenAcceptBoth(ThreadId threadId, CompletionId completionId, CompletionId alternate, Serializable code) {
-        return withGraph(threadId,
+        return withActiveGraph(threadId,
                 (graph) ->
                         graph.withNode(alternate,
                                 (other) ->
@@ -320,20 +326,20 @@ public class InMemCompleter implements CompleterClient {
     public ExternalCompletion createExternalCompletion(ThreadId threadId) {
         CompletableFuture<Result> resultFuture = new CompletableFuture<>();
 
-        Graph.Node node = withGraph(threadId,
+        Graph.Node node = withActiveGraph(threadId,
                 graph -> graph.addExternalNode(resultFuture));
         return externalCompletionServer.ensureStarted().createCompletion(threadId, node.id, resultFuture);
     }
 
     @Override
     public CompletionId invokeFunction(ThreadId threadId, String functionId, byte[] data, HttpMethod method, Headers headers) {
-        return withGraph(threadId, (graph) ->
+        return withActiveGraph(threadId, (graph) ->
                 graph.addInvokeFunction(functionId, method, headers, data)).getId();
     }
 
     @Override
     public CompletionId completedValue(ThreadId threadId, Serializable value) {
-        return withGraph(threadId, (graph) ->
+        return withActiveGraph(threadId, (graph) ->
                 graph.addCompletedValue(new Datum.BlobDatum(serializeClosure(value)))).getId();
 
 
@@ -341,14 +347,14 @@ public class InMemCompleter implements CompleterClient {
 
     @Override
     public CompletionId allOf(ThreadId threadId, List<CompletionId> cids) {
-        return withGraph(threadId,
+        return withActiveGraph(threadId,
                 (graph) ->
                         graph.withNodes(cids, graph::addAllOf).getId());
     }
 
     @Override
     public CompletionId handle(ThreadId threadId, CompletionId completionId, Serializable code) {
-        return withGraph(threadId,
+        return withActiveGraph(threadId,
                 (graph) ->
                         graph.withNode(completionId,
                                 (node) -> node.addHandleNode(serializeClosure(code))).getId());
@@ -356,7 +362,7 @@ public class InMemCompleter implements CompleterClient {
 
     @Override
     public CompletionId exceptionally(ThreadId threadId, CompletionId completionId, Serializable code) {
-        return withGraph(threadId,
+        return withActiveGraph(threadId,
                 (graph) ->
                         graph.withNode(completionId,
                                 (node) -> node.addExceptionallyNode(serializeClosure(code))).getId());
@@ -364,7 +370,7 @@ public class InMemCompleter implements CompleterClient {
 
     @Override
     public CompletionId thenCombine(ThreadId threadId, CompletionId completionId, Serializable code, CompletionId alternate) {
-        return withGraph(threadId,
+        return withActiveGraph(threadId,
                 (graph) ->
                         graph.withNode(alternate,
                                 (other) ->
@@ -375,7 +381,7 @@ public class InMemCompleter implements CompleterClient {
 
     @Override
     public void commit(ThreadId threadId) {
-        withGraph(threadId, Graph::commit);
+        withActiveGraph(threadId, Graph::commit);
     }
 
 
@@ -386,7 +392,7 @@ public class InMemCompleter implements CompleterClient {
         private final AtomicInteger nodeCount = new AtomicInteger();
         private final AtomicInteger activeCount = new AtomicInteger();
         private final Map<CompletionId, Node> nodes = new ConcurrentHashMap<>();
-
+        private AtomicBoolean complete = new AtomicBoolean(false);
 
         Graph(String functionId, ThreadId graphId) {
             this.functionId = functionId;
@@ -397,8 +403,17 @@ public class InMemCompleter implements CompleterClient {
             return committed.get() && activeCount.get() == 0;
         }
 
+        private void checkCompletion(){
+            if(committed.get() && activeCount.get() ==0){
+                complete.set(true);
+            }
+        }
         private boolean commit() {
-            return committed.compareAndSet(false, true);
+            boolean commitResult =  committed.compareAndSet(false, true);
+            if(commitResult ){
+                checkCompletion();
+            }
+            return commitResult;
         }
 
         private Optional<Node> findNode(CompletionId ref) {
@@ -524,6 +539,7 @@ public class InMemCompleter implements CompleterClient {
                 outputFuture.whenComplete((in, err) -> {
                     activeCount.decrementAndGet();
                     System.err.printf("Node %s complete : %s \n", id, err != null ? "error" : "succes");
+                    checkCompletion();
                 });
             }
 
@@ -638,8 +654,8 @@ public class InMemCompleter implements CompleterClient {
                             CompletableFuture<Result> result = new CompletableFuture<>();
                             inputs.whenComplete((results, err) -> {
                                 if (err != null) {
-                                    if (err instanceof ResultException) {
-                                        chainInvocation(closure).apply(node, CompletableFuture.completedFuture(Collections.singletonList(((ResultException) err).toResult())))
+                                    if (err instanceof CompletionException && err.getCause() instanceof ResultException) {
+                                        chainInvocation(closure).apply(node, CompletableFuture.completedFuture(Collections.singletonList(((ResultException) err.getCause()).toResult())))
                                                 .whenComplete((r, e) -> {
                                                     if (e != null) {
                                                         result.completeExceptionally(err);

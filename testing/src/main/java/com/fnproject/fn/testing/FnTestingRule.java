@@ -10,7 +10,6 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.TeeOutputStream;
 import org.apache.http.HttpResponse;
 import org.apache.http.NoHttpResponseException;
-import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.io.*;
 import org.junit.rules.TestRule;
@@ -121,6 +120,9 @@ public final class FnTestingRule implements TestRule {
     }
 
 
+
+
+
     /**
      * Runs the function runtime with the specified class and method (and waits for Cloud Threads completions to finish
      * if the test spawns any Cloud Thread)
@@ -145,7 +147,7 @@ public final class FnTestingRule implements TestRule {
                 // TODO avoid repeating MIME stuff (library-ise with CT/runtime? )
                 // TODO de-dupe shared env setup
                 // TODO Making up event details (app path?)
-                oldSystemErr.printf("Executing closure for %s with args \n ", stageId,input);
+                oldSystemErr.printf("Executing closure for %s with args \n ", stageId, input);
 
                 byte[] inputBody;
                 String boundary = UUID.randomUUID().toString().replaceAll("-", "");
@@ -199,14 +201,14 @@ public final class FnTestingRule implements TestRule {
                 ByteArrayInputStream parseStream = new ByteArrayInputStream(output.toByteArray());
                 sib.bind(parseStream);
                 DefaultHttpResponseParser parser = new DefaultHttpResponseParser(sib);
-
+                Result r;
                 try {
                     // Read wrapping result, and throw it away
                     HttpResponse response = parser.parse();
                     IdentityInputStream iis = new IdentityInputStream(sib);
                     byte[] responseBody = IOUtils.toByteArray(iis);
 
-                    System.err.println("Got Fn response body: \n" + new String(responseBody) );
+                   // System.err.println("Got Fn response body: \n" + new String(responseBody));
                     // HTTP in HTTP :(
                     SessionInputBufferImpl sib2 = new SessionInputBufferImpl(new HttpTransportMetricsImpl(), 65535);
                     InputStream frameStream = new ByteArrayInputStream(responseBody);
@@ -221,17 +223,21 @@ public final class FnTestingRule implements TestRule {
 
                     oldSystemErr.println("HTTP Resp " + wrappedResponse);
 
-                    Result r = Result.readResult(wrappedResponse);
+                    r = Result.readResult(wrappedResponse);
                     oldSystemErr.println("Response  " + r);
 
-                    return r;
+
 
                 } catch (Exception e) {
                     oldSystemErr.println("Err\n" + e);
                     e.printStackTrace(oldSystemErr);
-                    return Result.failure(new Datum.ErrorDatum(Datum.ErrorType.unknown_error, "Error reading fn Response:" + e.getMessage()));
+                     r = Result.failure(new Datum.ErrorDatum(Datum.ErrorType.unknown_error, "Error reading fn Response:" + e.getMessage()));
                 }
 
+                if(!r.isSuccess()){
+                    throw new ResultException(r.getDatum());
+                }
+                return r;
 
             }
         };
@@ -279,7 +285,9 @@ public final class FnTestingRule implements TestRule {
             System.err.flush();
             System.setOut(oldSystemOut);
             System.setErr(oldSystemErr);
+
             CloudThreadsContinuationInvoker.resetCompleterClientFactory();
+            CloudThreadsContinuationInvoker.setTestingMode(false);
         }
     }
 

@@ -22,7 +22,7 @@ public class Result {
         this.datum = Objects.requireNonNull(datum);
     }
 
-    Datum getDatum() {
+    public Datum getDatum() {
         return datum;
     }
 
@@ -84,5 +84,9 @@ public class Result {
         sb.append(", datum=").append(datum);
         sb.append('}');
         return sb.toString();
+    }
+
+    public boolean isSuccess() {
+        return success;
     }
 }
