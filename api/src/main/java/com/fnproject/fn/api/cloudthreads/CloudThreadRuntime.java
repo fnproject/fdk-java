@@ -37,10 +37,9 @@ public interface CloudThreadRuntime extends Serializable {
      * @param data       input data to function as a byte array -
      * @return a future which completes normally if the function succeeded and fails if it fails
      */
-    // TODO: convert method from string to HttpMethod enum
-    CloudFuture<FunctionResponse> invokeFunction(String functionId, HttpMethod method, Headers headers, byte[] data);
+    CloudFuture<HttpResponse> invokeFunction(String functionId, HttpMethod method, Headers headers, byte[] data);
 
-    default CloudFuture<FunctionResponse> invokeFunction(String functionId, HttpMethod method, Headers headers) {
+    default CloudFuture<HttpResponse> invokeFunction(String functionId, HttpMethod method, Headers headers) {
         return invokeFunction(functionId, method, headers, new byte[]{});
     }
 
@@ -124,7 +123,7 @@ public interface CloudThreadRuntime extends Serializable {
      * @return an external future
      * @see ExternalCloudFuture for details of how to complete external futures.
      */
-    ExternalCloudFuture<byte[]> createExternalFuture();
+    ExternalCloudFuture<HttpRequest> createExternalFuture();
 
     /**
      * Wait for all a list of tasks to complete

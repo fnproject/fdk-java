@@ -3,6 +3,7 @@ package com.fnproject.fn.integration;
 import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.InputEvent;
 import com.fnproject.fn.api.cloudthreads.*;
+import com.fnproject.fn.runtime.cloudthreads.HttpClient;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.TeeOutputStream;
 
@@ -10,6 +11,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -116,11 +118,11 @@ public class ExerciseEverything {
                 .exceptionally((e) -> -3);
     }
 
-    @Test(11)
-    @Test.Catch(FunctionInvocationException.class)
-    public CloudFuture<FunctionResponse> nonexistentExternalEvaluation(CloudThreadRuntime rt) {
-        return rt.invokeFunction("nonexistent", HttpMethod.POST, Headers.emptyHeaders(), new byte[0]);
-    }
+//    @Test(11)
+//    @Test.Catch({CloudCompletionException.class, FunctionInvocationException.class})
+//    public CloudFuture<HttpResponse> nonexistentExternalEvaluation(CloudThreadRuntime rt) {
+//        return rt.invokeFunction("nonexistent", HttpMethod.POST, Headers.emptyHeaders(), new byte[0]);
+//    }
 
     @Test(12)
     @Test.Expect("okay")
@@ -134,8 +136,8 @@ public class ExerciseEverything {
     // There is currently no way for a hot function to signal failure in the Fn platform.
     // This test will only work in default mode.
     @Test(13)
-    @Test.Catch(FunctionInvocationException.class)
-    public CloudFuture<FunctionResponse> checkFailingExternalInvocation(CloudThreadRuntime rt) {
+    @Test.Catch({CloudCompletionException.class, FunctionInvocationException.class})
+    public CloudFuture<HttpResponse> checkFailingExternalInvocation(CloudThreadRuntime rt) {
         return rt.invokeFunction(inputEvent.getAppName() + inputEvent.getRoute(), HttpMethod.POST, Headers.emptyHeaders(), "FAIL".getBytes());
     }
 
@@ -290,6 +292,69 @@ public class ExerciseEverything {
                 .exceptionally(Throwable::getMessage);
     }
 
+    @Test(31)
+    @Test.Expect("foobar")
+    public CloudFuture<String> externallyCompletable(CloudThreadRuntime rt) throws IOException {
+        ExternalCloudFuture<HttpRequest> cf = rt.createExternalFuture();
+        HttpClient httpClient = new HttpClient();
+        httpClient.execute(httpClient
+                .preparePost(cf.completionUrl().toString())
+                .withHeader("My-Header", "foo")
+                .withHeader("FnProject-Method", "post")
+                .withBody("bar".getBytes()));
+        return cf.thenApply((req) ->
+                req.getHeaders().get("my-header").get() + new String(req.getBodyAsBytes())
+        );
+    }
+
+    @Test(32)
+    @Test.Expect("bar")
+    public CloudFuture<HttpRequest> externallyCompletableDirectGet(CloudThreadRuntime rt) throws IOException {
+        ExternalCloudFuture<HttpRequest> cf = rt.createExternalFuture();
+        HttpClient httpClient = new HttpClient();
+        httpClient.execute(HttpClient
+                .preparePost(cf.completionUrl().toString())
+                .withHeader("My-Header", "foo")
+                .withHeader("FnProject-Method", "post")
+                .withBody("bar".getBytes()));
+        return cf;
+    }
+
+
+    @Test(33)
+    @Test.Catch({CloudCompletionException.class, ExternalCompletionException.class})
+    @Test.Expect("External completion failed")
+    public CloudFuture<HttpRequest> externalFutureFailureAndGet(CloudThreadRuntime rt) throws IOException {
+        ExternalCloudFuture<HttpRequest> cf = rt.createExternalFuture();
+        HttpClient httpClient = new HttpClient();
+        httpClient.execute(HttpClient
+                .preparePost(cf.failUrl().toString())
+                .withHeader("My-Header", "foo")
+                .withHeader("FnProject-Method", "post")
+                .withBody("bar".getBytes()));
+        return cf;
+    }
+
+
+    @Test(34)
+    @Test.Expect("foobar")
+    public CloudFuture<String> externallyCompletableFailure(CloudThreadRuntime rt) throws IOException {
+        ExternalCloudFuture<HttpRequest> cf = rt.createExternalFuture();
+        HttpClient httpClient = new HttpClient();
+        httpClient.execute(HttpClient
+                .preparePost(cf.failUrl().toString())
+                .withHeader("My-Header", "foo")
+                .withHeader("FnProject-Method", "post")
+                .withBody("bar".getBytes()));
+        return cf.thenApply((req) -> { System.err.println("got here"); return "failed"; })
+                .exceptionally(e -> {
+                        System.err.println("Got into exception with e=" + e);
+                        return
+                        ((ExternalCompletionException)e).getExternalRequest().getHeaders().get("my-header").get() +
+                        new String(((ExternalCompletionException)e).getExternalRequest().getBodyAsBytes()); }
+        );
+    }
+
     private int id;
 
     void fail() {
@@ -318,6 +383,8 @@ public class ExerciseEverything {
         CloudThreadRuntime rt = CloudThreads.currentRuntime();
 
         out.println("In main function");
+        Map<Integer, CloudFuture<Object>> awaiting = new TreeMap<>();
+
         for (Map.Entry<Integer, Method> e: findTests(this).entrySet()) {
             id = e.getKey();
             Method m = e.getValue();
@@ -328,11 +395,28 @@ public class ExerciseEverything {
             String[] values = expectedValues(m);
 
             try {
+                awaiting.put(id, (CloudFuture<Object>) m.invoke(this, rt));
+            } catch (InvocationTargetException ex) {
+                out.println("Failure setting up test " + id + ": " + ex.getCause());
+                ex.printStackTrace(out);
+                fail();
+            } catch (IllegalAccessException e1) {}
+        }
 
-                CloudFuture<Object> cf = (CloudFuture<Object>) m.invoke(this, rt);
+        for (Map.Entry<Integer, Method> e: findTests(this).entrySet()) {
+            id = e.getKey();
+            Method m = e.getValue();
+
+            out.println("Running test " + id);
+
+            Test.Catch exWanted = m.getAnnotation(Test.Catch.class);
+            String[] values = expectedValues(m);
+            try {
+                CloudFuture<Object> cf = awaiting.get(id);
+                if (cf == null) {
+                    continue;
+                }
                 Object r = cf.get();
-
-                boolean found = false;
 
                 // Coerce returned value to string
                 String rv = coerceToString(r);
@@ -394,6 +478,10 @@ public class ExerciseEverything {
             return (String) r;
         } else if (r instanceof Throwable) {
             return ((Throwable) r).getMessage();
+        } else if (r instanceof HttpRequest) {
+            return new String(((HttpRequest) r).getBodyAsBytes());
+        } else if (r instanceof HttpResponse) {
+            return new String(((HttpResponse) r).getBodyAsBytes());
         } else {
             return r.toString();
         }

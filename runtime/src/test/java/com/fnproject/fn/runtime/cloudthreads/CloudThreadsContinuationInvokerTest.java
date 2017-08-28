@@ -242,7 +242,7 @@ public class CloudThreadsContinuationInvokerTest {
 
         String functionResponse = "{ \"some\": \"json\" }";
         HttpMultipartSerialization ser = new HttpMultipartSerialization()
-                .addJavaEntity((CloudThreads.SerFunction<FunctionResponse, Boolean>) (result) -> {
+                .addJavaEntity((CloudThreads.SerFunction<HttpResponse, Boolean>) (result) -> {
                     // Expect
                     assertThat(result.getStatusCode()).isEqualTo(200);
                     assertThat(new String(result.getBodyAsBytes())).isEqualTo(functionResponse);
@@ -268,7 +268,7 @@ public class CloudThreadsContinuationInvokerTest {
 
         String functionResponse = "{ \"some\": \"json\" }";
         HttpMultipartSerialization ser = new HttpMultipartSerialization()
-                .addJavaEntity((CloudThreads.SerFunction<FunctionResponse, Boolean>) (result) -> {
+                .addJavaEntity((CloudThreads.SerFunction<HttpResponse, Boolean>) (result) -> {
                     // Then
                     assertThat(result.getStatusCode()).isEqualTo(500);
                     assertThat(new String(result.getBodyAsBytes())).isEqualTo(functionResponse);
@@ -284,6 +284,82 @@ public class CloudThreadsContinuationInvokerTest {
         // When
         CloudThreadsContinuationInvoker invoker = new CloudThreadsContinuationInvoker();
         Optional<OutputEvent> result = invoker.tryInvoke(new EmptyInvocationContext(), event);
+    }
+
+
+    @Test
+    public void failedExternalFunctionInvocationCorrectlyCoercedToException() throws Exception {
+        // Given
+        Map<String, String> headers = new HashMap<>();
+        headers.put("FnProject-Header-Custom-Header", "customValue");
+        headers.put(RESULT_STATUS_HEADER, RESULT_STATUS_FAILURE);
+
+
+        String postedResult = "{ \"some\": \"json\" }";
+        HttpMultipartSerialization ser = new HttpMultipartSerialization()
+                .addJavaEntity((CloudThreads.SerFunction<Throwable, String>) (result) ->
+                        new String(((FunctionInvocationException) result).getFunctionResponse().getBodyAsBytes()))
+                .addFnResultEntity(500, headers, "application/json", postedResult);
+
+        InputEvent event = constructContinuationInputEvent(ser);
+
+        // When
+        CloudThreadsContinuationInvoker invoker = new CloudThreadsContinuationInvoker();
+        Optional<OutputEvent> result = invoker.tryInvoke(new EmptyInvocationContext(), event);
+        assertThat(result).isPresent();
+        assertThat(resultAsObject(result.get())).isEqualTo(postedResult);
+    }
+
+    @Test
+    public void externallyCompletableResultPopulatesHttpRequest() throws Exception {
+        // Given
+        Map<String, String> headers = new HashMap<>();
+        headers.put("FnProject-Header-Custom-Header", "customValue");
+
+        String postedResult = "{ \"some\": \"json\" }";
+        HttpMultipartSerialization ser = new HttpMultipartSerialization()
+                .addJavaEntity((CloudThreads.SerFunction<HttpRequest, Boolean>) (result) -> {
+                    // Expect
+                    assertThat(result.getMethod()).isEqualTo(HttpMethod.POST);
+                    assertThat(new String(result.getBodyAsBytes())).isEqualTo(postedResult);
+                    assertThat(result.getHeaders().get("Content-Type"))
+                            .isPresent()
+                            .contains("application/json");
+                    assertThat(result.getHeaders().get("Custom-Header"))
+                            .isPresent()
+                            .contains("customValue");
+                    return true;
+                })
+                .addExternalCompletionEntity("POST", headers, "application/json", postedResult);
+
+        InputEvent event = constructContinuationInputEvent(ser);
+
+        // When
+        CloudThreadsContinuationInvoker invoker = new CloudThreadsContinuationInvoker();
+        Optional<OutputEvent> result = invoker.tryInvoke(new EmptyInvocationContext(), event);
+    }
+
+    @Test
+    public void externallyCompletableResultFailureCorrectlyCoercedToException() throws Exception {
+        // Given
+        Map<String, String> headers = new HashMap<>();
+        headers.put("FnProject-Header-Custom-Header", "customValue");
+        headers.put(RESULT_STATUS_HEADER, RESULT_STATUS_FAILURE);
+
+        String postedResult = "{ \"some\": \"json\" }";
+        HttpMultipartSerialization ser = new HttpMultipartSerialization()
+                .addJavaEntity((CloudThreads.SerBiFunction<Object, Throwable, String>) (result, error) ->
+                                new String(((ExternalCompletionException) error).getExternalRequest().getBodyAsBytes()))
+                .addEmptyEntity()
+                .addExternalCompletionEntity("POST", headers, "application/json", postedResult);
+
+        InputEvent event = constructContinuationInputEvent(ser);
+
+        // When
+        CloudThreadsContinuationInvoker invoker = new CloudThreadsContinuationInvoker();
+        Optional<OutputEvent> result = invoker.tryInvoke(new EmptyInvocationContext(), event);
+        assertThat(result).isPresent();
+        assertThat(resultAsObject(result.get())).isEqualTo(postedResult);
     }
 
     @Test
