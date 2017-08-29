@@ -66,6 +66,15 @@ public final class FnTestingRule implements TestRule {
     private InputStream pendingInput = new ByteArrayInputStream(new byte[0]);
     private ByteArrayOutputStream stdOut = new ByteArrayOutputStream();
     private ByteArrayOutputStream stdErr = new ByteArrayOutputStream();
+    private Map<String, FnFunctionStub> functionStubs = new HashMap<>();
+
+    // CloudThreadsRuntime can be serialised. In order for that to work, we can't have the InMemCompleter
+    // captured dynamically inside the CTRT.
+    // Without this, it will be: the RemoteCloudThreadRuntime has a handle on its CompleterClientFactory, which
+    // in this case is a lambda that refers directly to our completer.
+    // A consequence of this is that CloudThreads tests cannot be run in parallel: there must only
+    // be one invocation of thenRun() active across all threads.
+    private static InMemCompleter completer = null;
 
     private FnTestingRule() {
     }
@@ -179,8 +188,10 @@ public final class FnTestingRule implements TestRule {
                 Map<String, String> mutableEnv = new HashMap<>();
                 PrintStream functionOut = new PrintStream(output);
                 PrintStream functionErr = new PrintStream(oldSystemErr);
-//                System.setOut(functionErr);
-//                System.setErr(functionErr);
+
+                // Do we want to capture IO from continuations on the main log stream?
+                // System.setOut(functionErr);
+                // System.setErr(functionErr);
 
                 mutableEnv.putAll(config);
                 mutableEnv.putAll(eventEnv);
@@ -242,12 +253,16 @@ public final class FnTestingRule implements TestRule {
         FnInvokeClient fnInvokeClient = new FnInvokeClient() {
             @Override
             public CompletableFuture<Result> invokeFunction(String fnId, HttpMethod method, Headers headers, byte[] data) {
-                return null;
+                return CompletableFuture.completedFuture(functionStubs
+                    .computeIfAbsent(fnId, (k) -> {
+                        throw new IllegalStateException("Function was invoked that had no definition: " + k); })
+                    .stubFunction(method, headers, data));
             }
         };
 
         CloudThreadsContinuationInvoker.setTestingMode(true);
-        InMemCompleter completer = new InMemCompleter(client, fnInvokeClient);
+        // The following must be a static: otherwise the factory (the lambda) will not be serializable.
+        completer = new InMemCompleter(client, fnInvokeClient);
         CloudThreadsContinuationInvoker.setCompleterClientFactory((CompleterClientFactory) () -> completer);
 
 
@@ -256,8 +271,8 @@ public final class FnTestingRule implements TestRule {
         try {
             PrintStream functionOut = new PrintStream(stdOut);
             PrintStream functionErr = new PrintStream(new TeeOutputStream(stdErr, oldSystemErr));
-//            System.setOut(functionErr);
-//            System.setErr(functionErr);
+            System.setOut(functionErr);
+            System.setErr(functionErr);
 
             mutableEnv.putAll(config);
             mutableEnv.putAll(eventEnv);
@@ -387,24 +402,37 @@ public final class FnTestingRule implements TestRule {
         return new FnFunctionStubBuilder() {
             @Override
             public FnTestingRule withResult(byte[] result) {
-                return null;
+                return withAction((body) -> result);
             }
 
             @Override
             public FnTestingRule withFunctionError() {
-                return null;
+                return withAction((body) -> { throw new FunctionError("simulated by testing platform"); });
             }
 
             @Override
             public FnTestingRule withPlatformError() {
-                return null;
+                return withAction((body) -> { throw new PlatformError("simulated by testing platform"); });
             }
 
             @Override
             public FnTestingRule withAction(ExternalFunctionAction f) {
-                return null;
+                functionStubs.put(id, (HttpMethod method, Headers headers, byte[] body) -> {
+                    try {
+                        return Result.success(new Datum.HttpRespDatum(200, Headers.emptyHeaders(), f.apply(body)));
+                    } catch (FunctionError functionError) {
+                        throw new ResultException(new Datum.HttpRespDatum(500, Headers.emptyHeaders(), functionError.getMessage().getBytes()));
+                    } catch (PlatformError platformError) {
+                        throw new ResultException(new Datum.ErrorDatum(Datum.ErrorType.function_invoke_failed, platformError.getMessage()));
+                    }
+                });
+                return FnTestingRule.this;
             }
         };
+    }
+
+    private interface FnFunctionStub {
+        Result stubFunction(HttpMethod method, Headers headers, byte[] body);
     }
 
     /**

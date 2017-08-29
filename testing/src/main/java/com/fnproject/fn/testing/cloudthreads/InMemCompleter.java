@@ -1,10 +1,7 @@
 package com.fnproject.fn.testing.cloudthreads;
 
 import com.fnproject.fn.api.Headers;
-import com.fnproject.fn.api.cloudthreads.CloudCompletionException;
-import com.fnproject.fn.api.cloudthreads.HttpMethod;
-import com.fnproject.fn.api.cloudthreads.LambdaSerializationException;
-import com.fnproject.fn.api.cloudthreads.PlatformException;
+import com.fnproject.fn.api.cloudthreads.*;
 import com.fnproject.fn.runtime.cloudthreads.*;
 import com.sun.net.httpserver.HttpServer;
 import org.apache.commons.io.IOUtils;
@@ -198,7 +195,7 @@ public class InMemCompleter implements CompleterClient {
             oos.close();
             return new Datum.Blob(CloudCompleterApiClient.CONTENT_TYPE_JAVA_OBJECT, bos.toByteArray());
         } catch (Exception e) {
-            throw new LambdaSerializationException("Error serializing closure ");
+            throw new LambdaSerializationException("Error serializing closure");
         }
     }
 
@@ -247,6 +244,10 @@ public class InMemCompleter implements CompleterClient {
                     Object err = r.toJavaObject();
                     if (err instanceof Throwable) {
                         throw new CloudCompletionException((Throwable) err);
+                    } else if (err instanceof HttpResponse && !r.isSuccess()) {
+                        throw new CloudCompletionException(new FunctionInvocationException((HttpResponse) err));
+                    } else if (err instanceof HttpRequest && !r.isSuccess()) {
+                        throw new CloudCompletionException(new ExternalCompletionException((HttpRequest) err));
                     }
                     throw new PlatformException(e);
                 } else {
@@ -602,12 +603,12 @@ public class InMemCompleter implements CompleterClient {
             }
 
             private Result errorToResult(Throwable err) {
-                if (err instanceof ResultException) {
-                    return ((ResultException) err).toResult();
+                if (err.getCause() instanceof ResultException) {
+                    return ((ResultException) err.getCause()).toResult();
                 } else {
                     System.err.println("Unexpected error " + err.toString());
                     err.printStackTrace();
-                    return Result.failure(new Datum.ErrorDatum(Datum.ErrorType.unknown_error, "Unexpected error" + err.getMessage()));
+                    return Result.failure(new Datum.ErrorDatum(Datum.ErrorType.unknown_error, "Unexpected error " + err.getMessage()));
                 }
             }
 

@@ -2,10 +2,7 @@ package com.fnproject.fn.testing;
 
 import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.RuntimeContext;
-import com.fnproject.fn.api.cloudthreads.CloudFuture;
-import com.fnproject.fn.api.cloudthreads.CloudThreadRuntime;
-import com.fnproject.fn.api.cloudthreads.CloudThreads;
-import com.fnproject.fn.api.cloudthreads.HttpMethod;
+import com.fnproject.fn.api.cloudthreads.*;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -74,12 +71,14 @@ public class FnTestingRuleCloudThreadsTest {
             Supply,
             AllOf,
             InvokeFunctionEcho,
+            InvokeFunctionFixed,
             AnyOf, Exceptionally,
             ThenCompose,
             ThenComplete
         }
         static Result result = null;
         static Integer TO_ADD = null;
+        static Throwable exception = null;
 
         public TestFn(RuntimeContext ctx) {
             TO_ADD = Integer.parseInt(ctx.getConfigurationByKey("ADD").orElse("-1"));
@@ -128,8 +127,18 @@ public class FnTestingRuleCloudThreadsTest {
 
         public void invokeFunctionEcho() {
             CloudThreadRuntime rt = CloudThreads.currentRuntime();
-            rt.invokeFunction("user/echo", HttpMethod.GET, Headers.emptyHeaders(),Result.InvokeFunctionEcho.name().getBytes())
+            rt.invokeFunction("user/echo", HttpMethod.GET, Headers.emptyHeaders(), Result.InvokeFunctionEcho.name().getBytes())
                 .thenAccept((r) -> result = Result.valueOf(new String(r.getBodyAsBytes())));
+        }
+
+        public void invokeFunctionError() {
+            CloudThreadRuntime rt = CloudThreads.currentRuntime();
+            rt.invokeFunction("user/error", HttpMethod.GET, Headers.emptyHeaders(), new byte[]{})
+                    .exceptionally((e) -> {
+                        result = Result.Exceptionally;
+                        exception = e;
+                        return null;
+                    });
         }
 
         public void completeExceptionally() {
@@ -170,6 +179,7 @@ public class FnTestingRuleCloudThreadsTest {
 
         static void reset() {
             result = null;
+            exception = null;
         }
     }
 
@@ -231,6 +241,45 @@ public class FnTestingRuleCloudThreadsTest {
         assertThat(fn.getOnlyResult().getBodyAsString())
                 .isEqualTo(String.join("", Collections.nCopies(Loop.COUNT, "hello world")));
     }
+
+    @Test
+    public void invokeFunctionWithResult() {
+        fn.givenEvent().enqueue();
+        fn.givenFn("user/echo")
+                .withResult(TestFn.Result.InvokeFunctionFixed.name().getBytes());
+
+        fn.thenRun(TestFn.class, "invokeFunctionEcho");
+
+        assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
+        assertThat(TestFn.result).isEqualTo(TestFn.Result.InvokeFunctionFixed);
+    }
+
+    @Test
+    public void invokeFunctionWithFunctionError() {
+        fn.givenEvent().enqueue();
+        fn.givenFn("user/error")
+                .withFunctionError();
+
+        fn.thenRun(TestFn.class, "invokeFunctionError");
+
+        assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
+        assertThat(TestFn.result).isEqualTo(TestFn.Result.Exceptionally);
+        assertThat(TestFn.exception).isInstanceOfAny(FunctionInvocationException.class);
+    }
+
+    @Test
+    public void invokeFunctionWithPlatformError() {
+        fn.givenEvent().enqueue();
+        fn.givenFn("user/error")
+                .withPlatformError();
+
+        fn.thenRun(TestFn.class, "invokeFunctionError");
+
+        assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
+        assertThat(TestFn.result).isEqualTo(TestFn.Result.Exceptionally);
+        assertThat(TestFn.exception).isInstanceOfAny(PlatformException.class);
+    }
+
     @Test
     public void invokeFunctionWithAction() {
         fn.givenEvent().enqueue();
@@ -265,6 +314,7 @@ public class FnTestingRuleCloudThreadsTest {
 
     @Test
     public void shouldLogMessagesToStdErrToPlatformStdErr() {
+        // Questionable: for testing, do we point all stderr stuff to the same log stream?
         fn.givenEvent().enqueue();
 
         fn.thenRun(TestFn.class, "logToStdErrInContinuation");
@@ -275,6 +325,17 @@ public class FnTestingRuleCloudThreadsTest {
 
     @Test
     public void shouldLogMessagesToStdOutToPlatformStdErr() {
+        // Questionable: for testing, do we point all stderr stuff to the same log stream?
+        fn.givenEvent().enqueue();
+
+        fn.thenRun(TestFn.class, "logToStdOutInContinuation");
+
+        assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
+        assertThat(fn.getStdErrAsString()).contains("TestFn logging: 1");
+    }
+
+    @Test
+    public void staticCopyOfConfigVarAvailableInContinuation() {
         fn.setConfig("ADD", "1");
         fn.givenEvent().enqueue();
 

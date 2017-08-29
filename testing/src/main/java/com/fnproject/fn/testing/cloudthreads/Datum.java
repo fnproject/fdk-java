@@ -264,7 +264,7 @@ public abstract class Datum {
         private final Headers headers;
         private final byte[] body;
 
-        HttpRespDatum(int status, Headers headers, byte[] body) {
+        public HttpRespDatum(int status, Headers headers, byte[] body) {
             this.status = status;
             this.headers = Objects.requireNonNull(headers);
             this.body = body;
@@ -272,33 +272,22 @@ public abstract class Datum {
 
         @Override
         public Object asJavaValue() {
-            return new FnResult() {
+            return new HttpResponse() {
                 @Override
-                public byte[] getBodyAsBytes() {
-                    return body;
-                }
+                public int getStatusCode() { return status; }
 
                 @Override
-                public String getBodyAsString() {
-                    return new String(body, StandardCharsets.UTF_8);
-                }
+                public Headers getHeaders() { return headers; }
 
                 @Override
-                public Headers getHeaders() {
-                    return headers;
-                }
-
-                @Override
-                public int getStatus() {
-                    return status;
-                }
+                public byte[] getBodyAsBytes() { return body; }
             };
         }
 
         @Override
         public void writeHeaders(HeaderWriter hw) throws IOException {
             hw.writeHeader(DATUM_TYPE_HEADER, DATUM_TYPE_HTTP_RESP);
-            hw.writeHeader(RESULT_STATUS_HEADER, String.valueOf(status));
+            hw.writeHeader(RESULT_CODE_HEADER, String.valueOf(status));
 
             for (Map.Entry<String, String> e : headers.getAll().entrySet()) {
                 hw.writeHeader(USER_HEADER_PREFIX + e.getKey(), e.getValue());

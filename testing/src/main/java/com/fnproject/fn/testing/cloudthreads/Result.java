@@ -26,7 +26,7 @@ public class Result {
         return datum;
     }
 
-    static Result success(Datum d) {
+    public static Result success(Datum d) {
         return new Result(true, d);
 
     }
