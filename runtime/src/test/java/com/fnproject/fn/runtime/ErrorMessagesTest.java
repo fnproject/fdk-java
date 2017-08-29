@@ -15,8 +15,7 @@ public class ErrorMessagesTest {
     private void assertIsErrorWithoutStacktrace(String errorMessage) {
         assertThat(fn.exitStatus()).isEqualTo(2);
         assertThat(fn.getStdErrAsString()).contains(errorMessage);
-        int errorMessageLineCount = errorMessage.split("\n").length;
-        assertThat(fn.getStdErrAsString().split(System.getProperty("line.separator")).length).isEqualTo(errorMessageLineCount);
+        assertThat(fn.getStdErrAsString().split(System.getProperty("line.separator")).length).isEqualTo(1);
     }
 
     private void assertIsErrorWithStacktrace(String errorMessage) {
@@ -31,8 +30,7 @@ public class ErrorMessagesTest {
     @Test
     public void userSpecifiesNonExistentClass(){
         fn.thenRun("NonExistentClass", "method");
-        assertIsErrorWithoutStacktrace("Class 'NonExistentClass' not found in function jar\n" +
-                "Its likely that the 'cmd' entry in func.yaml is incorrect.");
+        assertIsErrorWithoutStacktrace("Class 'NonExistentClass' not found in function jar. It's likely that the 'cmd' entry in func.yaml is incorrect.");
     }
 
     @Test

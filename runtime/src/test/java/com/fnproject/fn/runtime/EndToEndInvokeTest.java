@@ -155,7 +155,7 @@ public class EndToEndInvokeTest {
         fn.thenRun("com.fnproject.unknown.Class", "unknownMethod");
 
         assertThat(fn.getStdOutAsString()).isEqualTo("");
-        assertThat(fn.getStdErrAsString()).startsWith("Class 'com.fnproject.unknown.Class' not found in function jar\n");
+        assertThat(fn.getStdErrAsString()).startsWith("Class 'com.fnproject.unknown.Class' not found in function jar");
 
     }
 
