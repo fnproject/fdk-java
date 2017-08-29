@@ -260,7 +260,7 @@ public final class FnTestingRule implements TestRule {
             }
         };
 
-        CloudThreadsContinuationInvoker.setTestingMode(true);
+        // CloudThreadsContinuationInvoker.setTestingMode(true);
         // The following must be a static: otherwise the factory (the lambda) will not be serializable.
         completer = new InMemCompleter(client, fnInvokeClient);
         CloudThreadsContinuationInvoker.setCompleterClientFactory((CompleterClientFactory) () -> completer);
