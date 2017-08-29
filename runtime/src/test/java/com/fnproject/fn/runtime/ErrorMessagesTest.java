@@ -12,15 +12,16 @@ public class ErrorMessagesTest {
     @Rule
     public final FnTestHarness fn = new FnTestHarness();
 
-    private void assertIsErrorWithoutStacktrace(String s) {
+    private void assertIsErrorWithoutStacktrace(String errorMessage) {
         assertThat(fn.exitStatus()).isEqualTo(2);
-        assertThat(fn.getStdErrAsString()).contains(s);
-        assertThat(fn.getStdErrAsString().split(System.getProperty("line.separator")).length).isGreaterThanOrEqualTo(1);
+        assertThat(fn.getStdErrAsString()).contains(errorMessage);
+        int errorMessageLineCount = errorMessage.split("\n").length;
+        assertThat(fn.getStdErrAsString().split(System.getProperty("line.separator")).length).isEqualTo(errorMessageLineCount);
     }
 
-    private void assertIsErrorWithStacktrace(String s) {
+    private void assertIsErrorWithStacktrace(String errorMessage) {
         assertThat(fn.exitStatus()).isEqualTo(2);
-        assertThat(fn.getStdErrAsString()).contains(s);
+        assertThat(fn.getStdErrAsString()).contains(errorMessage);
         assertThat(fn.getStdErrAsString().split(System.getProperty("line.separator")).length).isGreaterThan(1);
         assertThat(fn.getStdErrAsString()).doesNotContain("at com.fnproject.fn.runtime");
     }
@@ -30,7 +31,8 @@ public class ErrorMessagesTest {
     @Test
     public void userSpecifiesNonExistentClass(){
         fn.thenRun("NonExistentClass", "method");
-        assertIsErrorWithoutStacktrace("Class 'NonExistentClass' not found in function jar");
+        assertIsErrorWithoutStacktrace("Class 'NonExistentClass' not found in function jar\n" +
+                "Its likely that the 'cmd' entry in func.yaml is incorrect.");
     }
 
     @Test
