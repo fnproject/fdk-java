@@ -139,7 +139,7 @@ $ fn apps config set cloudthreads-example COMPLETER_BASE_URL http://${COMPLETER_
 You can now run your function using `fn call` or HTTP and curl:
 
 ```
-$ fn call cloudthreads-example /primes
+$ echo 10 | fn call cloudthreads-example /primes
 The 10th prime number is 29
 ```
 
