@@ -64,9 +64,9 @@ func.yaml created
 
 ### 2. Create a Cloud Thread within your Function
 
-You will create a function that produces the nth prime number and then returns an informational message once the prime number has been computed. In this example, we have chosen to block for the computation graph to complete by calling `get()`. This allows you to see the return value when invoking your function over HTTP. In a production application, you should avoid blocking, since your function will continue to run while waiting for a computation result, even though it has no useful work to do.
+You will create a function that produces the nth prime number and then returns an informational message once the prime number has been computed. In this example, we have chosen to block our to wait for completion of the computation graph by calling `get()`. This allows you to see the return value when invoking your function over HTTP. *In a production application, you should avoid blocking*, since your function will continue to run while waiting for a computation result, even though it has no useful work to do.
 
-Edit the file: `src/main/java/com/example/fn/PrimeFunction.java` and add the following contents:
+Create the file: `src/main/java/com/example/fn/PrimeFunction.java` with the following contents:
 
 ```java
 package com.example.fn;
@@ -150,7 +150,7 @@ The 10th prime number is 29
 
 ### 5. Where Do I Go from Here?
 
-For a more realistic application that leverages the non-blocking functionality of Cloud Threads, please take a look at the asynchronous [thumbnail generation example](examples/async-thumbnails/README.md).
+For a more realistic application that leverages the non-blocking functionality of Cloud Threads, please take a look at the asynchronous [thumbnail generation example](../examples/async-thumbnails/README.md).
 
 
 # Passing data between completion stages
@@ -314,7 +314,7 @@ public class MyFunction{
 
 ### Cloud Threads stage lambda types:
 
-The Cloud Threads API does not take standard Java `java.util.function` types as arguments (e.g. `java.util.function.Function`) - instead, it subclasses these types to include `Serializable` (e.g. [CloudThreads.SerFunction](../api/src/main/java/com.fnproject.fn/api/cloudthreads/CloudThreads.java)).
+The Cloud Threads API does not take standard Java `java.util.function` types as arguments (e.g. `java.util.function.Function`) - instead, it subclasses these types to include `Serializable` (e.g. [CloudThreads.SerFunction](../api/src/main/java/com/fnproject/fn/api/cloudthreads/CloudThreads.java)).
 
 This is necessary, as by default the Java compiler does not generate the necessary code to serialize and deserialze generated lambda objects.
 
@@ -393,7 +393,7 @@ public class MyFunction{
 ### Exceptions should be serializable
 Finally, exceptions thrown by `CloudThread` lambda stages will be be propagated as error values to other stages - this means that those exceptions should be serializable. Exceptions are serializable by default, so generally you do not have to do anything.
 
-If your code does throw exceptions that contain non-serializable fields, the exception will be converted into a [WrappedException](../api/src/main/java/com.fnproject.fn/api/cloudthreads/WrappedFunctionException.java) - this is a a `RuntimeException` that will preserve the original message and stacktrace of the source exception, but not any fields on the original exception.
+If your code does throw exceptions that contain non-serializable fields, the exception will be converted into a [WrappedException](../api/src/main/java/com/fnproject/fn/api/cloudthreads/WrappedFunctionException.java) - this is a a `RuntimeException` that will preserve the original message and stacktrace of the source exception, but not any fields on the original exception.
 
 E.g.:
 
