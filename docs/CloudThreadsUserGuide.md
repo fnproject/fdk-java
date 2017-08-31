@@ -268,7 +268,7 @@ public class MyFunction implements Serialiable{
 
    public void run(){
       final String config = this.config;
-      String dbVal = db.getValue();
+      String dbVal = getDb().getValue();
 
       CloudThreads.currentRuntime().supply(()->{
          System.err.println(config  + getDb().getValue());
