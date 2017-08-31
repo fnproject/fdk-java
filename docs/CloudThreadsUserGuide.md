@@ -96,7 +96,6 @@ following contents:
 ```java
 package com.example.fn;
 
-import java.util.function.Supplier;
 import com.fnproject.fn.api.cloudthreads.CloudThreadRuntime;
 import com.fnproject.fn.api.cloudthreads.CloudThreads;
 
