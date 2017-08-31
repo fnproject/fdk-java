@@ -11,6 +11,10 @@ system which then would store a correspondence between that ID and further data.
 For example, the thumbnailed image might be a user's avatar in a web app, and
 its ID would be linked to the user's ID in a database somewhere.
 
+## Dependencies
+
+* [minio client `mc`](https://github.com/minio/mc) installed locally and
+  available on your path
 
 ## Demonstrated FDK features
 
