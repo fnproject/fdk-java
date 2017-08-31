@@ -135,7 +135,7 @@ Hello, Universe!
 ```
 
 ### 4. Testing your function
-The Fn Java FDK includes a testing library providing useful [JUnit 4](http://junit.org/junit4/) rules to test functions. Look at the test in `src/test/java/com.example.fn/HelloFunctionTest.java`:
+The Fn Java FDK includes a testing library providing useful [JUnit 4](http://junit.org/junit4/) rules to test functions. Look at the test in `src/test/java/com/example/fn/HelloFunctionTest.java`:
 
 ```java
 package com.example.fn;
