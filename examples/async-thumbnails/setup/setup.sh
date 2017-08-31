@@ -1,18 +1,25 @@
 #!/bin/bash
 set -e
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+STORAGE_DIR="/tmp/example-storage-server-files"
 
 # Checks
-if docker ps >/dev/null ; then
+if docker ps &>/dev/null ; then
     echo "Docker is present."
 else
     echo "error: docker is not available."
     exit 1
 fi
-if fn --help >/dev/null ; then
+if fn --help &>/dev/null ; then
     echo "Fn is present."
 else
     echo "error: fn is not available."
+    exit 1
+fi
+if type mc &>/dev/null ; then
+    echo "mc is present."
+else
+    echo "error: mc is not available, please install it from the minio client website"
     exit 1
 fi
 
@@ -73,10 +80,17 @@ fi
 
 # Set up the storage server and upload directory
 if [[ -z `docker ps | grep "example-storage-server"` ]]; then
-    mkdir -p $SCRIPT_DIR/../storage-upload
-    docker run -d -e "MINIO_ACCESS_KEY=alpha" -e "MINIO_SECRET_KEY=betabetabetabeta" -v $SCRIPT_DIR/../storage-upload:/export --name example-storage-server -p 9000:9000 minio/minio server /export
+    mkdir -p "$STORAGE_DIR"
+    docker run -d -e "MINIO_ACCESS_KEY=alpha" -e "MINIO_SECRET_KEY=betabetabetabeta" -v "$STORAGE_DIR":/export --name example-storage-server -p 9000:9000 minio/minio server /export
     # Give it time to start up
     sleep 3
 else
     echo "Storage server is already up."
+fi
+
+if mc config host list | grep example-storage-server &>/dev/null ; then
+    echo "mc example-storage-server configuration is already present"
+else
+    echo "configuring mc example-storage-server host"
+    mc config host add example-storage-server http://localhost:9000 alpha betabetabetabeta
 fi
