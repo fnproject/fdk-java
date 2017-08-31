@@ -36,14 +36,11 @@ public class ThumbnailsFunction implements Serializable {
 
         runtime.allOf(
                 runtime.invokeFunction("myapp/resize128", HttpMethod.POST, Headers.emptyHeaders(), imageBuffer)
-                        .thenAccept((img) -> objectUpload(img.getBodyAsBytes(), id + "-128.png"))
-                        .exceptionally((err) -> { System.err.println(err.getMessage()); return null; }),
+                        .thenAccept((img) -> objectUpload(img.getBodyAsBytes(), id + "-128.png")),
                 runtime.invokeFunction("myapp/resize256", HttpMethod.POST, Headers.emptyHeaders(), imageBuffer)
-                        .thenAccept((img) -> objectUpload(img.getBodyAsBytes(), id + "-256.png"))
-                        .exceptionally((err) -> { System.err.println(err.getMessage()); return null; }),
+                        .thenAccept((img) -> objectUpload(img.getBodyAsBytes(), id + "-256.png")),
                 runtime.invokeFunction("myapp/resize512", HttpMethod.POST, Headers.emptyHeaders(), imageBuffer)
-                        .thenAccept((img) -> objectUpload(img.getBodyAsBytes(), id + "-512.png"))
-                        .exceptionally((err) -> { System.err.println(err.getMessage()); return null; }),
+                        .thenAccept((img) -> objectUpload(img.getBodyAsBytes(), id + "-512.png")),
                 runtime.supply(() -> objectUpload(imageBuffer, id + ".png"))
         );
         return new Response(id);
