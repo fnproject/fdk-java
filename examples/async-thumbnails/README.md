@@ -146,13 +146,14 @@ public class ThumbnailsFunction {
     public Response handleRequest(byte[] imageBuffer) {
         String id = java.util.UUID.randomUUID().toString();
         CloudThreadRuntime runtime = CloudThreads.currentRuntime();
+        
         runtime.allOf(
-                runtime.invokeFunction("myapp/resize128", imageBuffer)
-                        .thenAccept((img) -> objectUpload(img, id + "-128.png")),
-                runtime.invokeFunction("myapp/resize256", imageBuffer)
-                        .thenAccept((img) -> objectUpload(img, id + "-256.png")),
-                runtime.invokeFunction("myapp/resize512", imageBuffer)
-                        .thenAccept((img) -> objectUpload(img, id + "-512.png")),
+                runtime.invokeFunction("myapp/resize128", HttpMethod.POST, Headers.emptyHeaders(), imageBuffer)
+                        .thenAccept((img) -> objectUpload(img.getBodyAsBytes(), id + "-128.png")),
+                runtime.invokeFunction("myapp/resize256", HttpMethod.POST, Headers.emptyHeaders(), imageBuffer)
+                        .thenAccept((img) -> objectUpload(img.getBodyAsBytes(), id + "-256.png")),
+                runtime.invokeFunction("myapp/resize512", HttpMethod.POST, Headers.emptyHeaders(), imageBuffer)
+                        .thenAccept((img) -> objectUpload(img.getBodyAsBytes(), id + "-512.png")),
                 runtime.supply(() -> objectUpload(imageBuffer, id + ".png"))
         );
         return new Response(id);
