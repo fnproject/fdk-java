@@ -2,7 +2,7 @@
 
 set -e
 
-FUNCTION_ENTRYPOINT=${1}
+FUNCTION_ENTRYPOINT="${1}"
 
 # UseCGroupMemoryLimitForHeap looks up /sys/fs/cgroup/memory/memory.limit_in_bytes inside the container to determine
 # what the heap should be set to. This is an experimental feature at the moment, thus we need to unlock to use it.
@@ -21,4 +21,4 @@ JVM_ARGS="-XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -XX:
 exec java \
     ${JVM_ARGS} \
     -cp 'app/*:runtime/*' \
-    com.fnproject.fn.runtime.EntryPoint ${FUNCTION_ENTRYPOINT}
+    com.fnproject.fn.runtime.EntryPoint "${FUNCTION_ENTRYPOINT}"
