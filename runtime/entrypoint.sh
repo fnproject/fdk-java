@@ -20,5 +20,5 @@ JVM_ARGS="-XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -XX:
 
 exec java \
     ${JVM_ARGS} \
-    -cp app/*:runtime/* \
+    -cp 'app/*:runtime/*' \
     com.fnproject.fn.runtime.EntryPoint ${FUNCTION_ENTRYPOINT}
