@@ -131,8 +131,8 @@ public class PrimeFunction {
 ```
 
 Edit your `func.yaml` by changing ...
-* The `cmd` entry to your function's entrypoint
-* The *path* to `/primes`
+* The `cmd:` entry to your function's entrypoint
+* The `path:` to `/primes`
 
 
 ```
