@@ -26,7 +26,7 @@ public final class CloudThreadsContinuationInvoker implements FunctionInvoker {
 
     private static final Object runtimeSourceLock = new Object();
 
-    private static final String DEFAULT_COMPLETER_BASE_URL = "http://completer-svc:8080";
+    private static final String DEFAULT_COMPLETER_BASE_URL = "http://completer-svc:8081";
     private static final String COMPLETER_BASE_URL = "COMPLETER_BASE_URL";
 
     private static class URLCompleterClientFactory implements CompleterClientFactory {

@@ -74,7 +74,10 @@ public final class FnTestingRule implements TestRule {
     // in this case is a lambda that refers directly to our completer.
     // A consequence of this is that CloudThreads tests cannot be run in parallel: there must only
     // be one invocation of thenRun() active across all threads.
-    private static InMemCompleter completer = null;
+    // TODO: just have this as a static map and serialize a key into the completer factory - recovers multithreadability
+    public static InMemCompleter completer = null;
+
+    private final List<String> forkedPackages = new ArrayList<>(Arrays.asList("com.fnproject.fn.runtime.", "com.fnproject.fn.api."));
 
     private FnTestingRule() {
     }
@@ -101,6 +104,26 @@ public final class FnTestingRule implements TestRule {
      */
     public FnTestingRule setConfig(String key, String value) {
         config.put(key.toUpperCase().replaceAll("[- ]", "_"), value);
+        return this;
+    }
+
+    /**
+     * Add a class or package name to be forked during the test.
+     * The test will be run under the aegis of a classloader that duplicates the class hierarchy named.
+     * @param prefix  A class name or package prefix, such as "com.example.foo."
+     */
+    public FnTestingRule addMirroredClass(String prefix) {
+        forkedPackages.add(prefix);
+        return this;
+    }
+
+    /**
+     * Add a class to be forked during the test.
+     * The test will be run under the aegis of a classloader that duplicates the class hierarchy named.
+     * @param cls  A class
+     */
+    public FnTestingRule addMirroredClass(Class<?> cls) {
+        forkedPackages.add(cls.getName());
         return this;
     }
 
@@ -138,23 +161,37 @@ public final class FnTestingRule implements TestRule {
      * @param method the method name
      */
     public void thenRun(String cls, String method) {
+        final ClassLoader functionClassLoader;
+        Class c = null;
         try {
             // Trick to work around Maven class loader separation
             // if passed class is a valid class then set the classloader to the same as the class's loader
-            Class c = Class.forName(cls);
-            FunctionLoader.setContextClassLoader(c.getClassLoader());
+            c = Class.forName(cls);
         } catch (Exception ignored) {
         }
+        if (c != null) {
+            functionClassLoader = c.getClassLoader();
+            FunctionLoader.setContextClassLoader(functionClassLoader);
+        } else {
+            functionClassLoader = getClass().getClassLoader();
+        }
+
         PrintStream oldSystemOut = System.out;
         PrintStream oldSystemErr = System.err;
 
         CompleterInvokeClient client = new CompleterInvokeClient() {
             @Override
             public Result invokeStage(String fnId, ThreadId thread, CompletionId stageId, Datum.Blob closure, List<Result> input) {
+                // Construct a new ClassLoader hierarchy with a copy of the statics embedded in the runtime.
+                // Initialise it appropriately.
+                ForkingClassLoader fcl = new ForkingClassLoader(functionClassLoader, forkedPackages, oldSystemErr);
+                fcl.setCompleterClientFactory(completer);
+
+
                 // TODO avoid repeating MIME stuff (library-ise with CT/runtime? )
                 // TODO de-dupe shared env setup
                 // TODO Making up event details (app path?)
-                oldSystemErr.printf("Executing closure for %s with args \n ", stageId, input);
+                oldSystemErr.printf("Executing closure for %s with args %s\n", stageId, input);
 
                 byte[] inputBody;
                 String boundary = UUID.randomUUID().toString().replaceAll("-", "");
@@ -198,7 +235,7 @@ public final class FnTestingRule implements TestRule {
                 mutableEnv.put("FN_FORMAT", "http");
 
 
-                new EntryPoint().run(
+                fcl.run(
                         mutableEnv,
                         is,
                         functionOut,
@@ -263,7 +300,8 @@ public final class FnTestingRule implements TestRule {
         // CloudThreadsContinuationInvoker.setTestingMode(true);
         // The following must be a static: otherwise the factory (the lambda) will not be serializable.
         completer = new InMemCompleter(client, fnInvokeClient);
-        CloudThreadsContinuationInvoker.setCompleterClientFactory((CompleterClientFactory) () -> completer);
+
+        TestSupport.installCompleterClientFactory(completer, oldSystemErr);
 
 
         Map<String, String> mutableEnv = new HashMap<>();

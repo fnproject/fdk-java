@@ -3,11 +3,13 @@ package com.fnproject.fn.testing;
 import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.RuntimeContext;
 import com.fnproject.fn.api.cloudthreads.*;
+import org.junit.AssumptionViolatedException;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -61,24 +63,222 @@ public class FnTestingRuleCloudThreadsTest {
                 this.third = third;
             }
         }
+    }
+
+    @Before
+    public void setup() {
+        fn.addMirroredClass(TestFn.class);
+
+        // This is required because Loop.class refers to CloudThreads. Since it does, we want the test class
+        // to be recreated under a forked classloader during tests. Otherwise the call to CloudThreads.currentThread()
+        // will hit on the incorrect static member, and return the wrong completer handle.
+
+        // The critical decision here is: does the class under test refer to the Cloud Threads API directly from within
+        // an invocation which will run under the context of a continuation? If so, it *must* be mirrored.
+        fn.addMirroredClass(Loop.class);
+        TestFn.reset();
+    }
+
+    @Test
+    public void completedValue() {
+        fn.givenEvent().enqueue();
+
+        fn.thenRun(TestFn.class, "completedValue");
+
+        assertThat(fn.getOnlyResult().getStatus()).isEqualTo(200);
+        assertThat(result).isEqualTo(Result.CompletedValue);
+    }
+
+    @Test
+    public void supply() {
+        fn.givenEvent().enqueue();
+
+        fn.thenRun(TestFn.class, "supply");
+
+        assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
+        assertThat(result).isEqualTo(Result.Supply);
+    }
+
+    @Test
+    public void allOf() {
+        fn.givenEvent().enqueue();
+
+        fn.thenRun(TestFn.class, "allOf");
+
+        assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
+        assertThat(result).isEqualTo(Result.AllOf);
+    }
 
 
+    @Test
+    public void anyOf() {
+        fn.givenEvent().enqueue();
+
+        fn.thenRun(TestFn.class, "anyOf");
+
+        assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
+        assertThat(result).isEqualTo(Result.AnyOf);
+    }
+
+    @Test()
+    public void nestedThenCompose() {
+        fn.givenEvent()
+                .withBody("hello world")
+                .enqueue();
+
+        fn.thenRun(Loop.class, "repeat");
+
+        assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
+        assertThat(fn.getOnlyResult().getBodyAsString())
+                .isEqualTo(String.join("", Collections.nCopies(Loop.COUNT, "hello world")));
+    }
+
+    @Test
+    public void invokeFunctionWithResult() {
+        fn.givenEvent().enqueue();
+        fn.givenFn("user/echo")
+                .withResult(Result.InvokeFunctionFixed.name().getBytes());
+
+        fn.thenRun(TestFn.class, "invokeFunctionEcho");
+
+        assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
+        assertThat(result).isEqualTo(Result.InvokeFunctionFixed);
+    }
+
+    @Test
+    public void invokeFunctionWithFunctionError() {
+        fn.givenEvent().enqueue();
+        fn.givenFn("user/error")
+                .withFunctionError();
+
+        fn.thenRun(TestFn.class, "invokeFunctionError");
+
+        assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
+        assertThat(result).isEqualTo(Result.Exceptionally);
+        isInstanceOfAny(exception, FunctionInvocationException.class);
+    }
+
+    @Test
+    public void invokeFunctionWithPlatformError() {
+        fn.givenEvent().enqueue();
+        fn.givenFn("user/error")
+                .withPlatformError();
+
+        fn.thenRun(TestFn.class, "invokeFunctionError");
+
+        assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
+        assertThat(result).isEqualTo(Result.Exceptionally);
+        isInstanceOfAny(exception, PlatformException.class);
+    }
+
+    @Test
+    public void invokeFunctionWithAction() {
+        fn.givenEvent().enqueue();
+        fn.givenFn("user/echo")
+                .withAction((p) -> p);
+
+        fn.thenRun(TestFn.class, "invokeFunctionEcho");
+
+        assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
+        assertThat(result).isEqualTo(Result.InvokeFunctionEcho);
+    }
+
+    @Test
+    public void completingExceptionally() {
+        fn.givenEvent().enqueue();
+
+        fn.thenRun(TestFn.class, "completeExceptionally");
+
+        assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
+        assertThat(result).isEqualTo(Result.Exceptionally);
+    }
+
+    @Test
+    public void completingExceptionallyWhenErrorIsThrownEarlyInGraph() {
+        fn.givenEvent().enqueue();
+
+        fn.thenRun(TestFn.class, "completeExceptionallyEarly");
+
+        assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
+        assertThat(result).isEqualTo(Result.Exceptionally);
+    }
+
+    @Test
+    public void shouldLogMessagesToStdErrToPlatformStdErr() {
+        // Questionable: for testing, do we point all stderr stuff to the same log stream?
+        fn.givenEvent().enqueue();
+
+        fn.thenRun(TestFn.class, "logToStdErrInContinuation");
+
+        assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
+        assertThat(fn.getStdErrAsString()).contains("TestFn logging: 1");
+    }
+
+    @Test
+    public void shouldLogMessagesToStdOutToPlatformStdErr() {
+        // Questionable: for testing, do we point all stderr stuff to the same log stream?
+        fn.givenEvent().enqueue();
+
+        fn.thenRun(TestFn.class, "logToStdOutInContinuation");
+
+        assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
+        assertThat(fn.getStdErrAsString()).contains("TestFn logging: 1");
+    }
+
+    @Test
+    public void staticCopyOfConfigVarUnavailableInContinuation() {
+        fn.setConfig("ADD", "1");
+        fn.givenEvent().enqueue();
+
+        fn.thenRun(TestFn.class, "cannotReadConfigVarInContinuation");
+
+        assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
+        assertThat(staticConfig).isNull();
+    }
+
+    @Test
+    public void shouldHandleMultipleEventsForFunctionWithoutInput() {
+        fn.givenEvent().enqueue(2);
+
+        fn.thenRun(TestFn.class, "anyOf");
+
+        assertThat(fn.getResults().get(0).getStatus()).isEqualTo(HTTP_OK);
+        assertThat(fn.getResults().get(1).getStatus()).isEqualTo(HTTP_OK);
+        assertThat(result).isEqualTo(Result.AnyOf);
+    }
+
+    @Test(timeout = 5000)
+    public void shouldHandleMultipleEventsForFunctionWithInput() {
+        String[] bodies = { "hello", "world", "test" };
+        for (int i = 0; i < bodies.length; i++) {
+            fn.givenEvent().withBody(bodies[i]).enqueue();
+        }
+
+        fn.thenRun(Loop.class, "repeat");
+
+        for (int i = 0; i < bodies.length; i++) {
+            assertThat(fn.getResults().get(i).getBodyAsString())
+                    .isEqualTo(String.join("", Collections.nCopies(Loop.COUNT, bodies[i])));
+        }
+    }
+
+    // Due to the alien nature of the stored exception, we supply a helper to assert isInstanceOfAny
+    void isInstanceOfAny(Object o, Class<?>... cs) {
+        assertThat(o).isNotNull();
+        ClassLoader loader = o.getClass().getClassLoader();
+        for (Class<?> c: cs) {
+            try {
+                if (loader.loadClass(c.getName()).isAssignableFrom(o.getClass())) {
+                    return;
+                }
+            } catch (ClassNotFoundException e) {}
+        }
+        throw new AssumptionViolatedException("Object " + o + "is not an instance of any of " + Arrays.toString(cs));
     }
 
     public static class TestFn {
-        enum Result {
-            CompletedValue,
-            Supply,
-            AllOf,
-            InvokeFunctionEcho,
-            InvokeFunctionFixed,
-            AnyOf, Exceptionally,
-            ThenCompose,
-            ThenComplete
-        }
-        static Result result = null;
         static Integer TO_ADD = null;
-        static Throwable exception = null;
+
 
         public TestFn(RuntimeContext ctx) {
             TO_ADD = Integer.parseInt(ctx.getConfigurationByKey("ADD").orElse("-1"));
@@ -170,204 +370,37 @@ public class FnTestingRuleCloudThreadsTest {
                     .thenApply((x) -> x + 1);
         }
 
-        public Integer readConfigVarInContinuation() {
+        public void cannotReadConfigVarInContinuation() {
             CloudThreadRuntime rt = CloudThreads.currentRuntime();
-            return rt.completedValue(1)
-                    .thenApply((x) -> x + TO_ADD)
-                    .get();
+            TO_ADD = 3;
+            rt.completedValue(1)
+                    .thenAccept((x) -> { staticConfig = TO_ADD; });
         }
 
         static void reset() {
             result = null;
             exception = null;
+            staticConfig = null;
         }
     }
 
-    @Before
-    public void setup() {
-        TestFn.reset();
+
+    public enum Result {
+        CompletedValue,
+        Supply,
+        AllOf,
+        InvokeFunctionEcho,
+        InvokeFunctionFixed,
+        AnyOf, Exceptionally,
+        ThenCompose,
+        ThenComplete
     }
 
-    @Test
-    public void completedValue() {
-        fn.givenEvent().enqueue();
+    // These members are external to the class under test so as to be visible from the unit tests.
+    // They must be public, since the TestFn class will be instantiated under a separate ClassLoader;
+    // therefore we need broader access than might be anticipated.
+    public static Result result = null;
+    public static Throwable exception = null;
+    public static Integer staticConfig = null;
 
-        fn.thenRun(TestFn.class, "completedValue");
-
-        assertThat(fn.getOnlyResult().getStatus()).isEqualTo(200);
-        assertThat(TestFn.result).isEqualTo(TestFn.Result.CompletedValue);
-    }
-
-    @Test
-    public void supply() {
-        fn.givenEvent().enqueue();
-
-        fn.thenRun(TestFn.class, "supply");
-
-        assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
-        assertThat(TestFn.result).isEqualTo(TestFn.Result.Supply);
-    }
-
-    @Test
-    public void allOf() {
-        fn.givenEvent().enqueue();
-
-        fn.thenRun(TestFn.class, "allOf");
-
-        assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
-        assertThat(TestFn.result).isEqualTo(TestFn.Result.AllOf);
-    }
-
-
-    @Test
-    public void anyOf() {
-        fn.givenEvent().enqueue();
-
-        fn.thenRun(TestFn.class, "anyOf");
-
-        assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
-        assertThat(TestFn.result).isEqualTo(TestFn.Result.AnyOf);
-    }
-
-    @Test
-    public void nestedThenCompose() {
-        fn.givenEvent()
-                .withBody("hello world")
-                .enqueue();
-
-        fn.thenRun(Loop.class, "repeat");
-
-        assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
-        assertThat(fn.getOnlyResult().getBodyAsString())
-                .isEqualTo(String.join("", Collections.nCopies(Loop.COUNT, "hello world")));
-    }
-
-    @Test
-    public void invokeFunctionWithResult() {
-        fn.givenEvent().enqueue();
-        fn.givenFn("user/echo")
-                .withResult(TestFn.Result.InvokeFunctionFixed.name().getBytes());
-
-        fn.thenRun(TestFn.class, "invokeFunctionEcho");
-
-        assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
-        assertThat(TestFn.result).isEqualTo(TestFn.Result.InvokeFunctionFixed);
-    }
-
-    @Test
-    public void invokeFunctionWithFunctionError() {
-        fn.givenEvent().enqueue();
-        fn.givenFn("user/error")
-                .withFunctionError();
-
-        fn.thenRun(TestFn.class, "invokeFunctionError");
-
-        assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
-        assertThat(TestFn.result).isEqualTo(TestFn.Result.Exceptionally);
-        assertThat(TestFn.exception).isInstanceOfAny(FunctionInvocationException.class);
-    }
-
-    @Test
-    public void invokeFunctionWithPlatformError() {
-        fn.givenEvent().enqueue();
-        fn.givenFn("user/error")
-                .withPlatformError();
-
-        fn.thenRun(TestFn.class, "invokeFunctionError");
-
-        assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
-        assertThat(TestFn.result).isEqualTo(TestFn.Result.Exceptionally);
-        assertThat(TestFn.exception).isInstanceOfAny(PlatformException.class);
-    }
-
-    @Test
-    public void invokeFunctionWithAction() {
-        fn.givenEvent().enqueue();
-        fn.givenFn("user/echo")
-                .withAction((p) -> p);
-
-        fn.thenRun(TestFn.class, "invokeFunctionEcho");
-
-        assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
-        assertThat(TestFn.result).isEqualTo(TestFn.Result.InvokeFunctionEcho);
-    }
-
-    @Test
-    public void completingExceptionally() {
-        fn.givenEvent().enqueue();
-
-        fn.thenRun(TestFn.class, "completeExceptionally");
-
-        assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
-        assertThat(TestFn.result).isEqualTo(TestFn.Result.Exceptionally);
-    }
-
-    @Test
-    public void completingExceptionallyWhenErrorIsThrownEarlyInGraph() {
-        fn.givenEvent().enqueue();
-
-        fn.thenRun(TestFn.class, "completeExceptionallyEarly");
-
-        assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
-        assertThat(TestFn.result).isEqualTo(TestFn.Result.Exceptionally);
-    }
-
-    @Test
-    public void shouldLogMessagesToStdErrToPlatformStdErr() {
-        // Questionable: for testing, do we point all stderr stuff to the same log stream?
-        fn.givenEvent().enqueue();
-
-        fn.thenRun(TestFn.class, "logToStdErrInContinuation");
-
-        assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
-        assertThat(fn.getStdErrAsString()).contains("TestFn logging: 1");
-    }
-
-    @Test
-    public void shouldLogMessagesToStdOutToPlatformStdErr() {
-        // Questionable: for testing, do we point all stderr stuff to the same log stream?
-        fn.givenEvent().enqueue();
-
-        fn.thenRun(TestFn.class, "logToStdOutInContinuation");
-
-        assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
-        assertThat(fn.getStdErrAsString()).contains("TestFn logging: 1");
-    }
-
-    @Test
-    public void staticCopyOfConfigVarAvailableInContinuation() {
-        fn.setConfig("ADD", "1");
-        fn.givenEvent().enqueue();
-
-        fn.thenRun(TestFn.class, "readConfigVarInContinuation");
-
-        assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
-        assertThat(fn.getOnlyResult().getBodyAsString()).isEqualTo("2");
-    }
-
-    @Test
-    public void shouldHandleMultipleEventsForFunctionWithoutInput() {
-        fn.givenEvent().enqueue(2);
-
-        fn.thenRun(TestFn.class, "anyOf");
-
-        assertThat(fn.getResults().get(0).getStatus()).isEqualTo(HTTP_OK);
-        assertThat(fn.getResults().get(1).getStatus()).isEqualTo(HTTP_OK);
-        assertThat(TestFn.result).isEqualTo(TestFn.Result.AnyOf);
-    }
-
-    @Test
-    public void shouldHandleMultipleEventsForFunctionWithInput() {
-        String[] bodies = { "hello", "world", "test" };
-        for (int i = 0; i < bodies.length; i++) {
-            fn.givenEvent().withBody(bodies[i]).enqueue();
-        }
-
-        fn.thenRun(Loop.class, "repeat");
-
-        for (int i = 0; i < bodies.length; i++) {
-            assertThat(fn.getResults().get(i).getBodyAsString())
-                    .isEqualTo(String.join("", Collections.nCopies(Loop.COUNT, bodies[i])));
-        }
-    }
 }

@@ -12,6 +12,8 @@ public class IntegrationTest {
 
     @Test
     public void runIntegrationTests() {
+        fn.addMirroredClass(ExerciseEverything.class.getName());
+
         fn.givenFn("nonexistent/nonexistent")
                 .withFunctionError()
 
@@ -24,6 +26,7 @@ public class IntegrationTest {
                     }
                 })
             .givenEvent()
+                .withBody("")   // or "1,5,6,32" to select a set of tests individually
                 .enqueue()
 
             .thenRun(ExerciseEverything.class, "handleRequest");

@@ -13,9 +13,9 @@ public class MultipleEventsTest {
     @Rule
     public FnTestingRule fn = FnTestingRule.createDefault();
 
-    static Semaphore oneGo = null;
-    static Semaphore twoGo = null;
-    static boolean success = false;
+    public static Semaphore oneGo = null;
+    public static Semaphore twoGo = null;
+    public static boolean success = false;
 
     public static class TestFn {
         public void handleRequest(String s) {
@@ -24,6 +24,12 @@ public class MultipleEventsTest {
                     CloudThreads.currentRuntime().supply(() -> one());
                     break;
                 case "2":
+                    try {
+                        MultipleEventsTest.twoGo.acquire();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+
                     CloudThreads.currentRuntime().supply(() -> two());
                     break;
             }
@@ -62,11 +68,6 @@ public class MultipleEventsTest {
 
         static void two() {
             System.err.println("In two, awaiting signal to proceed");
-            try {
-                MultipleEventsTest.twoGo.acquire();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
 
             System.err.println("In two, making rt");
             CloudThreadRuntime rt2 = CloudThreads.currentRuntime();
@@ -89,6 +90,8 @@ public class MultipleEventsTest {
 
     @Test
     public void OverlappingThreadInvocationsShouldWork() {
+        fn.addMirroredClass(TestFn.class.getName());
+
         oneGo = new Semaphore(0);
         twoGo = new Semaphore(0);
         success = false;

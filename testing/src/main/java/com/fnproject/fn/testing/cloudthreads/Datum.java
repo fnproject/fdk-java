@@ -24,7 +24,6 @@ import static com.fnproject.fn.runtime.cloudthreads.CloudCompleterApiClient.*;
  */
 public abstract class Datum {
 
-
     public abstract Object asJavaValue();
 
     public abstract void writeHeaders(HeaderWriter hw) throws IOException;

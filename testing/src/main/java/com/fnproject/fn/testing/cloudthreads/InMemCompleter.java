@@ -42,7 +42,6 @@ public class InMemCompleter implements CompleterClient {
         this.fnInvokeClient = fnInvokeClient;
     }
 
-
     private ExternalCompletionServer externalCompletionServer = new ExternalCompletionServer();
 
     public void awaitTermination() {
@@ -155,11 +154,14 @@ public class InMemCompleter implements CompleterClient {
             String path = tid.getId() + "_" + TestSupport.completionIdString(cid);
 
             knownCompletions.put(path, resultFuture);
+
+            return createCompletion(cid, baseUrl, port, path);
+        }
+
+        private static ExternalCompletion createCompletion(CompletionId cid, String baseUrl, int port, String path) {
             return new ExternalCompletion() {
                 @Override
-                public CompletionId completionId() {
-                    return cid;
-                }
+                public CompletionId completionId() { return cid; }
 
                 @Override
                 public URI completeURI() {

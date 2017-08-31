@@ -26,7 +26,7 @@ public final class CompletionId implements Serializable {
         return Objects.hash(id);
     }
 
-    protected String getId() {
+    String getId() {
         return id;
     }
 
