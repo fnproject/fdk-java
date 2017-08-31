@@ -1,4 +1,4 @@
-prox#!/bin/bash
+#!/bin/bash
 
 # Run all smoke-tests in parallel, recording their output.
 # Report the results on any failures.
