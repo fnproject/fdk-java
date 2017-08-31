@@ -39,7 +39,7 @@ public final class Headers {
      * header is found then {@code Optional.empty} is returned.
      * <p>
      * Multiple headers are collapsed by {@code fn} into a single header entry delimited by commas (see
-     * <a href="https://tools.ietf.org/html/rfc7230#section-3.22">RFC7230 Sec 3.22</a> for details), for example
+     * <a href="https://tools.ietf.org/html/rfc7230#section-3.2.2">RFC7230 Sec 3.2.2</a> for details), for example
      *
      * <pre>
      *     Accept: text/html
