@@ -34,6 +34,9 @@ which just invoke `imagemagick` to convert the images to the specified sizes.
 
 The setup script also starts a docker container with an object storage daemon
 based on `minio` (with access key `alpha` and secret key `betabetabetabeta`).
+To view the files uploaded to minio you will need to download the [`mc` minio
+client](https://docs.minio.io/docs/minio-client-quickstart-guide) and place it
+somewhere on your path.
 
 The local directories `./storage-upload` is mapped as a volume in the
 docker container, so that you can verify when the thumbnails are uploaded.
@@ -61,8 +64,8 @@ $ docker inspect --type container -f '{{range .NetworkSettings.Networks}}{{.IPAd
 and then use it as the storage host:
 
 ```bash
-$ fn routes config set myapp /async-thumbnails OBJECT_STORAGE_URL http://172.17.0.4
-myapp /async-thumbnails updated OBJECT_STORAGE_URL with http://172.17.0.4
+$ fn routes config set myapp /async-thumbnails OBJECT_STORAGE_URL http://172.17.0.4:9000
+myapp /async-thumbnails updated OBJECT_STORAGE_URL with http://172.17.0.4:9000
 $ fn routes config set myapp /async-thumbnails OBJECT_STORAGE_ACCESS alpha
 myapp /async-thumbnails updated OBJECT_STORAGE_ACCESS with alpha
 $ fn routes config set myapp /async-thumbnails OBJECT_STORAGE_SECRET betabetabetabeta
@@ -76,12 +79,14 @@ $ curl -X POST --data-binary @test-image.png -H "Content-type: application/octet
 {"imageId":"bd74fff4-0388-4c6f-82f2-8cde9ba9b6fc"}
 ```
 
-After a while, you will find the files in `./storage-upload/alpha/`:
+After a while, the files will be uploaded and can be viewed using `mc ls -r example-storage-server`
 
 ```bash
-$ ls storage-upload/alpha/
-bd74fff4-0388-4c6f-82f2-8cde9ba9b6fc-128.png    bd74fff4-0388-4c6f-82f2-8cde9ba9b6fc-512.png
-bd74fff4-0388-4c6f-82f2-8cde9ba9b6fc-256.png    bd74fff4-0388-4c6f-82f2-8cde9ba9b6fc.png
+$ mc ls -r example-storage-server
+[2017-08-31 09:18:10 BST]  25KiB alpha/678a162e-a4e1-4926-bb9f-f552598ee4c0-128.png
+[2017-08-31 09:18:12 BST]  25KiB alpha/678a162e-a4e1-4926-bb9f-f552598ee4c0-256.png
+[2017-08-31 09:18:12 BST]  25KiB alpha/678a162e-a4e1-4926-bb9f-f552598ee4c0-512.png
+[2017-08-31 09:18:08 BST]  25KiB alpha/678a162e-a4e1-4926-bb9f-f552598ee4c0.png
 ```
 
 
