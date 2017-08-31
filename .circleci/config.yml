@@ -6,7 +6,10 @@ jobs:
       java:
         version: oraclejdk8
     environment:
-      ARTIFACT_DIR: /tmp/artifacts
+      # store_artifacts doesn't shell substitute so the variable
+      # definitions are duplicated in those steps too.
+      FDK_ARTIFACT_DIR: /tmp/artifacts/fdk
+      TEST_ARTIFACT_DIR: /tmp/artifacts/tests
       STAGING_DIR: /tmp/staging-repository
     steps:
       - checkout
@@ -14,21 +17,26 @@ jobs:
           key: mvn-cache
 
       - run:
-          name: Build, Test and Package.
-          command: mvn package
+          name: Build and Package. (without tests)
+          command: mvn package -DskipTests
+
+      - run:
+          name: Run unit tests
+          command: mvn test
       - store_test_results:
           path: runtime/target/surefire-reports
       - store_test_results:
           path: testing/target/surefire-reports
+
       - run:
           name: Copy FDK artifacts to upload folder
           command: |
-            mkdir $ARTIFACT_DIR
-            cp api/target/*.jar $ARTIFACT_DIR
-            cp runtime/target/*.jar $ARTIFACT_DIR
+            mkdir -p "$FDK_ARTIFACT_DIR"
+            cp -a api/target/*.jar "$FDK_ARTIFACT_DIR"
+            cp -a runtime/target/*.jar "$FDK_ARTIFACT_DIR"
       - store_artifacts:
           name: Upload FDK artifacts
-          path: $ARTIFACT_DIR
+          path: /tmp/artifacts/fdk
       - run:
           name: Perform a local staging deploy of the maven artifacts
           command: |
@@ -51,10 +59,26 @@ jobs:
       - run:
           name: Install fn binary (as it is needed for the integration tests)
           command: ./.circleci/install-fn.sh
+
       - run:
           name: Run integration tests
           command: REPOSITORY_LOCATION="$STAGING_DIR" ./integration-tests/run-local.sh
           timeout: 1200
+
+      - run:
+          name: Copy integration test results to test artifact dir
+          command: |
+            mkdir -p "$TEST_ARTIFACT_DIR"
+            for test_dir in ./integration-tests/main/test-*; do
+              test_name="$(basename "$test_dir")"
+              mkdir "${TEST_ARTIFACT_DIR}/${test_name}"
+              cp -a $(find "$test_dir" -maxdepth 1 -type f) "${TEST_ARTIFACT_DIR}/${test_name}"
+            done
+            find "${TEST_ARTIFACT_DIR}"
+          when: always
+      - store_artifacts:
+          name: Upload integration test results to artifacts
+          path: /tmp/artifacts/tests
 
       - deploy:
           name: Push to maven repo
