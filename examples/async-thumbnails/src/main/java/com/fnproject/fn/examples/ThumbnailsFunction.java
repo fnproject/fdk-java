@@ -35,12 +35,15 @@ public class ThumbnailsFunction implements Serializable {
         CloudThreadRuntime runtime = CloudThreads.currentRuntime();
 
         runtime.allOf(
-                runtime.invokeFunction("myapp/resize128", HttpMethod.GET, Headers.emptyHeaders(), imageBuffer)
-                        .thenAccept((img) -> objectUpload(img.getBodyAsBytes(), id + "-128.png")),
-                runtime.invokeFunction("myapp/resize256", HttpMethod.GET, Headers.emptyHeaders(), imageBuffer)
-                        .thenAccept((img) -> objectUpload(img.getBodyAsBytes(), id + "-256.png")),
-                runtime.invokeFunction("myapp/resize512", HttpMethod.GET, Headers.emptyHeaders(), imageBuffer)
-                        .thenAccept((img) -> objectUpload(img.getBodyAsBytes(), id + "-512.png")),
+                runtime.invokeFunction("myapp/resize128", HttpMethod.POST, Headers.emptyHeaders(), imageBuffer)
+                        .thenAccept((img) -> objectUpload(img.getBodyAsBytes(), id + "-128.png"))
+                        .exceptionally((err) -> { System.err.println(err.getMessage()); return null; }),
+                runtime.invokeFunction("myapp/resize256", HttpMethod.POST, Headers.emptyHeaders(), imageBuffer)
+                        .thenAccept((img) -> objectUpload(img.getBodyAsBytes(), id + "-256.png"))
+                        .exceptionally((err) -> { System.err.println(err.getMessage()); return null; }),
+                runtime.invokeFunction("myapp/resize512", HttpMethod.POST, Headers.emptyHeaders(), imageBuffer)
+                        .thenAccept((img) -> objectUpload(img.getBodyAsBytes(), id + "-512.png"))
+                        .exceptionally((err) -> { System.err.println(err.getMessage()); return null; }),
                 runtime.supply(() -> objectUpload(imageBuffer, id + ".png"))
         );
         return new Response(id);
