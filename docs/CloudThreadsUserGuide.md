@@ -130,7 +130,10 @@ public class PrimeFunction {
 }
 ```
 
-Edit your `func.yaml` to point to your function's entrypoint:
+Edit your `func.yaml` by changing ...
+* The `cmd` entry to your function's entrypoint
+* The *path* to `/primes`
+
 
 ```
 name: your_dockerhub_account/cloudthread-primes
