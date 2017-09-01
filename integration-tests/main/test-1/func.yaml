@@ -3,5 +3,5 @@ version: 0.0.1
 runtime: java
 cmd: com.fnproject.fn.integration.test_1.CompleterFunction::handleRequest
 path: /test
-format: http
+format: default
 timeout: 90
