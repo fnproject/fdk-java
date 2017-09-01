@@ -336,10 +336,12 @@ public class ExerciseEverything {
     }
 
 
-    @Test(34)
-    @Test.Expect("foobar")
+   // @Test(34)
+   // @Test.Expect("foobar")
     public CloudFuture<String> externallyCompletableFailure(CloudThreadRuntime rt) throws IOException {
         ExternalCloudFuture<HttpRequest> cf = rt.createExternalFuture();
+        System.err.println("Running against external future:" + cf.completionUrl() + " : " + cf.failUrl());
+
         HttpClient httpClient = new HttpClient();
         httpClient.execute(HttpClient
                 .preparePost(cf.failUrl().toString())
