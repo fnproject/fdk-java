@@ -16,19 +16,17 @@ import java.util.stream.Collectors;
  * <p>
  * This
  */
-final class RemoteCloudThreadRuntime implements CloudThreadRuntime, Serializable {
+public final class RemoteCloudThreadRuntime implements CloudThreadRuntime, Serializable {
     private transient CompleterClient client;
-    private CompleterClientFactory clientFactory;
     private final ThreadId threadId;
 
-    RemoteCloudThreadRuntime(ThreadId thread, CompleterClientFactory clientFactory) {
+    RemoteCloudThreadRuntime(ThreadId thread) {
         this.threadId = Objects.requireNonNull(thread);
-        this.clientFactory = clientFactory;
     }
 
     private CompleterClient getClient() {
         if (client == null) {
-            client = clientFactory.get();
+            client = CloudThreadRuntimeGlobals.getCompleterClientFactory().get();
         }
         return client;
     }

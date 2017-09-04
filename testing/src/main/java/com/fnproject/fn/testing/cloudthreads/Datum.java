@@ -2,8 +2,7 @@ package com.fnproject.fn.testing.cloudthreads;
 
 import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.cloudthreads.*;
-import com.fnproject.fn.runtime.cloudthreads.TestSupport;
-import com.fnproject.fn.testing.FnResult;
+import com.fnproject.fn.runtime.cloudthreads.CompletionId;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
 
@@ -11,7 +10,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -330,7 +328,7 @@ public abstract class Datum {
 
         @Override
         public Object asJavaValue() {
-            return TestSupport.completionId(stageId);
+            return new CompletionId(stageId);
         }
 
 

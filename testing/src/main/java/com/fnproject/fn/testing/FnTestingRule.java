@@ -1,10 +1,7 @@
 package com.fnproject.fn.testing;
 
-import com.fnproject.fn.api.Headers;
-import com.fnproject.fn.api.cloudthreads.CloudThreads;
+import com.fnproject.fn.api.*;
 import com.fnproject.fn.api.cloudthreads.HttpMethod;
-import com.fnproject.fn.runtime.EntryPoint;
-import com.fnproject.fn.runtime.FunctionLoader;
 import com.fnproject.fn.runtime.cloudthreads.*;
 import com.fnproject.fn.testing.cloudthreads.*;
 import org.apache.commons.io.IOUtils;
@@ -67,17 +64,28 @@ public final class FnTestingRule implements TestRule {
     private ByteArrayOutputStream stdOut = new ByteArrayOutputStream();
     private ByteArrayOutputStream stdErr = new ByteArrayOutputStream();
     private Map<String, FnFunctionStub> functionStubs = new HashMap<>();
-
-    // CloudThreadsRuntime can be serialised. In order for that to work, we can't have the InMemCompleter
-    // captured dynamically inside the CTRT.
-    // Without this, it will be: the RemoteCloudThreadRuntime has a handle on its CompleterClientFactory, which
-    // in this case is a lambda that refers directly to our completer.
-    // A consequence of this is that CloudThreads tests cannot be run in parallel: there must only
-    // be one invocation of thenRun() active across all threads.
-    // TODO: just have this as a static map and serialize a key into the completer factory - recovers multithreadability
     public static InMemCompleter completer = null;
 
-    private final List<String> forkedPackages = new ArrayList<>(Arrays.asList(CloudThreads.class.getCanonicalName(),CloudThreadsContinuationInvoker.class.getCanonicalName(),EntryPoint.class.getCanonicalName()));
+    private final List<String> sharedPrefixes = new ArrayList<>();
+
+    {
+        // Internal shared classes required to bridge completer into tests
+        addSharedClassPrefix("java.");
+        addSharedClassPrefix("javax.");
+
+        addSharedClassPrefix("sun.");
+        addSharedClass(CompleterClient.class);
+        addSharedClass(CompleterClientFactory.class);
+        addSharedClass(CompletionId.class);
+        addSharedClass(ThreadId.class);
+        addSharedClass(CompleterClient.ExternalCompletion.class);
+        addSharedClass(Headers.class);
+        addSharedClass(HttpMethod.class);
+        addSharedClass(QueryParameters.class);
+        addSharedClass(InputEvent.class);
+        addSharedClass(OutputEvent.class);
+
+    }
 
     private FnTestingRule() {
     }
@@ -110,20 +118,22 @@ public final class FnTestingRule implements TestRule {
     /**
      * Add a class or package name to be forked during the test.
      * The test will be run under the aegis of a classloader that duplicates the class hierarchy named.
-     * @param prefix  A class name or package prefix, such as "com.example.foo."
+     *
+     * @param prefix A class name or package prefix, such as "com.example.foo."
      */
-    public FnTestingRule addMirroredClass(String prefix) {
-        forkedPackages.add(prefix);
+    public FnTestingRule addSharedClassPrefix(String prefix) {
+        sharedPrefixes.add(prefix);
         return this;
     }
 
     /**
      * Add a class to be forked during the test.
      * The test will be run under the aegis of a classloader that duplicates the class hierarchy named.
-     * @param cls  A class
+     *
+     * @param cls A class
      */
-    public FnTestingRule addMirroredClass(Class<?> cls) {
-        forkedPackages.add(cls.getName());
+    public FnTestingRule addSharedClass(Class<?> cls) {
+        sharedPrefixes.add("=" + cls.getName());
         return this;
     }
 
@@ -202,8 +212,8 @@ public final class FnTestingRule implements TestRule {
             mutableEnv.putAll(eventEnv);
             mutableEnv.put("FN_FORMAT", "http");
 
-            ForkingClassLoader forked = new ForkingClassLoader(functionClassLoader, forkedPackages, oldSystemErr);
-            forked.setCompleterClientFactory(completer);
+            FnTestingClassLoader forked = new FnTestingClassLoader(functionClassLoader, sharedPrefixes);
+            forked.setCompleterClient(completer);
             forked.run(
                     mutableEnv,
                     pendingInput,
@@ -223,9 +233,6 @@ public final class FnTestingRule implements TestRule {
             System.setOut(oldSystemOut);
             System.setErr(oldSystemErr);
 
-            CloudThreadsContinuationInvoker.resetCompleterClientFactory();
-            CloudThreadsContinuationInvoker.setTestingMode(false);
-            CloudThreads.setCurrentRuntimeSource(null);
         }
     }
 
@@ -332,12 +339,16 @@ public final class FnTestingRule implements TestRule {
 
             @Override
             public FnTestingRule withFunctionError() {
-                return withAction((body) -> { throw new FunctionError("simulated by testing platform"); });
+                return withAction((body) -> {
+                    throw new FunctionError("simulated by testing platform");
+                });
             }
 
             @Override
             public FnTestingRule withPlatformError() {
-                return withAction((body) -> { throw new PlatformError("simulated by testing platform"); });
+                return withAction((body) -> {
+                    throw new PlatformError("simulated by testing platform");
+                });
             }
 
             @Override
@@ -471,14 +482,13 @@ public final class FnTestingRule implements TestRule {
         public Result invokeStage(String fnId, ThreadId thread, CompletionId stageId, Datum.Blob closure, List<Result> input) {
             // Construct a new ClassLoader hierarchy with a copy of the statics embedded in the runtime.
             // Initialise it appropriately.
-            ForkingClassLoader fcl = new ForkingClassLoader(functionClassLoader, forkedPackages, oldSystemErr);
-            fcl.setCompleterClientFactory(completer);
+            FnTestingClassLoader fcl = new FnTestingClassLoader(functionClassLoader, sharedPrefixes);
+            fcl.setCompleterClient(completer);
 
 
             // TODO avoid repeating MIME stuff (library-ise with CT/runtime? )
             // TODO de-dupe shared env setup
             // TODO Making up event details (app path?)
-            oldSystemErr.printf("Executing closure for %s with args %s\n", stageId, input);
 
             byte[] inputBody;
             String boundary = UUID.randomUUID().toString().replaceAll("-", "");
@@ -506,7 +516,7 @@ public final class FnTestingRule implements TestRule {
                     .withRoute("/route").withRequestUrl("http://some/url")
                     .withMethod("POST")
                     .withHeader(CloudCompleterApiClient.CONTENT_TYPE_HEADER, String.format("multipart/mixed; boundary=\"%s\"", boundary))
-                    .withHeader(CloudCompleterApiClient.THREAD_ID_HEADER, thread.getId()).withHeader(CloudCompleterApiClient.STAGE_ID_HEADER, TestSupport.completionIdString(stageId)).currentEventInputStream();
+                    .withHeader(CloudCompleterApiClient.THREAD_ID_HEADER, thread.getId()).withHeader(CloudCompleterApiClient.STAGE_ID_HEADER, stageId.getId()).currentEventInputStream();
 
             ByteArrayOutputStream output = new ByteArrayOutputStream();
             Map<String, String> mutableEnv = new HashMap<>();
@@ -554,10 +564,7 @@ public final class FnTestingRule implements TestRule {
 
                 wrappedResponse.setEntity(new InputStreamEntity(frameBodyStream));
 
-                oldSystemErr.println("HTTP Resp " + wrappedResponse);
-
                 r = Result.readResult(wrappedResponse);
-                oldSystemErr.println("Response  " + r);
 
 
             } catch (Exception e) {
@@ -578,9 +585,10 @@ public final class FnTestingRule implements TestRule {
         @Override
         public CompletableFuture<Result> invokeFunction(String fnId, HttpMethod method, Headers headers, byte[] data) {
             return CompletableFuture.completedFuture(functionStubs
-                .computeIfAbsent(fnId, (k) -> {
-                    throw new IllegalStateException("Function was invoked that had no definition: " + k); })
-                .stubFunction(method, headers, data));
+                    .computeIfAbsent(fnId, (k) -> {
+                        throw new IllegalStateException("Function was invoked that had no definition: " + k);
+                    })
+                    .stubFunction(method, headers, data));
         }
     }
 }

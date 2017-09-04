@@ -1,6 +1,5 @@
 package com.fnproject.fn.testing;
 
-import com.fnproject.fn.api.FnConfiguration;
 import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.RuntimeContext;
 import com.fnproject.fn.api.cloudthreads.*;
@@ -44,7 +43,7 @@ public class FnTestingRuleCloudThreadsTest {
             if (i == 0) {
                 return rt.completedValue(acc);
             } else {
-                return rt.completedValue(triple(i-1, s, acc + s))
+                return rt.completedValue(triple(i - 1, s, acc + s))
                         .thenCompose(Loop::loop);
             }
         }
@@ -68,15 +67,9 @@ public class FnTestingRuleCloudThreadsTest {
 
     @Before
     public void setup() {
-        fn.addMirroredClass(TestFn.class);
+        fn.addSharedClass(FnTestingRuleCloudThreadsTest.class);
+        fn.addSharedClass(Result.class);
 
-        // This is required because Loop.class refers to CloudThreads. Since it does, we want the test class
-        // to be recreated under a forked classloader during tests. Otherwise the call to CloudThreads.currentThread()
-        // will hit on the incorrect static member, and return the wrong completer handle.
-
-        // The critical decision here is: does the class under test refer to the Cloud Threads API directly from within
-        // an invocation which will run under the context of a continuation? If so, it *must* be mirrored.
-        fn.addMirroredClass(Loop.class);
         reset();
     }
 
@@ -226,16 +219,6 @@ public class FnTestingRuleCloudThreadsTest {
         assertThat(fn.getStdErrAsString()).contains("TestFn logging: 1");
     }
 
-    @Test
-    public void staticCopyOfConfigVarUnavailableInContinuation() {
-        fn.setConfig("ADD", "1");
-        fn.givenEvent().enqueue();
-
-        fn.thenRun(TestFn.class, "cannotReadConfigVarInContinuation");
-
-        assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
-        assertThat(staticConfig).isNull();
-    }
 
     @Test
     public void shouldHandleMultipleEventsForFunctionWithoutInput() {
@@ -248,9 +231,9 @@ public class FnTestingRuleCloudThreadsTest {
         assertThat(result).isEqualTo(Result.AnyOf);
     }
 
-    @Test(timeout = 5000)
+    @Test()
     public void shouldHandleMultipleEventsForFunctionWithInput() {
-        String[] bodies = { "hello", "world", "test" };
+        String[] bodies = {"hello", "world", "test"};
         for (int i = 0; i < bodies.length; i++) {
             fn.givenEvent().withBody(bodies[i]).enqueue();
         }
@@ -267,26 +250,19 @@ public class FnTestingRuleCloudThreadsTest {
     void isInstanceOfAny(Object o, Class<?>... cs) {
         assertThat(o).isNotNull();
         ClassLoader loader = o.getClass().getClassLoader();
-        for (Class<?> c: cs) {
+        for (Class<?> c : cs) {
             try {
                 if (loader.loadClass(c.getName()).isAssignableFrom(o.getClass())) {
                     return;
                 }
-            } catch (ClassNotFoundException e) {}
+            } catch (ClassNotFoundException e) {
+            }
         }
         throw new AssumptionViolatedException("Object " + o + "is not an instance of any of " + Arrays.toString(cs));
     }
 
     public static class TestFn {
         static Integer TO_ADD = null;
-
-        static int myCount = 0;
-
-        @FnConfiguration
-        public static void configure(){
-            myCount++;
-            System.err.println("@@@@@@@I being configured for the " +myCount+ " st time");
-        }
 
         public TestFn(RuntimeContext ctx) {
             TO_ADD = Integer.parseInt(ctx.getConfigurationByKey("ADD").orElse("-1"));
@@ -299,9 +275,9 @@ public class FnTestingRuleCloudThreadsTest {
 
         public void supply() {
             CloudThreads.currentRuntime()
-                    .supply(() ->{
+                    .supply(() -> {
                         return Result.Supply;
-                    } ).thenAccept((r) -> result = r);
+                    }).thenAccept((r) -> result = r);
         }
 
         public void allOf() {
@@ -309,7 +285,7 @@ public class FnTestingRuleCloudThreadsTest {
             rt.allOf(
                     rt.completedValue(1),
                     rt.completedValue(-1)
-                    ).thenAccept((r) -> {
+            ).thenAccept((r) -> {
                 result = Result.AllOf;
             });
         }
@@ -327,16 +303,16 @@ public class FnTestingRuleCloudThreadsTest {
             rt.completedValue(1)
                     .thenCompose((x) ->
                             rt.completedValue(1)
-                              .thenApply((y) -> x + y)
+                                    .thenApply((y) -> x + y)
                     )
-            .thenAccept((r) -> result = Result.AnyOf);
+                    .thenAccept((r) -> result = Result.AnyOf);
 
         }
 
         public void invokeFunctionEcho() {
             CloudThreadRuntime rt = CloudThreads.currentRuntime();
             rt.invokeFunction("user/echo", HttpMethod.GET, Headers.emptyHeaders(), Result.InvokeFunctionEcho.name().getBytes())
-                .thenAccept((r) -> result = Result.valueOf(new String(r.getBodyAsBytes())));
+                    .thenAccept((r) -> result = Result.valueOf(new String(r.getBodyAsBytes())));
         }
 
         public void invokeFunctionError() {
@@ -351,30 +327,43 @@ public class FnTestingRuleCloudThreadsTest {
 
         public void completeExceptionally() {
             CloudThreadRuntime rt = CloudThreads.currentRuntime();
-            rt.supply(() -> { throw new RuntimeException("This function should fail"); })
-                .exceptionally((ex) -> result = Result.Exceptionally);
+            rt.supply(() -> {
+                throw new RuntimeException("This function should fail");
+            })
+                    .exceptionally((ex) -> result = Result.Exceptionally);
         }
 
         public void completeExceptionallyEarly() {
             CloudThreadRuntime rt = CloudThreads.currentRuntime();
             rt.completedValue(null)
-                    .thenApply((x) -> { throw new RuntimeException("This function should fail"); })
+                    .thenApply((x) -> {
+                        throw new RuntimeException("This function should fail");
+                    })
                     .thenApply((x) -> 2)
-                    .exceptionally((ex) -> { result = Result.Exceptionally; return null; });
+                    .exceptionally((ex) -> {
+                        result = Result.Exceptionally;
+                        return null;
+                    });
         }
 
 
         public void logToStdErrInContinuation() {
             CloudThreadRuntime rt = CloudThreads.currentRuntime();
             rt.completedValue(1)
-                    .thenApply((x) -> { System.err.println("TestFn logging: " + x); return x; })
+                    .thenApply((x) -> {
+                        System.err.println("TestFn logging: " + x);
+                        return x;
+                    })
                     .thenApply((x) -> x + 1);
         }
 
         public void logToStdOutInContinuation() {
             CloudThreadRuntime rt = CloudThreads.currentRuntime();
             rt.completedValue(1)
-                    .thenApply((x) -> { System.err.println("TestFn logging: " + x); return x; })
+                    .thenApply((x) -> {
+                        System.err.println("TestFn logging: " + x);
+                        return x;
+                    })
                     .thenApply((x) -> x + 1);
         }
 
@@ -382,7 +371,9 @@ public class FnTestingRuleCloudThreadsTest {
             CloudThreadRuntime rt = CloudThreads.currentRuntime();
             TO_ADD = 3;
             rt.completedValue(1)
-                    .thenAccept((x) -> { staticConfig = TO_ADD; });
+                    .thenAccept((x) -> {
+                        staticConfig = TO_ADD;
+                    });
         }
 
     }

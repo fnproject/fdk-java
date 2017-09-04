@@ -14,7 +14,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.*;
 
-class FunctionRuntimeContext implements RuntimeContext {
+public class FunctionRuntimeContext implements RuntimeContext {
 
     private final Class<?> targetClass;
     private final Method targetMethod;
@@ -28,7 +28,7 @@ class FunctionRuntimeContext implements RuntimeContext {
     private final List<OutputCoercion> builtinOutputCoercions = Arrays.asList(new StringCoercion(), new ByteArrayCoercion(), new VoidCoercion(), new OutputEventCoercion(), JacksonCoercion.instance());
     private final List<OutputCoercion> userOutputCoercions = new LinkedList<>();
 
-    FunctionRuntimeContext(Class<?> targetClass, Method targetMethod, Map<String, String> config) {
+    public FunctionRuntimeContext(Class<?> targetClass, Method targetMethod, Map<String, String> config) {
         this.targetClass = Objects.requireNonNull(targetClass);
         this.targetMethod = Objects.requireNonNull(targetMethod);
         this.config = Objects.requireNonNull(config);

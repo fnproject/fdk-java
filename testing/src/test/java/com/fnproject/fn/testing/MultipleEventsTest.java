@@ -90,7 +90,7 @@ public class MultipleEventsTest {
 
     @Test
     public void OverlappingThreadInvocationsShouldWork() {
-        fn.addMirroredClass(TestFn.class.getName());
+        fn.addSharedClass(MultipleEventsTest.class);
 
         oneGo = new Semaphore(0);
         twoGo = new Semaphore(0);

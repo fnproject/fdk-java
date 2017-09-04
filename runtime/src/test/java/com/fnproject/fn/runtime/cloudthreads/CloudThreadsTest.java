@@ -44,9 +44,9 @@ public class CloudThreadsTest {
     public void setup() {
         tag.set(false);
         MockitoAnnotations.initMocks(this);
-        CloudThreadsContinuationInvoker.resetCompleterClientFactory();
+        CloudThreadRuntimeGlobals.resetCompleterClientFactory();
 
-        CloudThreadsContinuationInvoker.setCompleterClientFactory(() -> mockCompleterClient);
+        CloudThreadRuntimeGlobals.setCompleterClientFactory(() -> mockCompleterClient);
     }
 
     private FnTestHarness.EventBuilder eventToTestFN() {

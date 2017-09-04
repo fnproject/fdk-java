@@ -21,7 +21,6 @@ public class ThumbnailsFunctionTest {
     @Test
     public void testThumbnail() {
         testing
-                .addMirroredClass(ThumbnailsFunction.class)
 
                 .setConfig("OBJECT_STORAGE_URL", "http://localhost:" + mockServer.port())
                 .setConfig("OBJECT_STORAGE_ACCESS", "alpha")
@@ -55,8 +54,6 @@ public class ThumbnailsFunctionTest {
     @Test
     public void anExternalFunctionFailure() {
         testing
-                .addMirroredClass(ThumbnailsFunction.class)
-
                 .setConfig("OBJECT_STORAGE_URL", "http://localhost:" + mockServer.port())
                 .setConfig("OBJECT_STORAGE_ACCESS", "alpha")
                 .setConfig("OBJECT_STORAGE_SECRET", "betabetabetabeta")

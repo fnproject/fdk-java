@@ -51,14 +51,11 @@ public class InMemCompleter implements CompleterClient {
                 }
             }
             if (aliveCount > 0) {
-                System.err.println(graphs.size() + "graphs  alive count is " + aliveCount);
                 try {
                     Thread.sleep(150);
                 } catch (InterruptedException e) {
                 }
             } else {
-                System.err.println(graphs.size() + "graphs  Alive count is 0 , terminating");
-
                 break;
             }
         }
@@ -148,7 +145,7 @@ public class InMemCompleter implements CompleterClient {
 
         private ExternalCompletion createCompletion(ThreadId tid, CompletionId cid, CompletableFuture<Result> resultFuture) {
             ensureStarted();
-            String path = tid.getId() + "_" + TestSupport.completionIdString(cid);
+            String path = tid.getId() + "_" + cid.getId();
 
             knownCompletions.put(path, resultFuture);
 
@@ -158,7 +155,9 @@ public class InMemCompleter implements CompleterClient {
         private static ExternalCompletion createCompletion(CompletionId cid, String baseUrl, int port, String path) {
             return new ExternalCompletion() {
                 @Override
-                public CompletionId completionId() { return cid; }
+                public CompletionId completionId() {
+                    return cid;
+                }
 
                 @Override
                 public URI completeURI() {
@@ -175,7 +174,7 @@ public class InMemCompleter implements CompleterClient {
 
     @Override
     public ThreadId createThread(String functionId) {
-        ThreadId id = TestSupport.threadId("thread-" + threadCount.incrementAndGet());
+        ThreadId id = new ThreadId("thread-" + threadCount.incrementAndGet());
         graphs.put(id, new Graph(functionId, id));
 
         return id;
@@ -194,6 +193,7 @@ public class InMemCompleter implements CompleterClient {
             oos.close();
             return new Datum.Blob(CloudCompleterApiClient.CONTENT_TYPE_JAVA_OBJECT, bos.toByteArray());
         } catch (Exception e) {
+            e.printStackTrace();
             throw new LambdaSerializationException("Error serializing closure");
         }
     }
@@ -203,7 +203,7 @@ public class InMemCompleter implements CompleterClient {
         if (g == null) {
             throw new PlatformException("unknown graph " + t.getId());
         }
-        if(g.complete.get()){
+        if (g.complete.get()) {
             throw new PlatformException("graph already completed");
         }
         return act.apply(g);
@@ -403,14 +403,15 @@ public class InMemCompleter implements CompleterClient {
             return committed.get() && activeCount.get() == 0;
         }
 
-        private void checkCompletion(){
-            if(committed.get() && activeCount.get() ==0){
+        private void checkCompletion() {
+            if (committed.get() && activeCount.get() == 0) {
                 complete.set(true);
             }
         }
+
         private boolean commit() {
-            boolean commitResult =  committed.compareAndSet(false, true);
-            if(commitResult ){
+            boolean commitResult = committed.compareAndSet(false, true);
+            if (commitResult) {
                 checkCompletion();
             }
             return commitResult;
@@ -426,7 +427,7 @@ public class InMemCompleter implements CompleterClient {
         }
 
         private CompletionId newNodeId() {
-            return TestSupport.completionId("" + nodeCount.incrementAndGet());
+            return new CompletionId("" + nodeCount.incrementAndGet());
         }
 
 
@@ -529,17 +530,11 @@ public class InMemCompleter implements CompleterClient {
 
                 this.id = newNodeId();
                 input.whenComplete((in, err) -> {
-                    System.err.printf("Node %s%s activated :  (%s) \n", graphId,id, err != null ? "error" : "success");
-                    if (in != null) {
-                        System.err.printf("Node %s%s (%d) args:  (%s) \n", graphId,id, in.size(), in);
-
-                    }
                     activeCount.incrementAndGet();
                 });
                 this.outputFuture = invoke.apply(this, input);
                 outputFuture.whenComplete((in, err) -> {
                     activeCount.decrementAndGet();
-                    System.err.printf("Node %s%s complete : %s \n", graphId,id, err != null ? "error" : "succes");
                     checkCompletion();
                 });
             }
@@ -580,7 +575,7 @@ public class InMemCompleter implements CompleterClient {
                                     if (result.getDatum() instanceof Datum.StageRefDatum) {
                                         String ref = ((Datum.StageRefDatum) result.getDatum()).getStageId();
 
-                                        Node node = findNode(TestSupport.completionId(ref)).orElseThrow(() ->
+                                        Node node = findNode(new CompletionId(ref)).orElseThrow(() ->
                                                 new ResultException(new Datum.ErrorDatum(Datum.ErrorType.invalid_stage_response, "returned stage not found")));
                                         return node.outputFuture;
                                     } else {
@@ -605,8 +600,6 @@ public class InMemCompleter implements CompleterClient {
                 if (err.getCause() instanceof ResultException) {
                     return ((ResultException) err.getCause()).toResult();
                 } else {
-                    System.err.println("Unexpected error " + err.toString());
-                    err.printStackTrace();
                     return Result.failure(new Datum.ErrorDatum(Datum.ErrorType.unknown_error, "Unexpected error " + err.getMessage()));
                 }
             }

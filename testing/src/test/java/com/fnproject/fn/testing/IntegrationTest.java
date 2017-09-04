@@ -1,5 +1,6 @@
 package com.fnproject.fn.testing;
 
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -10,9 +11,9 @@ public class IntegrationTest {
     @Rule
     public FnTestingRule fn = FnTestingRule.createDefault();
 
+    @Ignore
     @Test
     public void runIntegrationTests() {
-        fn.addMirroredClass(ExerciseEverything.class.getName());
 
         fn.givenFn("nonexistent/nonexistent")
                 .withFunctionError()
@@ -26,7 +27,7 @@ public class IntegrationTest {
                     }
                 })
             .givenEvent()
-                .withBody("")   // or "1,5,6,32" to select a set of tests individually
+                .withBody("8")   // or "1,5,6,32" to select a set of tests individually
                 .enqueue()
 
             .thenRun(ExerciseEverything.class, "handleRequest");

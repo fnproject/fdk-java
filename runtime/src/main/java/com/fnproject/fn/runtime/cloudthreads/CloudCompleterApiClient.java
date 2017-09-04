@@ -58,7 +58,7 @@ public class CloudCompleterApiClient implements CompleterClient {
     private static final int MAX_POLL_INTERVAL_MS = 1000;
     private static final int HTTP_CODE_REQUEST_TIMEOUT = 408;
 
-    protected CloudCompleterApiClient(String apiUrlBase, HttpClient httpClient) {
+    public  CloudCompleterApiClient(String apiUrlBase, HttpClient httpClient) {
         this.apiUrlBase = Objects.requireNonNull(apiUrlBase);
         this.httpClient = Objects.requireNonNull(httpClient);
     }
