@@ -77,7 +77,7 @@ public final class FnTestingRule implements TestRule {
     // TODO: just have this as a static map and serialize a key into the completer factory - recovers multithreadability
     public static InMemCompleter completer = null;
 
-    private final List<String> forkedPackages = new ArrayList<>(Arrays.asList("com.fnproject.fn.runtime.", "com.fnproject.fn.api."));
+    private final List<String> forkedPackages = new ArrayList<>(Arrays.asList(CloudThreads.class.getCanonicalName(),CloudThreadsContinuationInvoker.class.getCanonicalName(),EntryPoint.class.getCanonicalName()));
 
     private FnTestingRule() {
     }
@@ -168,10 +168,10 @@ public final class FnTestingRule implements TestRule {
             // if passed class is a valid class then set the classloader to the same as the class's loader
             c = Class.forName(cls);
         } catch (Exception ignored) {
+            // TODO don't fall through here
         }
         if (c != null) {
             functionClassLoader = c.getClassLoader();
-            FunctionLoader.setContextClassLoader(functionClassLoader);
         } else {
             functionClassLoader = getClass().getClassLoader();
         }
@@ -179,129 +179,15 @@ public final class FnTestingRule implements TestRule {
         PrintStream oldSystemOut = System.out;
         PrintStream oldSystemErr = System.err;
 
-        CompleterInvokeClient client = new CompleterInvokeClient() {
-            @Override
-            public Result invokeStage(String fnId, ThreadId thread, CompletionId stageId, Datum.Blob closure, List<Result> input) {
-                // Construct a new ClassLoader hierarchy with a copy of the statics embedded in the runtime.
-                // Initialise it appropriately.
-                ForkingClassLoader fcl = new ForkingClassLoader(functionClassLoader, forkedPackages, oldSystemErr);
-                fcl.setCompleterClientFactory(completer);
+        CompleterInvokeClient client = new TestRuleCompleterInvokeClient(functionClassLoader, oldSystemErr, cls, method);
 
-
-                // TODO avoid repeating MIME stuff (library-ise with CT/runtime? )
-                // TODO de-dupe shared env setup
-                // TODO Making up event details (app path?)
-                oldSystemErr.printf("Executing closure for %s with args %s\n", stageId, input);
-
-                byte[] inputBody;
-                String boundary = UUID.randomUUID().toString().replaceAll("-", "");
-
-                try {
-                    ByteArrayOutputStream bodyBytes = new ByteArrayOutputStream();
-                    bodyBytes.write(("\r\n--" + boundary + "\r\n").getBytes(StandardCharsets.UTF_8));
-                    new Datum.BlobDatum(closure).writePart(bodyBytes);
-
-                    for (Result r : input) {
-                        bodyBytes.write(("\r\n--" + boundary + "\r\n").getBytes(StandardCharsets.UTF_8));
-                        r.writePart(bodyBytes);
-                    }
-                    bodyBytes.write(("\r\n--" + boundary + "--\r\n").getBytes(StandardCharsets.UTF_8));
-                    inputBody = bodyBytes.toByteArray();
-                } catch (IOException e) {
-                    throw new RuntimeException("Failed to write inputBody", e);
-                }
-
-                // oldSystemErr.println("Body\n" + new String(inputBody));
-
-                InputStream is = new FnHttpEventBuilder()
-                        .withBody(inputBody)
-                        .withAppName("appName")
-                        .withRoute("/route").withRequestUrl("http://some/url")
-                        .withMethod("POST")
-                        .withHeader(CloudCompleterApiClient.CONTENT_TYPE_HEADER, String.format("multipart/mixed; boundary=\"%s\"", boundary))
-                        .withHeader(CloudCompleterApiClient.THREAD_ID_HEADER, thread.getId()).withHeader(CloudCompleterApiClient.STAGE_ID_HEADER, TestSupport.completionIdString(stageId)).currentEventInputStream();
-
-                ByteArrayOutputStream output = new ByteArrayOutputStream();
-                Map<String, String> mutableEnv = new HashMap<>();
-                PrintStream functionOut = new PrintStream(output);
-                PrintStream functionErr = new PrintStream(oldSystemErr);
-
-                // Do we want to capture IO from continuations on the main log stream?
-                // System.setOut(functionErr);
-                // System.setErr(functionErr);
-
-                mutableEnv.putAll(config);
-                mutableEnv.putAll(eventEnv);
-                mutableEnv.put("FN_FORMAT", "http");
-
-
-                fcl.run(
-                        mutableEnv,
-                        is,
-                        functionOut,
-                        functionErr,
-                        cls + "::" + method);
-
-
-                SessionInputBufferImpl sib = new SessionInputBufferImpl(new HttpTransportMetricsImpl(), 65535);
-                ByteArrayInputStream parseStream = new ByteArrayInputStream(output.toByteArray());
-                sib.bind(parseStream);
-                DefaultHttpResponseParser parser = new DefaultHttpResponseParser(sib);
-                Result r;
-                try {
-                    // Read wrapping result, and throw it away
-                    parser.parse();
-                    IdentityInputStream iis = new IdentityInputStream(sib);
-                    byte[] responseBody = IOUtils.toByteArray(iis);
-
-                    // System.err.println("Got Fn response body: \n" + new String(responseBody));
-                    // HTTP in HTTP :(
-                    SessionInputBufferImpl sib2 = new SessionInputBufferImpl(new HttpTransportMetricsImpl(), 65535);
-                    InputStream frameStream = new ByteArrayInputStream(responseBody);
-                    sib2.bind(frameStream);
-
-                    DefaultHttpResponseParser parser2 = new DefaultHttpResponseParser(sib2);
-                    HttpResponse wrappedResponse = parser2.parse();
-
-                    IdentityInputStream frameBodyStream = new IdentityInputStream(sib2);
-
-                    wrappedResponse.setEntity(new InputStreamEntity(frameBodyStream));
-
-                    oldSystemErr.println("HTTP Resp " + wrappedResponse);
-
-                    r = Result.readResult(wrappedResponse);
-                    oldSystemErr.println("Response  " + r);
-
-
-                } catch (Exception e) {
-                    oldSystemErr.println("Err\n" + e);
-                    e.printStackTrace(oldSystemErr);
-                    r = Result.failure(new Datum.ErrorDatum(Datum.ErrorType.unknown_error, "Error reading fn Response:" + e.getMessage()));
-                }
-
-                if (!r.isSuccess()) {
-                    throw new ResultException(r.getDatum());
-                }
-                return r;
-
-            }
-        };
-
-        FnInvokeClient fnInvokeClient = new FnInvokeClient() {
-            @Override
-            public CompletableFuture<Result> invokeFunction(String fnId, HttpMethod method, Headers headers, byte[] data) {
-                return CompletableFuture.completedFuture(functionStubs
-                    .computeIfAbsent(fnId, (k) -> {
-                        throw new IllegalStateException("Function was invoked that had no definition: " + k); })
-                    .stubFunction(method, headers, data));
-            }
-        };
+        FnInvokeClient fnInvokeClient = new TestRuleFnInvokeClient();
 
         // CloudThreadsContinuationInvoker.setTestingMode(true);
         // The following must be a static: otherwise the factory (the lambda) will not be serializable.
         completer = new InMemCompleter(client, fnInvokeClient);
 
-        TestSupport.installCompleterClientFactory(completer, oldSystemErr);
+        //TestSupport.installCompleterClientFactory(completer, oldSystemErr);
 
 
         Map<String, String> mutableEnv = new HashMap<>();
@@ -316,8 +202,9 @@ public final class FnTestingRule implements TestRule {
             mutableEnv.putAll(eventEnv);
             mutableEnv.put("FN_FORMAT", "http");
 
-
-            new EntryPoint().run(
+            ForkingClassLoader forked = new ForkingClassLoader(functionClassLoader, forkedPackages, oldSystemErr);
+            forked.setCompleterClientFactory(completer);
+            forked.run(
                     mutableEnv,
                     pendingInput,
                     functionOut,
@@ -565,5 +452,135 @@ public final class FnTestingRule implements TestRule {
         }
 
 
+    }
+
+    private class TestRuleCompleterInvokeClient implements CompleterInvokeClient {
+        private final ClassLoader functionClassLoader;
+        private final PrintStream oldSystemErr;
+        private final String cls;
+        private final String method;
+
+        public TestRuleCompleterInvokeClient(ClassLoader functionClassLoader, PrintStream oldSystemErr, String cls, String method) {
+            this.functionClassLoader = functionClassLoader;
+            this.oldSystemErr = oldSystemErr;
+            this.cls = cls;
+            this.method = method;
+        }
+
+        @Override
+        public Result invokeStage(String fnId, ThreadId thread, CompletionId stageId, Datum.Blob closure, List<Result> input) {
+            // Construct a new ClassLoader hierarchy with a copy of the statics embedded in the runtime.
+            // Initialise it appropriately.
+            ForkingClassLoader fcl = new ForkingClassLoader(functionClassLoader, forkedPackages, oldSystemErr);
+            fcl.setCompleterClientFactory(completer);
+
+
+            // TODO avoid repeating MIME stuff (library-ise with CT/runtime? )
+            // TODO de-dupe shared env setup
+            // TODO Making up event details (app path?)
+            oldSystemErr.printf("Executing closure for %s with args %s\n", stageId, input);
+
+            byte[] inputBody;
+            String boundary = UUID.randomUUID().toString().replaceAll("-", "");
+
+            try {
+                ByteArrayOutputStream bodyBytes = new ByteArrayOutputStream();
+                bodyBytes.write(("\r\n--" + boundary + "\r\n").getBytes(StandardCharsets.UTF_8));
+                new Datum.BlobDatum(closure).writePart(bodyBytes);
+
+                for (Result r : input) {
+                    bodyBytes.write(("\r\n--" + boundary + "\r\n").getBytes(StandardCharsets.UTF_8));
+                    r.writePart(bodyBytes);
+                }
+                bodyBytes.write(("\r\n--" + boundary + "--\r\n").getBytes(StandardCharsets.UTF_8));
+                inputBody = bodyBytes.toByteArray();
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to write inputBody", e);
+            }
+
+            // oldSystemErr.println("Body\n" + new String(inputBody));
+
+            InputStream is = new FnHttpEventBuilder()
+                    .withBody(inputBody)
+                    .withAppName("appName")
+                    .withRoute("/route").withRequestUrl("http://some/url")
+                    .withMethod("POST")
+                    .withHeader(CloudCompleterApiClient.CONTENT_TYPE_HEADER, String.format("multipart/mixed; boundary=\"%s\"", boundary))
+                    .withHeader(CloudCompleterApiClient.THREAD_ID_HEADER, thread.getId()).withHeader(CloudCompleterApiClient.STAGE_ID_HEADER, TestSupport.completionIdString(stageId)).currentEventInputStream();
+
+            ByteArrayOutputStream output = new ByteArrayOutputStream();
+            Map<String, String> mutableEnv = new HashMap<>();
+            PrintStream functionOut = new PrintStream(output);
+            PrintStream functionErr = new PrintStream(oldSystemErr);
+
+            // Do we want to capture IO from continuations on the main log stream?
+            // System.setOut(functionErr);
+            // System.setErr(functionErr);
+
+            mutableEnv.putAll(config);
+            mutableEnv.putAll(eventEnv);
+            mutableEnv.put("FN_FORMAT", "http");
+
+
+            fcl.run(
+                    mutableEnv,
+                    is,
+                    functionOut,
+                    functionErr,
+                    cls + "::" + method);
+
+
+            SessionInputBufferImpl sib = new SessionInputBufferImpl(new HttpTransportMetricsImpl(), 65535);
+            ByteArrayInputStream parseStream = new ByteArrayInputStream(output.toByteArray());
+            sib.bind(parseStream);
+            DefaultHttpResponseParser parser = new DefaultHttpResponseParser(sib);
+            Result r;
+            try {
+                // Read wrapping result, and throw it away
+                parser.parse();
+                IdentityInputStream iis = new IdentityInputStream(sib);
+                byte[] responseBody = IOUtils.toByteArray(iis);
+
+                // System.err.println("Got Fn response body: \n" + new String(responseBody));
+                // HTTP in HTTP :(
+                SessionInputBufferImpl sib2 = new SessionInputBufferImpl(new HttpTransportMetricsImpl(), 65535);
+                InputStream frameStream = new ByteArrayInputStream(responseBody);
+                sib2.bind(frameStream);
+
+                DefaultHttpResponseParser parser2 = new DefaultHttpResponseParser(sib2);
+                HttpResponse wrappedResponse = parser2.parse();
+
+                IdentityInputStream frameBodyStream = new IdentityInputStream(sib2);
+
+                wrappedResponse.setEntity(new InputStreamEntity(frameBodyStream));
+
+                oldSystemErr.println("HTTP Resp " + wrappedResponse);
+
+                r = Result.readResult(wrappedResponse);
+                oldSystemErr.println("Response  " + r);
+
+
+            } catch (Exception e) {
+                oldSystemErr.println("Err\n" + e);
+                e.printStackTrace(oldSystemErr);
+                r = Result.failure(new Datum.ErrorDatum(Datum.ErrorType.unknown_error, "Error reading fn Response:" + e.getMessage()));
+            }
+
+            if (!r.isSuccess()) {
+                throw new ResultException(r.getDatum());
+            }
+            return r;
+
+        }
+    }
+
+    private class TestRuleFnInvokeClient implements FnInvokeClient {
+        @Override
+        public CompletableFuture<Result> invokeFunction(String fnId, HttpMethod method, Headers headers, byte[] data) {
+            return CompletableFuture.completedFuture(functionStubs
+                .computeIfAbsent(fnId, (k) -> {
+                    throw new IllegalStateException("Function was invoked that had no definition: " + k); })
+                .stubFunction(method, headers, data));
+        }
     }
 }

@@ -1,22 +1,17 @@
 package com.fnproject.fn.testing.cloudthreads;
 
-import com.fnproject.fn.api.cloudthreads.CloudThreadRuntime;
 import com.fnproject.fn.api.cloudthreads.PlatformException;
 import com.fnproject.fn.runtime.EntryPoint;
-import com.fnproject.fn.runtime.cloudthreads.CloudThreadsContinuationInvoker;
 import com.fnproject.fn.runtime.cloudthreads.CompleterClient;
-import com.fnproject.fn.runtime.cloudthreads.CompleterClientFactory;
 import com.fnproject.fn.runtime.cloudthreads.TestSupport;
 import org.apache.commons.io.IOUtils;
 
-import javax.management.ReflectionException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,17 +31,9 @@ public class ForkingClassLoader extends ClassLoader {
         this.originalSystemErr = originalSystemErr;
     }
 
-    public Class getOriginalClass(Class c) {
-        try {
-            return super.loadClass(c.getName());
-        } catch (ClassNotFoundException e) {
-            return null;
-        }
-    }
-
     @Override
     public synchronized Class<?> loadClass(String s) throws ClassNotFoundException {
-        // originalSystemErr.println("Loading class " + s);
+         originalSystemErr.println("Loading class " + s);
         Class<?> definedClass = loaded.get(s);
         if (definedClass == UNFORKED_TYPE) {
             // Delegate directly for these

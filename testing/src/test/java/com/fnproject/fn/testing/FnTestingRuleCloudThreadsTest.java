@@ -1,5 +1,6 @@
 package com.fnproject.fn.testing;
 
+import com.fnproject.fn.api.FnConfiguration;
 import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.RuntimeContext;
 import com.fnproject.fn.api.cloudthreads.*;
@@ -76,7 +77,7 @@ public class FnTestingRuleCloudThreadsTest {
         // The critical decision here is: does the class under test refer to the Cloud Threads API directly from within
         // an invocation which will run under the context of a continuation? If so, it *must* be mirrored.
         fn.addMirroredClass(Loop.class);
-        TestFn.reset();
+        reset();
     }
 
     @Test
@@ -279,6 +280,13 @@ public class FnTestingRuleCloudThreadsTest {
     public static class TestFn {
         static Integer TO_ADD = null;
 
+        static int myCount = 0;
+
+        @FnConfiguration
+        public static void configure(){
+            myCount++;
+            System.err.println("@@@@@@@I being configured for the " +myCount+ " st time");
+        }
 
         public TestFn(RuntimeContext ctx) {
             TO_ADD = Integer.parseInt(ctx.getConfigurationByKey("ADD").orElse("-1"));
@@ -377,11 +385,6 @@ public class FnTestingRuleCloudThreadsTest {
                     .thenAccept((x) -> { staticConfig = TO_ADD; });
         }
 
-        static void reset() {
-            result = null;
-            exception = null;
-            staticConfig = null;
-        }
     }
 
 
@@ -394,6 +397,12 @@ public class FnTestingRuleCloudThreadsTest {
         AnyOf, Exceptionally,
         ThenCompose,
         ThenComplete
+    }
+
+    static void reset() {
+        result = null;
+        exception = null;
+        staticConfig = null;
     }
 
     // These members are external to the class under test so as to be visible from the unit tests.

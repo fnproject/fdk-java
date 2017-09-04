@@ -24,9 +24,6 @@ import java.util.stream.Collectors;
 
 /**
  * In memory completer
- * Created on 25/08/2017.
- * <p>
- * (c) 2017 Oracle Corporation
  */
 public class InMemCompleter implements CompleterClient {
     private final Map<ThreadId, Graph> graphs = new ConcurrentHashMap<>();
@@ -35,7 +32,7 @@ public class InMemCompleter implements CompleterClient {
     private final FnInvokeClient fnInvokeClient;
 
     private static ScheduledThreadPoolExecutor spe = new ScheduledThreadPoolExecutor(1);
-    private static ExecutorService faasExectuor = Executors.newCachedThreadPool();
+    private static ExecutorService faasExecutor = Executors.newCachedThreadPool();
 
     public InMemCompleter(CompleterInvokeClient completerInvokeClient, FnInvokeClient fnInvokeClient) {
         this.completerInvokeClient = completerInvokeClient;
@@ -512,13 +509,13 @@ public class InMemCompleter implements CompleterClient {
         private Node addInvokeFunction(String functionId, HttpMethod method, Headers headers, byte[] data) {
             return addNode(new Node(CompletableFuture.completedFuture(Collections.emptyList()),
                     (n, in) -> in.thenComposeAsync((ignored) ->
-                            fnInvokeClient.invokeFunction(functionId, method, headers, data), faasExectuor)));
+                            fnInvokeClient.invokeFunction(functionId, method, headers, data), faasExecutor)));
         }
 
         private BiFunction<Node, CompletionStage<List<Result>>, CompletionStage<Result>> chainInvocation(Datum.Blob closure) {
             return (node, trigger) -> trigger.thenApplyAsync((input) -> {
                 return completerInvokeClient.invokeStage(functionId, graphId, node.id, closure, input);
-            }, faasExectuor);
+            }, faasExecutor);
         }
 
 

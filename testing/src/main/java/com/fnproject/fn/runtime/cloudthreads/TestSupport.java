@@ -52,6 +52,7 @@ public class TestSupport {
                     @Override
                     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
                         // Map classes of arguments to alien class
+
                         logs.println("Invoking " + method.getName());
                         Class[] pts = method.getParameterTypes();
                         Object[] alienArgs = new Object[args.length];
@@ -281,7 +282,7 @@ public class TestSupport {
 
                     private Object naturaliseObject(Object t) {
                         if (t == null) {
-                            return t;
+                            return null;
                         }
 
                         try {
