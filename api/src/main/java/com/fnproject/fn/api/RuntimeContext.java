@@ -77,4 +77,11 @@ public interface RuntimeContext {
      */
     void addOutputCoercion(OutputCoercion oc);
 
+    /**
+     * Set an {@link FunctionInvoker} for this function. The invoker will override
+     * the built in function invoker, although the cloud threads invoker will still
+     * have precedence so that cloud threads can be used from functions using custom invokers.
+     * @param invoker The {@link FunctionInvoker} to add.
+     */
+    void setInvoker(FunctionInvoker invoker);
 }
