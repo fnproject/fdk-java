@@ -1,6 +1,7 @@
 package com.fnproject.fn.runtime;
 
 import com.fnproject.fn.api.*;
+import com.fnproject.fn.runtime.cloudthreads.CloudThreadsContinuationInvoker;
 import com.fnproject.fn.runtime.coercion.*;
 import com.fnproject.fn.runtime.coercion.jackson.JacksonCoercion;
 import com.fnproject.fn.runtime.exception.FunctionClassInstantiationException;
@@ -14,12 +15,12 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.*;
 
-class FunctionRuntimeContext implements RuntimeContext {
+public class FunctionRuntimeContext implements RuntimeContext {
 
-    private final Class<?> targetClass;
-    private final Method targetMethod;
     private final Map<String, String> config;
+    private final FnFunction function;
     private Map<String, Object> attributes = new HashMap<>();
+    private List<FunctionInvoker> configuredInvokers = Arrays.asList(new CloudThreadsContinuationInvoker(), new MethodFunctionInvoker());
 
     private Object instance;
 
@@ -28,9 +29,8 @@ class FunctionRuntimeContext implements RuntimeContext {
     private final List<OutputCoercion> builtinOutputCoercions = Arrays.asList(new StringCoercion(), new ByteArrayCoercion(), new VoidCoercion(), new OutputEventCoercion(), JacksonCoercion.instance());
     private final List<OutputCoercion> userOutputCoercions = new LinkedList<>();
 
-    FunctionRuntimeContext(Class<?> targetClass, Method targetMethod, Map<String, String> config) {
-        this.targetClass = Objects.requireNonNull(targetClass);
-        this.targetMethod = Objects.requireNonNull(targetMethod);
+    public FunctionRuntimeContext(FnFunction function, Map<String, String> config) {
+        this.function = function;
         this.config = Objects.requireNonNull(config);
     }
 
@@ -78,12 +78,12 @@ class FunctionRuntimeContext implements RuntimeContext {
 
     @Override
     public Class<?> getTargetClass() {
-        return targetClass;
+        return this.function.getTargetClass();
     }
 
     @Override
     public Method getTargetMethod() {
-        return targetMethod;
+        return this.function.getTargetMethod();
     }
 
     @Override
@@ -152,6 +152,32 @@ class FunctionRuntimeContext implements RuntimeContext {
         userOutputCoercions.add(Objects.requireNonNull(oc));
     }
 
+    @Override
+    public void setInvoker(FunctionInvoker invoker) {
+        // TODO: Decide whether to remove default invoker, or simply let this invoker take precedence
+        configuredInvokers.add(1, invoker);
+    }
+
+    public InternalInvocationContext newInvocationContext() {
+        return new FunctionInvocationContext(this);
+    }
+
+    public FnFunction getFunction() {
+        return function;
+    }
+
+    public OutputEvent tryInvoke(InputEvent evt, InternalInvocationContext entryPoint) {
+        OutputEvent output = null;
+        for (FunctionInvoker invoker : configuredInvokers) {
+            Optional<OutputEvent> result = invoker.tryInvoke(entryPoint, evt);
+            if (result.isPresent()) {
+                output = result.get();
+                break;
+            }
+        }
+        return output;
+    }
+
     /**
      * Gets a stream of the possible {@link OutputCoercion} for the method.
      * <p>
@@ -170,7 +196,7 @@ class FunctionRuntimeContext implements RuntimeContext {
                 return coercionList;
 
             } catch (IllegalAccessException | InstantiationException e) {
-                throw new FunctionConfigurationException("Unable to instantiate output coercion class for method " + targetMethod);
+                throw new FunctionConfigurationException("Unable to instantiate output coercion class for method " + getTargetMethod());
             }
         }
         List<OutputCoercion> outputList = new ArrayList<OutputCoercion>();

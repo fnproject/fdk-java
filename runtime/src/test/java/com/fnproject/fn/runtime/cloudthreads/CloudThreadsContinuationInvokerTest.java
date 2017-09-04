@@ -690,6 +690,11 @@ public class CloudThreadsContinuationInvokerTest {
             throw new RuntimeException("You can't modify the empty runtime context in the tests, sorry.");
         }
 
+        @Override
+        public void setInvoker(FunctionInvoker invoker) {
+            throw new RuntimeException("You can't modify the empty runtime context in the tests, sorry.");
+        }
+
     }
 
     class EmptyInvocationContext implements InvocationContext {

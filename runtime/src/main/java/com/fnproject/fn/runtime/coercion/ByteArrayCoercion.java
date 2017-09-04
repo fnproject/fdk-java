@@ -21,7 +21,6 @@ public class ByteArrayCoercion implements InputCoercion<byte[]>, OutputCoercion 
     }
 
     private byte[] toByteArray(InputStream is) throws IOException {
-
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         int nRead;
         byte[] data = new byte[1024];

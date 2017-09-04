@@ -21,7 +21,7 @@ public class JacksonCoercionTest {
     public void listOfCustomObjects() throws NoSuchMethodException {
         JacksonCoercion jc = new JacksonCoercion();
 
-        FunctionRuntimeContext frc = new FunctionRuntimeContext(JacksonCoercionTest.class, JacksonCoercionTest.class.getMethod("testMethod", List.class), new HashMap<>());
+        FunctionRuntimeContext frc = new FunctionRuntimeContext(new FnFunction(JacksonCoercionTest.class, JacksonCoercionTest.class.getMethod("testMethod", List.class)), new HashMap<>());
         FunctionInvocationContext invocationContext = new FunctionInvocationContext(frc);
 
         Map<String, String> headers = new HashMap<>();
@@ -42,7 +42,7 @@ public class JacksonCoercionTest {
     public void failureToParseIsUserFriendlyError() throws NoSuchMethodException {
         JacksonCoercion jc = new JacksonCoercion();
 
-        FunctionRuntimeContext frc = new FunctionRuntimeContext(JacksonCoercionTest.class, JacksonCoercionTest.class.getMethod("testMethod", List.class), new HashMap<>());
+        FunctionRuntimeContext frc = new FunctionRuntimeContext(new FnFunction(JacksonCoercionTest.class, JacksonCoercionTest.class.getMethod("testMethod", List.class)), new HashMap<>());
         FunctionInvocationContext invocationContext = new FunctionInvocationContext(frc);
 
         Map<String, String> headers = new HashMap<>();
