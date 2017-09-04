@@ -11,9 +11,8 @@ import java.util.Optional;
  * Handles coercion to and from byte arrays.
  */
 public class ByteArrayCoercion implements InputCoercion<byte[]>, OutputCoercion {
-    @Override
-    public Optional<OutputEvent> wrapFunctionResult(InvocationContext ctx, Object value) {
-        if (ctx.getRuntimeContext().getTargetMethod().getReturnType().equals(byte[].class)) {
+    public Optional<OutputEvent> wrapFunctionResult(InvocationContext ctx, MethodWrapper method, Object value) {
+        if (method.getReturnType().getParameterClass().equals(byte[].class)) {
             return Optional.of(OutputEvent.fromBytes(((byte[]) value), OutputEvent.SUCCESS, "application/octet-stream"));
         } else {
             return Optional.empty();
@@ -21,7 +20,6 @@ public class ByteArrayCoercion implements InputCoercion<byte[]>, OutputCoercion 
     }
 
     private byte[] toByteArray(InputStream is) throws IOException {
-
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         int nRead;
         byte[] data = new byte[1024];
@@ -34,8 +32,8 @@ public class ByteArrayCoercion implements InputCoercion<byte[]>, OutputCoercion 
     }
 
     @Override
-    public Optional<byte[]> tryCoerceParam(InvocationContext currentContext, int arg, InputEvent input) {
-        if (currentContext.getRuntimeContext().getTargetMethod().getParameterTypes()[arg].equals(byte[].class)) {
+    public Optional<byte[]> tryCoerceParam(InvocationContext currentContext, int arg, InputEvent input, MethodWrapper method) {
+        if (method.getParamType(arg).getParameterClass().equals(byte[].class)) {
             return Optional.of(
                     input.consumeBody(is -> {
                         try {
