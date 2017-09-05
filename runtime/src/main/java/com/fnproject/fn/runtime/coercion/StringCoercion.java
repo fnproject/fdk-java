@@ -34,7 +34,7 @@ public class StringCoercion implements InputCoercion<String>, OutputCoercion {
     }
 
     private Class<?> parameterType(InvocationContext currentContext, int arg) {
-        return currentContext.getRuntimeContext().getMethod().param(arg).getParameterClass();
+        return currentContext.getRuntimeContext().getMethod().getParamType(arg).getParameterClass();
     }
 
     private Class<?> returnType(InvocationContext currentContext) {

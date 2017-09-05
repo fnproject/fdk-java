@@ -1,19 +1,14 @@
 package com.fnproject.fn.runtime.spring;
 
-import com.fasterxml.jackson.databind.util.ClassUtil;
-import com.fnproject.fn.api.MethodWrapper;
+import com.fnproject.fn.runtime.DefaultMethodWrapper;
 import com.fnproject.fn.api.RuntimeContext;
-import com.fnproject.fn.runtime.FunctionLoader;
 import com.fnproject.fn.runtime.FunctionRuntimeContext;
 import com.fnproject.fn.runtime.exception.InvalidEntryPointException;
 import com.fnproject.fn.runtime.spring.testfns.FunctionConfig;
-import org.junit.Ignore;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.util.ClassUtils;
 
 import java.lang.reflect.Method;
@@ -200,7 +195,7 @@ public class SpringCloudFunctionDiscoveryTests {
 
     private RuntimeContext fromMethod(Class<?> cls, String methodName) {
         Method method = ClassUtils.getMethod(cls, methodName);
-        return new FunctionRuntimeContext(new MethodWrapper(cls, method), new HashMap<>());
+        return new FunctionRuntimeContext(new DefaultMethodWrapper(cls, method), new HashMap<>());
     }
 
 }

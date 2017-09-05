@@ -19,7 +19,7 @@ public interface QueryParameters {
 
     /**
      * Find the list of entries for a specific key. Returns {@code Optional.empty}. Useful when multiple values are
-     * passed. e.g. this method returns {@code ["val1", "val2", "val3]} for the key {@code param} in the URL
+     * passed. e.g. this method returns {@code ["val1", "val2", "val3]} for the key {@code getParam} in the URL
      * {@code http://example.com?param=val1&amp;param=val2&amp;param=val3}
      *
      * @param key the header entry key (e.g. {@code Accept} in {@code Accept: text/html}

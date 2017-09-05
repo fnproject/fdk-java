@@ -1,20 +1,23 @@
-package com.fnproject.fn.api;
+package com.fnproject.fn.runtime;
 
+import com.fnproject.fn.api.MethodType;
+import com.fnproject.fn.api.MethodWrapper;
 import net.jodah.typetools.TypeResolver;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 
 
-public class MethodTypeMetaData {
+public class DefaultMethodType implements MethodType {
     protected final MethodWrapper src;
     protected Class<?> parameterClass;
 
-    public MethodTypeMetaData(MethodWrapper src, Class<?> parameterClass) {
+    public DefaultMethodType(MethodWrapper src, Class<?> parameterClass) {
         this.src = src;
         this.parameterClass = parameterClass;
     }
 
+    @Override
     public Class<?> getParameterClass() {
         return parameterClass;
     }

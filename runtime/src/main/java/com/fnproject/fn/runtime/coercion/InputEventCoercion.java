@@ -19,6 +19,6 @@ public class InputEventCoercion implements InputCoercion<InputEvent> {
     }
 
     private Class<?> parameterType(InvocationContext currentContext, int arg) {
-        return currentContext.getRuntimeContext().getMethod().param(arg).getParameterClass();
+        return currentContext.getRuntimeContext().getMethod().getParamType(arg).getParameterClass();
     }
 }

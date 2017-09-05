@@ -1,6 +1,8 @@
-package com.fnproject.fn.api;
+package com.fnproject.fn.runtime;
 
-public class MethodParameter extends MethodTypeMetaData {
+import com.fnproject.fn.api.MethodWrapper;
+
+public class MethodParameter extends DefaultMethodType {
     private int index;
 
     public MethodParameter(MethodWrapper src, int index) {
@@ -8,6 +10,7 @@ public class MethodParameter extends MethodTypeMetaData {
         this.index = index;
     }
 
+    @Override
     public Class<?> getParameterClass() {
         return parameterClass;
     }

@@ -29,11 +29,10 @@ public class MethodWrapperTests {
 
     @Test
     public void testMethodParameterHasExpectedType() throws NoSuchMethodException {
-        ;
-        MethodWrapper method = new MethodWrapper(srcClass, srcClass.getMethod(this.methodName, this.methodParameterTypes));
+        MethodWrapper method = new DefaultMethodWrapper(srcClass, srcClass.getMethod(this.methodName, this.methodParameterTypes));
 
         if (parameterIndex >= 0) {
-            assertThat(method.param(parameterIndex).getParameterClass()).isEqualTo(expectedType);
+            assertThat(method.getParamType(parameterIndex).getParameterClass()).isEqualTo(expectedType);
         } else {
             assertThat(parameterIndex).isEqualTo(-1)
                     .withFailMessage("You can only use non negative parameter indices or -1 to represent return value in this test suite");

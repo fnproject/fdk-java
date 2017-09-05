@@ -34,7 +34,7 @@ public class ByteArrayCoercion implements InputCoercion<byte[]>, OutputCoercion 
 
     @Override
     public Optional<byte[]> tryCoerceParam(InvocationContext currentContext, int arg, InputEvent input) {
-        if (currentContext.getRuntimeContext().getMethod().param(arg).getParameterClass().equals(byte[].class)) {
+        if (currentContext.getRuntimeContext().getMethod().getParamType(arg).getParameterClass().equals(byte[].class)) {
             return Optional.of(
                     input.consumeBody(is -> {
                         try {
