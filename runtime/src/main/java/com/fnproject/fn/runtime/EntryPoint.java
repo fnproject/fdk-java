@@ -77,19 +77,19 @@ public class EntryPoint {
                         break;
                     }
                     InputEvent evt = evtOpt.get();
-                    InternalInvocationContext ic = runtimeContext.newInvocationContext();
-                    OutputEvent output = runtimeContext.tryInvoke(evt, ic);
+                    FunctionInvocationContext fic = runtimeContext.newInvocationContext();
+                    OutputEvent output = runtimeContext.tryInvoke(evt, fic);
                     if (output == null) {
                         throw new FunctionInputHandlingException("No invoker found for input event");
                     }
                     codec.writeEvent(output);
                     if (output.isSuccess()) {
                         lastStatus = 0;
-                        ic.fireOnSuccessfulInvocation();
+                        fic.fireOnSuccessfulInvocation();
                     }
                      else {
                         lastStatus = 1;
-                        ic.fireOnFailedInvocation();
+                        fic.fireOnFailedInvocation();
                     }
 
                 } catch (InternalFunctionInvocationException fie) {

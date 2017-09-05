@@ -163,11 +163,11 @@ public class FunctionRuntimeContext implements RuntimeContext {
         return method;
     }
 
-    public InternalInvocationContext newInvocationContext() {
+    public FunctionInvocationContext newInvocationContext() {
         return new FunctionInvocationContext(this);
     }
 
-    public OutputEvent tryInvoke(InputEvent evt, InternalInvocationContext entryPoint) {
+    public OutputEvent tryInvoke(InputEvent evt, InvocationContext entryPoint) {
         OutputEvent output = null;
         for (FunctionInvoker invoker : configuredInvokers) {
             Optional<OutputEvent> result = invoker.tryInvoke(entryPoint, evt);
