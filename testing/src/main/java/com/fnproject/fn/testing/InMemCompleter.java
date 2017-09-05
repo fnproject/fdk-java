@@ -1,4 +1,4 @@
-package com.fnproject.fn.testing.cloudthreads;
+package com.fnproject.fn.testing;
 
 import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.cloudthreads.*;
@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 /**
  * In memory completer
  */
-public class InMemCompleter implements CompleterClient {
+class InMemCompleter implements CompleterClient {
     private final Map<ThreadId, Graph> graphs = new ConcurrentHashMap<>();
     private final AtomicInteger threadCount = new AtomicInteger();
     private final CompleterInvokeClient completerInvokeClient;
@@ -34,14 +34,22 @@ public class InMemCompleter implements CompleterClient {
     private static ScheduledThreadPoolExecutor spe = new ScheduledThreadPoolExecutor(1);
     private static ExecutorService faasExecutor = Executors.newCachedThreadPool();
 
-    public InMemCompleter(CompleterInvokeClient completerInvokeClient, FnInvokeClient fnInvokeClient) {
+    public interface CompleterInvokeClient {
+        Result invokeStage(String fnId, ThreadId threadId, CompletionId stageId, Datum.Blob closure, List<Result> body);
+    }
+
+    public interface FnInvokeClient {
+        CompletableFuture<Result> invokeFunction(String fnId, HttpMethod method, Headers headers, byte[] data);
+    }
+
+    InMemCompleter(CompleterInvokeClient completerInvokeClient, FnInvokeClient fnInvokeClient) {
         this.completerInvokeClient = completerInvokeClient;
         this.fnInvokeClient = fnInvokeClient;
     }
 
     private ExternalCompletionServer externalCompletionServer = new ExternalCompletionServer();
 
-    public void awaitTermination() {
+    void awaitTermination() {
         while (true) {
             int aliveCount = 0;
 
@@ -400,7 +408,7 @@ public class InMemCompleter implements CompleterClient {
             this.graphId = graphId;
         }
 
-        public boolean isCompleted() {
+        boolean isCompleted() {
             return committed.get() && activeCount.get() == 0;
         }
 
@@ -530,9 +538,7 @@ public class InMemCompleter implements CompleterClient {
                          BiFunction<Node, CompletionStage<List<Result>>, CompletionStage<Result>> invoke) {
 
                 this.id = newNodeId();
-                input.whenComplete((in, err) -> {
-                    activeCount.incrementAndGet();
-                });
+                input.whenComplete((in, err) -> activeCount.incrementAndGet());
                 this.outputFuture = invoke.apply(this, input);
                 outputFuture.whenComplete((in, err) -> {
                     activeCount.decrementAndGet();

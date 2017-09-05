@@ -3,7 +3,6 @@ package com.fnproject.fn.testing;
 import com.fnproject.fn.api.*;
 import com.fnproject.fn.api.cloudthreads.*;
 import com.fnproject.fn.runtime.cloudthreads.*;
-import com.fnproject.fn.testing.cloudthreads.*;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.TeeOutputStream;
 import org.apache.http.HttpResponse;
@@ -195,9 +194,9 @@ public final class FnTestingRule implements TestRule {
         PrintStream oldSystemOut = System.out;
         PrintStream oldSystemErr = System.err;
 
-        CompleterInvokeClient client = new TestRuleCompleterInvokeClient(functionClassLoader, oldSystemErr, cls, method);
+        InMemCompleter.CompleterInvokeClient client = new TestRuleCompleterInvokeClient(functionClassLoader, oldSystemErr, cls, method);
 
-        FnInvokeClient fnInvokeClient = new TestRuleFnInvokeClient();
+        InMemCompleter.FnInvokeClient fnInvokeClient = new TestRuleFnInvokeClient();
 
         // CloudThreadsContinuationInvoker.setTestingMode(true);
         // The following must be a static: otherwise the factory (the lambda) will not be serializable.
@@ -475,7 +474,7 @@ public final class FnTestingRule implements TestRule {
 
     }
 
-    private class TestRuleCompleterInvokeClient implements CompleterInvokeClient {
+    private class TestRuleCompleterInvokeClient implements InMemCompleter.CompleterInvokeClient {
         private final ClassLoader functionClassLoader;
         private final PrintStream oldSystemErr;
         private final String cls;
@@ -594,7 +593,7 @@ public final class FnTestingRule implements TestRule {
         }
     }
 
-    private class TestRuleFnInvokeClient implements FnInvokeClient {
+    private class TestRuleFnInvokeClient implements InMemCompleter.FnInvokeClient {
         @Override
         public CompletableFuture<Result> invokeFunction(String fnId, HttpMethod method, Headers headers, byte[] data) {
             return CompletableFuture.completedFuture(functionStubs

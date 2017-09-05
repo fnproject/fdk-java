@@ -1,4 +1,4 @@
-package com.fnproject.fn.testing.cloudthreads;
+package com.fnproject.fn.testing;
 
 import com.fnproject.fn.runtime.cloudthreads.CloudCompleterApiClient;
 import org.apache.http.HttpResponse;
@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Objects;
 
-public class Result {
+class Result {
 
     private final boolean success;
     private final Datum datum;
@@ -17,16 +17,16 @@ public class Result {
         this.datum = Objects.requireNonNull(datum);
     }
 
-    public Datum getDatum() {
+    Datum getDatum() {
         return datum;
     }
 
-    public static Result success(Datum d) {
+    static Result success(Datum d) {
         return new Result(true, d);
 
     }
 
-    public static Result failure(Datum d) {
+    static Result failure(Datum d) {
         return new Result(false, d);
     }
 
@@ -39,7 +39,7 @@ public class Result {
     }
 
 
-    public void writePart(OutputStream os) throws IOException {
+    void writePart(OutputStream os) throws IOException {
         HeaderWriter hw = new HeaderWriter(os);
 
         hw.writeHeader(CloudCompleterApiClient.RESULT_STATUS_HEADER, success ? CloudCompleterApiClient.RESULT_STATUS_SUCCESS : CloudCompleterApiClient.RESULT_STATUS_FAILURE);
@@ -49,7 +49,7 @@ public class Result {
         datum.writeBody(os);
     }
 
-    public static Result readResult(HttpResponse response) throws IOException {
+    static Result readResult(HttpResponse response) throws IOException {
         String status = response.getFirstHeader(CloudCompleterApiClient.RESULT_STATUS_HEADER).getValue();
 
         boolean success;
@@ -81,7 +81,7 @@ public class Result {
         return sb.toString();
     }
 
-    public boolean isSuccess() {
+    boolean isSuccess() {
         return success;
     }
 }

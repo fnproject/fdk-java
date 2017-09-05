@@ -1,4 +1,4 @@
-package com.fnproject.fn.testing.cloudthreads;
+package com.fnproject.fn.testing;
 
 import java.io.IOException;
 import java.io.OutputStream;

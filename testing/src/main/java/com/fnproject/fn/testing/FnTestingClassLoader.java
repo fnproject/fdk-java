@@ -1,4 +1,4 @@
-package com.fnproject.fn.testing.cloudthreads;
+package com.fnproject.fn.testing;
 
 import com.fnproject.fn.runtime.EntryPoint;
 import com.fnproject.fn.runtime.cloudthreads.CloudThreadsRuntimeGlobals;
@@ -19,16 +19,16 @@ import java.util.Map;
 /**
  * Testing classloader that loads all classes afresh when needed, otherwise delegates shared classes to the parent classloader
  */
-public class FnTestingClassLoader extends ClassLoader {
+class FnTestingClassLoader extends ClassLoader {
     private final List<String> sharedPrefixes;
     private final Map<String, Class<?>> loaded = new HashMap<>();
 
-    public FnTestingClassLoader(ClassLoader parent, List<String> sharedPrefixes) {
+    FnTestingClassLoader(ClassLoader parent, List<String> sharedPrefixes) {
         super(parent);
         this.sharedPrefixes = sharedPrefixes;
     }
 
-    public boolean isShared(String classOrPackageName) {
+    boolean isShared(String classOrPackageName) {
         for (String prefix : sharedPrefixes) {
             if (("=" + classOrPackageName).equals(prefix) || classOrPackageName.startsWith(prefix)) {
                 return true;
@@ -68,10 +68,7 @@ public class FnTestingClassLoader extends ClassLoader {
         return cls;
     }
 
-    /**
-     * @param completer
-     */
-    public void setCompleterClient(CompleterClient completer) {
+    void setCompleterClient(CompleterClient completer) {
         try {
             Class<?> completerGlobals = loadClass(CloudThreadsRuntimeGlobals.class.getName());
             CompleterClientFactory ccf = (CompleterClientFactory) () -> completer;

@@ -1,4 +1,4 @@
-package com.fnproject.fn.testing.cloudthreads;
+package com.fnproject.fn.testing;
 
 import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.cloudthreads.*;
@@ -16,7 +16,7 @@ import static com.fnproject.fn.runtime.cloudthreads.CloudCompleterApiClient.*;
 /**
  * Holder for a function-supplied value that contains an externalised representation of the references that that value contains
  */
-public abstract class Datum {
+abstract class Datum {
 
     public abstract Object asJavaValue(ClassLoader loader);
 
@@ -42,13 +42,13 @@ public abstract class Datum {
         Datum readDatum(org.apache.http.HttpResponse message) throws IOException;
     }
 
-    public void writePart(OutputStream os ) throws IOException {
+    void writePart(OutputStream os ) throws IOException {
         writeHeaders(new HeaderWriter(os));
         os.write(new byte[]{'\r','\n'});
         writeBody(os);
     }
 
-    public static class Blob {
+    static class Blob {
         private final String contentType;
         private final byte[] data;
 
@@ -86,7 +86,7 @@ public abstract class Datum {
     public static class BlobDatum extends Datum {
         private final Blob data;
 
-        public BlobDatum(Blob data) {
+        BlobDatum(Blob data) {
             this.data = data;
         }
 
@@ -148,7 +148,7 @@ public abstract class Datum {
         private final ErrorType type;
         private final String message;
 
-        public ErrorDatum(ErrorType type, String message) {
+        ErrorDatum(ErrorType type, String message) {
             this.type = Objects.requireNonNull(type);
             this.message = Objects.requireNonNull(message);
         }
@@ -270,7 +270,7 @@ public abstract class Datum {
         private final Headers headers;
         private final byte[] body;
 
-        public HttpRespDatum(int status, Headers headers, byte[] body) {
+        HttpRespDatum(int status, Headers headers, byte[] body) {
             this.status = status;
             this.headers = Objects.requireNonNull(headers);
             this.body = body;
