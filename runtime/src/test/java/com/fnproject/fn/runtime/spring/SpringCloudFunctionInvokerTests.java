@@ -1,6 +1,5 @@
 package com.fnproject.fn.runtime.spring;
 
-import com.fasterxml.jackson.databind.util.ClassUtil;
 import com.fnproject.fn.api.*;
 import com.fnproject.fn.runtime.*;
 import com.fnproject.fn.runtime.spring.testfns.FunctionConfig;
@@ -20,7 +19,7 @@ public class SpringCloudFunctionInvokerTests {
     @Test
     @Ignore
     public void shouldInvokeFunction() throws IOException {
-        MethodWrapper method = new MethodWrapper(FunctionConfig.class, ClassUtils.getMethod(FunctionConfig.class, "upperCaseFunction"));
+        MethodWrapper method = new DefaultMethodWrapper(FunctionConfig.class, ClassUtils.getMethod(FunctionConfig.class, "upperCaseFunction"));
         InvocationContext ctx = new InvocationContext() {
             FunctionRuntimeContext runtimeContex = new FunctionRuntimeContext(method, Collections.emptyMap());
 

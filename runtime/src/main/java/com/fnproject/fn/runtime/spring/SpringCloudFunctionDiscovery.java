@@ -38,10 +38,10 @@ public class SpringCloudFunctionDiscovery {
         try {
             fn = runtimeContext.getTargetMethod().invoke(runtimeContext.getInvokeInstance().orElse(null));
         } catch (IllegalAccessException | InvocationTargetException e) {
-            throw new InvalidEntryPointException("Could not invoke " + runtimeContext.getMethod().getCanonicalName() + " which is unsupported", e);
+            throw new InvalidEntryPointException("Could not invoke " + runtimeContext.getMethod().getLongName() + " which is unsupported", e);
         }
         if (!assignFnToField(fn)) {
-            throw new InvalidEntryPointException("The function loaded from " + runtimeContext.getMethod().getCanonicalName() +
+            throw new InvalidEntryPointException("The function loaded from " + runtimeContext.getMethod().getLongName() +
                     " is not of type Supplier, Consumer or Function, but is " + fn.getClass() + " which is unsupported");
         };
         tryLoadingFromContext();

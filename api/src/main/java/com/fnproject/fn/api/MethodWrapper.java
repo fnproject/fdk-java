@@ -3,36 +3,46 @@ package com.fnproject.fn.api;
 import java.lang.reflect.Method;
 
 /**
- * Wrapper class around {@link java.lang.reflect.Method} to provide type
- * resolution for methods with generic arguments
+ * Represents a method, similar to {@link Method} but with methods for resolving
+ * parameter and return types that are reified generics.
  */
-public class MethodWrapper {
-    private final Class<?> srcClass;
-    private final Method srcMethod;
-    private String canonicalName;
+public interface MethodWrapper {
+    /**
+     * The class from which the wrapper was created, may not necessarily be the declaring class of the method, but a
+     * subclass.
+     *
+     * @return class from which this wrapper was created
+     */
+    Class<?> getTargetClass();
 
-    public MethodWrapper(Class<?> srcClass, Method srcMethod) {
-        this.srcClass = srcClass;
-        this.srcMethod = srcMethod;
-    }
+    /**
+     * Gets the underlying wrapped {@link Method}
+     *
+     * @return {@link Method} which this class wraps
+     */
+    Method getTargetMethod();
 
-    public Class<?> getTargetClass() {
-        return srcClass;
-    }
+    /**
+     * Get the {@link MethodType} for a parameter specified by {@code index}
+     * @param index    index of the parameter whose type to retrieve
+     * @return the type of the parameter at {@code index}, reified generics will resolve to the reified type
+     *         and not {@link Object}
+     */
+    MethodType getParamType(int index);
 
-    public Method getTargetMethod() {
-        return srcMethod;
-    }
+    /**
+     * Get the {@link MethodType} for the return type of the method.
+     * @return the return type, reified generics will resolve to the reified type and not {@link Object}
+     */
+    MethodType getReturnType();
 
-    public MethodParameter param(int index) {
-        return new MethodParameter(this, index);
-    }
-
-    public MethodReturnType getReturnType() {
-        return new MethodReturnType(this);
-    }
-
-    public String getCanonicalName() {
+    /**
+     * Get the name of the method including the package path built from {@link Class#getCanonicalName()} and
+     * {@link Method#getName()}. e.g. {@code com.fnproject.fn.api.MethodWrapper::getLongName} for this method.
+     *
+     * @return long method name
+     */
+    default String getLongName() {
         return getTargetClass().getCanonicalName() + "::" + getTargetMethod().getName();
     }
 }

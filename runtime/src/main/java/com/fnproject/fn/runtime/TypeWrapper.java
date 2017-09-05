@@ -1,4 +1,4 @@
-package com.fnproject.fn.api;
+package com.fnproject.fn.runtime;
 
 import java.util.HashMap;
 import java.util.Map;

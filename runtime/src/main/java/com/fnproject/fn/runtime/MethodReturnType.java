@@ -1,6 +1,8 @@
-package com.fnproject.fn.api;
+package com.fnproject.fn.runtime;
 
-public class MethodReturnType extends MethodTypeMetaData {
+import com.fnproject.fn.api.MethodWrapper;
+
+public class MethodReturnType extends DefaultMethodType {
 
     public MethodReturnType(MethodWrapper src) {
         super(src, resolveType(src.getTargetMethod().getGenericReturnType(), src));

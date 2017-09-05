@@ -14,7 +14,7 @@ public class DefaultFunctionLoader implements FunctionLoader {
     @Override
     public MethodWrapper loadClass(String className, String fnName) {
         Class<?> targetClass = loadClass(className);
-        return new MethodWrapper(targetClass, getTargetMethod(targetClass, fnName));
+        return new DefaultMethodWrapper(targetClass, getTargetMethod(targetClass, fnName));
     }
 
     private Method getTargetMethod(Class<?> targetClass, String method) {
