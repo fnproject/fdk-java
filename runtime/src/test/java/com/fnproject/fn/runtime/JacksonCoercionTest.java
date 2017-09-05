@@ -22,7 +22,7 @@ public class JacksonCoercionTest {
     public void listOfCustomObjects() throws NoSuchMethodException {
         JacksonCoercion jc = new JacksonCoercion();
 
-        MethodWrapper method = new DefaultFunctionLoader().loadClass(JacksonCoercionTest.class.getCanonicalName(), "testMethod");
+        MethodWrapper method = new FunctionLoader().loadClass(JacksonCoercionTest.class.getCanonicalName(), "testMethod");
         FunctionRuntimeContext frc = new FunctionRuntimeContext(method, new HashMap<>());
         FunctionInvocationContext invocationContext = new FunctionInvocationContext(frc);
 
@@ -44,7 +44,7 @@ public class JacksonCoercionTest {
     public void failureToParseIsUserFriendlyError() throws NoSuchMethodException {
         JacksonCoercion jc = new JacksonCoercion();
 
-        MethodWrapper method = new DefaultFunctionLoader().loadClass(JacksonCoercionTest.class.getCanonicalName(), "testMethod");
+        MethodWrapper method = new FunctionLoader().loadClass(JacksonCoercionTest.class.getCanonicalName(), "testMethod");
         FunctionRuntimeContext frc = new FunctionRuntimeContext(method, new HashMap<>());
         FunctionInvocationContext invocationContext = new FunctionInvocationContext(frc);
 

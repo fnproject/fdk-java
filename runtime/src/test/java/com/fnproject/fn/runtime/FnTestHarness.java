@@ -267,7 +267,7 @@ public class FnTestHarness implements TestRule {
             // Trick to work around Maven class loader separation
             // if passed class is a valid class then set the classloader to the same as the class's loader
             Class c = Class.forName(cls);
-            DefaultFunctionLoader.setContextClassLoader(c.getClassLoader());
+            FunctionLoader.setContextClassLoader(c.getClassLoader());
         } catch (Exception ignored) {
         }
         InputStream oldSystemIn = System.in;

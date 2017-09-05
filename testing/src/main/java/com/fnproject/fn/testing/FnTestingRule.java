@@ -1,10 +1,8 @@
 package com.fnproject.fn.testing;
 
-import com.fnproject.fn.runtime.DefaultFunctionLoader;
-import com.fnproject.fn.runtime.EntryPoint;
-import com.fnproject.fn.runtime.FunctionConfigurer;
-import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.runtime.FunctionLoader;
+import com.fnproject.fn.runtime.EntryPoint;
+import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.runtime.cloudthreads.CloudThreadsContinuationInvoker;
 import com.fnproject.fn.runtime.cloudthreads.CompleterClientFactory;
 import org.apache.commons.io.IOUtils;
@@ -131,7 +129,7 @@ public final class FnTestingRule implements TestRule {
             // Trick to work around Maven class loader separation
             // if passed class is a valid class then set the classloader to the same as the class's loader
             Class c = Class.forName(cls);
-            DefaultFunctionLoader.setContextClassLoader(c.getClassLoader());
+            FunctionLoader.setContextClassLoader(c.getClassLoader());
         } catch (Exception ignored) {
         }
 
