@@ -1,4 +1,4 @@
-package com.example.faas;
+package com.fnproject.fn.examples;
 
 import com.fnproject.fn.examples.ThumbnailsFunction;
 import com.fnproject.fn.testing.FnTestingRule;
@@ -10,7 +10,6 @@ import org.junit.Test;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 
 public class ThumbnailsFunctionTest {
-
 
     @Rule
     public final FnTestingRule testing = FnTestingRule.createDefault();
@@ -25,7 +24,6 @@ public class ThumbnailsFunctionTest {
                 .setConfig("OBJECT_STORAGE_URL", "http://localhost:" + mockServer.port())
                 .setConfig("OBJECT_STORAGE_ACCESS", "alpha")
                 .setConfig("OBJECT_STORAGE_SECRET", "betabetabetabeta")
-
 
                 .givenFn("myapp/resize128")
                     .withAction((data) -> "128".getBytes())

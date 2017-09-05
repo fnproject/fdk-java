@@ -105,14 +105,17 @@ to obtain the details of the storage server host, username and password:
 ```java
 public class ThumbnailsFunction {
 
-    private final String storageHost;
+    private final String storageUrl;
     private final String storageAccessKey;
     private final String storageSecretKey;
 
     public ThumbnailsFunction(RuntimeContext ctx) {
-        storageHost = ctx.getConfigurationByKey("OBJECT_STORAGE_URL");
-        storageAccessKey = ctx.getConfigurationByKey("OBJECT_STORAGE_ACCESS");
-        storageSecretKey = ctx.getConfigurationByKey("OBJECT_STORAGE_SECRET");
+        storageUrl = ctx.getConfigurationByKey("OBJECT_STORAGE_URL")
+                .orElseThrow(() -> new RuntimeException("Missing configuration: OBJECT_STORAGE_URL"));
+        storageAccessKey = ctx.getConfigurationByKey("OBJECT_STORAGE_ACCESS")
+                .orElseThrow(() -> new RuntimeException("Missing configuration: OBJECT_STORAGE_ACCESS"));
+        storageSecretKey = ctx.getConfigurationByKey("OBJECT_STORAGE_SECRET")
+                .orElseThrow(() -> new RuntimeException("Missing configuration: OBJECT_STORAGE_SECRET"));
     }
 
     // ...
@@ -129,7 +132,7 @@ public class ThumbnailsFunction {
 
     public class Response {
         Response(String imageId) { this.imageId = imageId; }
-        String imageId;
+        public String imageId;
     }
 
     // ...
@@ -150,7 +153,7 @@ public class ThumbnailsFunction {
     public Response handleRequest(byte[] imageBuffer) {
         String id = java.util.UUID.randomUUID().toString();
         CloudThreadRuntime runtime = CloudThreads.currentRuntime();
-        
+
         runtime.allOf(
                 runtime.invokeFunction("myapp/resize128", HttpMethod.POST, Headers.emptyHeaders(), imageBuffer)
                         .thenAccept((img) -> objectUpload(img.getBodyAsBytes(), id + "-128.png")),
@@ -182,7 +185,7 @@ public class ThumbnailsFunction {
      */
     private void objectUpload(byte[] imageBuffer, String objectName) {
         try {
-            MinioClient minioClient = new MinioClient(storageHost, 9000, storageAccessKey, storageSecretKey);
+            MinioClient minioClient = new MinioClient(storageUrl, storageAccessKey, storageSecretKey);
 
             // Ensure the bucket exists.
             if(!minioClient.bucketExists("alpha")) {
@@ -209,18 +212,14 @@ of the resize functions fails.
 
 The tests can be found in the class `ThumbnailsFunctionTest`.
 
-First of all, the class initializes the `FnTestingRule` harness with a local
-test instance of the Cloud Threads completions service, as explained in
-[Testing Functions](../../docs/TestingFunctions.md).
+First of all, the class initializes the `FnTestingRule` harness, as explained
+in [Testing Functions](../../docs/TestingFunctions.md).
 
 ```java
 public class ThumbnailsFunctionTest {
 
-    @ClassRule
-    public static final FnTestingRule.FnCompleterRule completer = FnTestingRule.createCompleter();
-
     @Rule
-    public final FnTestingRule testing = FnTestingRule.createWithCompletions(completer);
+    public final FnTestingRule testing = FnTestingRule.createDefault();
 
     // ...
 }
@@ -241,7 +240,7 @@ public class ThumbnailsFunctionTest {
     // ...
 
     private void mockMinio() {
-        // ... the code here sets up the mocks in `restMock`
+        // ... the code here sets up the mocks in `mockServer`
     }
 
     // ...
@@ -258,20 +257,20 @@ public class ThumbnailsFunctionTest {
 
     // ...
 
-    @Test
+   @Test
     public void testThumbnail() {
         testing
-                .setConfig("OBJECT_STORAGE_URL", "http://localhost:" + mockServer.getPort())
+
+                .setConfig("OBJECT_STORAGE_URL", "http://localhost:" + mockServer.port())
                 .setConfig("OBJECT_STORAGE_ACCESS", "alpha")
                 .setConfig("OBJECT_STORAGE_SECRET", "betabetabetabeta")
 
-
                 .givenFn("myapp/resize128")
-                    .withResult("128".getBytes())
+                    .withAction((data) -> "128".getBytes())
                 .givenFn("myapp/resize256")
-                    .withResult("256".getBytes())
+                    .withAction((data) -> "256".getBytes())
                 .givenFn("myapp/resize512")
-                    .withResult("512".getBytes())
+                    .withAction((data) -> "512".getBytes())
 
                 .givenEvent()
                     .withBody("testing".getBytes())
@@ -303,7 +302,7 @@ public class ThumbnailsFunctionTest {
     @Test
     public void anExternalFunctionFailure() {
         testing
-                .setConfig("OBJECT_STORAGE_URL", "http://localhost:" + mockServer.getPort())
+                .setConfig("OBJECT_STORAGE_URL", "http://localhost:" + mockServer.port())
                 .setConfig("OBJECT_STORAGE_ACCESS", "alpha")
                 .setConfig("OBJECT_STORAGE_SECRET", "betabetabetabeta")
 
@@ -471,8 +470,3 @@ public class ThumbnailsFunctionTest {
     // ...
 }
 ```
-
-
-
-
-
