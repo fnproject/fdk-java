@@ -198,7 +198,7 @@ public class CloudCompleterApiClient implements CompleterClient {
 
     // wait for completion  -> result
     @Override
-    public Object waitForCompletion(ThreadId threadId, CompletionId id, ClassLoader loader) {
+    public Object waitForCompletion(ThreadId threadId, CompletionId id, ClassLoader ignored) {
         while (true) {
             long time = System.currentTimeMillis();
             try (HttpClient.HttpResponse response = httpClient.execute(HttpClient
