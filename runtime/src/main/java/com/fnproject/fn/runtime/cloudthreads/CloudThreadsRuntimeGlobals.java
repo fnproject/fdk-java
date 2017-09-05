@@ -4,9 +4,6 @@ import java.util.Objects;
 
 /**
  * Globals for injecting testing state into cloudthreads
- * Created on 04/09/2017.
- * <p>
- * (c) 2017 Oracle Corporation
  */
 public class CloudThreadsRuntimeGlobals {
     private static CompleterClientFactory completerClientFactory = null;
