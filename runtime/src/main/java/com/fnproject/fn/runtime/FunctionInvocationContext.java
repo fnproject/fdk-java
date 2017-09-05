@@ -6,7 +6,7 @@ import com.fnproject.fn.api.InvocationListener;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-public class FunctionInvocationContext implements InternalInvocationContext, FunctionInvocationCallback {
+public class FunctionInvocationContext implements InvocationContext, FunctionInvocationCallback {
     private final FunctionRuntimeContext runtimeContext;
     private List<InvocationListener> invocationListeners = new CopyOnWriteArrayList<>();
 
@@ -26,6 +26,10 @@ public class FunctionInvocationContext implements InternalInvocationContext, Fun
 
     @Override
     public void fireOnSuccessfulInvocation() {
+        notifyListeners();
+    }
+
+    private void notifyListeners() {
         for (InvocationListener listener : invocationListeners) {
             try {
                 listener.onSuccess();
