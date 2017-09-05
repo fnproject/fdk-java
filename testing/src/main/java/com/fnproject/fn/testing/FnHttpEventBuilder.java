@@ -163,7 +163,7 @@ class FnHttpEventBuilder {
         inputString.append("\r\n");
 
         inputString.append("Content-length: ").append(Integer.toString(contentLength)).append("\r\n");
-        headers.forEach((k, v) -> inputString.append("HEADER_").append(k).append(": ").append(String.join(", ", v)).append("\r\n"));
+        headers.forEach((k, v) -> inputString.append(k).append(": ").append(String.join(", ", v)).append("\r\n"));
 
 
         inputString.append("\r\n");

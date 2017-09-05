@@ -18,10 +18,7 @@ import org.apache.http.io.SessionOutputBuffer;
 import org.apache.http.message.BasicHttpResponse;
 import org.apache.http.message.BasicStatusLine;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -42,7 +39,7 @@ class HttpEventCodec implements EventCodec {
     private final HttpMessageParser<HttpRequest> parser;
 
 
-    public HttpEventCodec(InputStream input, OutputStream output) {
+    HttpEventCodec(InputStream input, OutputStream output) {
 
         SessionInputBufferImpl sib = new SessionInputBufferImpl(new HttpTransportMetricsImpl(), 65535);
         sib.bind(Objects.requireNonNull(input));
@@ -72,8 +69,16 @@ class HttpEventCodec implements EventCodec {
             throw new FunctionInputHandlingException("Failed to read HTTP content from input", e);
         }
 
-
-        long contentLength = Long.parseLong(requiredHeader(req, "content-length"));
+        InputStream bodyStream;
+        if (req.getHeaders("content-length").length > 0) {
+            long contentLength = Long.parseLong(requiredHeader(req, "content-length"));
+            bodyStream = new ContentLengthInputStream(sib, contentLength);
+        } else if (req.getHeaders("transfer-encoding").length > 0 &&
+                req.getFirstHeader("transfer-encoding").getValue().equalsIgnoreCase("chunked")) {
+            bodyStream = new ChunkedInputStream(sib);
+        } else {
+            bodyStream = new ByteArrayInputStream(new byte[]{});
+        }
         String appName = requiredHeader(req, "app_name");
         String route = requiredHeader(req, "route");
         String method = requiredHeader(req, "method");
@@ -81,15 +86,11 @@ class HttpEventCodec implements EventCodec {
 
         Map<String, String> headers = new HashMap<>();
         for (Header h : req.getAllHeaders()) {
-            String headerNameLower = h.getName().toLowerCase();
-            if (headerNameLower.startsWith("header_")) {
-                String name = h.getName().substring("header_".length());
-                headers.put(name, h.getValue());
-            }
+            headers.put(h.getName(), h.getValue());
         }
 
         return Optional.of(new ReadOnceInputEvent(appName, route, requestUrl, method,
-                new ContentLengthInputStream(sib, contentLength), Headers.fromMap(headers),
+                bodyStream, Headers.fromMap(headers),
                 QueryParametersParser.getParams(requestUrl)));
 
     }
@@ -122,6 +123,7 @@ class HttpEventCodec implements EventCodec {
 
             evt.getContentType().ifPresent((ct) -> response.setHeader(CONTENT_TYPE_HEADER, ct));
             response.setHeader("Content-length", String.valueOf(data.length));
+
 
             DefaultHttpResponseWriter writer = new DefaultHttpResponseWriter(sob);
             try {
