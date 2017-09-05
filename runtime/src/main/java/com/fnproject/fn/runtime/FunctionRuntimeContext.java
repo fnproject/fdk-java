@@ -48,7 +48,7 @@ public class FunctionRuntimeContext implements RuntimeContext {
                             if (RuntimeContext.class.isAssignableFrom(ctor.getParameterTypes()[0])) {
                                 instance = ctor.newInstance(FunctionRuntimeContext.this);
                             } else {
-                                if ( getMethod().getTargetClass().getEnclosingClass() != null && ! Modifier.isStatic(getTargetClass().getModifiers()) ) {
+                                if ( getMethod().getTargetClass().getEnclosingClass() != null && ! Modifier.isStatic(getMethod().getTargetClass().getModifiers()) ) {
                                     throw new FunctionClassInstantiationException("The function " + getMethod().getTargetClass() + " cannot be instantiated as it is a non-static inner class");
                                 } else {
                                     throw new FunctionClassInstantiationException("The function " + getMethod().getTargetClass() + " cannot be instantiated as its constructor takes an unrecognized argument of type " + constructors[0].getParameterTypes()[0] + ". Function classes should have a single public constructor that takes either no arguments or a RuntimeContext argument");
@@ -74,10 +74,6 @@ public class FunctionRuntimeContext implements RuntimeContext {
             return Optional.of(instance);
         }
         return Optional.empty();
-    }
-
-    public Class<?> getTargetClass() {
-        return this.method.getTargetClass();
     }
 
     @Override
