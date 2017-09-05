@@ -12,22 +12,19 @@ import java.util.Optional;
  * of a function; they will not change between multiple invocations of a hot function.
  */
 public interface RuntimeContext {
+    /**
+     * Create an instance of the user specified class on which the function to invoke is declared.
+     *
+     * @return new instance of class containing user specified function
+     */
     Optional<Object> getInvokeInstance();
 
     /**
-     * Get the target class for the function invocation
+     * Get the user specified function wrapped in a {@link MethodWrapper}.
      *
-     * @return the class the user has configured as the function entrypoint
+     * @return user specified function
      */
-    Class<?> getTargetClass();
-
-    /**
-     * Get the target method of the function invocation
-     *
-     * @return the target method of the function invocation
-     */
-    Method getTargetMethod();
-
+    MethodWrapper getMethod();
     /**
      * Get a configuration variable value by key
      *
@@ -44,7 +41,7 @@ public interface RuntimeContext {
     Map<String, String> getConfiguration();
 
     /**
-     * get an attribute from the context.
+     * Get an attribute from the context.
      *
      * @param att  the attribute ID
      * @param type the type of the attribute
@@ -85,5 +82,4 @@ public interface RuntimeContext {
      */
     void setInvoker(FunctionInvoker invoker);
 
-    MethodWrapper getMethod();
 }

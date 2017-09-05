@@ -8,10 +8,12 @@ import java.lang.reflect.Method;
  */
 public interface MethodWrapper {
     /**
+     * Get the target class for the function invocation
+     *
      * The class from which the wrapper was created, may not necessarily be the declaring class of the method, but a
      * subclass.
      *
-     * @return class from which this wrapper was created
+     * @return the class the user has configured as the function entrypoint
      */
     Class<?> getTargetClass();
 

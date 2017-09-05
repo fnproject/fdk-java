@@ -37,5 +37,10 @@ public class DefaultMethodWrapper implements MethodWrapper {
     public MethodType getReturnType() {
         return new MethodReturnType(this);
     }
+
+    @Override
+    public String toString() {
+        return getLongName();
+    }
 }
 
