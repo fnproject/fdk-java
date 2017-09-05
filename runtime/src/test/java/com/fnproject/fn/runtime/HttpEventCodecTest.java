@@ -24,23 +24,23 @@ public class HttpEventCodecTest {
     private final InputStream nullIn = new NullInputStream(0);
 
     private final String postReq = "GET /test HTTP/1.1\n" +
-            "Header_accept_encoding: gzip\n" +
-            "Header_user_agent: useragent\n" +
-            "Header_accept: text/html, text/plain;q=0.9\n" +
+            "Accept-Encoding: gzip\n" +
+            "User-Agent: useragent\n" +
+            "Accept: text/html, text/plain;q=0.9\n" +
             "Request_url: http//localhost:8080/r/testapp/test\n" +
             "Route: /test\n" +
             "Method: POST\n" +
             "Content-Length: 11\n" +
             "App_name: testapp\n" +
-            "Task-Id: task-id\n" +
+            "Call_id: task-id\n" +
             "Myconfig: fooconfig\n" +
-            "Header_content_type: text/plain\n\n" +
+            "Content-Type: text/plain\n\n" +
             "Hello World";
 
 
     private final String getReq = "GET /test HTTP/1.1\n" +
-            "Header_accept_encoding: gzip\n" +
-            "Header_user_agent: useragent\n" +
+            "Accept-Encoding: gzip\n" +
+            "User-Agent: useragent\n" +
             "Request_url: http//localhost:8080/r/testapp/test\n" +
             "Route: /test2\n" +
             "Method: GET\n" +
@@ -52,7 +52,7 @@ public class HttpEventCodecTest {
     private final Map<String, String> emptyConfig = new HashMap<>();
 
     @Test
-    public void testParsingSimpleHttpRequestWithIronHeadersAndBody() {
+    public void testParsingSimpleHttpRequestWithFnHeadersAndBody() {
         ByteArrayInputStream bis = new ByteArrayInputStream(postReq.getBytes());
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         HttpEventCodec httpEventCodec = new HttpEventCodec(bis, bos);
@@ -109,7 +109,6 @@ public class HttpEventCodecTest {
         requiredHeaders.put("request_url", "request_url");
         requiredHeaders.put("route", "/route");
         requiredHeaders.put("method", "GET");
-        requiredHeaders.put("content-length", "0");
         requiredHeaders.put("app_name", "app_name");
 
         for (String key : requiredHeaders.keySet()) {
@@ -120,7 +119,7 @@ public class HttpEventCodecTest {
             try {
                 HttpEventCodec httpEventCodec = new HttpEventCodec(asStream(req), nullOut);
                 httpEventCodec.readEvent();
-                fail();
+                fail("Should fail with header missing:" + key);
             } catch (FunctionInputHandlingException e) {
                 assertThat(e).hasMessageMatching("Incoming HTTP frame is missing required header: " + key);
             }
@@ -178,8 +177,8 @@ public class HttpEventCodecTest {
         assertThat(getEvent.getRoute()).isEqualTo("/test2");
 
         assertThat(getEvent.getHeaders().getAll())
-                .contains(headerEntry("accept_encoding", "gzip"),
-                        headerEntry("user_agent", "useragent"));
+                .contains(headerEntry("Accept-Encoding", "gzip"),
+                        headerEntry("User-Agent", "useragent"));
 
 
         getEvent.consumeBody((is) -> assertThat(is).hasSameContentAs(asStream("")));
@@ -189,13 +188,12 @@ public class HttpEventCodecTest {
         assertThat(postEvent.getAppName()).isEqualTo("testapp");
         assertThat(postEvent.getMethod()).isEqualTo("POST");
         assertThat(postEvent.getRoute()).isEqualTo("/test");
-        assertThat(postEvent.getHeaders().getAll().size()).isEqualTo(4);
+        assertThat(postEvent.getHeaders().getAll().size()).isEqualTo(11);
         assertThat(postEvent.getHeaders().getAll())
-                .contains(headerEntry("accept", "text/html, text/plain;q=0.9"),
-                          headerEntry("accept_encoding", "gzip"),
-                          headerEntry("user_agent", "useragent"),
-                          headerEntry("content_type", "text/plain"));
-        assertThat(postEvent.getHeaders().get("accept")).hasValue("text/html, text/plain;q=0.9");
+                .contains(headerEntry("Accept", "text/html, text/plain;q=0.9"),
+                          headerEntry("Accept-Encoding", "gzip"),
+                          headerEntry("User-Agent", "useragent"),
+                          headerEntry("Content-Type", "text/plain"));
 
         postEvent.consumeBody((is) -> assertThat(is).hasSameContentAs(asStream("Hello World")));
     }

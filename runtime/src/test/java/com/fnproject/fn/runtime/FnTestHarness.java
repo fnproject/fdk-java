@@ -231,7 +231,7 @@ public class FnTestHarness implements TestRule {
 
             inputString.append("Content-length: ").append(Integer.toString(contentLength)).append("\r\n");
             headers.forEach((k, v) -> {
-                inputString.append("HEADER_").append(k.replaceAll("-", "_")).append(": ").append(v).append("\r\n");
+                inputString.append(k).append(": ").append(v).append("\r\n");
             });
 
             // added to the http request as headers to mimic the behaviour of `functions` but should NOT be used as config
