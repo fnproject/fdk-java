@@ -3,11 +3,12 @@ package com.fnproject.fn.runtime.cloudthreads;
 import java.util.Objects;
 
 /**
+ * Globals for injecting testing state into cloudthreads
  * Created on 04/09/2017.
  * <p>
  * (c) 2017 Oracle Corporation
  */
-public class CloudThreadRuntimeGlobals {
+public class CloudThreadsRuntimeGlobals {
     private static CompleterClientFactory completerClientFactory = null;
 
     /**
@@ -22,10 +23,15 @@ public class CloudThreadRuntimeGlobals {
      *
      * @param currentClientFactory a new client factory to be used to create threads
      */
-    public static void setCompleterClientFactory(CompleterClientFactory currentClientFactory) {
+    public static  void setCompleterClientFactory(CompleterClientFactory currentClientFactory) {
         completerClientFactory = Objects.requireNonNull(currentClientFactory);
     }
 
+    /**
+     * return the current  cloud threads client factory;
+     *
+     * @return
+     */
     public static CompleterClientFactory getCompleterClientFactory() {
         return completerClientFactory;
     }

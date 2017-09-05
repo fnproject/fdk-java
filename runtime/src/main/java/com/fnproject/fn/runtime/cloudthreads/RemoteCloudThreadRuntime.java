@@ -26,7 +26,7 @@ public final class RemoteCloudThreadRuntime implements CloudThreadRuntime, Seria
 
     private CompleterClient getClient() {
         if (client == null) {
-            client = CloudThreadRuntimeGlobals.getCompleterClientFactory().get();
+            client = CloudThreadsRuntimeGlobals.getCompleterClientFactory().get();
         }
         return client;
     }

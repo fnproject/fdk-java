@@ -1,7 +1,7 @@
 package com.fnproject.fn.testing.cloudthreads;
 
 import com.fnproject.fn.runtime.EntryPoint;
-import com.fnproject.fn.runtime.cloudthreads.CloudThreadRuntimeGlobals;
+import com.fnproject.fn.runtime.cloudthreads.CloudThreadsRuntimeGlobals;
 import com.fnproject.fn.runtime.cloudthreads.CompleterClient;
 import com.fnproject.fn.runtime.cloudthreads.CompleterClientFactory;
 import org.apache.commons.io.IOUtils;
@@ -68,9 +68,9 @@ public class FnTestingClassLoader extends ClassLoader {
      */
     public void setCompleterClient(CompleterClient completer) {
         try {
-            Class<?> completerGlobals = loadClass(CloudThreadRuntimeGlobals.class.getName());
+            Class<?> completerGlobals = loadClass(CloudThreadsRuntimeGlobals.class.getName());
             CompleterClientFactory ccf = (CompleterClientFactory) () -> completer;
-            method(completerGlobals, "setCompleterClientFactory", CompleterClientFactory.class).invoke(completerGlobals, ccf);
+            callMethodInFnClassloader(completerGlobals, "setCompleterClientFactory", CompleterClientFactory.class).invoke(completerGlobals, ccf);
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | ClassNotFoundException | IllegalArgumentException e) {
             throw new RuntimeException("Something broke in the reflective classloader", e);
         }
@@ -82,14 +82,14 @@ public class FnTestingClassLoader extends ClassLoader {
             Class<?> entryPoint_class = loadClass(EntryPoint.class.getName());
             Object entryPoint = entryPoint_class.newInstance();
 
-            return (int) method(entryPoint, "run", Map.class, InputStream.class, OutputStream.class, PrintStream.class, String[].class)
+            return (int) callMethodInFnClassloader(entryPoint, "run", Map.class, InputStream.class, OutputStream.class, PrintStream.class, String[].class)
                     .invoke(entryPoint, mutableEnv, is, functionOut, functionErr, s);
         } catch (ClassNotFoundException | IllegalAccessException | InstantiationException | NoSuchMethodException | InvocationTargetException | IllegalArgumentException e) {
             throw new RuntimeException("Something broke in the reflective classloader", e);
         }
     }
 
-    private Method method(Object target, String method, Class... types) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    private Method callMethodInFnClassloader(Object target, String method, Class... types) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         Class<?> targetClass;
         if (target instanceof Class) {
             targetClass = (Class) target;

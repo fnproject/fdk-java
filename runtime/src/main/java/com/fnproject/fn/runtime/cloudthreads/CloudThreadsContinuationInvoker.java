@@ -50,10 +50,10 @@ public final class CloudThreadsContinuationInvoker implements FunctionInvoker {
      * @param completerBaseUrl the completer base URL to use if and when creating the factory
      */
     private static synchronized CompleterClientFactory getOrCreateCompleterClientFactory(String completerBaseUrl) {
-        if (CloudThreadRuntimeGlobals.getCompleterClientFactory() == null) {
-            CloudThreadRuntimeGlobals.setCompleterClientFactory(new URLCompleterClientFactory(completerBaseUrl));
+        if (CloudThreadsRuntimeGlobals.getCompleterClientFactory() == null) {
+            CloudThreadsRuntimeGlobals.setCompleterClientFactory(new URLCompleterClientFactory(completerBaseUrl));
         }
-        return CloudThreadRuntimeGlobals.getCompleterClientFactory();
+        return CloudThreadsRuntimeGlobals.getCompleterClientFactory();
     }
 
 
@@ -70,8 +70,8 @@ public final class CloudThreadsContinuationInvoker implements FunctionInvoker {
         final String completerBaseUrl = ctx.getRuntimeContext().getConfigurationByKey(COMPLETER_BASE_URL).orElse(DEFAULT_COMPLETER_BASE_URL);
 
         if (graphIdOption.isPresent()) {
-            if(CloudThreadRuntimeGlobals.getCompleterClientFactory() == null){
-                CloudThreadRuntimeGlobals.setCompleterClientFactory(getOrCreateCompleterClientFactory(completerBaseUrl));
+            if(CloudThreadsRuntimeGlobals.getCompleterClientFactory() == null){
+                CloudThreadsRuntimeGlobals.setCompleterClientFactory(getOrCreateCompleterClientFactory(completerBaseUrl));
             }
 
             final ThreadId threadId = new ThreadId(graphIdOption.get());
