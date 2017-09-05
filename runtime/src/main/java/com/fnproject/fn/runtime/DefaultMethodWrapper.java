@@ -4,6 +4,7 @@ import com.fnproject.fn.api.MethodType;
 import com.fnproject.fn.api.MethodWrapper;
 
 import java.lang.reflect.Method;
+import java.util.Arrays;
 
 /**
  * Wrapper class around {@link java.lang.reflect.Method} to provide type
@@ -17,6 +18,15 @@ public class DefaultMethodWrapper implements MethodWrapper {
         this.srcClass = srcClass;
         this.srcMethod = srcMethod;
     }
+
+    public DefaultMethodWrapper(Class<?> srcClass, String srcMethod) {
+        this.srcClass = srcClass;
+        this.srcMethod = Arrays.stream(srcClass.getMethods())
+                .filter((m) -> m.getName().equals(srcMethod))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException(new NoSuchMethodException(srcClass.getCanonicalName() + "::" + srcMethod)));
+    }
+
 
     @Override
     public Class<?> getTargetClass() {
