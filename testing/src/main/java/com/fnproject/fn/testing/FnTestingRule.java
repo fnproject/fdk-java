@@ -480,24 +480,12 @@ public final class FnTestingRule implements TestRule {
             this.method = method;
         }
 
-        private synchronized FnTestingClassLoader getClassLoaderFromPool(){
-            if (pool.size() > 0){
-                FnTestingClassLoader loader = pool.iterator().next();
-                pool.remove(loader);
-                return loader;
-            }
-            return new FnTestingClassLoader(functionClassLoader,sharedPrefixes);
-        }
-
-        private synchronized  void returnLoaderToPool(FnTestingClassLoader loader){
-            pool.add(loader);
-        }
 
         @Override
         public Result invokeStage(String fnId, ThreadId thread, CompletionId stageId, Datum.Blob closure, List<Result> input) {
             // Construct a new ClassLoader hierarchy with a copy of the statics embedded in the runtime.
             // Initialise it appropriately.
-            FnTestingClassLoader fcl = getClassLoaderFromPool();
+            FnTestingClassLoader fcl = new FnTestingClassLoader(functionClassLoader,sharedPrefixes);
             fcl.setCompleterClient(completer);
 
 
@@ -591,7 +579,6 @@ public final class FnTestingRule implements TestRule {
             if (!r.isSuccess()) {
                 throw new ResultException(r.getDatum());
             }
-            returnLoaderToPool(fcl);
             return r;
 
         }
