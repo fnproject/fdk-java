@@ -13,7 +13,7 @@ public class DefaultMethodWrapper implements MethodWrapper {
     private final Class<?> srcClass;
     private final Method srcMethod;
 
-    public DefaultMethodWrapper(Class<?> srcClass, Method srcMethod) {
+    DefaultMethodWrapper(Class<?> srcClass, Method srcMethod) {
         this.srcClass = srcClass;
         this.srcMethod = srcMethod;
     }
