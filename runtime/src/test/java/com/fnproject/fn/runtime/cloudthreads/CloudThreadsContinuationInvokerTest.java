@@ -14,7 +14,6 @@ import org.junit.rules.ExpectedException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
-import java.lang.reflect.Method;
 import java.util.*;
 import java.util.function.DoubleSupplier;
 
@@ -648,16 +647,6 @@ public class CloudThreadsContinuationInvokerTest {
         @Override
         public Optional<Object> getInvokeInstance() {
             return Optional.empty();
-        }
-
-        @Override
-        public Class<?> getTargetClass() {
-            return null;
-        }
-
-        @Override
-        public Method getTargetMethod() {
-            return null;
         }
 
         @Override

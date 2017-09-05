@@ -38,7 +38,7 @@ public class JacksonCoercion implements InputCoercion<Object>, OutputCoercion {
     @Override
     public Optional<Object> tryCoerceParam(InvocationContext currentContext, int param, InputEvent input) {
 
-        Type type = currentContext.getRuntimeContext().getTargetMethod().getGenericParameterTypes()[param];
+        Type type = currentContext.getRuntimeContext().getMethod().getTargetMethod().getGenericParameterTypes()[param];
         JavaType javaType = objectMapper(currentContext).constructType(type);
 
         return Optional.ofNullable(input.consumeBody(inputStream -> {

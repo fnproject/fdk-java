@@ -36,10 +36,10 @@ public class FunctionRuntimeContext implements RuntimeContext {
 
     @Override
     public Optional<Object> getInvokeInstance() {
-        if (!Modifier.isStatic(getTargetMethod().getModifiers())) {
+        if (!Modifier.isStatic(getMethod().getTargetMethod().getModifiers())) {
             if (instance == null) {
                 try {
-                    Constructor<?> constructors[] = getTargetClass().getConstructors();
+                    Constructor<?> constructors[] = getMethod().getTargetClass().getConstructors();
                     if (constructors.length == 1) {
                         Constructor<?> ctor = constructors[0];
                         if (ctor.getParameterTypes().length == 0) {
@@ -48,27 +48,27 @@ public class FunctionRuntimeContext implements RuntimeContext {
                             if (RuntimeContext.class.isAssignableFrom(ctor.getParameterTypes()[0])) {
                                 instance = ctor.newInstance(FunctionRuntimeContext.this);
                             } else {
-                                if ( getTargetClass().getEnclosingClass() != null && ! Modifier.isStatic(getTargetClass().getModifiers()) ) {
-                                    throw new FunctionClassInstantiationException("The function " + getTargetClass() + " cannot be instantiated as it is a non-static inner class");
+                                if ( getMethod().getTargetClass().getEnclosingClass() != null && ! Modifier.isStatic(getTargetClass().getModifiers()) ) {
+                                    throw new FunctionClassInstantiationException("The function " + getMethod().getTargetClass() + " cannot be instantiated as it is a non-static inner class");
                                 } else {
-                                    throw new FunctionClassInstantiationException("The function " + getTargetClass() + " cannot be instantiated as its constructor takes an unrecognized argument of type " + constructors[0].getParameterTypes()[0] + ". Function classes should have a single public constructor that takes either no arguments or a RuntimeContext argument");
+                                    throw new FunctionClassInstantiationException("The function " + getMethod().getTargetClass() + " cannot be instantiated as its constructor takes an unrecognized argument of type " + constructors[0].getParameterTypes()[0] + ". Function classes should have a single public constructor that takes either no arguments or a RuntimeContext argument");
                                 }
                             }
                         } else {
-                            throw new FunctionClassInstantiationException("The function " + getTargetClass() + " cannot be instantiated as its constructor takes more than one argument. Function classes should have a single public constructor that takes either no arguments or a RuntimeContext argument");
+                            throw new FunctionClassInstantiationException("The function " + getMethod().getTargetClass() + " cannot be instantiated as its constructor takes more than one argument. Function classes should have a single public constructor that takes either no arguments or a RuntimeContext argument");
                         }
                     } else {
                         if (constructors.length == 0) {
-                            throw new FunctionClassInstantiationException("The function " + getTargetClass() + " cannot be instantiated as it has no public constructors. Function classes should have a single public constructor that takes either no arguments or a RuntimeContext argument");
+                            throw new FunctionClassInstantiationException("The function " + getMethod().getTargetClass() + " cannot be instantiated as it has no public constructors. Function classes should have a single public constructor that takes either no arguments or a RuntimeContext argument");
                         } else {
-                            throw new FunctionClassInstantiationException("The function " + getTargetClass() + " cannot be instantiated as it has multiple public constructors. Function classes should have a single public constructor that takes either no arguments or a RuntimeContext argument");
+                            throw new FunctionClassInstantiationException("The function " + getMethod().getTargetClass() + " cannot be instantiated as it has multiple public constructors. Function classes should have a single public constructor that takes either no arguments or a RuntimeContext argument");
 
                         }
                     }
                 } catch (InvocationTargetException e) {
-                    throw new FunctionClassInstantiationException("An error occurred in the function constructor while instantiating " + getTargetClass(), e.getCause());
+                    throw new FunctionClassInstantiationException("An error occurred in the function constructor while instantiating " + getMethod().getTargetClass(), e.getCause());
                 } catch (InstantiationException | IllegalAccessException e) {
-                    throw new FunctionClassInstantiationException("The function class " + getTargetClass() + " could not be instantiated", e);
+                    throw new FunctionClassInstantiationException("The function class " + getMethod().getTargetClass() + " could not be instantiated", e);
                 }
             }
             return Optional.of(instance);
@@ -76,14 +76,8 @@ public class FunctionRuntimeContext implements RuntimeContext {
         return Optional.empty();
     }
 
-    @Override
     public Class<?> getTargetClass() {
         return this.method.getTargetClass();
-    }
-
-    @Override
-    public Method getTargetMethod() {
-        return this.method.getTargetMethod();
     }
 
     @Override
@@ -197,7 +191,7 @@ public class FunctionRuntimeContext implements RuntimeContext {
                 return coercionList;
 
             } catch (IllegalAccessException | InstantiationException e) {
-                throw new FunctionConfigurationException("Unable to instantiate output coercion class for method " + getTargetMethod());
+                throw new FunctionConfigurationException("Unable to instantiate output coercion class for method " + getMethod());
             }
         }
         List<OutputCoercion> outputList = new ArrayList<OutputCoercion>();

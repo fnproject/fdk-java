@@ -23,7 +23,7 @@ public class StringReversalCoercion implements InputCoercion<String>, OutputCoer
 
     @Override
     public Optional<OutputEvent> wrapFunctionResult(InvocationContext ctx, Object value) {
-        if (ctx.getRuntimeContext().getTargetMethod().getReturnType().equals(String.class)) {
+        if (ctx.getRuntimeContext().getMethod().getTargetMethod().getReturnType().equals(String.class)) {
             try {
                 String reversedOutput = new StringBuffer((String) value).reverse().toString();
                 return Optional.of(OutputEvent.fromBytes(reversedOutput.getBytes(), true, "text/plain"));

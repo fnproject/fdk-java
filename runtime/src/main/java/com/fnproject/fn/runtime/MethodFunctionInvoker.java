@@ -47,7 +47,7 @@ public class MethodFunctionInvoker implements FunctionInvoker {
     protected Object[] doInputCoercions(InvocationContext ctx, InputEvent evt) {
         try {
             FunctionRuntimeContext runtimeContext = (FunctionRuntimeContext) ctx.getRuntimeContext();
-            Method targetMethod = runtimeContext.getTargetMethod();
+            Method targetMethod = runtimeContext.getMethod().getTargetMethod();
             Class<?>[] paramTypes = targetMethod.getParameterTypes();
 
             Object[] userFunctionParams = new Object[paramTypes.length];
