@@ -1,13 +1,13 @@
 package com.fnproject.fn.testing;
 
-class ResultException extends RuntimeException{
+class ResultException extends RuntimeException {
     private final Datum datum;
 
     ResultException(Datum datum) {
         this.datum = datum;
     }
 
-    Result toResult(){
+    Result toResult() {
         return Result.failure(datum);
     }
 }

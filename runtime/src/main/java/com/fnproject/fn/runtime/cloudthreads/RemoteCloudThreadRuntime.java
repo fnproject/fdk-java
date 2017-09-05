@@ -53,7 +53,7 @@ public final class RemoteCloudThreadRuntime implements CloudThreadRuntime, Seria
         }
     }
 
-   class RemoteCloudFuture<T> implements CloudFuture<T>, Serializable {
+    class RemoteCloudFuture<T> implements CloudFuture<T>, Serializable {
         private final CompletionId completionId;
 
         RemoteCloudFuture(CompletionId completionId) {
@@ -96,7 +96,6 @@ public final class RemoteCloudThreadRuntime implements CloudThreadRuntime, Seria
         public <X> CloudFuture<Void> thenAcceptBoth(CloudFuture<X> alt, CloudThreads.SerBiConsumer<T, X> fn) {
             return new RemoteCloudFuture<>(getClient().thenAcceptBoth(threadId, completionId, ((RemoteCloudFuture<?>) alt).completionId, fn));
         }
-
 
         @Override
         public CloudFuture<Void> thenRun(CloudThreads.SerRunnable fn) {

@@ -15,5 +15,5 @@ interface EntityReader {
 
     InputStream getContentStream();
 
-    Map<String,String> getHeaders();
+    Map<String, String> getHeaders();
 }

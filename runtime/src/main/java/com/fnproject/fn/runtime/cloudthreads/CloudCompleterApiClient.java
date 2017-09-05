@@ -58,7 +58,7 @@ public class CloudCompleterApiClient implements CompleterClient {
     private static final int MAX_POLL_INTERVAL_MS = 1000;
     private static final int HTTP_CODE_REQUEST_TIMEOUT = 408;
 
-    public  CloudCompleterApiClient(String apiUrlBase, HttpClient httpClient) {
+    public CloudCompleterApiClient(String apiUrlBase, HttpClient httpClient) {
         this.apiUrlBase = Objects.requireNonNull(apiUrlBase);
         this.httpClient = Objects.requireNonNull(httpClient);
     }
@@ -151,10 +151,10 @@ public class CloudCompleterApiClient implements CompleterClient {
                         .withAdditionalHeaders(headers.getAll().entrySet().stream()
                                 .filter((header) -> !header.getKey().equalsIgnoreCase(CONTENT_TYPE_HEADER))
                                 .collect(Collectors.toMap(
-                                    (headerEntry) -> USER_HEADER_PREFIX + headerEntry.getKey(),
-                                    Map.Entry::getValue
-                                )
-                        ))
+                                        (headerEntry) -> USER_HEADER_PREFIX + headerEntry.getKey(),
+                                        Map.Entry::getValue
+                                        )
+                                ))
         );
     }
 
@@ -218,8 +218,8 @@ public class CloudCompleterApiClient implements CompleterClient {
                 // TODO: Add comment to API doc saying that error datum type responses always have failure result status
                 if (resultingInException(response)) {
                     if (resultingFromExternalFunctionInvocation(response) ||
-                                resultingFromUserException(response) ||
-                                resultingFromExternallyCompletedStage(response)) {
+                            resultingFromUserException(response) ||
+                            resultingFromExternallyCompletedStage(response)) {
                         Throwable userException = (Throwable) result.get();
                         throw new CloudCompletionException(userException);
                     } else if (resultingFromPlatformError(response)) {
@@ -288,9 +288,9 @@ public class CloudCompleterApiClient implements CompleterClient {
         }
     }
 
-     private static boolean isSuccessful(HttpClient.HttpResponse response) {
-         return response.getStatusCode() == 200 || response.getStatusCode() == 201;
-     }
+    private static boolean isSuccessful(HttpClient.HttpResponse response) {
+        return response.getStatusCode() == 200 || response.getStatusCode() == 201;
+    }
 
     private CompletionId requestCompletion(String url, Function<HttpClient.HttpRequest, HttpClient.HttpRequest> fn) {
         HttpClient.HttpRequest req = fn.apply(HttpClient.preparePost(apiUrlBase + url));
@@ -313,7 +313,7 @@ public class CloudCompleterApiClient implements CompleterClient {
                     .withHeader(CONTENT_TYPE_HEADER, CONTENT_TYPE_JAVA_OBJECT)
                     .withHeader(DATUM_TYPE_HEADER, DATUM_TYPE_BLOB)
                     .withBody(serBytes)));
-        } catch(IOException e) {
+        } catch (IOException e) {
             throw new LambdaSerializationException("Failed to serialize the lambda: " + e.getMessage());
         }
     }

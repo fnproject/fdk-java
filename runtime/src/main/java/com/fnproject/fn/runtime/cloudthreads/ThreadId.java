@@ -32,7 +32,7 @@ public final class ThreadId implements Serializable {
         return id;
     }
 
-    public String toString(){
+    public String toString() {
         return "thread." + getId();
     }
 }

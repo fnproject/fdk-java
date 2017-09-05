@@ -20,7 +20,7 @@ public class CloudThreadsRuntimeGlobals {
      *
      * @param currentClientFactory a new client factory to be used to create threads
      */
-    public static  void setCompleterClientFactory(CompleterClientFactory currentClientFactory) {
+    public static void setCompleterClientFactory(CompleterClientFactory currentClientFactory) {
         completerClientFactory = Objects.requireNonNull(currentClientFactory);
     }
 

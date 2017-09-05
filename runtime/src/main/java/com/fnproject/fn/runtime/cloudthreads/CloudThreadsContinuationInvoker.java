@@ -70,7 +70,7 @@ public final class CloudThreadsContinuationInvoker implements FunctionInvoker {
         final String completerBaseUrl = ctx.getRuntimeContext().getConfigurationByKey(COMPLETER_BASE_URL).orElse(DEFAULT_COMPLETER_BASE_URL);
 
         if (graphIdOption.isPresent()) {
-            if(CloudThreadsRuntimeGlobals.getCompleterClientFactory() == null){
+            if (CloudThreadsRuntimeGlobals.getCompleterClientFactory() == null) {
                 CloudThreadsRuntimeGlobals.setCompleterClientFactory(getOrCreateCompleterClientFactory(completerBaseUrl));
             }
 

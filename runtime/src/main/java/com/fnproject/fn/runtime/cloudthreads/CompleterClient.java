@@ -16,10 +16,13 @@ public interface CompleterClient {
     interface ExternalCompletion {
 
         CompletionId completionId();
+
         URI completeURI();
+
         URI failureURI();
 
     }
+
     /**
      * create a new thread against the completer
      *

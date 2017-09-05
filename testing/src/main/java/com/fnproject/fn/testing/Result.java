@@ -45,7 +45,7 @@ class Result {
         hw.writeHeader(CloudCompleterApiClient.RESULT_STATUS_HEADER, success ? CloudCompleterApiClient.RESULT_STATUS_SUCCESS : CloudCompleterApiClient.RESULT_STATUS_FAILURE);
 
         datum.writeHeaders(hw);
-        os.write(new byte[]{'\r','\n'});
+        os.write(new byte[]{'\r', '\n'});
         datum.writeBody(os);
     }
 

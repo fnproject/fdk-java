@@ -42,9 +42,9 @@ abstract class Datum {
         Datum readDatum(org.apache.http.HttpResponse message) throws IOException;
     }
 
-    void writePart(OutputStream os ) throws IOException {
+    void writePart(OutputStream os) throws IOException {
         writeHeaders(new HeaderWriter(os));
-        os.write(new byte[]{'\r','\n'});
+        os.write(new byte[]{'\r', '\n'});
         writeBody(os);
     }
 
@@ -107,8 +107,7 @@ abstract class Datum {
                         String cname = classDesc.getName();
                         try {
                             return loader.loadClass(cname);
-                        }
-                        catch(ClassNotFoundException ex) {
+                        } catch (ClassNotFoundException ex) {
                             return super.resolveClass(classDesc);
                         }
                     }
@@ -280,13 +279,19 @@ abstract class Datum {
         public Object asJavaValue(ClassLoader loader) {
             return new HttpResponse() {
                 @Override
-                public int getStatusCode() { return status; }
+                public int getStatusCode() {
+                    return status;
+                }
 
                 @Override
-                public Headers getHeaders() { return headers; }
+                public Headers getHeaders() {
+                    return headers;
+                }
 
                 @Override
-                public byte[] getBodyAsBytes() { return body; }
+                public byte[] getBodyAsBytes() {
+                    return body;
+                }
             };
         }
 

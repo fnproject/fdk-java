@@ -91,11 +91,15 @@ public class ExerciseEverything {
     @Test(8)
     @Test.Catch({CloudCompletionException.class, MyException.class})
     public CloudFuture<String> supplyAnException(CloudThreadRuntime rt) {
-        return rt.supply(() -> { throw new MyException("test exception"); });
+        return rt.supply(() -> {
+            throw new MyException("test exception");
+        });
     }
 
     public static class MyException extends RuntimeException {
-        MyException(String m) { super(m); }
+        MyException(String m) {
+            super(m);
+        }
     }
 
     @Test(9)
@@ -115,7 +119,10 @@ public class ExerciseEverything {
     public CloudFuture<Integer> catchBubbledException(CloudThreadRuntime rt) {
         return rt.completedValue(0)
                 .thenApply((x) -> x + 1)
-                .thenApply((x) -> { if (x == 1) throw new MyException("boom"); else return x + 1; })
+                .thenApply((x) -> {
+                    if (x == 1) throw new MyException("boom");
+                    else return x + 1;
+                })
                 .thenApply((x) -> x + 1)
                 .thenApply((x) -> x + 1)
                 .exceptionally((e) -> -3);
@@ -160,17 +167,20 @@ public class ExerciseEverything {
     @Test.Expect("hello world")
     public CloudFuture<String> thenCompose(CloudThreadRuntime rt) {
         return rt.completedValue("hello")
-                 .thenCompose((s) ->
+                .thenCompose((s) ->
                         rt.supply(() -> s)
-                          .thenApply((s2) -> s2 + " world")
-                 );
+                                .thenApply((s2) -> s2 + " world")
+                );
     }
 
     @Test(16)
     @Test.Expect("foo")
     public CloudFuture<String> thenComposeThenError(CloudThreadRuntime rt) {
         return rt.completedValue("hello")
-                .thenCompose((s) -> rt.supply(() -> { if (s.equals("hello")) throw new MyException("foo"); else return s; }))
+                .thenCompose((s) -> rt.supply(() -> {
+                    if (s.equals("hello")) throw new MyException("foo");
+                    else return s;
+                }))
                 .exceptionally(Throwable::getMessage);
     }
 
@@ -178,7 +188,10 @@ public class ExerciseEverything {
     @Test.Expect("foo")
     public CloudFuture<String> thenComposeWithErrorInBody(CloudThreadRuntime rt) {
         return rt.completedValue("hello")
-                .thenCompose((s) -> { if (s.equals("hello")) throw new MyException("foo"); else return rt.completedValue(s); })
+                .thenCompose((s) -> {
+                    if (s.equals("hello")) throw new MyException("foo");
+                    else return rt.completedValue(s);
+                })
                 .exceptionally(Throwable::getMessage);
     }
 
@@ -200,7 +213,7 @@ public class ExerciseEverything {
     public CloudFuture<Void> harmlessAcceptBoth(CloudThreadRuntime rt) {
         return rt.completedValue("a")
                 .thenAcceptBoth(
-                    rt.completedValue("b"),
+                        rt.completedValue("b"),
                         (a, b) -> System.err.println(a + "; " + b)
                 );
     }
@@ -211,7 +224,7 @@ public class ExerciseEverything {
     public CloudFuture<Void> acceptBoth(CloudThreadRuntime rt) {
         return rt.completedValue("a")
                 .thenAcceptBoth(
-                    rt.completedValue("b"),
+                        rt.completedValue("b"),
                         (a, b) -> {
                             System.err.println("A is " + a + " and B is " + b);
                             throw new MyException(a + b);
@@ -226,7 +239,9 @@ public class ExerciseEverything {
         return rt.completedValue("a")
                 .acceptEither(
                         rt.completedValue("b"),
-                            (x) -> { throw new MyException(x); }
+                        (x) -> {
+                            throw new MyException(x);
+                        }
                 );
     }
 
@@ -241,7 +256,9 @@ public class ExerciseEverything {
     @Test(24)
     @Test.Expect("foo")
     public CloudFuture<String> thenCombineE1(CloudThreadRuntime rt) {
-        return rt.supply(() -> { throw new MyException("foo"); })
+        return rt.supply(() -> {
+            throw new MyException("foo");
+        })
                 .thenCombine(rt.completedValue("bar"),
                         (a, b) -> a + b)
                 .exceptionally(Throwable::getMessage);
@@ -251,7 +268,9 @@ public class ExerciseEverything {
     @Test.Expect("bar")
     public CloudFuture<String> thenCombineE2(CloudThreadRuntime rt) {
         return rt.completedValue("foo")
-                .thenCombine(rt.supply(() -> { throw new MyException("bar"); }),
+                .thenCombine(rt.supply(() -> {
+                            throw new MyException("bar");
+                        }),
                         (a, b) -> a + b)
                 .exceptionally(Throwable::getMessage);
     }
@@ -262,7 +281,10 @@ public class ExerciseEverything {
     public CloudFuture<String> thenCombineE3(CloudThreadRuntime rt) {
         return rt.completedValue("foo")
                 .thenCombine(rt.completedValue("bar"),
-                        (a, b) -> { if (! a.equals(b)) throw new MyException(a + b); else return "baz"; })
+                        (a, b) -> {
+                            if (!a.equals(b)) throw new MyException(a + b);
+                            else return "baz";
+                        })
                 .exceptionally(Throwable::getMessage);
     }
 
@@ -276,7 +298,9 @@ public class ExerciseEverything {
     @Test(28)
     @Test.Expect("bar")
     public CloudFuture<String> handleWithError(CloudThreadRuntime rt) {
-        return rt.supply(() -> { throw new MyException("bar"); })
+        return rt.supply(() -> {
+            throw new MyException("bar");
+        })
                 .handle((v, e) -> e.getMessage());
     }
 
@@ -284,15 +308,22 @@ public class ExerciseEverything {
     @Test.Expect("foo")
     public CloudFuture<String> whenCompleteNoError(CloudThreadRuntime rt) {
         return rt.completedValue("foo")
-                .whenComplete((v, e) -> { throw new MyException(v); })
+                .whenComplete((v, e) -> {
+                    throw new MyException(v);
+                })
                 .exceptionally(Throwable::getMessage);
     }
 
     @Test(30)
     @Test.Expect("bar")
     public CloudFuture<String> whenCompleteWithError(CloudThreadRuntime rt) {
-        return rt.supply(() -> { if (true) throw new MyException("bar"); else return ""; })
-                .whenComplete((v, e) -> { throw new MyException(e.getMessage()); })
+        return rt.supply(() -> {
+            if (true) throw new MyException("bar");
+            else return "";
+        })
+                .whenComplete((v, e) -> {
+                    throw new MyException(e.getMessage());
+                })
                 .exceptionally(Throwable::getMessage);
     }
 
@@ -350,13 +381,16 @@ public class ExerciseEverything {
                 .withHeader("My-Header", "foo")
                 .withHeader("FnProject-Method", "post")
                 .withBody("bar".getBytes()));
-        return cf.thenApply((req) -> { System.err.println("got here"); return "failed"; })
+        return cf.thenApply((req) -> {
+            System.err.println("got here");
+            return "failed";
+        })
                 .exceptionally(e -> {
-                        System.err.println("Got into exception with e=" + e);
-                        return
-                        ((ExternalCompletionException)e).getExternalRequest().getHeaders().get("my-header").get() +
-                        new String(((ExternalCompletionException)e).getExternalRequest().getBodyAsBytes()); }
-        );
+                            System.err.println("Got into exception with e=" + e);
+                            return ((ExternalCompletionException) e).getExternalRequest().getHeaders().get("my-header").get() +
+                                    new String(((ExternalCompletionException) e).getExternalRequest().getBodyAsBytes());
+                        }
+                );
     }
 
     private int id;
@@ -372,7 +406,7 @@ public class ExerciseEverything {
         this.inputEvent = ie;
         String selector = ie.consumeBody((InputStream is) -> {
             try {
-                return IOUtils.toString(is,"utf-8");
+                return IOUtils.toString(is, "utf-8");
             } catch (IOException e) {
                 return "FAIL";
             }
@@ -389,7 +423,7 @@ public class ExerciseEverything {
         out.println("In main function");
         Map<Integer, CloudFuture<Object>> awaiting = new TreeMap<>();
 
-        for (Map.Entry<Integer, Method> e: findTests(this).entrySet()) {
+        for (Map.Entry<Integer, Method> e : findTests(this).entrySet()) {
             id = e.getKey();
             Method m = e.getValue();
 
@@ -404,10 +438,11 @@ public class ExerciseEverything {
                 out.println("Failure setting up test " + id + ": " + ex.getCause());
                 ex.printStackTrace(out);
                 fail();
-            } catch (IllegalAccessException e1) {}
+            } catch (IllegalAccessException e1) {
+            }
         }
 
-        for (Map.Entry<Integer, Method> e: findTests(this).entrySet()) {
+        for (Map.Entry<Integer, Method> e : findTests(this).entrySet()) {
             id = e.getKey();
             Method m = e.getValue();
 
@@ -425,7 +460,7 @@ public class ExerciseEverything {
                 // Coerce returned value to string
                 String rv = coerceToString(r);
 
-                if (! huntForValues(rv, values)) {
+                if (!huntForValues(rv, values)) {
                     fail();
                 }
 
@@ -439,12 +474,13 @@ public class ExerciseEverything {
                     // We have a series of wrapped exceptions that should follow this containment pattern
                     boolean found = false;
 
-                    for (Class<?> c: exWanted.value()) {
+                    for (Class<?> c : exWanted.value()) {
                         if (t == null) {
                             out.println("  end of exception chain, wanted " + c);
                             fail();
                             break;
-                        } if (c.isAssignableFrom(t.getClass())) {
+                        }
+                        if (c.isAssignableFrom(t.getClass())) {
                             out.println("  exception type as wanted: " + t);
                             String message = coerceToString(t);
 

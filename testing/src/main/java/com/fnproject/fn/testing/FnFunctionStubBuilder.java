@@ -2,7 +2,6 @@ package com.fnproject.fn.testing;
 
 /**
  * A builder for constructing stub external functions
- *
  */
 public interface FnFunctionStubBuilder {
     /**
@@ -33,7 +32,7 @@ public interface FnFunctionStubBuilder {
      * Consume the builder and stub the function to perform some action; the action is an implementation of the
      * functional interface {@link ExternalFunctionAction}, this gives finer grained control over the behaviour of the
      * stub compared to {@link #withResult(byte[])}, {@link #withFunctionError()} and {@link #withPlatformError()}.
-     *
+     * <p>
      * Note that there are no thread-safety guarantees on any external state modified in the provided action. If shared
      * external state is accessed, a synchronization mechanism should be used.
      *

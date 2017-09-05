@@ -1,6 +1,9 @@
 package com.fnproject.fn.testing;
 
-import com.fnproject.fn.api.*;
+import com.fnproject.fn.api.Headers;
+import com.fnproject.fn.api.InputEvent;
+import com.fnproject.fn.api.OutputEvent;
+import com.fnproject.fn.api.QueryParameters;
 import com.fnproject.fn.api.cloudthreads.*;
 import com.fnproject.fn.runtime.cloudthreads.*;
 import org.apache.commons.io.IOUtils;
@@ -218,7 +221,7 @@ public final class FnTestingRule implements TestRule {
             mutableEnv.put("FN_FORMAT", "http");
 
             FnTestingClassLoader forked = new FnTestingClassLoader(functionClassLoader, sharedPrefixes);
-            if(forked.isShared(cls)) {
+            if (forked.isShared(cls)) {
                 oldSystemErr.println("WARNING: The function class under test is shared with the test ClassLoader.");
                 oldSystemErr.println("         This may result in unexpected behaviour around function initialization and configuration.");
             }
@@ -494,7 +497,7 @@ public final class FnTestingRule implements TestRule {
         public Result invokeStage(String fnId, ThreadId thread, CompletionId stageId, Datum.Blob closure, List<Result> input) {
             // Construct a new ClassLoader hierarchy with a copy of the statics embedded in the runtime.
             // Initialise it appropriately.
-            FnTestingClassLoader fcl = new FnTestingClassLoader(functionClassLoader,sharedPrefixes);
+            FnTestingClassLoader fcl = new FnTestingClassLoader(functionClassLoader, sharedPrefixes);
             fcl.setCompleterClient(completer);
 
 

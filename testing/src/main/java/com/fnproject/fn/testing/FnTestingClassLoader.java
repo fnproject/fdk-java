@@ -45,14 +45,14 @@ class FnTestingClassLoader extends ClassLoader {
         }
 
         Class<?> cls = null;
-        if(isShared(className)) {
+        if (isShared(className)) {
             cls = getParent().loadClass(className);
         }
 
         if (cls == null) {
             try {
                 InputStream in = getResourceAsStream(className.replace('.', '/') + ".class");
-                if (in == null){
+                if (in == null) {
                     throw new ClassNotFoundException("Class not found :" + className);
                 }
 

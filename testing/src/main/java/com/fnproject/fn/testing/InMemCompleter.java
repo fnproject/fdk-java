@@ -2,7 +2,10 @@ package com.fnproject.fn.testing;
 
 import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.cloudthreads.*;
-import com.fnproject.fn.runtime.cloudthreads.*;
+import com.fnproject.fn.runtime.cloudthreads.CloudCompleterApiClient;
+import com.fnproject.fn.runtime.cloudthreads.CompleterClient;
+import com.fnproject.fn.runtime.cloudthreads.CompletionId;
+import com.fnproject.fn.runtime.cloudthreads.ThreadId;
 import com.sun.net.httpserver.HttpServer;
 import org.apache.commons.io.IOUtils;
 

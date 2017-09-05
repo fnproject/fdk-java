@@ -31,7 +31,7 @@ public final class CompletionId implements Serializable {
     }
 
     @Override
-    public String toString(){
+    public String toString() {
         return "#" + getId();
     }
 

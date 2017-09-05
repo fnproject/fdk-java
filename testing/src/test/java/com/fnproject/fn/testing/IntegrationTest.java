@@ -1,6 +1,5 @@
 package com.fnproject.fn.testing;
 
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -17,7 +16,7 @@ public class IntegrationTest {
         fn.givenFn("nonexistent/nonexistent")
                 .withFunctionError()
 
-            .givenFn("appName/route")
+                .givenFn("appName/route")
                 .withAction((body) -> {
                     if (new String(body).equals("PASS")) {
                         return "okay".getBytes();
@@ -25,13 +24,13 @@ public class IntegrationTest {
                         throw new FunctionError("failed as demanded");
                     }
                 })
-            .givenEvent()
+                .givenEvent()
                 .withBody("")   // or "1,5,6,32" to select a set of tests individually
                 .enqueue()
 
-            .thenRun(ExerciseEverything.class, "handleRequest");
+                .thenRun(ExerciseEverything.class, "handleRequest");
 
         assertThat(fn.getResults().get(0).getBodyAsString())
-            .endsWith("Everything worked\n");
+                .endsWith("Everything worked\n");
     }
 }

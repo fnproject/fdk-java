@@ -1,18 +1,6 @@
 package com.fnproject.fn.testing;
 
 import com.fnproject.fn.api.Headers;
-import com.fnproject.fn.runtime.exception.FunctionOutputHandlingException;
-import org.apache.http.HttpException;
-import org.apache.http.ProtocolVersion;
-import org.apache.http.impl.io.ContentLengthOutputStream;
-import org.apache.http.impl.io.DefaultHttpResponseWriter;
-import org.apache.http.impl.io.HttpTransportMetricsImpl;
-import org.apache.http.impl.io.SessionOutputBufferImpl;
-import org.apache.http.message.BasicHttpResponse;
-import org.apache.http.message.BasicStatusLine;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 
 /**
  * A simple abstraction for a parsed HTTP response returned by a function
@@ -47,6 +35,4 @@ public interface FnResult {
      * @return the HTTP status code returned by the function
      */
     int getStatus();
-
-
 }

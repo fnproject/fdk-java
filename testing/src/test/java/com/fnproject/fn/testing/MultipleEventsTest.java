@@ -99,7 +99,7 @@ public class MultipleEventsTest {
         fn.givenEvent()
                 .withBody("1")
                 .enqueue()
-            .givenEvent()
+                .givenEvent()
                 .withBody("2")
                 .enqueue();
 

@@ -99,8 +99,8 @@ public interface FnEventBuilder {
      * {@link IllegalStateException}.
      *
      * @param n number of copies of the event to enqueue
-     * @throws IllegalStateException if the body cannot be read multiple times.
      * @return The original testing rule. The builder is consumed.
+     * @throws IllegalStateException if the body cannot be read multiple times.
      */
     FnTestingRule enqueue(int n);
 }
