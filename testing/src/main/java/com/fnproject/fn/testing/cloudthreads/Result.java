@@ -7,11 +7,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Objects;
 
-/**
- * Created on 26/08/2017.
- * <p>
- * (c) 2017 Oracle Corporation
- */
 public class Result {
 
     private final boolean success;

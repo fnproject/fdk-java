@@ -3,7 +3,6 @@ package com.fnproject.fn.testing.cloudthreads;
 import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.cloudthreads.*;
 import com.fnproject.fn.runtime.cloudthreads.CompletionId;
-import com.sun.beans.finder.ClassFinder;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
 
@@ -15,8 +14,7 @@ import java.util.Objects;
 import static com.fnproject.fn.runtime.cloudthreads.CloudCompleterApiClient.*;
 
 /**
- * Holder  for a function-supplied value that contains an externalised representation of the references that that value contains
- * Created by OCliffe on 08/05/2017.
+ * Holder for a function-supplied value that contains an externalised representation of the references that that value contains
  */
 public abstract class Datum {
 
@@ -180,12 +178,12 @@ public abstract class Datum {
         public void writeHeaders(HeaderWriter hw) throws IOException {
             hw.writeHeader(DATUM_TYPE_HEADER, DATUM_TYPE_ERROR);
             hw.writeHeader(ERROR_TYPE_HEADER, type.name());
-            hw.writeHeader(CONTENT_TYPE_HEADER, "text/plain");
+            hw.writeHeader(CONTENT_TYPE_HEADER, "text/plain; charset=utf-8");
         }
 
         @Override
         public void writeBody(OutputStream os) throws IOException {
-            os.write(message.getBytes());
+            os.write(message.getBytes("UTF-8"));
         }
     }
 

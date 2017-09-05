@@ -184,7 +184,7 @@ You can specify that the invocation a function returns a valid value (as a byte 
   }
 ```
 
-Or you can specify that the invocation a function will cause a usage error or a platform error:
+Or you can specify that the invocation a function will cause a user error or a platform error:
 
 ```java
   @Test
@@ -194,9 +194,6 @@ Or you can specify that the invocation a function will cause a usage error or a 
     testing.givenFn("example/other-function-2").withPlatformError();
 
     // ...
-
-  }
-```
 
   }
 ```
@@ -224,6 +221,9 @@ used to check some behavior:
 This is a very simple example using a static variable - but any mock injection can be performed provided that the mock
 object is effectively final and can be captured in the lambda.
 
+Also note that `withAction` makes no thread-safety guarantees, and Cloud Threads are executed asynchronously and
+concurrently. Therefore, if you have several `withAction` clauses accessing the same shared state, you will have to take
+care of synchronization of the state.
 
 # A note on class loaders
 To ensure isolation of each function invocation and/or Cloud Threads completion, and to simulate the behaviour of the

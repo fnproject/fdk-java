@@ -34,6 +34,9 @@ public interface FnFunctionStubBuilder {
      * functional interface {@link ExternalFunctionAction}, this gives finer grained control over the behaviour of the
      * stub compared to {@link #withResult(byte[])}, {@link #withFunctionError()} and {@link #withPlatformError()}.
      *
+     * Note that there are no thread-safety guarantees on any external state modified in the provided action. If shared
+     * external state is accessed, a synchronization mechanism should be used.
+     *
      * @param f an action to apply when this function is invoked
      * @return The original testing rule (usually {@link FnTestingRule}. The builder is consumed.
      */
