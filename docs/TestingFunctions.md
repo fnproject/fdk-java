@@ -223,3 +223,23 @@ used to check some behavior:
 
 This is a very simple example using a static variable - but any mock injection can be performed provided that the mock
 object is effectively final and can be captured in the lambda.
+
+
+# A note on class loaders
+To ensure isolation of each function invocation and/or Cloud Threads completion, and to simulate the behaviour of the
+real Fn platform (where each function invocation can potentially run in a different JVM), the `FnTestingRule` is running
+each `thenRun` invocation and the simulation of each Cloud Thread completion using a different class loader. Only a
+small number of classes and packages are shared between the class loaders.
+
+The default set of shared classes and packages should already be enough for the vast majority of tests. If you really
+need some additional static data to be shared, it is possible to request that some classes be shared between the class
+loaders. To do so, use the `addSharedClass()` or `addSharedClassPrefix()` methods.
+
+```java
+    testing.addSharedClass(MyClassWithStaticState.class); // Shares only the specific class
+    testing.addSharedPrefix("com.example.MyClassWithStaticState"); // Shares the class and anything under it
+    testing.addSharedPrefix("com.example.mysubpackage."); // Shares anyhting under a package
+```
+
+Note that in most cases _you should not share your function class across class loaders_, because unexpected behavior
+may occur if you have static mutable state altered (for example) by configuration methods.
