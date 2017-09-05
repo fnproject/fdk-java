@@ -232,15 +232,15 @@ public class InMemCompleter implements CompleterClient {
     }
 
     @Override
-    public Object waitForCompletion(ThreadId threadId, CompletionId completionId) {
+    public Object waitForCompletion(ThreadId threadId, CompletionId completionId, ClassLoader loader) {
         return withActiveGraph(threadId, (graph) -> graph.withNode(completionId, (node) -> {
             try {
-                return node.outputFuture().toCompletableFuture().get().toJavaObject();
+                return node.outputFuture().toCompletableFuture().get().toJavaObject(loader);
             } catch (ExecutionException e) {
                 if (e.getCause() instanceof ResultException) {
 
                     Result r = ((ResultException) e.getCause()).toResult();
-                    Object err = r.toJavaObject();
+                    Object err = r.toJavaObject(loader);
                     if (err instanceof Throwable) {
                         throw new CloudCompletionException((Throwable) err);
                     } else if (err instanceof HttpResponse && !r.isSuccess()) {

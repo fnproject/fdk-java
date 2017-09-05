@@ -28,38 +28,43 @@ public class FnTestingClassLoader extends ClassLoader {
         this.sharedPrefixes = sharedPrefixes;
     }
 
+    public boolean isShared(String classOrPackageName) {
+        for (String prefix : sharedPrefixes) {
+            if (("=" + classOrPackageName).equals(prefix) || classOrPackageName.startsWith(prefix)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @Override
-    public synchronized Class<?> loadClass(String s) throws ClassNotFoundException {
-        Class<?> definedClass = loaded.get(s);
+    public synchronized Class<?> loadClass(String className) throws ClassNotFoundException {
+        Class<?> definedClass = loaded.get(className);
         if (definedClass != null) {
             return definedClass;
         }
 
         Class<?> cls = null;
-        for (String prefix : sharedPrefixes) {
-            if (("=" + s).equals(prefix) || s.startsWith(prefix)) {
-                cls = getParent().loadClass(s);
-                break;
-            }
+        if(isShared(className)) {
+            cls = getParent().loadClass(className);
         }
-
 
         if (cls == null) {
             try {
-                InputStream in = getResourceAsStream(s.replace('.', '/') + ".class");
+                InputStream in = getResourceAsStream(className.replace('.', '/') + ".class");
                 if (in == null){
-                    throw new ClassNotFoundException("Class not found :" + s);
+                    throw new ClassNotFoundException("Class not found :" + className);
                 }
 
                 byte[] clsBytes = IOUtils.toByteArray(in);
-                cls = defineClass(s, clsBytes, 0, clsBytes.length);
+                cls = defineClass(className, clsBytes, 0, clsBytes.length);
                 resolveClass(cls);
 
             } catch (IOException e) {
-                throw new ClassNotFoundException(s, e);
+                throw new ClassNotFoundException(className, e);
             }
         }
-        loaded.put(s, cls);
+        loaded.put(className, cls);
         return cls;
     }
 

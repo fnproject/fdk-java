@@ -120,7 +120,7 @@ public final class RemoteCloudThreadRuntime implements CloudThreadRuntime, Seria
 
         @Override
         public T get() {
-            return (T) getClient().waitForCompletion(threadId, completionId);
+            return (T) getClient().waitForCompletion(threadId, completionId, getClass().getClassLoader());
         }
 
         public String id() {

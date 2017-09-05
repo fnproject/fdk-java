@@ -451,6 +451,7 @@ public class ExerciseEverything {
                             found = found || huntForValues(message, values);
                         } else {
                             out.println("  exception type mismatch: " + t + ", wanted " + c);
+                            out.println("  Class loaders: " + t.getClass().getClassLoader() + ", wanted " + c.getClassLoader());
                             t.printStackTrace(out);
                             fail();
                             break;

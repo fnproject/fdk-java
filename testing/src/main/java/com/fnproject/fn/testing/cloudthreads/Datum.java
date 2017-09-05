@@ -3,13 +3,11 @@ package com.fnproject.fn.testing.cloudthreads;
 import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.cloudthreads.*;
 import com.fnproject.fn.runtime.cloudthreads.CompletionId;
+import com.sun.beans.finder.ClassFinder;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -22,7 +20,7 @@ import static com.fnproject.fn.runtime.cloudthreads.CloudCompleterApiClient.*;
  */
 public abstract class Datum {
 
-    public abstract Object asJavaValue();
+    public abstract Object asJavaValue(ClassLoader loader);
 
     public abstract void writeHeaders(HeaderWriter hw) throws IOException;
 
@@ -70,7 +68,7 @@ public abstract class Datum {
 
     public static class EmptyDatum extends Datum {
         @Override
-        public Object asJavaValue() {
+        public Object asJavaValue(ClassLoader loader) {
             return null;
         }
 
@@ -100,10 +98,23 @@ public abstract class Datum {
         }
 
         @Override
-        public Object asJavaValue() {
+        public Object asJavaValue(ClassLoader loader) {
             Object o;
             try {
-                ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(data.data));
+                ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(data.data)) {
+                    @Override
+                    protected Class resolveClass(ObjectStreamClass classDesc)
+                            throws IOException, ClassNotFoundException {
+
+                        String cname = classDesc.getName();
+                        try {
+                            return loader.loadClass(cname);
+                        }
+                        catch(ClassNotFoundException ex) {
+                            return super.resolveClass(classDesc);
+                        }
+                    }
+                };
                 o = ois.readObject();
             } catch (Exception e) {
                 throw new PlatformException("Failed to deserialize result", e);
@@ -145,7 +156,7 @@ public abstract class Datum {
         }
 
         @Override
-        public Object asJavaValue() {
+        public Object asJavaValue(ClassLoader loader) {
             switch (type) {
                 case stage_timeout:
                     return new StageTimeoutException(message);
@@ -190,7 +201,7 @@ public abstract class Datum {
         }
 
         @Override
-        public Object asJavaValue() {
+        public Object asJavaValue(ClassLoader loader) {
             return new HttpRequest() {
 
                 @Override
@@ -268,7 +279,7 @@ public abstract class Datum {
         }
 
         @Override
-        public Object asJavaValue() {
+        public Object asJavaValue(ClassLoader loader) {
             return new HttpResponse() {
                 @Override
                 public int getStatusCode() { return status; }
@@ -327,7 +338,7 @@ public abstract class Datum {
         }
 
         @Override
-        public Object asJavaValue() {
+        public Object asJavaValue(ClassLoader loader) {
             return new CompletionId(stageId);
         }
 

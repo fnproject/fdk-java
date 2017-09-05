@@ -11,7 +11,6 @@ public class IntegrationTest {
     @Rule
     public FnTestingRule fn = FnTestingRule.createDefault();
 
-    @Ignore
     @Test
     public void runIntegrationTests() {
 
@@ -27,7 +26,7 @@ public class IntegrationTest {
                     }
                 })
             .givenEvent()
-                .withBody("8")   // or "1,5,6,32" to select a set of tests individually
+                .withBody("")   // or "1,5,6,32" to select a set of tests individually
                 .enqueue()
 
             .thenRun(ExerciseEverything.class, "handleRequest");

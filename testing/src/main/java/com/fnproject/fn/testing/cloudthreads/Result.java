@@ -39,8 +39,8 @@ public class Result {
         return new Result(success, new Datum.EmptyDatum());
     }
 
-    Object toJavaObject() {
-        return datum.asJavaValue();
+    Object toJavaObject(ClassLoader loader) {
+        return datum.asJavaValue(loader);
     }
 
 

@@ -45,7 +45,7 @@ public interface CompleterClient {
     CompletionId thenCompose(ThreadId threadId, CompletionId completionId, Serializable fn);
 
     // block (indefinitely) until the completion completes
-    Object waitForCompletion(ThreadId threadID, CompletionId id);
+    Object waitForCompletion(ThreadId threadID, CompletionId id, ClassLoader loader);
 
     CompletionId thenAccept(ThreadId threadId, CompletionId completionId, Serializable fn);
 

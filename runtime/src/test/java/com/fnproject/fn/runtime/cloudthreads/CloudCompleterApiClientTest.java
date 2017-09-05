@@ -66,7 +66,7 @@ public class CloudCompleterApiClientTest {
 
         // When
         CloudCompleterApiClient completerClient = new CloudCompleterApiClient("", mockHttpClient);
-        Object result = completerClient.waitForCompletion(new ThreadId("1"), new CompletionId("2"));
+        Object result = completerClient.waitForCompletion(new ThreadId("1"), new CompletionId("2"), getClass().getClassLoader());
 
         // Then
         assertThat(result).isInstanceOf(HttpResponse.class);
@@ -87,7 +87,7 @@ public class CloudCompleterApiClientTest {
         // When
         CloudCompleterApiClient completerClient = new CloudCompleterApiClient("", mockHttpClient);
         try {
-            Object result = completerClient.waitForCompletion(new ThreadId("1"), new CompletionId("2"));
+            Object result = completerClient.waitForCompletion(new ThreadId("1"), new CompletionId("2"), getClass().getClassLoader());
         } catch (CloudCompletionException e) {
             assertThat(e.getCause()).isInstanceOfAny(FunctionInvocationException.class);
             assertThat(((FunctionInvocationException)e.getCause()).getFunctionResponse().getStatusCode()).isEqualTo(500);
@@ -108,7 +108,7 @@ public class CloudCompleterApiClientTest {
 
         // When
         CloudCompleterApiClient completerClient = new CloudCompleterApiClient("", mockHttpClient);
-        Object result = completerClient.waitForCompletion(new ThreadId("1"), new CompletionId("2"));
+        Object result = completerClient.waitForCompletion(new ThreadId("1"), new CompletionId("2"), getClass().getClassLoader());
 
         // Then
         assertThat(result).isInstanceOf(HttpRequest.class);
@@ -130,7 +130,7 @@ public class CloudCompleterApiClientTest {
         // When
         CloudCompleterApiClient completerClient = new CloudCompleterApiClient("", mockHttpClient);
         try {
-            completerClient.waitForCompletion(new ThreadId("1"), new CompletionId("2"));
+            completerClient.waitForCompletion(new ThreadId("1"), new CompletionId("2"), getClass().getClassLoader());
             fail("Should have thrown an exception");
         } catch (CloudCompletionException e) {
             // Just as with thrown exceptions, the ECEx is wrapped in a CCEx on .get
@@ -154,7 +154,7 @@ public class CloudCompleterApiClientTest {
         when((Object) mockHttpClient.execute(any())).thenReturn(invalidResponse);
 
         CloudCompleterApiClient completerClient = new CloudCompleterApiClient("", mockHttpClient);
-        completerClient.waitForCompletion(new ThreadId("1"), new CompletionId("2"));
+        completerClient.waitForCompletion(new ThreadId("1"), new CompletionId("2"), getClass().getClassLoader());
     }
 
     @Test
@@ -176,7 +176,7 @@ public class CloudCompleterApiClientTest {
             when((Object) mockHttpClient.execute(any())).thenReturn(response);
 
             CloudCompleterApiClient completerClient = new CloudCompleterApiClient("", mockHttpClient);
-            completerClient.waitForCompletion(new ThreadId("1"), new CompletionId("2"));
+            completerClient.waitForCompletion(new ThreadId("1"), new CompletionId("2"), getClass().getClassLoader());
         }
     }
 
@@ -194,7 +194,7 @@ public class CloudCompleterApiClientTest {
             when((Object) mockHttpClient.execute(any())).thenReturn(response);
 
             CloudCompleterApiClient completerClient = new CloudCompleterApiClient("", mockHttpClient);
-            completerClient.waitForCompletion(new ThreadId("1"), new CompletionId("2"));
+            completerClient.waitForCompletion(new ThreadId("1"), new CompletionId("2"), getClass().getClassLoader());
         }
     }
 
@@ -213,7 +213,7 @@ public class CloudCompleterApiClientTest {
         when((Object) mockHttpClient.execute(any())).thenReturn(response);
 
         CloudCompleterApiClient completerClient = new CloudCompleterApiClient("", mockHttpClient);
-        completerClient.waitForCompletion(new ThreadId("1"), new CompletionId("2"));
+        completerClient.waitForCompletion(new ThreadId("1"), new CompletionId("2"), getClass().getClassLoader());
     }
 
     @Test

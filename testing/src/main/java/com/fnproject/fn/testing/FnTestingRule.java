@@ -1,7 +1,7 @@
 package com.fnproject.fn.testing;
 
 import com.fnproject.fn.api.*;
-import com.fnproject.fn.api.cloudthreads.HttpMethod;
+import com.fnproject.fn.api.cloudthreads.*;
 import com.fnproject.fn.runtime.cloudthreads.*;
 import com.fnproject.fn.testing.cloudthreads.*;
 import org.apache.commons.io.IOUtils;
@@ -81,9 +81,15 @@ public final class FnTestingRule implements TestRule {
         addSharedClass(CompleterClient.ExternalCompletion.class);
         addSharedClass(Headers.class);
         addSharedClass(HttpMethod.class);
+        addSharedClass(com.fnproject.fn.api.cloudthreads.HttpRequest.class);
+        addSharedClass(com.fnproject.fn.api.cloudthreads.HttpResponse.class);
         addSharedClass(QueryParameters.class);
         addSharedClass(InputEvent.class);
         addSharedClass(OutputEvent.class);
+        addSharedClass(CloudCompletionException.class);
+        addSharedClass(FunctionInvocationException.class);
+        addSharedClass(ExternalCompletionException.class);
+        addSharedClass(PlatformException.class);
 
     }
 
@@ -213,6 +219,10 @@ public final class FnTestingRule implements TestRule {
             mutableEnv.put("FN_FORMAT", "http");
 
             FnTestingClassLoader forked = new FnTestingClassLoader(functionClassLoader, sharedPrefixes);
+            if(forked.isShared(cls)) {
+                oldSystemErr.println("WARNING: The function class under test is shared with the test ClassLoader.");
+                oldSystemErr.println("         This may result in unexpected behaviour around function initialization and configuration.");
+            }
             forked.setCompleterClient(completer);
             forked.run(
                     mutableEnv,
