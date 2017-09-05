@@ -26,10 +26,6 @@ public class FunctionInvocationContext implements InvocationContext, FunctionInv
 
     @Override
     public void fireOnSuccessfulInvocation() {
-        notifyListeners();
-    }
-
-    private void notifyListeners() {
         for (InvocationListener listener : invocationListeners) {
             try {
                 listener.onSuccess();
