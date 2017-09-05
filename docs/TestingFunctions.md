@@ -152,28 +152,13 @@ You can test that this is all handled correctly as follows:
     Assert.assertEquals("{\"c\":\"blah-foobar\"}", result.getBodyAsString());
   }
 ```
+
 # Testing Cloud Threads
 
-If your function is using the [Cloud Threads API](CloudThreadsUserGuide.md), then you will need additional plumbing to
-emulate the functionality of the Cloud Threads completions service.
-
-A `ClassRule` is available to create a Cloud Threads completion service in-process, which you can then provide to your
-`FnTestingRule`. The reason for this is performance: spawning and tearing down the completion service is a
-time-consuming process and you probably do not want to do it for every single test.
-
-The code for creating this class rule and using it looks like the following:
-
-```java
-    @ClassRule
-    public static final FnTestingRule.FnCompleterRule completer = FnTestingRule.createCompleter();
-
-    @Rule
-    public final FnTestingRule testing = FnTestingRule.createWithCompletions(completer);
-```
-
-Cloud Threads are executed asynchronously, so if the `FnTestingRule` instance is created with a reference to a
-completion service the `thenRun` method will not only execute the function under test but also wait for all the
-asynchronous completions to finish.
+Even if your function is using the [Cloud Threads API](CloudThreadsUserGuide.md), you will need no additional plumbing
+to emulate the functionality of the Cloud Threads completions service. The `FnTestingRule` already provides a simulated
+completions service that will deal with any Cloud Threads invocation. The `thenRun` method will not only execute the
+function under test but also wait for all the asynchronous completions to finish.
 
 Functions only return the data from the initial invocation, so you will not have direct access to the return values of
 each asynchronous process spawned as a Cloud Thread. Therefore, you will be unable to test your function through the I/O
@@ -181,94 +166,8 @@ contract alone and you will want to test the functions side effects (using mocks
 This can involve for example testing the changes to a mock database, or capturing HTTP requests to a mock HTTP server;
 you can use your favourite test framework for handling such mocks.
 
-One thing that is however specific to the fn platform is the invocation of other functions, i.e. when
-you use Cloud Threads to asynchronously call an fn with the `invokeFunction()` API. This can be
-mocked with the `FnTestingRule` rule itself, which provides a convenient API for pretending that the execution of a
-remote function results in a valid return value or an error.
-
-You can specify that the invocation a function returns a valid value (as a byte array):
-
-```java
-  @Test
-  public void callsRemoteFunctionWhichSucceeds() {
-
-    testing.givenFn("example/other-function").withResult("blah".getBytes());
-
-    // ...
-
-  }
-```
-
-Or you can specify that the invocation a function will cause a usage error or a platform error:
-
-```java
-  @Test
-  public void callsRemoteFunctionWhichCausesAnError() {
-
-    testing.givenFn("example/other-function").withFunctionError();
-    testing.givenFn("example/other-function-2").withPlatformError();
-
-    // ...
-
-  }
-```
-
-  }
-```
-
-You can even specify custom actions to perform when the function is called, using for example a lambda. This can be
-used to check some behavior:
-
-```java
-
-  static boolean called;
-
-  @Test
-  public void callsRemoteFunction() {
-
-    testing.givenFn("example/other-function").withAction( (data) -> { called = true; return data; } );
-
-    called = false;
-
-    // ... prepare an event and run the function ...
-
-    Assert.assertTrue(called);
-  }
-```
-
-This is a very simple example using a static variable - but any mock injection can be performed provided that the mock
-object is effectively final and can be captured in the lambda.
-# Testing Cloud Threads
-
-If your function is using the [Cloud Threads API](CloudThreadsUserGuide.md), then you will need additional plumbing to
-emulate the functionality of the Cloud Threads completions service.
-
-A `ClassRule` is available to create a Cloud Threads completion service in-process, which you can then provide to your
-`FnTestingRule`. The reason for this is performance: spawning and tearing down the completion service is a
-time-consuming process and you probably do not want to do it for every single test.
-
-The code for creating this class rule and using it looks like the following:
-
-```java
-    @ClassRule
-    public static final FnTestingRule.FnCompleterRule completer = FnTestingRule.createCompleter();
-
-    @Rule
-    public final FnTestingRule testing = FnTestingRule.createWithCompletions(completer);
-```
-
-Cloud Threads are executed asynchronously, so if the `FnTestingRule` instance is created with a reference to a
-completion service the `thenRun` method will not only execute the function under test but also wait for all the
-asynchronous completions to finish.
-
-Functions only return the data from the initial invocation, so you will not have direct access to the return values of
-each asynchronous process spawned as a Cloud Thread. Therefore, you will be unable to test your function through the I/O
-contract alone and you will want to test the functions side effects (using mocks/spies).
-This can involve for example testing the changes to a mock database, or capturing HTTP requests to a mock HTTP server;
-you can use your favourite test framework for handling such mocks.
-
-One thing that is however specific to the fn platform is the invocation of other functions, i.e. when
-you use Cloud Threads to asynchronously call an fn with the `invokeFunction()` API. This can be
+One thing that is however specific to the Fn platform is the invocation of other functions, i.e. when
+you use Cloud Threads to asynchronously call a function with the `invokeFunction()` API. This can be
 mocked with the `FnTestingRule` rule itself, which provides a convenient API for pretending that the execution of a
 remote function results in a valid return value or an error.
 
