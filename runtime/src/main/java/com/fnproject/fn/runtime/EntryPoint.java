@@ -53,7 +53,7 @@ public class EntryPoint {
         try {
             final Map<String, String> configFromEnvVars = Collections.unmodifiableMap(excludeInternalConfigAndHeaders(env));
 
-            DefaultFunctionLoader functionLoader = new DefaultFunctionLoader();
+            FunctionLoader functionLoader = new FunctionLoader();
             FunctionRuntimeContext runtimeContext = new FunctionRuntimeContext(functionLoader.loadClass(cls, mth), configFromEnvVars);
 
             FunctionConfigurer functionConfigurer = new FunctionConfigurer();
