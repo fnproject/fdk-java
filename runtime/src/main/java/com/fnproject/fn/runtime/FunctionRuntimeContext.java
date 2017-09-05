@@ -18,7 +18,7 @@ import java.util.*;
 public class FunctionRuntimeContext implements RuntimeContext {
 
     private final Map<String, String> config;
-    private final FnFunction function;
+    private final MethodWrapper method;
     private Map<String, Object> attributes = new HashMap<>();
     private List<FunctionInvoker> configuredInvokers = Arrays.asList(new CloudThreadsContinuationInvoker(), new MethodFunctionInvoker());
 
@@ -29,8 +29,8 @@ public class FunctionRuntimeContext implements RuntimeContext {
     private final List<OutputCoercion> builtinOutputCoercions = Arrays.asList(new StringCoercion(), new ByteArrayCoercion(), new VoidCoercion(), new OutputEventCoercion(), JacksonCoercion.instance());
     private final List<OutputCoercion> userOutputCoercions = new LinkedList<>();
 
-    public FunctionRuntimeContext(FnFunction function, Map<String, String> config) {
-        this.function = function;
+    public FunctionRuntimeContext(MethodWrapper method, Map<String, String> config) {
+        this.method = method;
         this.config = Objects.requireNonNull(config);
     }
 
@@ -78,12 +78,12 @@ public class FunctionRuntimeContext implements RuntimeContext {
 
     @Override
     public Class<?> getTargetClass() {
-        return this.function.getTargetClass();
+        return this.method.getTargetClass();
     }
 
     @Override
     public Method getTargetMethod() {
-        return this.function.getTargetMethod();
+        return this.method.getTargetMethod();
     }
 
     @Override
@@ -158,12 +158,13 @@ public class FunctionRuntimeContext implements RuntimeContext {
         configuredInvokers.add(1, invoker);
     }
 
-    public InternalInvocationContext newInvocationContext() {
-        return new FunctionInvocationContext(this);
+    @Override
+    public MethodWrapper getMethod() {
+        return method;
     }
 
-    public FnFunction getFunction() {
-        return function;
+    public InternalInvocationContext newInvocationContext() {
+        return new FunctionInvocationContext(this);
     }
 
     public OutputEvent tryInvoke(InputEvent evt, InternalInvocationContext entryPoint) {
@@ -205,4 +206,7 @@ public class FunctionRuntimeContext implements RuntimeContext {
         return outputList;
     }
 
+    public MethodWrapper getMethodWrapper() {
+        return method;
+    }
 }

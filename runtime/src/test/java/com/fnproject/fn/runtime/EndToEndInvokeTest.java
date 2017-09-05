@@ -38,7 +38,6 @@ public class EndToEndInvokeTest {
         assertThat(fn.exitStatus()).isZero();
     }
 
-
     @Test
     public void shouldResolveTestCallFromHotCall() throws Exception {
         fn.givenEvent().withBody("Hello World").enqueue();
@@ -49,7 +48,6 @@ public class EndToEndInvokeTest {
         assertThat(TestFn.getInput()).isEqualTo("Hello World");
     }
 
-
     @Test
     public void shouldSerializeGenericCollections() throws Exception {
         fn.givenDefaultEvent().withBody("four").enqueue();
@@ -58,7 +56,6 @@ public class EndToEndInvokeTest {
 
         assertThat(fn.getStdOutAsString()).isEqualTo("[\"one\",\"two\",\"three\",\"four\"]");
     }
-
 
     @Test
     public void shouldSerializeAnimalCollections() throws Exception {

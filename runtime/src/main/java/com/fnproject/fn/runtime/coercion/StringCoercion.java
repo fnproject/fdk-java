@@ -10,7 +10,7 @@ import java.util.Optional;
 public class StringCoercion implements InputCoercion<String>, OutputCoercion {
     @Override
     public Optional<OutputEvent> wrapFunctionResult(InvocationContext ctx, Object value) {
-        if (ctx.getRuntimeContext().getTargetMethod().getReturnType().equals(String.class)) {
+        if (returnType(ctx).equals(String.class)) {
             return Optional.of(OutputEvent.fromBytes(((String) value).getBytes(), true, "text/plain"));
         } else {
             return Optional.empty();
@@ -19,7 +19,7 @@ public class StringCoercion implements InputCoercion<String>, OutputCoercion {
 
     @Override
     public Optional<String> tryCoerceParam(InvocationContext currentContext, int param, InputEvent input) {
-        if (currentContext.getRuntimeContext().getTargetMethod().getParameterTypes()[param].equals(String.class)) {
+        if (parameterType(currentContext, param).equals(String.class)) {
             return Optional.of(
                     input.consumeBody(is -> {
                         try {
@@ -31,5 +31,13 @@ public class StringCoercion implements InputCoercion<String>, OutputCoercion {
         } else {
             return Optional.empty();
         }
+    }
+
+    private Class<?> parameterType(InvocationContext currentContext, int arg) {
+        return currentContext.getRuntimeContext().getMethod().param(arg).getParameterClass();
+    }
+
+    private Class<?> returnType(InvocationContext currentContext) {
+        return currentContext.getRuntimeContext().getMethod().getReturnType().getParameterClass();
     }
 }

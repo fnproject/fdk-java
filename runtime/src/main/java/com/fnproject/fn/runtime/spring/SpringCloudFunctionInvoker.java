@@ -1,21 +1,29 @@
 package com.fnproject.fn.runtime.spring;
 
-import com.fnproject.fn.api.FunctionInvoker;
-import com.fnproject.fn.api.InputEvent;
-import com.fnproject.fn.api.InvocationContext;
-import com.fnproject.fn.api.OutputEvent;
+import com.fnproject.fn.api.*;
+import com.fnproject.fn.runtime.MethodFunctionInvoker;
 
 import java.util.Optional;
 
-public class SpringCloudFunctionInvoker implements FunctionInvoker {
-    public final Class<?> configClass;
+public class SpringCloudFunctionInvoker extends MethodFunctionInvoker {
 
-    public SpringCloudFunctionInvoker(Class<?> configClass) {
-        this.configClass = configClass;
+    private final RuntimeContext runtimeContext;
+    private final SpringCloudFunctionDiscovery functionDiscovery;
+
+    public SpringCloudFunctionInvoker(RuntimeContext runtimeContext) {
+        this.runtimeContext = runtimeContext;
+        this.functionDiscovery = new SpringCloudFunctionDiscovery(runtimeContext);
     }
 
     @Override
     public Optional<OutputEvent> tryInvoke(InvocationContext ctx, InputEvent evt) {
+        functionDiscovery.discover();
+        functionDiscovery.getFunction();
+        // TODO
+        // coerce input based on Function type
+        // invoke Function with input
+        // coerce output based on Function type
+        // build output event
         return null;
     }
 }

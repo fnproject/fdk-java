@@ -56,11 +56,9 @@ public class JacksonCoercion implements InputCoercion<Object>, OutputCoercion {
         return new RuntimeException("Failed to coerce event to user function parameter type " + paramType, cause);
     }
 
-
     private static RuntimeException coercionFailed(Type paramType) {
         return coercionFailed(paramType, null);
     }
-
 
     @Override
     public Optional<OutputEvent> wrapFunctionResult(InvocationContext ctx, Object value) {

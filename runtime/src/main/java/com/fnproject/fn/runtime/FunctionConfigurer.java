@@ -1,6 +1,7 @@
 package com.fnproject.fn.runtime;
 
 import com.fnproject.fn.api.FnConfiguration;
+import com.fnproject.fn.api.MethodWrapper;
 import com.fnproject.fn.runtime.exception.FunctionConfigurationException;
 
 import java.lang.reflect.InvocationTargetException;
@@ -21,12 +22,12 @@ public class FunctionConfigurer {
      * @return a new runtime context
      */
     public void configure(FunctionRuntimeContext runtimeContext) {
-        validateConfigurationMethods(runtimeContext.getFunction());
-        applyUserConfigurationMethod(runtimeContext.getTargetClass(), runtimeContext);
+        validateConfigurationMethods(runtimeContext.getMethodWrapper());
+        applyUserConfigurationMethod(runtimeContext.getMethodWrapper(), runtimeContext);
     }
 
 
-    private void validateConfigurationMethods(FnFunction function) {
+    private void validateConfigurationMethods(MethodWrapper function) {
         // Function configuration methods must have a void return type.
         Arrays.stream(function.getTargetClass().getMethods())
                 .filter(this::isConfigurationMethod)
@@ -50,9 +51,9 @@ public class FunctionConfigurer {
         }
     }
 
-    private void applyUserConfigurationMethod(Class<?> targetClass, FunctionRuntimeContext runtimeContext) {
+    private void applyUserConfigurationMethod(MethodWrapper targetClass, FunctionRuntimeContext runtimeContext) {
 
-        Arrays.stream(targetClass.getMethods())
+        Arrays.stream(targetClass.getTargetClass().getMethods())
                 .filter(this::isConfigurationMethod)
                 .sorted(Comparator.<Method>comparingInt((m) -> Modifier.isStatic(m.getModifiers()) ? 0 : 1) // run static methods first
                         .thenComparing(Comparator.<Method>comparingInt((m) -> { // depth first in implementation

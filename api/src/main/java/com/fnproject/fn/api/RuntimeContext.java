@@ -84,4 +84,6 @@ public interface RuntimeContext {
      * @param invoker The {@link FunctionInvoker} to add.
      */
     void setInvoker(FunctionInvoker invoker);
+
+    MethodWrapper getMethod();
 }

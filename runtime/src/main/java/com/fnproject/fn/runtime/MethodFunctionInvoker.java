@@ -1,10 +1,7 @@
 package com.fnproject.fn.runtime;
 
 
-import com.fnproject.fn.api.FunctionInvoker;
-import com.fnproject.fn.api.InputEvent;
-import com.fnproject.fn.api.InvocationContext;
-import com.fnproject.fn.api.OutputEvent;
+import com.fnproject.fn.api.*;
 import com.fnproject.fn.runtime.exception.FunctionInputHandlingException;
 import com.fnproject.fn.runtime.exception.InternalFunctionInvocationException;
 import com.fnproject.fn.runtime.exception.FunctionOutputHandlingException;
@@ -19,7 +16,7 @@ import java.util.Optional;
  * <p>
  * This handles the binding and invocation of function calls via java methods.
  */
-class MethodFunctionInvoker implements FunctionInvoker {
+public class MethodFunctionInvoker implements FunctionInvoker {
 
     /**
      * Invoke the function wrapped by this loader
@@ -34,23 +31,21 @@ class MethodFunctionInvoker implements FunctionInvoker {
         Object[] userFunctionParams = doInputCoercions(ctx, evt);
 
         FunctionRuntimeContext runtimeContext = (FunctionRuntimeContext) ctx.getRuntimeContext();
-        Method targetMethod = runtimeContext.getTargetMethod();
+        MethodWrapper method = runtimeContext.getMethodWrapper();
         Object rawResult;
 
         try {
-            rawResult = targetMethod.invoke(ctx.getRuntimeContext().getInvokeInstance().orElse(null), userFunctionParams);
+            rawResult = method.getTargetMethod().invoke(ctx.getRuntimeContext().getInvokeInstance().orElse(null), userFunctionParams);
         } catch (IllegalAccessException | InvocationTargetException e) {
             throw new InternalFunctionInvocationException(e.getCause().getMessage(), e.getCause());
         }
 
-        return doOutputCoercion(ctx, runtimeContext, targetMethod, rawResult);
+        return doOutputCoercion(ctx, runtimeContext, method, rawResult);
 
     }
 
-    private Object[] doInputCoercions(InvocationContext ctx, InputEvent evt) {
-
+    protected Object[] doInputCoercions(InvocationContext ctx, InputEvent evt) {
         try {
-
             FunctionRuntimeContext runtimeContext = (FunctionRuntimeContext) ctx.getRuntimeContext();
             Method targetMethod = runtimeContext.getTargetMethod();
             Class<?>[] paramTypes = targetMethod.getParameterTypes();
@@ -77,10 +72,10 @@ class MethodFunctionInvoker implements FunctionInvoker {
     }
 
 
-    private Optional<OutputEvent> doOutputCoercion(InvocationContext ctx, FunctionRuntimeContext runtimeContext, Method targetMethod, Object rawResult) {
+    protected Optional<OutputEvent> doOutputCoercion(InvocationContext ctx, FunctionRuntimeContext runtimeContext, MethodWrapper method, Object rawResult) {
 
         try {
-            return Optional.of(runtimeContext.getOutputCoercions(targetMethod)
+            return Optional.of(runtimeContext.getOutputCoercions(method.getTargetMethod())
                     .stream()
                     .map((c) -> c.wrapFunctionResult(ctx, rawResult))
                     .filter(Optional::isPresent)
