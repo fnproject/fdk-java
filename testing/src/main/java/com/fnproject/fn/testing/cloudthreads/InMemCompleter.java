@@ -63,10 +63,10 @@ public class InMemCompleter implements CompleterClient {
     }
 
     private static class ExternalCompletionServer {
-        private static final int port = 11979;
         private static final String baseUrl = "/completions/";
         Pattern pathPattern = Pattern.compile("([^/]+)/(.*)");
         HttpServer server;
+        int port = -1;
 
         Map<String, CompletableFuture<Result>> knownCompletions = new ConcurrentHashMap<>();
 
@@ -83,7 +83,8 @@ public class InMemCompleter implements CompleterClient {
                 return this;
             }
             try {
-                server = HttpServer.create(new InetSocketAddress(port), 0);
+                server = HttpServer.create(new InetSocketAddress(0), 0);
+                port = server.getAddress().getPort();
             } catch (IOException e) {
                 throw new PlatformException("Failed to create external completer server on port " + port);
             }
