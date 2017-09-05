@@ -13,18 +13,19 @@ import java.util.Optional;
  */
 public interface RuntimeContext {
     /**
-     * Create an instance of the user specified class on which the function to invoke is declared.
+     * Create an instance of the user specified class on which the target function to invoke is declared.
      *
-     * @return new instance of class containing user specified function
+     * @return new instance of class containing the target function
      */
     Optional<Object> getInvokeInstance();
 
     /**
-     * Get the user specified function wrapped in a {@link MethodWrapper}.
+     * Get the target method of the user specified function wrapped in a {@link MethodWrapper}.
      *
-     * @return user specified function
+     * @return the target method of the function invocation
      */
     MethodWrapper getMethod();
+
     /**
      * Get a configuration variable value by key
      *
