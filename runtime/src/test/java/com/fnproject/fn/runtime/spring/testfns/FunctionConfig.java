@@ -5,6 +5,7 @@ import com.fnproject.fn.api.RuntimeContext;
 import com.fnproject.fn.runtime.spring.SpringCloudFunctionInvoker;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.function.context.ContextFunctionCatalogAutoConfiguration;
+import org.springframework.cloud.function.context.FunctionInspector;
 import org.springframework.cloud.function.context.FunctionScan;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -24,7 +25,7 @@ public class FunctionConfig {
 
     @FnConfiguration
     public static void configure(RuntimeContext ctx) {
-        ctx.setInvoker(new SpringCloudFunctionInvoker(ctx));
+        ctx.setInvoker(new SpringCloudFunctionInvoker(FunctionConfig.class));
     }
 
     @Bean

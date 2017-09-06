@@ -46,10 +46,8 @@ public class MethodFunctionInvoker implements FunctionInvoker {
         try {
             Object[] userFunctionParams = new Object[targetMethod.getParameterCount()];
 
-            for (int i = 0; i < userFunctionParams.length; i++) {
-                int param = i;
-                Object coercedParameter = coerceParameter(ctx, targetMethod, param, evt);
-                userFunctionParams[i] = coercedParameter;
+            for (int paramIndex = 0; paramIndex < userFunctionParams.length; paramIndex++) {
+                userFunctionParams[paramIndex] = coerceParameter(ctx, targetMethod, paramIndex, evt);
             }
 
             return userFunctionParams;

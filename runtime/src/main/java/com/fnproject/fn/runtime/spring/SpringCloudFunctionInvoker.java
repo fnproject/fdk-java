@@ -2,42 +2,37 @@ package com.fnproject.fn.runtime.spring;
 
 import com.fnproject.fn.api.*;
 import com.fnproject.fn.runtime.MethodFunctionInvoker;
-import com.fnproject.fn.runtime.exception.InternalFunctionInvocationException;
+import com.fnproject.fn.runtime.spring.function.SpringCloudFunction;
+import com.fnproject.fn.runtime.spring.function.SpringCloudMethod;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 import reactor.core.publisher.Flux;
 
-import java.lang.reflect.InvocationTargetException;
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 public class SpringCloudFunctionInvoker extends MethodFunctionInvoker {
-    private final RuntimeContext runtimeContext;
+    private final SpringCloudFunctionLoader loader;
 
-    private SpringCloudFunction method;
-
-    private final ApplicationContext applicationContext;
-
-    public SpringCloudFunctionInvoker(RuntimeContext runtimeContext) {
-        this.runtimeContext = runtimeContext;
-
-        SpringApplicationBuilder builder = new SpringApplicationBuilder(runtimeContext.getMethod().getTargetClass());
-        applicationContext = builder.web(false).run();
-
-        method = new SpringCloudFunction(applicationContext);
-        applicationContext.getAutowireCapableBeanFactory().autowireBean(method);
+    SpringCloudFunctionInvoker(SpringCloudFunctionLoader loader) {
+        this.loader = loader;
     }
 
-    @Bean
-    RuntimeContext getRuntimeContext() {
-        return runtimeContext;
+    public SpringCloudFunctionInvoker(Class<?> configClass) {
+        SpringApplicationBuilder builder = new SpringApplicationBuilder(configClass);
+        ConfigurableApplicationContext applicationContext = builder.web(false).run();
+        loader = applicationContext.getAutowireCapableBeanFactory().createBean(SpringCloudFunctionLoader.class);
+        loader.loadFunction();
     }
 
     @Override
     public Optional<OutputEvent> tryInvoke(InvocationContext ctx, InputEvent evt) {
-        method.discover();
+        SpringCloudMethod method = loader.getFunction();
 
         Object[] userFunctionParams = coerceParameters(ctx, method, evt);
 
