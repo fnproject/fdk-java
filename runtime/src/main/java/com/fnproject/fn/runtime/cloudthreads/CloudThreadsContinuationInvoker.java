@@ -2,7 +2,6 @@ package com.fnproject.fn.runtime.cloudthreads;
 
 import com.fnproject.fn.api.*;
 import com.fnproject.fn.api.cloudthreads.*;
-import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.runtime.exception.FunctionInputHandlingException;
 import com.fnproject.fn.runtime.exception.InternalFunctionInvocationException;
 
@@ -10,7 +9,10 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.function.*;
 
@@ -22,11 +24,7 @@ import static com.fnproject.fn.runtime.cloudthreads.CloudCompleterApiClient.*;
  */
 public final class CloudThreadsContinuationInvoker implements FunctionInvoker {
 
-    private static boolean testingMode = false;
-
-    private static final Object runtimeSourceLock = new Object();
-
-    private static final String DEFAULT_COMPLETER_BASE_URL = "http://completer-svc:8080";
+    private static final String DEFAULT_COMPLETER_BASE_URL = "http://completer-svc:8081";
     private static final String COMPLETER_BASE_URL = "COMPLETER_BASE_URL";
 
     private static class URLCompleterClientFactory implements CompleterClientFactory {
@@ -46,34 +44,16 @@ public final class CloudThreadsContinuationInvoker implements FunctionInvoker {
         }
     }
 
-    private static CompleterClientFactory completerClientFactory = null;
-
-    /**
-     * Resets the state of the completer client factory to defaults; this is primarily for testing
-     */
-    public static synchronized void resetCompleterClientFactory() {
-        completerClientFactory = null;
-    }
-
-    /**
-     * override the default completer client factory
-     *
-     * @param currentClientFactory a new client factory to be used to create threads
-     */
-    public static synchronized void setCompleterClientFactory(CompleterClientFactory currentClientFactory) {
-        CloudThreadsContinuationInvoker.completerClientFactory = Objects.requireNonNull(currentClientFactory);
-    }
-
     /**
      * Gets or creates the completer client factory; if it has been overridden, the parameter will be ignored
      *
      * @param completerBaseUrl the completer base URL to use if and when creating the factory
      */
     private static synchronized CompleterClientFactory getOrCreateCompleterClientFactory(String completerBaseUrl) {
-        if (completerClientFactory == null) {
-            setCompleterClientFactory(new URLCompleterClientFactory(completerBaseUrl));
+        if (CloudThreadsRuntimeGlobals.getCompleterClientFactory() == null) {
+            CloudThreadsRuntimeGlobals.setCompleterClientFactory(new URLCompleterClientFactory(completerBaseUrl));
         }
-        return completerClientFactory;
+        return CloudThreadsRuntimeGlobals.getCompleterClientFactory();
     }
 
 
@@ -86,28 +66,29 @@ public final class CloudThreadsContinuationInvoker implements FunctionInvoker {
     @Override
     public Optional<OutputEvent> tryInvoke(InvocationContext ctx, InputEvent evt) {
         Optional<String> graphIdOption = evt.getHeaders().get(THREAD_ID_HEADER);
+
         final String completerBaseUrl = ctx.getRuntimeContext().getConfigurationByKey(COMPLETER_BASE_URL).orElse(DEFAULT_COMPLETER_BASE_URL);
 
         if (graphIdOption.isPresent()) {
-
-            synchronized (runtimeSourceLock) {
-                if (!testingMode || null == CloudThreads.getCurrentRuntimeSource()) {
-                    final ThreadId threadId = new ThreadId(graphIdOption.get());
-                    CloudThreads.RuntimeSource attachedSource = new CloudThreads.RuntimeSource() {
-                        CloudThreadRuntime runtime;
-
-                        @Override
-                        public synchronized CloudThreadRuntime currentRuntime() {
-                            if (runtime == null) {
-                                runtime = new RemoteCloudThreadRuntime(threadId, getOrCreateCompleterClientFactory(completerBaseUrl));
-                            }
-                            return runtime;
-                        }
-                    };
-
-                    CloudThreads.setCurrentRuntimeSource(attachedSource);
-                }
+            if (CloudThreadsRuntimeGlobals.getCompleterClientFactory() == null) {
+                CloudThreadsRuntimeGlobals.setCompleterClientFactory(getOrCreateCompleterClientFactory(completerBaseUrl));
             }
+
+            final ThreadId threadId = new ThreadId(graphIdOption.get());
+            CloudThreads.RuntimeSource attachedSource = new CloudThreads.RuntimeSource() {
+                CloudThreadRuntime runtime;
+
+                @Override
+                public synchronized CloudThreadRuntime currentRuntime() {
+                    if (runtime == null) {
+                        runtime = new RemoteCloudThreadRuntime(threadId);
+                    }
+                    return runtime;
+                }
+            };
+
+            CloudThreads.setCurrentRuntimeSource(attachedSource);
+
 
             try {
                 return evt.consumeBody((is) -> {
@@ -116,7 +97,7 @@ public final class CloudThreadsContinuationInvoker implements FunctionInvoker {
                         cs = new SerUtils.ContentStream(
                                 evt.getHeaders().get(CONTENT_TYPE_HEADER)
                                         .orElseThrow(() -> new RuntimeException(CONTENT_TYPE_HEADER + " header not present, expected value to multipart/form-data")),
-                        is);
+                                is);
                     } catch (IOException e) {
                         throw new FunctionInputHandlingException("Error reading continuation content", e);
                     }
@@ -153,46 +134,39 @@ public final class CloudThreadsContinuationInvoker implements FunctionInvoker {
                 });
 
             } finally {
-                if(!testingMode) {
-                    CloudThreads.setCurrentRuntimeSource(null);
-                }
+                CloudThreads.setCurrentRuntimeSource(null);
             }
 
         } else {
-            synchronized (runtimeSourceLock) {
-                if (!testingMode || null == CloudThreads.getCurrentRuntimeSource()) {
-                    CloudThreads.RuntimeSource deferredSource = new CloudThreads.RuntimeSource() {
-                        CloudThreadRuntime runtime;
+            CloudThreads.RuntimeSource deferredSource = new CloudThreads.RuntimeSource() {
+                CloudThreadRuntime runtime;
 
-                        @Override
-                        public synchronized CloudThreadRuntime currentRuntime() {
-                            if (runtime == null) {
-                                String functionId = evt.getAppName() + evt.getRoute();
-                                CompleterClientFactory factory = getOrCreateCompleterClientFactory(completerBaseUrl);
-                                final ThreadId threadId = factory.get().createThread(functionId);
-                                runtime = new RemoteCloudThreadRuntime(threadId, factory);
+                @Override
+                public synchronized CloudThreadRuntime currentRuntime() {
+                    if (runtime == null) {
+                        String functionId = evt.getAppName() + evt.getRoute();
+                        CompleterClientFactory factory = getOrCreateCompleterClientFactory(completerBaseUrl);
+                        final ThreadId threadId = factory.get().createThread(functionId);
+                        runtime = new RemoteCloudThreadRuntime(threadId);
 
-                                InvocationListener threadInvocationListener = new InvocationListener() {
-                                    @Override
-                                    public void onSuccess() {
-                                        factory.get().commit(threadId);
-                                    }
-
-                                    public void onFailure() {
-                                        factory.get().commit(threadId);
-                                    }
-                                };
-                                ctx.addListener(threadInvocationListener);
+                        InvocationListener threadInvocationListener = new InvocationListener() {
+                            @Override
+                            public void onSuccess() {
+                                factory.get().commit(threadId);
                             }
-                            return runtime;
-                        }
-                    };
 
-                    // Not a cloud-threads invocation
-                    CloudThreads.setCurrentRuntimeSource(deferredSource);
+                            public void onFailure() {
+                                factory.get().commit(threadId);
+                            }
+                        };
+                        ctx.addListener(threadInvocationListener);
+                    }
+                    return runtime;
                 }
-            }
+            };
 
+            // Not a cloud-threads invocation
+            CloudThreads.setCurrentRuntimeSource(deferredSource);
             return Optional.empty();
         }
     }
@@ -203,6 +177,7 @@ public final class CloudThreadsContinuationInvoker implements FunctionInvoker {
             m.setAccessible(true);
             result = m.invoke(instance, args);
         } catch (InvocationTargetException ite) {
+            ite.printStackTrace(System.err);
             throw new InternalFunctionInvocationException(
                     "Error invoking cloud threads lambda",
                     ite.getCause(),
@@ -216,7 +191,7 @@ public final class CloudThreadsContinuationInvoker implements FunctionInvoker {
             if (result == null) {
                 return constructEmptyOutputEvent();
             } else if (result instanceof CloudFuture) {
-                if (! (result instanceof RemoteCloudThreadRuntime.RemoteCloudFuture)) {
+                if (!(result instanceof RemoteCloudThreadRuntime.RemoteCloudFuture)) {
                     // TODO: bubble up as stage failed exception
                     throw new InternalFunctionInvocationException("Error handling function response", new IllegalStateException("Unsupported cloud future type return by function"));
                 }
@@ -253,6 +228,7 @@ public final class CloudThreadsContinuationInvoker implements FunctionInvoker {
 
         /**
          * The completer expects a 200 on the outptu event.
+         *
          * @return
          */
         @Override
@@ -262,6 +238,7 @@ public final class CloudThreadsContinuationInvoker implements FunctionInvoker {
 
         /**
          * The outer wrapper doesn't need to provide this: it's elided at the Fn boundary
+         *
          * @return
          */
         @Override
@@ -269,7 +246,8 @@ public final class CloudThreadsContinuationInvoker implements FunctionInvoker {
             return Optional.empty();
         }
 
-        /** We have no way of passing out headers through the functions platform.
+        /**
+         * We have no way of passing out headers through the functions platform.
          * Instead, we put the additional headers we require in the *body* (ie, the entity becomes
          * a single MIME-encoded entity (that is, an HTTP message *including* the status line).
          */
@@ -282,11 +260,11 @@ public final class CloudThreadsContinuationInvoker implements FunctionInvoker {
             if (contentType != null) {
                 addHeader(out, CONTENT_TYPE_HEADER, contentType);
             }
-            for (Map.Entry<String, String> h: headers.entrySet()) {
+            for (Map.Entry<String, String> h : headers.entrySet()) {
                 addHeader(out, h.getKey(), h.getValue());
             }
 
-            addHeader(out,"Content-Length", Long.toString(body.length));
+            addHeader(out, "Content-Length", Long.toString(body.length));
             out.write(new byte[]{'\r', '\n'});
 
             out.write(body);
@@ -303,12 +281,17 @@ public final class CloudThreadsContinuationInvoker implements FunctionInvoker {
             return Headers.fromMap(headers);
         }
 
-        String getInternalContentType() { return contentType; }
-        byte[] getContentBody() { return body; }
+        String getInternalContentType() {
+            return contentType;
+        }
+
+        byte[] getContentBody() {
+            return body;
+        }
     }
 
     private static OutputEvent constructEmptyOutputEvent() {
-        return new ContinuationOutputEvent(true,null, Collections.singletonMap(DATUM_TYPE_HEADER, DATUM_TYPE_EMPTY), new byte[0]);
+        return new ContinuationOutputEvent(true, null, Collections.singletonMap(DATUM_TYPE_HEADER, DATUM_TYPE_EMPTY), new byte[0]);
     }
 
     private static OutputEvent constructExceptionOutputEvent(Throwable t) {
@@ -392,15 +375,5 @@ public final class CloudThreadsContinuationInvoker implements FunctionInvoker {
 
     }
 
-    /**
-     * Preserve the runtime source between invocations of threads (for testing purposes)
-     * <p>
-     * this should only be used in testing
-     *
-     * @param testingMode should cloud thread runtimes be preserved between invocations
-     */
-    public static void setTestingMode(boolean testingMode) {
-        CloudThreadsContinuationInvoker.testingMode = testingMode;
-    }
 
 }

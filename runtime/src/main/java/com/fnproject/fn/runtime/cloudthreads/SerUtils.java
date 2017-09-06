@@ -1,7 +1,7 @@
 package com.fnproject.fn.runtime.cloudthreads;
 
-import com.fnproject.fn.api.cloudthreads.*;
 import com.fnproject.fn.api.Headers;
+import com.fnproject.fn.api.cloudthreads.*;
 import com.fnproject.fn.runtime.exception.FunctionInputHandlingException;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.NullOutputStream;
@@ -30,22 +30,33 @@ final class SerUtils {
     interface Deserializer {
         /**
          * Construct a new ContentPart of the appropriate type.
-         * @param datumType     The datum-type field contents
-         * @param entityReader       The MIME entityReader for this item
-         * @param bodyStream    An InputStream that contains the serialized contents
-         * @return              The ContentPart that corresponds to this item.
-         * @throws IOException  If there is a problem reading the stream
-         * @throws DeserializeException
-         *                      should a problem arise during deserialization
+         *
+         * @param datumType    The datum-type field contents
+         * @param entityReader The MIME entityReader for this item
+         * @param bodyStream   An InputStream that contains the serialized contents
+         * @return The ContentPart that corresponds to this item.
+         * @throws IOException          If there is a problem reading the stream
+         * @throws DeserializeException should a problem arise during deserialization
          */
         ContentPart deserialize(String datumType, EntityReader entityReader, InputStream bodyStream)
                 throws DeserializeException, IOException, ClassNotFoundException;
 
         class DeserializeException extends Exception {
-            DeserializeException() { super(); }
-            DeserializeException(String s) { super(s); }
-            DeserializeException(Throwable t) { super(t); }
-            DeserializeException(String s, Throwable t) { super(s, t); }
+            DeserializeException() {
+                super();
+            }
+
+            DeserializeException(String s) {
+                super(s);
+            }
+
+            DeserializeException(Throwable t) {
+                super(t);
+            }
+
+            DeserializeException(String s, Throwable t) {
+                super(s, t);
+            }
         }
     }
 
@@ -66,7 +77,7 @@ final class SerUtils {
     static {
         registerDeserializer(DATUM_TYPE_BLOB, (dt, h, is) -> {
             String contentType = h.getHeaderValue(CONTENT_TYPE_HEADER).orElseThrow(() -> new Deserializer.DeserializeException("Missing content-type"));
-            if (! contentType.equalsIgnoreCase(CONTENT_TYPE_JAVA_OBJECT)) {
+            if (!contentType.equalsIgnoreCase(CONTENT_TYPE_JAVA_OBJECT)) {
                 throw new Deserializer.DeserializeException("Unexpected content-type: " + contentType);
             }
             try (ObjectInputStream ois = new ObjectInputStream(is)) {
@@ -78,20 +89,27 @@ final class SerUtils {
 
         registerDeserializer(DATUM_TYPE_ERROR, (dt, h, is) -> {
             String resultStatus = h.getHeaderValue(RESULT_STATUS_HEADER).orElseThrow(() -> new Deserializer.DeserializeException("Missing FnProject-ResultStatus"));
-            if (! resultStatus.equalsIgnoreCase(RESULT_STATUS_FAILURE)) {
+            if (!resultStatus.equalsIgnoreCase(RESULT_STATUS_FAILURE)) {
                 throw new Deserializer.DeserializeException("FnProject-ResultStatus expected to be failure");
             }
             String errorType = h.getHeaderValue(ERROR_TYPE_HEADER).orElseThrow(() -> new Deserializer.DeserializeException("Missing FnProject-ErrorType"));
             String contentType = h.getHeaderValue(CONTENT_TYPE_HEADER).orElse("text/plain");
             String errorMessage = IOUtils.toString(is, "utf-8");
             switch (errorType.toLowerCase()) {
-                case ERROR_TYPE_STAGE_TIMEOUT: return new ContentPart(dt, contentType, new StageTimeoutException(errorMessage));
-                case ERROR_TYPE_STAGE_INVOKE_FAILED: return new ContentPart(dt, contentType, new StageInvokeFailedException(errorMessage));
-                case ERROR_TYPE_FUNCTION_TIMEOUT: return new ContentPart(dt, contentType, new FunctionTimeoutException(errorMessage));
-                case ERROR_TYPE_FUNCTION_INVOKE_FAILED: return new ContentPart(dt, contentType, new FunctionInvokeFailedException(errorMessage));
-                case ERROR_TYPE_STAGE_LOST: return new ContentPart(dt, contentType, new StageLostException(errorMessage));
-                case ERROR_TYPE_INVALID_STAGE_RESPONSE: return new ContentPart(dt, contentType, new InvalidStageResponseException(errorMessage));
-                default: return new ContentPart(dt, contentType, new PlatformException(errorMessage));
+                case ERROR_TYPE_STAGE_TIMEOUT:
+                    return new ContentPart(dt, contentType, new StageTimeoutException(errorMessage));
+                case ERROR_TYPE_STAGE_INVOKE_FAILED:
+                    return new ContentPart(dt, contentType, new StageInvokeFailedException(errorMessage));
+                case ERROR_TYPE_FUNCTION_TIMEOUT:
+                    return new ContentPart(dt, contentType, new FunctionTimeoutException(errorMessage));
+                case ERROR_TYPE_FUNCTION_INVOKE_FAILED:
+                    return new ContentPart(dt, contentType, new FunctionInvokeFailedException(errorMessage));
+                case ERROR_TYPE_STAGE_LOST:
+                    return new ContentPart(dt, contentType, new StageLostException(errorMessage));
+                case ERROR_TYPE_INVALID_STAGE_RESPONSE:
+                    return new ContentPart(dt, contentType, new InvalidStageResponseException(errorMessage));
+                default:
+                    return new ContentPart(dt, contentType, new PlatformException(errorMessage));
             }
         });
 
@@ -205,11 +223,17 @@ final class SerUtils {
             this.content = content;
         }
 
-        String getDatumType() { return datumType; }
+        String getDatumType() {
+            return datumType;
+        }
 
-        String getContentType() { return contentType; }
+        String getContentType() {
+            return contentType;
+        }
 
-        Object get() { return content; }
+        Object get() {
+            return content;
+        }
     }
 
 
@@ -300,7 +324,8 @@ final class SerUtils {
 
             // \r\n
 
-            UpToBoundaryInputStream() {}
+            UpToBoundaryInputStream() {
+            }
 
             @Override
             public int read() throws IOException {
@@ -323,12 +348,15 @@ final class SerUtils {
                 is.mark(65536);
                 int found;
 
-                if (firstChar != '\r' && atBeginning) { found = 2; }
-                else { found = 0; }
+                if (firstChar != '\r' && atBeginning) {
+                    found = 2;
+                } else {
+                    found = 0;
+                }
 
                 int c = firstChar;
                 while (found < boundary.length && c == boundary[found]) {
-                    found ++;
+                    found++;
                     c = is.read();
                 }
 

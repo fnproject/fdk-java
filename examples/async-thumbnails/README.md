@@ -11,6 +11,10 @@ system which then would store a correspondence between that ID and further data.
 For example, the thumbnailed image might be a user's avatar in a web app, and
 its ID would be linked to the user's ID in a database somewhere.
 
+## Dependencies
+
+* [minio client `mc`](https://github.com/minio/mc) installed locally and
+  available on your path
 
 ## Demonstrated FDK features
 
@@ -34,6 +38,9 @@ which just invoke `imagemagick` to convert the images to the specified sizes.
 
 The setup script also starts a docker container with an object storage daemon
 based on `minio` (with access key `alpha` and secret key `betabetabetabeta`).
+To view the files uploaded to minio you will need to download the [`mc` minio
+client](https://docs.minio.io/docs/minio-client-quickstart-guide) and place it
+somewhere on your path.
 
 The local directories `./storage-upload` is mapped as a volume in the
 docker container, so that you can verify when the thumbnails are uploaded.
@@ -61,8 +68,8 @@ $ docker inspect --type container -f '{{range .NetworkSettings.Networks}}{{.IPAd
 and then use it as the storage host:
 
 ```bash
-$ fn routes config set myapp /async-thumbnails OBJECT_STORAGE_URL http://172.17.0.4
-myapp /async-thumbnails updated OBJECT_STORAGE_URL with http://172.17.0.4
+$ fn routes config set myapp /async-thumbnails OBJECT_STORAGE_URL http://172.17.0.4:9000
+myapp /async-thumbnails updated OBJECT_STORAGE_URL with http://172.17.0.4:9000
 $ fn routes config set myapp /async-thumbnails OBJECT_STORAGE_ACCESS alpha
 myapp /async-thumbnails updated OBJECT_STORAGE_ACCESS with alpha
 $ fn routes config set myapp /async-thumbnails OBJECT_STORAGE_SECRET betabetabetabeta
@@ -76,12 +83,14 @@ $ curl -X POST --data-binary @test-image.png -H "Content-type: application/octet
 {"imageId":"bd74fff4-0388-4c6f-82f2-8cde9ba9b6fc"}
 ```
 
-After a while, you will find the files in `./storage-upload/alpha/`:
+After a while, the files will be uploaded and can be viewed using `mc ls -r example-storage-server`
 
 ```bash
-$ ls storage-upload/alpha/
-bd74fff4-0388-4c6f-82f2-8cde9ba9b6fc-128.png    bd74fff4-0388-4c6f-82f2-8cde9ba9b6fc-512.png
-bd74fff4-0388-4c6f-82f2-8cde9ba9b6fc-256.png    bd74fff4-0388-4c6f-82f2-8cde9ba9b6fc.png
+$ mc ls -r example-storage-server
+[2017-08-31 09:18:10 BST]  25KiB alpha/678a162e-a4e1-4926-bb9f-f552598ee4c0-128.png
+[2017-08-31 09:18:12 BST]  25KiB alpha/678a162e-a4e1-4926-bb9f-f552598ee4c0-256.png
+[2017-08-31 09:18:12 BST]  25KiB alpha/678a162e-a4e1-4926-bb9f-f552598ee4c0-512.png
+[2017-08-31 09:18:08 BST]  25KiB alpha/678a162e-a4e1-4926-bb9f-f552598ee4c0.png
 ```
 
 
@@ -96,14 +105,17 @@ to obtain the details of the storage server host, username and password:
 ```java
 public class ThumbnailsFunction {
 
-    private final String storageHost;
+    private final String storageUrl;
     private final String storageAccessKey;
     private final String storageSecretKey;
 
     public ThumbnailsFunction(RuntimeContext ctx) {
-        storageHost = ctx.getConfigurationByKey("OBJECT_STORAGE_URL");
-        storageAccessKey = ctx.getConfigurationByKey("OBJECT_STORAGE_ACCESS");
-        storageSecretKey = ctx.getConfigurationByKey("OBJECT_STORAGE_SECRET");
+        storageUrl = ctx.getConfigurationByKey("OBJECT_STORAGE_URL")
+                .orElseThrow(() -> new RuntimeException("Missing configuration: OBJECT_STORAGE_URL"));
+        storageAccessKey = ctx.getConfigurationByKey("OBJECT_STORAGE_ACCESS")
+                .orElseThrow(() -> new RuntimeException("Missing configuration: OBJECT_STORAGE_ACCESS"));
+        storageSecretKey = ctx.getConfigurationByKey("OBJECT_STORAGE_SECRET")
+                .orElseThrow(() -> new RuntimeException("Missing configuration: OBJECT_STORAGE_SECRET"));
     }
 
     // ...
@@ -120,7 +132,7 @@ public class ThumbnailsFunction {
 
     public class Response {
         Response(String imageId) { this.imageId = imageId; }
-        String imageId;
+        public String imageId;
     }
 
     // ...
@@ -141,13 +153,14 @@ public class ThumbnailsFunction {
     public Response handleRequest(byte[] imageBuffer) {
         String id = java.util.UUID.randomUUID().toString();
         CloudThreadRuntime runtime = CloudThreads.currentRuntime();
+
         runtime.allOf(
-                runtime.invokeFunction("myapp/resize128", imageBuffer)
-                        .thenAccept((img) -> objectUpload(img, id + "-128.png")),
-                runtime.invokeFunction("myapp/resize256", imageBuffer)
-                        .thenAccept((img) -> objectUpload(img, id + "-256.png")),
-                runtime.invokeFunction("myapp/resize512", imageBuffer)
-                        .thenAccept((img) -> objectUpload(img, id + "-512.png")),
+                runtime.invokeFunction("myapp/resize128", HttpMethod.POST, Headers.emptyHeaders(), imageBuffer)
+                        .thenAccept((img) -> objectUpload(img.getBodyAsBytes(), id + "-128.png")),
+                runtime.invokeFunction("myapp/resize256", HttpMethod.POST, Headers.emptyHeaders(), imageBuffer)
+                        .thenAccept((img) -> objectUpload(img.getBodyAsBytes(), id + "-256.png")),
+                runtime.invokeFunction("myapp/resize512", HttpMethod.POST, Headers.emptyHeaders(), imageBuffer)
+                        .thenAccept((img) -> objectUpload(img.getBodyAsBytes(), id + "-512.png")),
                 runtime.supply(() -> objectUpload(imageBuffer, id + ".png"))
         );
         return new Response(id);
@@ -172,7 +185,7 @@ public class ThumbnailsFunction {
      */
     private void objectUpload(byte[] imageBuffer, String objectName) {
         try {
-            MinioClient minioClient = new MinioClient(storageHost, 9000, storageAccessKey, storageSecretKey);
+            MinioClient minioClient = new MinioClient(storageUrl, storageAccessKey, storageSecretKey);
 
             // Ensure the bucket exists.
             if(!minioClient.bucketExists("alpha")) {
@@ -185,6 +198,135 @@ public class ThumbnailsFunction {
             System.err.println("Error occurred: " + e);
             e.printStackTrace();
         }
+    }
+
+    // ...
+}
+```
+
+## Test walkthrough
+
+Two simple tests are provided for this example function. One of them checks the
+normal behavior of the function, and the other one checks what happens when one
+of the resize functions fails.
+
+The tests can be found in the class `ThumbnailsFunctionTest`.
+
+First of all, the class initializes the `FnTestingRule` harness, as explained
+in [Testing Functions](../../docs/TestingFunctions.md).
+
+```java
+public class ThumbnailsFunctionTest {
+
+    @Rule
+    public final FnTestingRule testing = FnTestingRule.createDefault();
+
+    // ...
+}
+```
+
+Because we need to test the side effects of our asynchronous upload processes,
+the test code then mocks an HTTP server pretending to be `minio`. We use
+`WireMockRule` for this, but really any framework or library can be used.
+
+```java
+public class ThumbnailsFunctionTest {
+
+    // ...
+
+    @Rule
+    public final WireMockRule mockServer = new WireMockRule();
+
+    // ...
+
+    private void mockMinio() {
+        // ... the code here sets up the mocks in `mockServer`
+    }
+
+    // ...
+}
+```
+
+We can now look at the proper testing methods.
+
+The `testThumbnail()` method checks the normal behavior of the function, by
+using the `FnTestingRule` API to mock the calls to external functions.
+
+```java
+public class ThumbnailsFunctionTest {
+
+    // ...
+
+   @Test
+    public void testThumbnail() {
+        testing
+
+                .setConfig("OBJECT_STORAGE_URL", "http://localhost:" + mockServer.port())
+                .setConfig("OBJECT_STORAGE_ACCESS", "alpha")
+                .setConfig("OBJECT_STORAGE_SECRET", "betabetabetabeta")
+
+                .givenFn("myapp/resize128")
+                    .withAction((data) -> "128".getBytes())
+                .givenFn("myapp/resize256")
+                    .withAction((data) -> "256".getBytes())
+                .givenFn("myapp/resize512")
+                    .withAction((data) -> "512".getBytes())
+
+                .givenEvent()
+                    .withBody("testing".getBytes())
+                    .enqueue();
+
+        // Mock the http endpoint
+        mockMinio();
+
+        testing.thenRun(ThumbnailsFunction.class, "handleRequest");
+
+        // Check the final image uploads were performed
+        mockServer.verify(1, putRequestedFor(urlMatching("/alpha/.*\\.png")).withRequestBody(equalTo("testing")));
+
+        // ... and the other checks
+    }
+
+    // ...
+}
+```
+
+Similarly, the `anExternalFunctionFailure()` method checks what happens when one
+of the function invocations fails:
+
+```java
+public class ThumbnailsFunctionTest {
+
+    // ...
+
+    @Test
+    public void anExternalFunctionFailure() {
+        testing
+                .setConfig("OBJECT_STORAGE_URL", "http://localhost:" + mockServer.port())
+                .setConfig("OBJECT_STORAGE_ACCESS", "alpha")
+                .setConfig("OBJECT_STORAGE_SECRET", "betabetabetabeta")
+
+                .givenFn("myapp/resize128")
+                    .withResult("128".getBytes())
+                .givenFn("myapp/resize256")
+                    .withResult("256".getBytes())
+                .givenFn("myapp/resize512")
+                    .withFunctionError()
+
+                .givenEvent()
+                    .withBody("testing".getBytes())
+                    .enqueue();
+
+        // Mock the http endpoint
+        mockMinio();
+
+        testing.thenRun(ThumbnailsFunction.class, "handleRequest");
+
+        // Confirm that one image upload didn't happen
+        mockServer.verify(0, putRequestedFor(urlMatching("/alpha/.*\\.png")).withRequestBody(equalTo("512")));
+
+        mockServer.verify(3, putRequestedFor(urlMatching(".*")));
+
     }
 
     // ...

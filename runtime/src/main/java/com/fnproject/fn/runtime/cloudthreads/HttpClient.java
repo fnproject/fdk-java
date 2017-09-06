@@ -26,7 +26,7 @@ public class HttpClient {
         connection.setConnectTimeout(CONNECT_TIMEOUT_MS);
         connection.setReadTimeout(REQUEST_TIMEOUT_MS);
 
-        for (Map.Entry<String, String> requestHeader: request.headers.entrySet()) {
+        for (Map.Entry<String, String> requestHeader : request.headers.entrySet()) {
             connection.setRequestProperty(requestHeader.getKey(), requestHeader.getValue());
         }
 
@@ -63,11 +63,11 @@ public class HttpClient {
 
     }
 
-    public static class HttpResponse implements EntityReader, Closeable{
-         final int status;
-         final Map<String, String> headers = new HashMap<>();
-         String statusLine;
-         InputStream body = new ByteArrayInputStream(new byte[]{});
+    public static class HttpResponse implements EntityReader, Closeable {
+        final int status;
+        final Map<String, String> headers = new HashMap<>();
+        String statusLine;
+        InputStream body = new ByteArrayInputStream(new byte[]{});
 
         public HttpResponse(int status) {
             this.status = status;
@@ -121,6 +121,7 @@ public class HttpClient {
             return IOUtils.toString(body, StandardCharsets.UTF_8);
 
         }
+
         public InputStream getEntity() {
             return body;
         }

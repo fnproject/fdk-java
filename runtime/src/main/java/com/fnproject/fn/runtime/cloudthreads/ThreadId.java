@@ -11,7 +11,7 @@ import java.util.Objects;
 public final class ThreadId implements Serializable {
     private final String id;
 
-    ThreadId(String id) {
+    public ThreadId(String id) {
         this.id = Objects.requireNonNull(id);
     }
 
@@ -30,5 +30,9 @@ public final class ThreadId implements Serializable {
 
     public String getId() {
         return id;
+    }
+
+    public String toString() {
+        return "thread." + getId();
     }
 }

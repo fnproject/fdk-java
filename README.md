@@ -1,12 +1,14 @@
 # Fn Java Functions Developer Kit (FDK)
 [![CircleCI](https://circleci.com/gh/fnproject/fn-java-fdk.svg?style=svg&circle-token=348bec5610c34421f6c436ab8f6a18e153cb1c01)](https://circleci.com/gh/fnproject/fn-java-fdk)
 
-This project adds support for writing functions in Java on the [Fn platform](https://github.com/fnproject/fn).
+This project adds support for writing functions in Java on the [Fn
+platform](https://github.com/fnproject/fn).
 
 
 # Quick Start Tutorial
 
-By following this step-by-step guide you will learn to create, run and deploy a simple app written in Java on Fn.
+By following this step-by-step guide you will learn to create, run and deploy
+a simple app written in Java on Fn.
 
 ## Pre-requisites
 
@@ -24,11 +26,13 @@ To install the Fn CLI tool, just run the following:
 curl -LSs https://raw.githubusercontent.com/fnproject/cli/master/install | sh
 ```
 
-This will download a shell script and execute it. If the script asks for a password, that is because it invokes sudo.
+This will download a shell script and execute it. If the script asks for
+a password, that is because it invokes sudo.
 
 ### Log in to DockerHub
 
-You will also need to be logged in to your Docker Hub account in order to deploy functions.
+You will also need to be logged in to your Docker Hub account in order to
+deploy functions.
 
 ```shell
 docker login
@@ -46,16 +50,21 @@ function boilerplate generated.
 func.yaml created
 ```
 
-This creates the boilerplate for a new Java Function based on Maven and Oracle Java 8. The `pom.xml` includes a dependency on the latest version of the Fn Java FDK that is useful for developing your Java functions.
+This creates the boilerplate for a new Java Function based on Maven and Oracle
+Java 8. The `pom.xml` includes a dependency on the latest version of the Fn
+Java FDK that is useful for developing your Java functions.
 
-Note that the `your_dockerhub_account/hello` name follows the format of a Docker image name. The Fn platform relies on docker images implementing functions and these will be deployed to a Docker registry. By default Docker Hub is used, hence the requirement for a Docker Hub account. You should replace `your_dockerhub_account` with your account name.
+Note that the `your_dockerhub_account/hello` name follows the format of
+a Docker image name. The Fn platform relies on docker images implementing
+functions and these will be deployed to a Docker registry. By default Docker
+Hub is used, hence the requirement for a Docker Hub account. You should replace
+`your_dockerhub_account` with your account name.
 
 You can now import this project into your favourite IDE as normal.
 
 ### 2. Deep dive into your first Java Function:
-
-We'll now take a look at what makes up our new Java Function. First,
-lets take a look at the `func.yaml`:
+We'll now take a look at what makes up our new Java Function. First, lets take
+a look at the `func.yaml`:
 
 ```bash
 $ cat func.yaml
@@ -66,15 +75,22 @@ cmd: com.example.fn.HelloFunction::handleRequest
 path: /hello
 ```
 
-The `cmd` field determines which method is called when your funciton is invoked. In the generated Function, the `func.yaml` references `com.example.fn.HelloFunction::handleRequest`. Your functions will likely live in different classes, and this field should always point to the method to execute, with the following syntax:
+The `cmd` field determines which method is called when your funciton is
+invoked. In the generated Function, the `func.yaml` references
+`com.example.fn.HelloFunction::handleRequest`. Your functions will likely live
+in different classes, and this field should always point to the method to
+execute, with the following syntax:
 
 ```text
 cmd: <fully qualified class name>::<method name>
 ```
 
-For more information about the fields in `func.yaml`, refer to the [Fn platform documentation](https://github.com/fnproject/fn/blob/master/docs/function-file.md) about it.
+For more information about the fields in `func.yaml`, refer to the [Fn platform
+documentation](https://github.com/fnproject/fn/blob/master/docs/function-file.md)
+about it.
 
-Let's also have a brief look at the source: `src/main/java/com/example/fn/HelloFunction.java`:
+Let's also have a brief look at the source:
+`src/main/java/com/example/fn/HelloFunction.java`:
 
 ```java
 package com.example.fn;
@@ -128,7 +144,8 @@ Function your_dockerhub_account/hello:0.0.1 built successfully.
 Hello, world!
 ```
 
-The next time you run this, it will execute much quicker as your dependencies are cached. Try passing in some input this time:
+The next time you run this, it will execute much quicker as your dependencies
+are cached. Try passing in some input this time:
 
 ```bash
 $ echo -n "Universe" | fn run
@@ -191,6 +208,7 @@ Function your_dockerhub_account/hello:0.0.1 built successfully.
 Hello, Universe!
 ```
 
+<<<<<<< HEAD
 But we can localize it by changing the `LANG` env var.
 
 ```bash
@@ -202,8 +220,10 @@ Function your_dockerhub_account/hello:0.0.1 built successfully.
 Guten Tag, Universe!
 ```
 
-### 5. Testing your function
-The Fn Java FDK includes a testing library providing useful [JUnit 4](http://junit.org/junit4/) rules to test functions. Look at the test in `src/test/java/com.example.fn/HelloFunctionTest.java`:
+### 4. Testing your function
+The Fn Java FDK includes a testing library providing useful [JUnit
+4](http://junit.org/junit4/) rules to test functions. Look at the test in
+`src/test/java/com/example/fn/HelloFunctionTest.java`:
 
 ```java
 package com.example.fn;
@@ -230,12 +250,21 @@ public class HelloFunctionTest {
 }
 ```
 
-This test is very simple: it just enqueues an event with empty input and then runs the function, checking its output. Under the hood, the `FnTestingRule` is actually instantiating the same runtime wrapping function invocations, so that during the test your function will be invoked in exactly the same way that it would when deployed.
+This test is very simple: it just enqueues an event with empty input and then
+runs the function, checking its output. Under the hood, the `FnTestingRule` is
+actually instantiating the same runtime wrapping function invocations, so that
+during the test your function will be invoked in exactly the same way that it
+would when deployed.
 
-There is much more functionality to construct tests in the testing library. Testing functions is covered in more detail in [Testing Functions](docs/TestingFunctions.md).
+There is much more functionality to construct tests in the testing library.
+Testing functions is covered in more detail in [Testing
+Functions](docs/TestingFunctions.md).
 
-### 6. Run using HTTP and the local Fn server
-The previous example used `fn run` to run a function directly via docker, you can also  use the Fn server locally to test the deployment of your function and the HTTP calls to your functions.
+
+The previous example used `fn run` to run a function directly via docker, you
+can also  use the Fn server locally to test the deployment of your function and
+the HTTP calls to your functions.
+
 
 Open another terminal and start the Fn server:
 
@@ -250,7 +279,10 @@ $ fn apps create java-app
 Successfully created app: java-app
 ```
 
-Now deploy your Function using the `fn deploy` command. This will bump the function's version up, rebuild it, and push the image to the Docker registry, ready to be used in the function deployment. Finally it will create a route on the local Fn server, corresponding to your function.
+Now deploy your Function using the `fn deploy` command. This will bump the
+function's version up, rebuild it, and push the image to the Docker registry,
+ready to be used in the function deployment. Finally it will create a route on
+the local Fn server, corresponding to your function.
 
 ```bash
 $ fn deploy java-app
@@ -289,9 +321,11 @@ Hello, world!
 ```
 
 ### 6. Something more interesting
-The Fn Java FDK supports [flexible data binding](docs/DataBinding.md)  to make it easier for you to map function input and output data to Java objects.
+The Fn Java FDK supports [flexible data binding](docs/DataBinding.md)  to make
+it easier for you to map function input and output data to Java objects.
 
-Below is an example of a Function that returns a POJO which will be serialized to JSON using Jackson:
+Below is an example to of a Function that returns a POJO which will be
+serialized to JSON using Jackson:
 
 ```java
 package com.example.fn;
@@ -338,23 +372,38 @@ $ echo -n Michael | fn run
 
 ## 7. Where do I go from here?
 
-Learn more about the Fn Java FDK by reading the next tutorials in the series. Also check out the examples in the [`examples` directory](examples) for some functions demonstrating different features of the Fn Java FDK.
+Learn more about the Fn Java FDK by reading the next tutorials in the series.
+Also check out the examples in the [`examples` directory](examples) for some
+functions demonstrating different features of the Fn Java FDK.
 
 ### Configuring your function
 
-If you want to set up the state of your function object before the function is invoked, and to use external configuration variables that you can set up with the Fn tool, have a look at the [Function Configuration](docs/FunctionConfiguration.md) tutorial.
+If you want to set up the state of your function object before the function is
+invoked, and to use external configuration variables that you can set up with
+the Fn tool, have a look at the [Function
+Configuration](docs/FunctionConfiguration.md) tutorial.
 
 ### Input and output bindings
 
-You have the option of taking more control of how serialization and deserialization is performed by defining your own bindings.
+You have the option of taking more control of how serialization and
+deserialization is performed by defining your own bindings.
 
-See the [Data Binding](docs/DataBinding.md) tutorial for other out-of-the-box options and the [Extending Data Binding](docs/ExtendingDataBinding.md) tutorial for how to define and use your own bindings.
+See the [Data Binding](docs/DataBinding.md) tutorial for other out-of-the-box
+options and the [Extending Data Binding](docs/ExtendingDataBinding.md) tutorial
+for how to define and use your own bindings.
 
 ### Asynchronous workflows
 
-Suppose you want to call out to some other function from yours - perhaps a function written in a different language, or even one maintained by a different team. Maybe you then want to do some processing on the result. Or even have your function interact asynchronously with a completely different system. Perhaps you also need to maintain some state for the duration of your function, but you don't want to pay for execution time while you're waiting for someone else to do their work.
+Suppose you want to call out to some other function from yours - perhaps
+a function written in a different language, or even one maintained by
+a different team. Maybe you then want to do some processing on the result. Or
+even have your function interact asynchronously with a completely different
+system. Perhaps you also need to maintain some state for the duration of your
+function, but you don't want to pay for execution time while you're waiting for
+someone else to do their work.
 
-If this sounds like you, then have a look at the [Cloud Threads quickstart](docs/CloudThreadsUserGuide.md).
+If this sounds like you, then have a look at the [Cloud Threads
+quickstart](docs/CloudThreadsUserGuide.md).
 
 # Contributing
 

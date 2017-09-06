@@ -44,9 +44,9 @@ public class CloudThreadsTest {
     public void setup() {
         tag.set(false);
         MockitoAnnotations.initMocks(this);
-        CloudThreadsContinuationInvoker.resetCompleterClientFactory();
+        CloudThreadsRuntimeGlobals.resetCompleterClientFactory();
 
-        CloudThreadsContinuationInvoker.setCompleterClientFactory(() -> mockCompleterClient);
+        CloudThreadsRuntimeGlobals.setCompleterClientFactory(() -> mockCompleterClient);
     }
 
     private FnTestHarness.EventBuilder eventToTestFN() {
@@ -101,7 +101,7 @@ public class CloudThreadsTest {
         when(mockCompleterClient.supply(eq(THREAD_ID),
                 isA(CloudThreads.SerCallable.class)))
                 .thenAnswer(invokeContinuation(completionId, continuationResult, "supplyAndGetResult"));
-        when(mockCompleterClient.waitForCompletion(eq(THREAD_ID), eq(completionId)))
+        when(mockCompleterClient.waitForCompletion(eq(THREAD_ID), eq(completionId), eq(getClass().getClassLoader())))
                 .thenAnswer(invocationOnMock -> continuationResult.get());
 
         httpEventToTestFN().enqueue();
@@ -112,7 +112,7 @@ public class CloudThreadsTest {
         verify(mockCompleterClient, times(1))
                 .supply(eq(THREAD_ID), isA(CloudThreads.SerCallable.class));
         verify(mockCompleterClient, times(1))
-                .waitForCompletion(eq(THREAD_ID), eq(completionId));
+                .waitForCompletion(eq(THREAD_ID), eq(completionId), eq(getClass().getClassLoader()));
     }
 
 

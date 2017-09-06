@@ -254,4 +254,26 @@ public class EndToEndInvokeTest {
         assertThat(TestFn.getInput()).isEqualTo(Arrays.asList("foo", "bar"));
 
     }
+
+
+
+    @Test
+    public void shouldReadMultipleMessageWhenInputIsNotParsed() throws Exception {
+        fn.givenHttpEvent().withBody("Hello World 1").enqueue();
+        fn.givenHttpEvent().withBody("Hello World 2").enqueue();
+
+
+        fn.thenRun(TestFn.class, "readSecondInput");
+
+        List<FnTestHarness.ParsedHttpResponse> results = fn.getParsedHttpResponses();
+        assertThat(results).hasSize(2);
+        assertThat(results.get(0).getStatus()).isEqualTo(200);
+        assertThat(results.get(0).getBodyAsString()).isEqualTo("first;");
+        assertThat(results.get(1).getStatus()).isEqualTo(200);
+        assertThat(results.get(1).getBodyAsString()).isEqualTo("Hello World 2");
+
+
+    }
+
+
 }

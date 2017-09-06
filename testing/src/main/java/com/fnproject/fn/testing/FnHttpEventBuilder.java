@@ -15,10 +15,10 @@ import java.util.stream.Collectors;
 class FnHttpEventBuilder {
     private Map<String, List<String>> queryParams = new TreeMap<>();
     private boolean streamRead = false;
-    private String method ;
-    private String appName ;
-    private String route ;
-    private String requestUrl ;
+    private String method;
+    private String appName;
+    private String route;
+    private String requestUrl;
     private byte[] bodyBytes = new byte[0];
     private InputStream bodyStream;
     private int contentLength = 0;
@@ -126,11 +126,11 @@ class FnHttpEventBuilder {
         }
     }
 
-    private void verify(){
-        Objects.requireNonNull(method,"method not set");
-        Objects.requireNonNull(appName,"appName not set");
-        Objects.requireNonNull(route,"route not set");
-        Objects.requireNonNull(requestUrl,"requestUrl not set");
+    private void verify() {
+        Objects.requireNonNull(method, "method not set");
+        Objects.requireNonNull(appName, "appName not set");
+        Objects.requireNonNull(route, "route not set");
+        Objects.requireNonNull(requestUrl, "requestUrl not set");
 
     }
 
@@ -139,8 +139,8 @@ class FnHttpEventBuilder {
         Map<String, String> env = new HashMap<>();
         headers.forEach((k, v) -> env.put("HEADER_" + k.toUpperCase().replaceAll("-", "_"), v));
         env.put("METHOD", method);
-        env.put("APP_NAME",  appName);
-        env.put("ROUTE",  route);
+        env.put("APP_NAME", appName);
+        env.put("ROUTE", route);
         env.put("REQUEST_URL", requestUrl);
         return env;
     }
@@ -163,7 +163,7 @@ class FnHttpEventBuilder {
         inputString.append("\r\n");
 
         inputString.append("Content-length: ").append(Integer.toString(contentLength)).append("\r\n");
-        headers.forEach((k, v) -> inputString.append("HEADER_").append(k).append(": ").append(String.join(", ", v)).append("\r\n"));
+        headers.forEach((k, v) -> inputString.append(k).append(": ").append(String.join(", ", v)).append("\r\n"));
 
 
         inputString.append("\r\n");

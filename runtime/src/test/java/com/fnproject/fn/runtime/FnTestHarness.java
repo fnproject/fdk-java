@@ -22,13 +22,13 @@ import java.util.*;
  */
 public class FnTestHarness implements TestRule {
     private EnvironmentVariables vars = new EnvironmentVariables();
-    boolean hasEvents = false;
-    InputStream pendingInput = new ByteArrayInputStream(new byte[0]);
-    ByteArrayOutputStream stdOut = new ByteArrayOutputStream();
-    ByteArrayOutputStream stdErr = new ByteArrayOutputStream();
-    int exitStatus = -1;
+    private boolean hasEvents = false;
+    private InputStream pendingInput = new ByteArrayInputStream(new byte[0]);
+    private ByteArrayOutputStream stdOut = new ByteArrayOutputStream();
+    private ByteArrayOutputStream stdErr = new ByteArrayOutputStream();
+    private int exitStatus = -1;
 
-    Map<String, String> config = new HashMap<>();
+    private final Map<String, String> config = new HashMap<>();
 
     /**
      * Add a config variable to the function
@@ -231,7 +231,7 @@ public class FnTestHarness implements TestRule {
 
             inputString.append("Content-length: ").append(Integer.toString(contentLength)).append("\r\n");
             headers.forEach((k, v) -> {
-                inputString.append("HEADER_").append(k.replaceAll("-", "_")).append(": ").append(v).append("\r\n");
+                inputString.append(k).append(": ").append(v).append("\r\n");
             });
 
             // added to the http request as headers to mimic the behaviour of `functions` but should NOT be used as config
@@ -263,13 +263,6 @@ public class FnTestHarness implements TestRule {
      * @param method the method name
      */
     public void thenRun(String cls, String method) {
-        try {
-            // Trick to work around Maven class loader separation
-            // if passed class is a valid class then set the classloader to the same as the class's loader
-            Class c = Class.forName(cls);
-            FunctionLoader.setContextClassLoader(c.getClassLoader());
-        } catch (Exception ignored) {
-        }
         InputStream oldSystemIn = System.in;
         PrintStream oldSystemOut = System.out;
         PrintStream oldSystemErr = System.err;

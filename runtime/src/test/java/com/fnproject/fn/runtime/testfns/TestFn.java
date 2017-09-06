@@ -1,5 +1,10 @@
 package com.fnproject.fn.runtime.testfns;
 
+import com.fnproject.fn.api.InputEvent;
+import org.apache.commons.io.IOUtils;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -11,6 +16,8 @@ public class TestFn {
     private static final Object NOTHING = new Object();
     private static Object input = NOTHING;
     private static Object output = NOTHING;
+
+    private static int count = 0;
 
     public static class JsonData {
         public String foo;
@@ -68,16 +75,34 @@ public class TestFn {
         return Arrays.asList("one", "two", "three", four);
     }
 
-    public static String fnGenericCollectionsInput(List<String> strings){
+    public static String fnGenericCollectionsInput(List<String> strings) {
         return strings.get(0).toUpperCase();
     }
 
-    public static String fnCustomObjectsCollectionsInput(List<Animal> animals){
+    public static String fnCustomObjectsCollectionsInput(List<Animal> animals) {
         return animals.get(0).getName();
     }
 
-    public static String fnCustomObjectsNestedCollectionsInput(Map<String, List<Animal>> animals){
+    public static String fnCustomObjectsNestedCollectionsInput(Map<String, List<Animal>> animals) {
         return animals.values().stream().findFirst().get().get(0).getName(); // !
+    }
+
+
+    public static String readSecondInput(InputEvent evt) {
+        count++;
+        if (count > 1) {
+            return evt.consumeBody((is) -> {
+                try {
+                    return IOUtils.toString(is, StandardCharsets.UTF_8);
+
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+        } else {
+            return "first;";
+        }
+
     }
 
     public static List<Animal> fnGenericAnimal() {
@@ -93,7 +118,9 @@ public class TestFn {
     public static final void reset() {
         input = NOTHING;
         output = NOTHING;
+        count = 0;
     }
+
 
     public static Object getInput() {
         return input;

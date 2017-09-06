@@ -47,7 +47,7 @@ else
     fn apps create "$TESTNAME"
 fi
 
-fn routes create --timeout 450s "$TESTNAME" /test
+fn routes create --timeout 450 "$TESTNAME" /test
 
 [[ -n "$POST_CONFIGURE_HOOK" ]] && $POST_CONFIGURE_HOOK
 

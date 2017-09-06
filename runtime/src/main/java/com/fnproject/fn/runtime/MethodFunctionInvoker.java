@@ -19,7 +19,7 @@ import java.util.Optional;
  * <p>
  * This handles the binding and invocation of function calls via java methods.
  */
-class MethodFunctionInvoker implements FunctionInvoker {
+public class MethodFunctionInvoker implements FunctionInvoker {
 
     /**
      * Invoke the function wrapped by this loader

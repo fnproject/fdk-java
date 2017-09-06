@@ -16,10 +16,13 @@ public interface CompleterClient {
     interface ExternalCompletion {
 
         CompletionId completionId();
+
         URI completeURI();
+
         URI failureURI();
 
     }
+
     /**
      * create a new thread against the completer
      *
@@ -45,7 +48,7 @@ public interface CompleterClient {
     CompletionId thenCompose(ThreadId threadId, CompletionId completionId, Serializable fn);
 
     // block (indefinitely) until the completion completes
-    Object waitForCompletion(ThreadId threadID, CompletionId id);
+    Object waitForCompletion(ThreadId threadID, CompletionId id, ClassLoader loader);
 
     CompletionId thenAccept(ThreadId threadId, CompletionId completionId, Serializable fn);
 
