@@ -7,6 +7,7 @@ import com.fnproject.fn.api.OutputEvent;
 import com.fnproject.fn.runtime.cloudthreads.CloudThreadsContinuationInvoker;
 import com.fnproject.fn.runtime.exception.*;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
@@ -79,27 +80,29 @@ public class EntryPoint {
                     if (!evtOpt.isPresent()) {
                         break;
                     }
-                    InputEvent evt = evtOpt.get();
-                    FunctionInvocationContext fic = new FunctionInvocationContext(runtimeContext);
-                    OutputEvent output = null;
-                    for (FunctionInvoker invoker : configuredInvokers) {
-                        Optional<OutputEvent> result = invoker.tryInvoke(fic, evt);
-                        if (result.isPresent()) {
-                            output = result.get();
-                            break;
+                    try (InputEvent evt = evtOpt.get()) {
+                        FunctionInvocationContext fic = new FunctionInvocationContext(runtimeContext);
+                        OutputEvent output = null;
+                        for (FunctionInvoker invoker : configuredInvokers) {
+                            Optional<OutputEvent> result = invoker.tryInvoke(fic, evt);
+                            if (result.isPresent()) {
+                                output = result.get();
+                                break;
+                            }
                         }
-                    }
-                    if (output == null) {
-                        throw new FunctionInputHandlingException("No invoker found for input event");
-                    }
-                    codec.writeEvent(output);
-                    if (output.isSuccess()) {
-                        lastStatus = 0;
-                        fic.fireOnSuccessfulInvocation();
-                    }
-                     else {
-                        lastStatus = 1;
-                        fic.fireOnFailedInvocation();
+                        if (output == null) {
+                            throw new FunctionInputHandlingException("No invoker found for input event");
+                        }
+                        codec.writeEvent(output);
+                        if (output.isSuccess()) {
+                            lastStatus = 0;
+                            fic.fireOnSuccessfulInvocation();
+                        } else {
+                            lastStatus = 1;
+                            fic.fireOnFailedInvocation();
+                        }
+                    } catch (IOException e) {
+                        throw new FunctionInputHandlingException("Error closing function input", e);
                     }
 
                 } catch (InternalFunctionInvocationException fie) {
@@ -123,11 +126,11 @@ public class EntryPoint {
 
     /**
      * Produces a string representation of the supplied Throwable.
-     *
+     * <p>
      * Exception causes are walked until the end, each exception has its stack walked until either:
-     *   - the end, or
-     *   - a class in `com.fnproject.fn`
-     *
+     * - the end, or
+     * - a class in `com.fnproject.fn`
+     * <p>
      * This means the user sees a full stack trace of their code, messages without stacktraces from
      * the layers of com.fnproject.fn which are passed through, with the root cause at the top of
      * the trace
