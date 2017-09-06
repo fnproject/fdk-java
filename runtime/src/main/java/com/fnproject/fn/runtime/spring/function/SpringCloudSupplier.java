@@ -10,7 +10,7 @@ import java.util.function.Supplier;
 public class SpringCloudSupplier extends SpringCloudMethod {
     private Supplier<Object> supplier;
 
-    SpringCloudSupplier(Supplier<Object> supplier, FunctionInspector inspector) {
+    public SpringCloudSupplier(Supplier<Object> supplier, FunctionInspector inspector) {
         super(inspector);
         this.supplier = supplier;
     }

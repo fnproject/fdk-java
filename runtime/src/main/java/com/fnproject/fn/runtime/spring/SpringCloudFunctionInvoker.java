@@ -1,23 +1,23 @@
 package com.fnproject.fn.runtime.spring;
 
-import com.fnproject.fn.api.*;
+import com.fnproject.fn.api.InputEvent;
+import com.fnproject.fn.api.InvocationContext;
+import com.fnproject.fn.api.OutputEvent;
 import com.fnproject.fn.runtime.MethodFunctionInvoker;
-import com.fnproject.fn.runtime.spring.function.SpringCloudFunction;
 import com.fnproject.fn.runtime.spring.function.SpringCloudMethod;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.context.annotation.Bean;
 import reactor.core.publisher.Flux;
 
-import javax.swing.*;
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class SpringCloudFunctionInvoker extends MethodFunctionInvoker {
+public class SpringCloudFunctionInvoker extends MethodFunctionInvoker implements Closeable {
     private final SpringCloudFunctionLoader loader;
+    private ConfigurableApplicationContext applicationContext;
 
     SpringCloudFunctionInvoker(SpringCloudFunctionLoader loader) {
         this.loader = loader;
@@ -25,7 +25,7 @@ public class SpringCloudFunctionInvoker extends MethodFunctionInvoker {
 
     public SpringCloudFunctionInvoker(Class<?> configClass) {
         SpringApplicationBuilder builder = new SpringApplicationBuilder(configClass);
-        ConfigurableApplicationContext applicationContext = builder.web(false).run();
+        applicationContext = builder.web(false).run();
         loader = applicationContext.getAutowireCapableBeanFactory().createBean(SpringCloudFunctionLoader.class);
         loader.loadFunction();
     }
@@ -51,5 +51,10 @@ public class SpringCloudFunctionInvoker extends MethodFunctionInvoker {
 
     private Object convertToFlux(Object userFunctionParam) {
         return Flux.just(userFunctionParam);
+    }
+
+    @Override
+    public void close() throws IOException {
+        applicationContext.close();
     }
 }

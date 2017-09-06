@@ -1,8 +1,6 @@
 package com.fnproject.fn.runtime.spring.function;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.function.context.FunctionInspector;
-import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 
 import java.util.function.Consumer;
@@ -10,7 +8,7 @@ import java.util.function.Consumer;
 public class SpringCloudConsumer extends SpringCloudMethod {
     private Consumer<Object> consumer;
 
-    SpringCloudConsumer(Consumer<Object> consumer, FunctionInspector inspector) {
+    public SpringCloudConsumer(Consumer<Object> consumer, FunctionInspector inspector) {
         super(inspector);
         this.consumer = consumer;
     }
