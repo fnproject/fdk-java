@@ -3,4 +3,4 @@ version: 0.0.1
 runtime: java
 cmd: com.fnproject.fn.integration.test2.PlainFunction::handleRequest
 path: /java-function
-format: default
+format: http

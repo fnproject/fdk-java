@@ -4,7 +4,7 @@ runtime: java
 
 path: /test
 timeout: 450
-format: default
+format: http
 
 build:
   - mvn package dependency:copy-dependencies -DincludeScope=runtime -DskipTests=true -Dmdep.prependGroupId=true -DoutputDirectory=target
