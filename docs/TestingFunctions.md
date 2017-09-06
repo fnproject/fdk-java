@@ -155,21 +155,9 @@ You can test that this is all handled correctly as follows:
 
 # Testing Cloud Threads
 
-Even if your function is using the [Cloud Threads API](CloudThreadsUserGuide.md), you will need no additional plumbing
-to emulate the functionality of the Cloud Threads completions service. The `FnTestingRule` already provides a simulated
-completions service that will deal with any Cloud Threads invocation. The `thenRun` method will not only execute the
-function under test but also wait for all the asynchronous completions to finish.
+You can use `FnTestingRule` to test [Cloud Threads](CloudThreadsUserGuide.md) within your functions.  If threads are started by functions within `thenRun` then the testing rule will execute the stages of those threads locally, returning when all spawned threads are complete. 
 
-Functions only return the data from the initial invocation, so you will not have direct access to the return values of
-each asynchronous process spawned as a Cloud Thread. Therefore, you will be unable to test your function through the I/O
-contract alone and you will want to test the functions side effects (using mocks/spies).
-This can involve for example testing the changes to a mock database, or capturing HTTP requests to a mock HTTP server;
-you can use your favourite test framework for handling such mocks.
-
-One thing that is however specific to the Fn platform is the invocation of other functions, i.e. when
-you use Cloud Threads to asynchronously call a function with the `invokeFunction()` API. This can be
-mocked with the `FnTestingRule` rule itself, which provides a convenient API for pretending that the execution of a
-remote function results in a valid return value or an error.
+`FnTestingRule` supports  mocking  the behaviour of Fn functions invoked by the  `invokeFunction()` API within cloud threads. 
 
 You can specify that the invocation a function returns a valid value (as a byte array):
 
@@ -198,7 +186,7 @@ Or you can specify that the invocation a function will cause a user error or a p
   }
 ```
 
-You can even specify custom actions to perform when the function is called, using for example a lambda. This can be
+Finally you specify custom actions to perform when the function is called, using for example a lambda. This can be
 used to check some behavior:
 
 ```java
@@ -218,10 +206,9 @@ used to check some behavior:
   }
 ```
 
-This is a very simple example using a static variable - but any mock injection can be performed provided that the mock
-object is effectively final and can be captured in the lambda.
+The same mechanism can be used to integrate mocking frameworks like [Mockito](http://site.mockito.org/).
 
-Note that Cloud Threads stages may execute in parallel. If you have several `withAction` clauses accessing the same shared state, you will have to ensure that that access is thread-safe.
+Cloud Threads stages may execute in parallel. If you have several `withAction` clauses accessing the same shared state, you must ensure that that access is thread-safe.
 
 # Sharing data between tests and your functions 
 To ensure isolation of each function invocation and/or Cloud Threads completion, and to simulate the behaviour of the
@@ -229,7 +216,7 @@ real Fn platform (where each function invocation can potentially run in a differ
 
 While this improves the veracity of tests, it prevents your tests from accessing or modifying the state of your functions and vice versa. 
 
-If you need to share objects or static data between your test classes and your functions (i.e. to pre-initialize global state) you can do so within your tests using the `addSharedClass` (for a specific class) and `addSharedPrefix` (for a package, or class prefix) methods on `FnTestingRule`. 
+If you need to share objects or static data between your test classes and your functions (e.g. to pre-initialize global state) you can do so within your tests using the `addSharedClass` (for a specific class) and `addSharedPrefix` (for a package, or class prefix) methods on `FnTestingRule`. 
 
 ```java
     testing.addSharedClass(MyClassWithStaticState.class); // Shares only the specific class
