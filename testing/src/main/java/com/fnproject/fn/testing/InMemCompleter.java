@@ -396,6 +396,11 @@ class InMemCompleter implements CompleterClient {
         withActiveGraph(threadId, Graph::commit);
     }
 
+    @Override
+    public void addTerminationHook(ThreadId threadId, Serializable code) {
+        // TODO
+    }
+
 
     class Graph {
         private final String functionId;
