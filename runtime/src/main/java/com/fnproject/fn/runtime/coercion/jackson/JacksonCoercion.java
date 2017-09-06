@@ -38,7 +38,7 @@ public class JacksonCoercion implements InputCoercion<Object>, OutputCoercion {
     @Override
     public Optional<Object> tryCoerceParam(InvocationContext currentContext, int param, InputEvent input) {
 
-        Type type = currentContext.getRuntimeContext().getTargetMethod().getGenericParameterTypes()[param];
+        Type type = currentContext.getRuntimeContext().getMethod().getTargetMethod().getGenericParameterTypes()[param];
         JavaType javaType = objectMapper(currentContext).constructType(type);
 
         return Optional.ofNullable(input.consumeBody(inputStream -> {
@@ -56,11 +56,9 @@ public class JacksonCoercion implements InputCoercion<Object>, OutputCoercion {
         return new RuntimeException("Failed to coerce event to user function parameter type " + paramType, cause);
     }
 
-
     private static RuntimeException coercionFailed(Type paramType) {
         return coercionFailed(paramType, null);
     }
-
 
     @Override
     public Optional<OutputEvent> wrapFunctionResult(InvocationContext ctx, Object value) {

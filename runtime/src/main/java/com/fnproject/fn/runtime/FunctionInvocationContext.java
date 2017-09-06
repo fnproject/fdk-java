@@ -6,7 +6,7 @@ import com.fnproject.fn.api.InvocationListener;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-class FunctionInvocationContext implements InvocationContext, FunctionInvocationCallback {
+public class FunctionInvocationContext implements InvocationContext, FunctionInvocationCallback {
     private final FunctionRuntimeContext runtimeContext;
     private List<InvocationListener> invocationListeners = new CopyOnWriteArrayList<>();
 

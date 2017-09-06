@@ -1,7 +1,7 @@
 package com.fnproject.fn.testing;
 
-import com.fnproject.fn.runtime.EntryPoint;
 import com.fnproject.fn.runtime.FunctionLoader;
+import com.fnproject.fn.runtime.EntryPoint;
 import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.runtime.cloudthreads.CloudThreadsContinuationInvoker;
 import com.fnproject.fn.runtime.cloudthreads.CompleterClientFactory;

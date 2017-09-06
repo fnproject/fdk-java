@@ -1,10 +1,7 @@
 package com.fnproject.fn.runtime;
 
 
-import com.fnproject.fn.api.FunctionInvoker;
-import com.fnproject.fn.api.InputEvent;
-import com.fnproject.fn.api.OutputEvent;
-import com.fnproject.fn.runtime.cloudthreads.CloudThreadsContinuationInvoker;
+import com.fnproject.fn.api.*;
 import com.fnproject.fn.runtime.exception.*;
 
 import java.io.InputStream;
@@ -34,9 +31,6 @@ public class EntryPoint {
     }
 
 
-    private List<FunctionInvoker> configuredInvokers = Arrays.asList(new CloudThreadsContinuationInvoker(), new MethodFunctionInvoker());
-
-
     /**
      * Entrypoint runner - this executes the whole lifecycle of the fn Java FDK runtime - including multiple invocations in the function for hot functions
      *
@@ -60,7 +54,10 @@ public class EntryPoint {
             final Map<String, String> configFromEnvVars = Collections.unmodifiableMap(excludeInternalConfigAndHeaders(env));
 
             FunctionLoader functionLoader = new FunctionLoader();
-            FunctionRuntimeContext runtimeContext = functionLoader.loadFunction(cls, mth, configFromEnvVars);
+            FunctionRuntimeContext runtimeContext = new FunctionRuntimeContext(functionLoader.loadClass(cls, mth), configFromEnvVars);
+
+            FunctionConfigurer functionConfigurer = new FunctionConfigurer();
+            functionConfigurer.configure(runtimeContext);
 
             String format = env.get("FN_FORMAT");
             EventCodec codec;
@@ -80,15 +77,8 @@ public class EntryPoint {
                         break;
                     }
                     InputEvent evt = evtOpt.get();
-                    FunctionInvocationContext fic = new FunctionInvocationContext(runtimeContext);
-                    OutputEvent output = null;
-                    for (FunctionInvoker invoker : configuredInvokers) {
-                        Optional<OutputEvent> result = invoker.tryInvoke(fic, evt);
-                        if (result.isPresent()) {
-                            output = result.get();
-                            break;
-                        }
-                    }
+                    FunctionInvocationContext fic = runtimeContext.newInvocationContext();
+                    OutputEvent output = runtimeContext.tryInvoke(evt, fic);
                     if (output == null) {
                         throw new FunctionInputHandlingException("No invoker found for input event");
                     }

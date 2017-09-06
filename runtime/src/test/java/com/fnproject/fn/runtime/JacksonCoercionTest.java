@@ -2,6 +2,7 @@ package com.fnproject.fn.runtime;
 
 import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.InputEvent;
+import com.fnproject.fn.api.MethodWrapper;
 import com.fnproject.fn.runtime.coercion.jackson.JacksonCoercion;
 import com.fnproject.fn.runtime.testfns.Animal;
 import org.junit.Assert;
@@ -21,7 +22,8 @@ public class JacksonCoercionTest {
     public void listOfCustomObjects() throws NoSuchMethodException {
         JacksonCoercion jc = new JacksonCoercion();
 
-        FunctionRuntimeContext frc = new FunctionRuntimeContext(JacksonCoercionTest.class, JacksonCoercionTest.class.getMethod("testMethod", List.class), new HashMap<>());
+        MethodWrapper method = new DefaultMethodWrapper(JacksonCoercionTest.class, "testMethod");
+        FunctionRuntimeContext frc = new FunctionRuntimeContext(method, new HashMap<>());
         FunctionInvocationContext invocationContext = new FunctionInvocationContext(frc);
 
         Map<String, String> headers = new HashMap<>();
@@ -42,7 +44,8 @@ public class JacksonCoercionTest {
     public void failureToParseIsUserFriendlyError() throws NoSuchMethodException {
         JacksonCoercion jc = new JacksonCoercion();
 
-        FunctionRuntimeContext frc = new FunctionRuntimeContext(JacksonCoercionTest.class, JacksonCoercionTest.class.getMethod("testMethod", List.class), new HashMap<>());
+        MethodWrapper method = new DefaultMethodWrapper(JacksonCoercionTest.class, "testMethod");
+        FunctionRuntimeContext frc = new FunctionRuntimeContext(method, new HashMap<>());
         FunctionInvocationContext invocationContext = new FunctionInvocationContext(frc);
 
         Map<String, String> headers = new HashMap<>();
