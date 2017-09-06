@@ -201,10 +201,6 @@ public interface CloudThreadRuntime extends Serializable {
         FAILED,
         CANCELLED,
         KILLED;
-
-        public String asText() {
-            return name().toLowerCase();
-        }
     }
 
     /**

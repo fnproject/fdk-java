@@ -246,6 +246,18 @@ public class FnTestingRuleCloudThreadsTest {
         }
     }
 
+    @Test()
+    public void shouldRunShutdownHooksInTest() {
+        fn.givenEvent().enqueue();
+
+
+        fn.thenRun(TestFn.class, "terminationHooks");
+        assertThat(fn.getOnlyResult().getStatus()).isEqualTo(200);
+
+        assertThat(result).isEqualTo(Result.TerminationHookRun);
+
+    }
+
     // Due to the alien nature of the stored exception, we supply a helper to assert isInstanceOfAny
     void isInstanceOfAny(Object o, Class<?>... cs) {
         assertThat(o).isNotNull();
@@ -376,6 +388,29 @@ public class FnTestingRuleCloudThreadsTest {
                     });
         }
 
+        public void terminationHooks() {
+            CloudThreadRuntime rt = CloudThreads.currentRuntime();
+
+            rt.supply(() -> 1)
+                    .thenAccept((i) -> {
+                        System.err.println("Hello");
+                    });
+
+            rt.addTerminationHook((s) -> {
+                if(staticConfig == 2){
+                    result = Result.TerminationHookRun;
+                }
+
+            });
+
+            rt.addTerminationHook((s) -> {
+                staticConfig ++;
+            });
+            rt.addTerminationHook((s) -> {
+                staticConfig =1;
+            });
+        }
+
     }
 
 
@@ -387,7 +422,8 @@ public class FnTestingRuleCloudThreadsTest {
         InvokeFunctionFixed,
         AnyOf, Exceptionally,
         ThenCompose,
-        ThenComplete
+        ThenComplete,
+        TerminationHookRun
     }
 
     static void reset() {

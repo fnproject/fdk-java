@@ -73,6 +73,51 @@ abstract class Datum {
         @Override
         public void writeHeaders(HeaderWriter hw) throws IOException {
             hw.writeHeader(DATUM_TYPE_HEADER, DATUM_TYPE_EMPTY);
+
+        }
+
+        @Override
+        public void writeBody(OutputStream os) {
+
+        }
+
+    }
+
+    public static class StateDatum extends Datum {
+        private final CloudThreadRuntime.CloudThreadState state;
+
+        public StateDatum(CloudThreadRuntime.CloudThreadState state) {
+            this.state = Objects.requireNonNull(state);
+        }
+
+        @Override
+        public Object asJavaValue(ClassLoader loader) {
+            return state;
+        }
+
+        @Override
+        public void writeHeaders(HeaderWriter hw) throws IOException {
+            hw.writeHeader(DATUM_TYPE_HEADER, DATUM_TYPE_STATE);
+
+            String stateName;
+            switch (state) {
+                case SUCCEEDED:
+                    stateName = "succeeded";
+                    break;
+                case FAILED:
+                    stateName ="failed";
+                    break;
+                case CANCELLED:
+                    stateName = "cancelled";
+                    break;
+                case KILLED:
+                    stateName = "killed";
+                    break;
+                default:
+                    throw new IllegalStateException("Unsupported state " + state);
+
+            }
+            hw.writeHeader(STATE_TYPE_HEADER,stateName);
         }
 
         @Override
