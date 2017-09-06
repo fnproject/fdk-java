@@ -225,15 +225,13 @@ Also note that `withAction` makes no thread-safety guarantees, and Cloud Threads
 concurrently. Therefore, if you have several `withAction` clauses accessing the same shared state, you will have to take
 care of synchronization of the state.
 
-# A note on class loaders
+# Sharing data between tests and your functions 
 To ensure isolation of each function invocation and/or Cloud Threads completion, and to simulate the behaviour of the
-real Fn platform (where each function invocation can potentially run in a different JVM), the `FnTestingRule` is running
-each `thenRun` invocation and the simulation of each Cloud Thread completion using a different class loader. Only a
-small number of classes and packages are shared between the class loaders.
+real Fn platform (where each function invocation can potentially run in a different JVM), the `FnTestingRule` runs each `thenRun` invocation and each Cloud Thread completion using a different Java Class Loader. 
 
-The default set of shared classes and packages should already be enough for the vast majority of tests. If you really
-need some additional static data to be shared, it is possible to request that some classes be shared between the class
-loaders. To do so, use the `addSharedClass()` or `addSharedClassPrefix()` methods.
+While this improves the veracity of tests, it prevents your tests from accessing or modifying the state of your functions and vice versa. 
+
+If you need to share objects or static data between your test classes and your functions (i.e. to pre-initialize global state) you can do so within your tests using the `addSharedClass` (for a specific class) and `addSharedPrefix` (for a package, or class prefix) methods on `FnTestingRule`. 
 
 ```java
     testing.addSharedClass(MyClassWithStaticState.class); // Shares only the specific class
@@ -241,5 +239,4 @@ loaders. To do so, use the `addSharedClass()` or `addSharedClassPrefix()` method
     testing.addSharedPrefix("com.example.mysubpackage."); // Shares anyhting under a package
 ```
 
-Note that in most cases _you should not share your function class across class loaders_, because unexpected behavior
-may occur if you have static mutable state altered (for example) by configuration methods.
+While it is possible, it is not generally correct to share the function class itself with the test Class Loader - doing so may result in unexpected (not representative of the real fn platform) initialisation of static fields on the class. With Cloud Threads sharing the test class may also result in concurrent access to static data (via `@FnConfiguration` methods). 
