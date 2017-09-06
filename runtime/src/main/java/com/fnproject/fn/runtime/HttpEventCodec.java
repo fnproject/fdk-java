@@ -32,7 +32,7 @@ import static com.fnproject.fn.runtime.cloudthreads.CloudCompleterApiClient.CONT
  * <p>
  * This does not consume the whole event from the buffer,  The caller is responsible for ensuring that either   {@link InputEvent#consumeBody(Function)} or {@link InputEvent#close()}  is called before reading a new event
  */
-class HttpEventCodec implements EventCodec {
+public class HttpEventCodec implements EventCodec {
 
     private final SessionInputBuffer sib;
     private final SessionOutputBuffer sob;

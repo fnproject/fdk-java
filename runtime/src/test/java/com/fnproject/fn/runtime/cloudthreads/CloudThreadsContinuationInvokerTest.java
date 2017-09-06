@@ -212,27 +212,7 @@ public class CloudThreadsContinuationInvokerTest {
         assertSucessfulEmptyResult(result.get());
     }
 
-    @Test
-    public void thenComposeStageCorrectlySerialized() throws Exception {
-        // Given
-        HttpMultipartSerialization ser = new HttpMultipartSerialization()
-                .addJavaEntity((CloudThreads.SerCallable) () -> {
-                            CompleterClient client = mock(CompleterClient.class, withSettings().serializable());
-                            when(client.completedValue(any(), any())).thenReturn(new CompletionId("1"));
-                            return new RemoteCloudThreadRuntime(new ThreadId("1"), (CompleterClientFactory) () -> client).completedValue(1);
-                        }
-                );
 
-        InputEvent event = constructContinuationInputEvent(ser);
-
-        // When
-        CloudThreadsContinuationInvoker invoker = new CloudThreadsContinuationInvoker();
-        Optional<OutputEvent> result = invoker.tryInvoke(new EmptyInvocationContext(), event);
-
-        // Then
-        assertTrue(result.isPresent());
-        assertSuccessfulCompletionStageResult("1", result.get());
-    }
 
     @Test
     public void externalFunctionInvocationPopulatesFunctionResponse() throws Exception {

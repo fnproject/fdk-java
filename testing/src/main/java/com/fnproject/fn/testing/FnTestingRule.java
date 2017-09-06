@@ -1,24 +1,25 @@
 package com.fnproject.fn.testing;
 
-import com.fnproject.fn.runtime.EntryPoint;
-import com.fnproject.fn.runtime.FunctionLoader;
 import com.fnproject.fn.api.Headers;
-import com.fnproject.fn.runtime.cloudthreads.CloudThreadsContinuationInvoker;
-import com.fnproject.fn.runtime.cloudthreads.CompleterClientFactory;
+import com.fnproject.fn.api.InputEvent;
+import com.fnproject.fn.api.OutputEvent;
+import com.fnproject.fn.api.QueryParameters;
+import com.fnproject.fn.api.cloudthreads.*;
+import com.fnproject.fn.runtime.cloudthreads.*;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.TeeOutputStream;
 import org.apache.http.HttpResponse;
 import org.apache.http.NoHttpResponseException;
-import org.apache.http.impl.io.ContentLengthInputStream;
-import org.apache.http.impl.io.DefaultHttpResponseParser;
-import org.apache.http.impl.io.HttpTransportMetricsImpl;
-import org.apache.http.impl.io.SessionInputBufferImpl;
+import org.apache.http.entity.InputStreamEntity;
+import org.apache.http.impl.io.*;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Testing {@link org.junit.Rule} for fn Java FDK functions.
@@ -64,9 +65,38 @@ public final class FnTestingRule implements TestRule {
     private InputStream pendingInput = new ByteArrayInputStream(new byte[0]);
     private ByteArrayOutputStream stdOut = new ByteArrayOutputStream();
     private ByteArrayOutputStream stdErr = new ByteArrayOutputStream();
-    private String entryPoint = null;
+    private Map<String, FnFunctionStub> functionStubs = new HashMap<>();
+    public static InMemCompleter completer = null;
 
-    private FnTestingRule() { }
+    private final List<String> sharedPrefixes = new ArrayList<>();
+
+    {
+        // Internal shared classes required to bridge completer into tests
+        addSharedClassPrefix("java.");
+        addSharedClassPrefix("javax.");
+
+        addSharedClassPrefix("sun.");
+        addSharedClass(CompleterClient.class);
+        addSharedClass(CompleterClientFactory.class);
+        addSharedClass(CompletionId.class);
+        addSharedClass(ThreadId.class);
+        addSharedClass(CompleterClient.ExternalCompletion.class);
+        addSharedClass(Headers.class);
+        addSharedClass(HttpMethod.class);
+        addSharedClass(com.fnproject.fn.api.cloudthreads.HttpRequest.class);
+        addSharedClass(com.fnproject.fn.api.cloudthreads.HttpResponse.class);
+        addSharedClass(QueryParameters.class);
+        addSharedClass(InputEvent.class);
+        addSharedClass(OutputEvent.class);
+        addSharedClass(CloudCompletionException.class);
+        addSharedClass(FunctionInvocationException.class);
+        addSharedClass(ExternalCompletionException.class);
+        addSharedClass(PlatformException.class);
+
+    }
+
+    private FnTestingRule() {
+    }
 
     /**
      * Create an instance of the testing {@link org.junit.Rule}, without Cloud Threads support
@@ -76,6 +106,7 @@ public final class FnTestingRule implements TestRule {
     public static FnTestingRule createDefault() {
         return new FnTestingRule();
     }
+
 
     /**
      * Add a config variable to the function for the test
@@ -89,6 +120,28 @@ public final class FnTestingRule implements TestRule {
      */
     public FnTestingRule setConfig(String key, String value) {
         config.put(key.toUpperCase().replaceAll("[- ]", "_"), value);
+        return this;
+    }
+
+    /**
+     * Add a class or package name to be forked during the test.
+     * The test will be run under the aegis of a classloader that duplicates the class hierarchy named.
+     *
+     * @param prefix A class name or package prefix, such as "com.example.foo."
+     */
+    public FnTestingRule addSharedClassPrefix(String prefix) {
+        sharedPrefixes.add(prefix);
+        return this;
+    }
+
+    /**
+     * Add a class to be forked during the test.
+     * The test will be run under the aegis of a classloader that duplicates the class hierarchy named.
+     *
+     * @param cls A class
+     */
+    public FnTestingRule addSharedClass(Class<?> cls) {
+        sharedPrefixes.add("=" + cls.getName());
         return this;
     }
 
@@ -117,6 +170,7 @@ public final class FnTestingRule implements TestRule {
         thenRun(cls.getName(), method);
     }
 
+
     /**
      * Runs the function runtime with the specified class and method (and waits for Cloud Threads completions to finish
      * if the test spawns any Cloud Thread)
@@ -125,19 +179,38 @@ public final class FnTestingRule implements TestRule {
      * @param method the method name
      */
     public void thenRun(String cls, String method) {
+        final ClassLoader functionClassLoader;
+        Class c = null;
         try {
             // Trick to work around Maven class loader separation
             // if passed class is a valid class then set the classloader to the same as the class's loader
-            Class c = Class.forName(cls);
-            FunctionLoader.setContextClassLoader(c.getClassLoader());
+            c = Class.forName(cls);
         } catch (Exception ignored) {
+            // TODO don't fall through here
+        }
+        if (c != null) {
+            functionClassLoader = c.getClassLoader();
+        } else {
+            functionClassLoader = getClass().getClassLoader();
         }
 
-        Map<String, String> mutableEnv = new HashMap<>();
         PrintStream oldSystemOut = System.out;
         PrintStream oldSystemErr = System.err;
+
+        InMemCompleter.CompleterInvokeClient client = new TestRuleCompleterInvokeClient(functionClassLoader, oldSystemErr, cls, method);
+
+        InMemCompleter.FnInvokeClient fnInvokeClient = new TestRuleFnInvokeClient();
+
+        // CloudThreadsContinuationInvoker.setTestingMode(true);
+        // The following must be a static: otherwise the factory (the lambda) will not be serializable.
+        completer = new InMemCompleter(client, fnInvokeClient);
+
+        //TestSupport.installCompleterClientFactory(completer, oldSystemErr);
+
+
+        Map<String, String> mutableEnv = new HashMap<>();
+
         try {
-            this.entryPoint = cls + "::" + method;
             PrintStream functionOut = new PrintStream(stdOut);
             PrintStream functionErr = new PrintStream(new TeeOutputStream(stdErr, oldSystemErr));
             System.setOut(functionErr);
@@ -147,11 +220,13 @@ public final class FnTestingRule implements TestRule {
             mutableEnv.putAll(eventEnv);
             mutableEnv.put("FN_FORMAT", "http");
 
-            CloudThreadsContinuationInvoker.setCompleterClientFactory((CompleterClientFactory) () -> {
-                throw new IllegalStateException("Cannot test a function using Cloud Threads without completion support: use FnTestingRule.createWithCompletions()?");
-            });
-
-            new EntryPoint().run(
+            FnTestingClassLoader forked = new FnTestingClassLoader(functionClassLoader, sharedPrefixes);
+            if (forked.isShared(cls)) {
+                oldSystemErr.println("WARNING: The function class under test is shared with the test ClassLoader.");
+                oldSystemErr.println("         This may result in unexpected behaviour around function initialization and configuration.");
+            }
+            forked.setCompleterClient(completer);
+            forked.run(
                     mutableEnv,
                     pendingInput,
                     functionOut,
@@ -160,6 +235,8 @@ public final class FnTestingRule implements TestRule {
 
             stdOut.flush();
             stdErr.flush();
+
+            completer.awaitTermination();
         } catch (Exception e) {
             throw new RuntimeException("internal error raised by entry point or flushing the test streams", e);
         } finally {
@@ -167,8 +244,7 @@ public final class FnTestingRule implements TestRule {
             System.err.flush();
             System.setOut(oldSystemOut);
             System.setErr(oldSystemErr);
-            CloudThreadsContinuationInvoker.resetCompleterClientFactory();
-            this.entryPoint = null;
+
         }
     }
 
@@ -196,7 +272,7 @@ public final class FnTestingRule implements TestRule {
      * @return a list of Parsed HTTP responses (as {@link FnResult}s) from the function runtime output
      */
     public List<FnResult> getResults() {
-        return parseHttpStreamForResults(stdOut);
+        return parseHttpStreamForResults(stdOut.toByteArray());
     }
 
     /**
@@ -213,9 +289,10 @@ public final class FnTestingRule implements TestRule {
         throw new IllegalStateException("One and only one response expected, but " + results.size() + " responses were generated.");
     }
 
-    private List<FnResult> parseHttpStreamForResults(ByteArrayOutputStream httpStream) {
+
+    private List<FnResult> parseHttpStreamForResults(byte[] httpStream) {
         SessionInputBufferImpl sib = new SessionInputBufferImpl(new HttpTransportMetricsImpl(), 65535);
-        ByteArrayInputStream parseStream = new ByteArrayInputStream(httpStream.toByteArray());
+        ByteArrayInputStream parseStream = new ByteArrayInputStream(httpStream);
         sib.bind(parseStream);
 
         DefaultHttpResponseParser parser = new DefaultHttpResponseParser(sib);
@@ -264,12 +341,46 @@ public final class FnTestingRule implements TestRule {
         return responses;
     }
 
-    private FnResult parseHttpStreamForResult(ByteArrayOutputStream httpStream) {
-        List<FnResult> continuationResults = parseHttpStreamForResults(httpStream);
-        if (continuationResults.size() != 1) {
-            throw new RuntimeException("Expected single HTTP response from the continuation invocation, received " + continuationResults.size());
-        }
-        return continuationResults.get(0);
+
+    public FnFunctionStubBuilder givenFn(String id) {
+        return new FnFunctionStubBuilder() {
+            @Override
+            public FnTestingRule withResult(byte[] result) {
+                return withAction((body) -> result);
+            }
+
+            @Override
+            public FnTestingRule withFunctionError() {
+                return withAction((body) -> {
+                    throw new FunctionError("simulated by testing platform");
+                });
+            }
+
+            @Override
+            public FnTestingRule withPlatformError() {
+                return withAction((body) -> {
+                    throw new PlatformError("simulated by testing platform");
+                });
+            }
+
+            @Override
+            public FnTestingRule withAction(ExternalFunctionAction f) {
+                functionStubs.put(id, (HttpMethod method, Headers headers, byte[] body) -> {
+                    try {
+                        return Result.success(new Datum.HttpRespDatum(200, Headers.emptyHeaders(), f.apply(body)));
+                    } catch (FunctionError functionError) {
+                        throw new ResultException(new Datum.HttpRespDatum(500, Headers.emptyHeaders(), functionError.getMessage().getBytes()));
+                    } catch (PlatformError platformError) {
+                        throw new ResultException(new Datum.ErrorDatum(Datum.ErrorType.function_invoke_failed, platformError.getMessage()));
+                    }
+                });
+                return FnTestingRule.this;
+            }
+        };
+    }
+
+    private interface FnFunctionStub {
+        Result stubFunction(HttpMethod method, Headers headers, byte[] body);
     }
 
     /**
@@ -364,5 +475,135 @@ public final class FnTestingRule implements TestRule {
         }
 
 
+    }
+
+    private class TestRuleCompleterInvokeClient implements InMemCompleter.CompleterInvokeClient {
+        private final ClassLoader functionClassLoader;
+        private final PrintStream oldSystemErr;
+        private final String cls;
+        private final String method;
+        private final Set<FnTestingClassLoader> pool = new HashSet<>();
+
+
+        public TestRuleCompleterInvokeClient(ClassLoader functionClassLoader, PrintStream oldSystemErr, String cls, String method) {
+            this.functionClassLoader = functionClassLoader;
+            this.oldSystemErr = oldSystemErr;
+            this.cls = cls;
+            this.method = method;
+        }
+
+
+        @Override
+        public Result invokeStage(String fnId, ThreadId thread, CompletionId stageId, Datum.Blob closure, List<Result> input) {
+            // Construct a new ClassLoader hierarchy with a copy of the statics embedded in the runtime.
+            // Initialise it appropriately.
+            FnTestingClassLoader fcl = new FnTestingClassLoader(functionClassLoader, sharedPrefixes);
+            fcl.setCompleterClient(completer);
+
+
+            // TODO avoid repeating MIME stuff (library-ise with CT/runtime? )
+            // TODO de-dupe shared env setup
+            // TODO Making up event details (app path?)
+
+            byte[] inputBody;
+            String boundary = UUID.randomUUID().toString().replaceAll("-", "");
+
+            try {
+                ByteArrayOutputStream bodyBytes = new ByteArrayOutputStream();
+                bodyBytes.write(("\r\n--" + boundary + "\r\n").getBytes(StandardCharsets.UTF_8));
+                new Datum.BlobDatum(closure).writePart(bodyBytes);
+
+                for (Result r : input) {
+                    bodyBytes.write(("\r\n--" + boundary + "\r\n").getBytes(StandardCharsets.UTF_8));
+                    r.writePart(bodyBytes);
+                }
+                bodyBytes.write(("\r\n--" + boundary + "--\r\n").getBytes(StandardCharsets.UTF_8));
+                inputBody = bodyBytes.toByteArray();
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to write inputBody", e);
+            }
+
+            // oldSystemErr.println("Body\n" + new String(inputBody));
+
+            InputStream is = new FnHttpEventBuilder()
+                    .withBody(inputBody)
+                    .withAppName("appName")
+                    .withRoute("/route").withRequestUrl("http://some/url")
+                    .withMethod("POST")
+                    .withHeader(CloudCompleterApiClient.CONTENT_TYPE_HEADER, String.format("multipart/mixed; boundary=\"%s\"", boundary))
+                    .withHeader(CloudCompleterApiClient.THREAD_ID_HEADER, thread.getId()).withHeader(CloudCompleterApiClient.STAGE_ID_HEADER, stageId.getId()).currentEventInputStream();
+
+            ByteArrayOutputStream output = new ByteArrayOutputStream();
+            Map<String, String> mutableEnv = new HashMap<>();
+            PrintStream functionOut = new PrintStream(output);
+            PrintStream functionErr = new PrintStream(oldSystemErr);
+
+            // Do we want to capture IO from continuations on the main log stream?
+            // System.setOut(functionErr);
+            // System.setErr(functionErr);
+
+            mutableEnv.putAll(config);
+            mutableEnv.putAll(eventEnv);
+            mutableEnv.put("FN_FORMAT", "http");
+
+
+            fcl.run(
+                    mutableEnv,
+                    is,
+                    functionOut,
+                    functionErr,
+                    cls + "::" + method);
+
+
+            SessionInputBufferImpl sib = new SessionInputBufferImpl(new HttpTransportMetricsImpl(), 65535);
+            ByteArrayInputStream parseStream = new ByteArrayInputStream(output.toByteArray());
+            sib.bind(parseStream);
+            DefaultHttpResponseParser parser = new DefaultHttpResponseParser(sib);
+            Result r;
+            try {
+                // Read wrapping result, and throw it away
+                parser.parse();
+                IdentityInputStream iis = new IdentityInputStream(sib);
+                byte[] responseBody = IOUtils.toByteArray(iis);
+
+                // System.err.println("Got Fn response body: \n" + new String(responseBody));
+                // HTTP in HTTP :(
+                SessionInputBufferImpl sib2 = new SessionInputBufferImpl(new HttpTransportMetricsImpl(), 65535);
+                InputStream frameStream = new ByteArrayInputStream(responseBody);
+                sib2.bind(frameStream);
+
+                DefaultHttpResponseParser parser2 = new DefaultHttpResponseParser(sib2);
+                HttpResponse wrappedResponse = parser2.parse();
+
+                IdentityInputStream frameBodyStream = new IdentityInputStream(sib2);
+
+                wrappedResponse.setEntity(new InputStreamEntity(frameBodyStream));
+
+                r = Result.readResult(wrappedResponse);
+
+
+            } catch (Exception e) {
+                oldSystemErr.println("Err\n" + e);
+                e.printStackTrace(oldSystemErr);
+                r = Result.failure(new Datum.ErrorDatum(Datum.ErrorType.unknown_error, "Error reading fn Response:" + e.getMessage()));
+            }
+
+            if (!r.isSuccess()) {
+                throw new ResultException(r.getDatum());
+            }
+            return r;
+
+        }
+    }
+
+    private class TestRuleFnInvokeClient implements InMemCompleter.FnInvokeClient {
+        @Override
+        public CompletableFuture<Result> invokeFunction(String fnId, HttpMethod method, Headers headers, byte[] data) {
+            return CompletableFuture.completedFuture(functionStubs
+                    .computeIfAbsent(fnId, (k) -> {
+                        throw new IllegalStateException("Function was invoked that had no definition: " + k);
+                    })
+                    .stubFunction(method, headers, data));
+        }
     }
 }

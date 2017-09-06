@@ -105,14 +105,17 @@ to obtain the details of the storage server host, username and password:
 ```java
 public class ThumbnailsFunction {
 
-    private final String storageHost;
+    private final String storageUrl;
     private final String storageAccessKey;
     private final String storageSecretKey;
 
     public ThumbnailsFunction(RuntimeContext ctx) {
-        storageHost = ctx.getConfigurationByKey("OBJECT_STORAGE_URL");
-        storageAccessKey = ctx.getConfigurationByKey("OBJECT_STORAGE_ACCESS");
-        storageSecretKey = ctx.getConfigurationByKey("OBJECT_STORAGE_SECRET");
+        storageUrl = ctx.getConfigurationByKey("OBJECT_STORAGE_URL")
+                .orElseThrow(() -> new RuntimeException("Missing configuration: OBJECT_STORAGE_URL"));
+        storageAccessKey = ctx.getConfigurationByKey("OBJECT_STORAGE_ACCESS")
+                .orElseThrow(() -> new RuntimeException("Missing configuration: OBJECT_STORAGE_ACCESS"));
+        storageSecretKey = ctx.getConfigurationByKey("OBJECT_STORAGE_SECRET")
+                .orElseThrow(() -> new RuntimeException("Missing configuration: OBJECT_STORAGE_SECRET"));
     }
 
     // ...
@@ -129,7 +132,7 @@ public class ThumbnailsFunction {
 
     public class Response {
         Response(String imageId) { this.imageId = imageId; }
-        String imageId;
+        public String imageId;
     }
 
     // ...
@@ -150,7 +153,7 @@ public class ThumbnailsFunction {
     public Response handleRequest(byte[] imageBuffer) {
         String id = java.util.UUID.randomUUID().toString();
         CloudThreadRuntime runtime = CloudThreads.currentRuntime();
-        
+
         runtime.allOf(
                 runtime.invokeFunction("myapp/resize128", HttpMethod.POST, Headers.emptyHeaders(), imageBuffer)
                         .thenAccept((img) -> objectUpload(img.getBodyAsBytes(), id + "-128.png")),
@@ -182,7 +185,7 @@ public class ThumbnailsFunction {
      */
     private void objectUpload(byte[] imageBuffer, String objectName) {
         try {
-            MinioClient minioClient = new MinioClient(storageHost, 9000, storageAccessKey, storageSecretKey);
+            MinioClient minioClient = new MinioClient(storageUrl, storageAccessKey, storageSecretKey);
 
             // Ensure the bucket exists.
             if(!minioClient.bucketExists("alpha")) {
@@ -195,6 +198,135 @@ public class ThumbnailsFunction {
             System.err.println("Error occurred: " + e);
             e.printStackTrace();
         }
+    }
+
+    // ...
+}
+```
+
+## Test walkthrough
+
+Two simple tests are provided for this example function. One of them checks the
+normal behavior of the function, and the other one checks what happens when one
+of the resize functions fails.
+
+The tests can be found in the class `ThumbnailsFunctionTest`.
+
+First of all, the class initializes the `FnTestingRule` harness, as explained
+in [Testing Functions](../../docs/TestingFunctions.md).
+
+```java
+public class ThumbnailsFunctionTest {
+
+    @Rule
+    public final FnTestingRule testing = FnTestingRule.createDefault();
+
+    // ...
+}
+```
+
+Because we need to test the side effects of our asynchronous upload processes,
+the test code then mocks an HTTP server pretending to be `minio`. We use
+`WireMockRule` for this, but really any framework or library can be used.
+
+```java
+public class ThumbnailsFunctionTest {
+
+    // ...
+
+    @Rule
+    public final WireMockRule mockServer = new WireMockRule();
+
+    // ...
+
+    private void mockMinio() {
+        // ... the code here sets up the mocks in `mockServer`
+    }
+
+    // ...
+}
+```
+
+We can now look at the proper testing methods.
+
+The `testThumbnail()` method checks the normal behavior of the function, by
+using the `FnTestingRule` API to mock the calls to external functions.
+
+```java
+public class ThumbnailsFunctionTest {
+
+    // ...
+
+   @Test
+    public void testThumbnail() {
+        testing
+
+                .setConfig("OBJECT_STORAGE_URL", "http://localhost:" + mockServer.port())
+                .setConfig("OBJECT_STORAGE_ACCESS", "alpha")
+                .setConfig("OBJECT_STORAGE_SECRET", "betabetabetabeta")
+
+                .givenFn("myapp/resize128")
+                    .withAction((data) -> "128".getBytes())
+                .givenFn("myapp/resize256")
+                    .withAction((data) -> "256".getBytes())
+                .givenFn("myapp/resize512")
+                    .withAction((data) -> "512".getBytes())
+
+                .givenEvent()
+                    .withBody("testing".getBytes())
+                    .enqueue();
+
+        // Mock the http endpoint
+        mockMinio();
+
+        testing.thenRun(ThumbnailsFunction.class, "handleRequest");
+
+        // Check the final image uploads were performed
+        mockServer.verify(1, putRequestedFor(urlMatching("/alpha/.*\\.png")).withRequestBody(equalTo("testing")));
+
+        // ... and the other checks
+    }
+
+    // ...
+}
+```
+
+Similarly, the `anExternalFunctionFailure()` method checks what happens when one
+of the function invocations fails:
+
+```java
+public class ThumbnailsFunctionTest {
+
+    // ...
+
+    @Test
+    public void anExternalFunctionFailure() {
+        testing
+                .setConfig("OBJECT_STORAGE_URL", "http://localhost:" + mockServer.port())
+                .setConfig("OBJECT_STORAGE_ACCESS", "alpha")
+                .setConfig("OBJECT_STORAGE_SECRET", "betabetabetabeta")
+
+                .givenFn("myapp/resize128")
+                    .withResult("128".getBytes())
+                .givenFn("myapp/resize256")
+                    .withResult("256".getBytes())
+                .givenFn("myapp/resize512")
+                    .withFunctionError()
+
+                .givenEvent()
+                    .withBody("testing".getBytes())
+                    .enqueue();
+
+        // Mock the http endpoint
+        mockMinio();
+
+        testing.thenRun(ThumbnailsFunction.class, "handleRequest");
+
+        // Confirm that one image upload didn't happen
+        mockServer.verify(0, putRequestedFor(urlMatching("/alpha/.*\\.png")).withRequestBody(equalTo("512")));
+
+        mockServer.verify(3, putRequestedFor(urlMatching(".*")));
+
     }
 
     // ...

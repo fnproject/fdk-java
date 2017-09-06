@@ -16,19 +16,17 @@ import java.util.stream.Collectors;
  * <p>
  * This
  */
-final class RemoteCloudThreadRuntime implements CloudThreadRuntime, Serializable {
+public final class RemoteCloudThreadRuntime implements CloudThreadRuntime, Serializable {
     private transient CompleterClient client;
-    private CompleterClientFactory clientFactory;
     private final ThreadId threadId;
 
-    RemoteCloudThreadRuntime(ThreadId thread, CompleterClientFactory clientFactory) {
+    RemoteCloudThreadRuntime(ThreadId thread) {
         this.threadId = Objects.requireNonNull(thread);
-        this.clientFactory = clientFactory;
     }
 
     private CompleterClient getClient() {
         if (client == null) {
-            client = clientFactory.get();
+            client = CloudThreadsRuntimeGlobals.getCompleterClientFactory().get();
         }
         return client;
     }
@@ -55,7 +53,7 @@ final class RemoteCloudThreadRuntime implements CloudThreadRuntime, Serializable
         }
     }
 
-   class RemoteCloudFuture<T> implements CloudFuture<T>, Serializable {
+    class RemoteCloudFuture<T> implements CloudFuture<T>, Serializable {
         private final CompletionId completionId;
 
         RemoteCloudFuture(CompletionId completionId) {
@@ -99,7 +97,6 @@ final class RemoteCloudThreadRuntime implements CloudThreadRuntime, Serializable
             return new RemoteCloudFuture<>(getClient().thenAcceptBoth(threadId, completionId, ((RemoteCloudFuture<?>) alt).completionId, fn));
         }
 
-
         @Override
         public CloudFuture<Void> thenRun(CloudThreads.SerRunnable fn) {
             return new RemoteCloudFuture<>(getClient().thenRun(threadId, completionId, fn));
@@ -122,7 +119,7 @@ final class RemoteCloudThreadRuntime implements CloudThreadRuntime, Serializable
 
         @Override
         public T get() {
-            return (T) getClient().waitForCompletion(threadId, completionId);
+            return (T) getClient().waitForCompletion(threadId, completionId, getClass().getClassLoader());
         }
 
         public String id() {

@@ -152,3 +152,76 @@ You can test that this is all handled correctly as follows:
     Assert.assertEquals("{\"c\":\"blah-foobar\"}", result.getBodyAsString());
   }
 ```
+
+# Testing Cloud Threads
+
+You can use `FnTestingRule` to test [Cloud Threads](CloudThreadsUserGuide.md) within your functions.  If threads are started by functions within `thenRun` then the testing rule will execute the stages of those threads locally, returning when all spawned threads are complete. 
+
+`FnTestingRule` supports  mocking  the behaviour of Fn functions invoked by the  `invokeFunction()` API within cloud threads. 
+
+You can specify that the invocation a function returns a valid value (as a byte array):
+
+```java
+  @Test
+  public void callsRemoteFunctionWhichSucceeds() {
+
+    testing.givenFn("example/other-function").withResult("blah".getBytes());
+
+    // ...
+
+  }
+```
+
+Or you can specify that the invocation a function will cause a user error or a platform error:
+
+```java
+  @Test
+  public void callsRemoteFunctionWhichCausesAnError() {
+
+    testing.givenFn("example/other-function").withFunctionError();
+    testing.givenFn("example/other-function-2").withPlatformError();
+
+    // ...
+
+  }
+```
+
+Finally you specify custom actions to perform when the function is called, using for example a lambda. This can be
+used to check some behavior:
+
+```java
+
+  static AtomicBoolean called = new AtomicBoolean();
+
+  @Test
+  public void callsRemoteFunction() {
+
+    testing.givenFn("example/other-function").withAction( (data) -> { called.set(true); return data; } );
+
+    called.set(false);
+
+    // ... prepare an event and run the function ...
+
+    Assert.assertTrue(called.get());
+  }
+```
+
+The same mechanism can be used to integrate mocking frameworks like [Mockito](http://site.mockito.org/).
+
+Cloud Threads stages may execute in parallel. If you have several `withAction` clauses accessing the same shared state, you must ensure that that access is thread-safe.
+
+# Sharing data between tests and your functions 
+To ensure isolation of each function invocation and/or Cloud Threads completion, and to simulate the behaviour of the
+real Fn platform (where each function invocation can potentially run in a different JVM), the `FnTestingRule` runs each `thenRun` invocation and each Cloud Thread completion using a different Java Class Loader. 
+
+While this improves the veracity of tests, it prevents your tests from accessing or modifying the state of your functions and vice versa. 
+
+If you need to share objects or static data between your test classes and your functions (e.g. to pre-initialize global state) you can do so within your tests using the `addSharedClass` (for a specific class) and `addSharedPrefix` (for a package, or class prefix) methods on `FnTestingRule`. 
+
+```java
+    testing.addSharedClass(MyClassWithStaticState.class); // Shares only the specific class
+    testing.addSharedPrefix("com.example.MyClassWithStaticState"); // Shares the class and anything under it
+    testing.addSharedPrefix("com.example.mysubpackage."); // Shares anyhting under a package
+```
+
+While it is possible, it is not generally correct to share the function class itself with the test Class Loader - doing so may result in unexpected (not representative of the real fn platform) initialisation of static fields on the class. With Cloud Threads sharing the test class may also result in concurrent access to static data (via `@FnConfiguration` methods). 

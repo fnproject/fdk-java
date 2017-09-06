@@ -7,7 +7,7 @@ APIs.
 
 ## What are Cloud Threads?
 
-Cloud Threads consists of a set of client-side APIs for you to use within your
+Cloud Threads consists of a set of completerInvokeClient-side APIs for you to use within your
 Fn apps, as well as a long-running server component (the _completer_) that
 orchestrates computation beyond the life-cycle of your functions. Together,
 these components enable non-blocking asynchronous execution flows, where your
