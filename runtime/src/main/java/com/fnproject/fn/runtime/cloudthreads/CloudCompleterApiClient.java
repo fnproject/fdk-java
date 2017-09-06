@@ -15,6 +15,9 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 
+/**
+ * REST client for accessing completer API
+ */
 public class CloudCompleterApiClient implements CompleterClient {
     private transient final HttpClient httpClient;
     private final String apiUrlBase;
@@ -214,8 +217,6 @@ public class CloudCompleterApiClient implements CompleterClient {
                 SerUtils.ContentPart result = SerUtils.ContentPart.readFromStream(response);
 
                 // check if the response headers indicate that the response body is an Exception/Error
-                // TODO: Check whether we're going to throw an exception then build and throw
-                // TODO: Add comment to API doc saying that error datum type responses always have failure result status
                 if (resultingInException(response)) {
                     if (resultingFromExternalFunctionInvocation(response) ||
                             resultingFromUserException(response) ||
@@ -260,7 +261,7 @@ public class CloudCompleterApiClient implements CompleterClient {
     }
 
     public void commit(ThreadId threadId) {
-        try (HttpClient.HttpResponse response = httpClient.execute(httpClient.preparePost(apiUrlBase + "/graph/" + threadId.getId() + "/commit"))) {
+        try (HttpClient.HttpResponse response = httpClient.execute(HttpClient.preparePost(apiUrlBase + "/graph/" + threadId.getId() + "/commit"))) {
             validateSuccessful(response);
         } catch (Exception e) {
             throw new PlatformException(e);

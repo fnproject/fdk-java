@@ -60,7 +60,7 @@ public class EntryPoint {
             final Map<String, String> configFromEnvVars = Collections.unmodifiableMap(excludeInternalConfigAndHeaders(env));
 
             FunctionLoader functionLoader = new FunctionLoader();
-            FunctionRuntimeContext runtimeContext = functionLoader.loadFunction(getClass().getClassLoader(),cls, mth, configFromEnvVars);
+            FunctionRuntimeContext runtimeContext = functionLoader.loadFunction(cls, mth, configFromEnvVars);
 
             String format = env.get("FN_FORMAT");
             EventCodec codec;

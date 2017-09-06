@@ -23,8 +23,8 @@ public class FunctionLoader {
      * @param fnName    the function in the class
      * @return a new runtime context
      */
-    public FunctionRuntimeContext loadFunction(ClassLoader cl, String className, String fnName, Map<String, String> config) {
-        Class<?> targetClass = loadClass(cl,className);
+    public FunctionRuntimeContext loadFunction( String className, String fnName, Map<String, String> config) {
+        Class<?> targetClass = loadClass(className);
 
         List<Method> namedMethods = findMethodsByName(fnName, targetClass);
 
@@ -129,10 +129,10 @@ public class FunctionLoader {
 
 
 
-    private Class<?> loadClass(ClassLoader cl, String className) {
+    private Class<?> loadClass( String className) {
         Class<?> fnClass;
         try {
-            fnClass = cl.loadClass(className);
+            fnClass = Class.forName(className);
         } catch (ClassNotFoundException e) {
             throw new InvalidFunctionDefinitionException(String.format("Class '%s' not found in function jar. " +
                     "It's likely that the 'cmd' entry in func.yaml is incorrect.", className));

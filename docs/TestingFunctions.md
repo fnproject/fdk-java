@@ -203,27 +203,25 @@ used to check some behavior:
 
 ```java
 
-  static boolean called;
+  static AtomicBoolean called = new AtomicBoolean();
 
   @Test
   public void callsRemoteFunction() {
 
-    testing.givenFn("example/other-function").withAction( (data) -> { called = true; return data; } );
+    testing.givenFn("example/other-function").withAction( (data) -> { called.set(true); return data; } );
 
-    called = false;
+    called.set(false);
 
     // ... prepare an event and run the function ...
 
-    Assert.assertTrue(called);
+    Assert.assertTrue(called.get());
   }
 ```
 
 This is a very simple example using a static variable - but any mock injection can be performed provided that the mock
 object is effectively final and can be captured in the lambda.
 
-Also note that `withAction` makes no thread-safety guarantees, and Cloud Threads are executed asynchronously and
-concurrently. Therefore, if you have several `withAction` clauses accessing the same shared state, you will have to take
-care of synchronization of the state.
+Note that Cloud Threads stages may execute in parallel. If you have several `withAction` clauses accessing the same shared state, you will have to ensure that that access is thread-safe.
 
 # Sharing data between tests and your functions 
 To ensure isolation of each function invocation and/or Cloud Threads completion, and to simulate the behaviour of the
