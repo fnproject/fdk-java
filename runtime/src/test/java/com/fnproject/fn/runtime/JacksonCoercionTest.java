@@ -32,7 +32,7 @@ public class JacksonCoercionTest {
         ByteArrayInputStream body = new ByteArrayInputStream("[{\"name\":\"Spot\",\"age\":6},{\"name\":\"Jason\",\"age\":16}]".getBytes());
         InputEvent inputEvent = new ReadOnceInputEvent("", "", "", "testMethod", body, Headers.fromMap(headers), new QueryParametersImpl());
 
-        Optional<Object> object = jc.tryCoerceParam(invocationContext, 0, inputEvent);
+        Optional<Object> object = jc.tryCoerceParam(invocationContext, 0, inputEvent, method);
 
         List<Animal> animals = (List<Animal>) (object.get());
         Animal first = animals.get(0);
@@ -56,7 +56,7 @@ public class JacksonCoercionTest {
 
         boolean causedExpectedError;
         try {
-            Optional<Object> object = jc.tryCoerceParam(invocationContext, 0, inputEvent);
+            Optional<Object> object = jc.tryCoerceParam(invocationContext, 0, inputEvent, method);
             causedExpectedError = false;
         } catch (RuntimeException e) {
             causedExpectedError = true;

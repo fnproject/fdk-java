@@ -2,9 +2,9 @@ package com.fnproject.fn.runtime;
 
 import com.fnproject.fn.api.MethodWrapper;
 
-class MethodReturnType extends DefaultMethodType {
+class ReturnTypeWrapper extends MethodTypeWrapper {
 
-    MethodReturnType(MethodWrapper src) {
+    ReturnTypeWrapper(MethodWrapper src) {
         super(src, resolveType(src.getTargetMethod().getGenericReturnType(), src));
     }
 

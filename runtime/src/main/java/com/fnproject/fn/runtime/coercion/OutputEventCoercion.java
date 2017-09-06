@@ -9,8 +9,8 @@ import java.util.Optional;
 
 public class OutputEventCoercion implements OutputCoercion {
     @Override
-    public Optional<OutputEvent> wrapFunctionResult(InvocationContext ctx, Object value) {
-        if (ctx.getRuntimeContext().getMethod().getReturnType().getParameterClass().equals(OutputEvent.class)) {
+    public Optional<OutputEvent> wrapFunctionResult(InvocationContext ctx, MethodWrapper method, Object value) {
+        if (method.getReturnType().getParameterClass().equals(OutputEvent.class)) {
             return Optional.of((OutputEvent) value);
         } else {
             return Optional.empty();

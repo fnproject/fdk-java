@@ -3,7 +3,7 @@ package com.fnproject.fn.api;
 /**
  * Interface representing type information about a method, possibly a parameter or return type.
  */
-public interface MethodType {
+public interface TypeWrapper {
     /**
      * Unlike {@link java.lang.reflect.Method}, types (such as parameter types, or return types) are
      * resolved to a reified type even if they are generic, providing reification is possible.
@@ -17,7 +17,7 @@ public interface MethodType {
      * class ConcreteClass extends GenericParent&lt;String&gt; { }
      * }</pre>
      *
-     * A {@link MethodType} representing the first argument of {@code someMethod} would return {@code String.class}
+     * A {@link TypeWrapper} representing the first argument of {@code someMethod} would return {@code String.class}
      * instead of {@code Object.class}
      *
      * @return Reified type

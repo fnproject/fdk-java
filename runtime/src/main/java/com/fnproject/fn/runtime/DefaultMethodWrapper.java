@@ -1,6 +1,6 @@
 package com.fnproject.fn.runtime;
 
-import com.fnproject.fn.api.MethodType;
+import com.fnproject.fn.api.TypeWrapper;
 import com.fnproject.fn.api.MethodWrapper;
 
 import java.lang.reflect.Method;
@@ -39,13 +39,13 @@ public class DefaultMethodWrapper implements MethodWrapper {
     }
 
     @Override
-    public MethodType getParamType(int index) {
-        return new MethodParameter(this, index);
+    public TypeWrapper getParamType(int index) {
+        return new ParameterWrapper(this, index);
     }
 
     @Override
-    public MethodType getReturnType() {
-        return new MethodReturnType(this);
+    public TypeWrapper getReturnType() {
+        return new ReturnTypeWrapper(this);
     }
 
     @Override

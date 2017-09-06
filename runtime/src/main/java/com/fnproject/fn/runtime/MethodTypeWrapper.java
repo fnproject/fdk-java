@@ -1,6 +1,6 @@
 package com.fnproject.fn.runtime;
 
-import com.fnproject.fn.api.MethodType;
+import com.fnproject.fn.api.TypeWrapper;
 import com.fnproject.fn.api.MethodWrapper;
 import net.jodah.typetools.TypeResolver;
 
@@ -8,11 +8,11 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 
 
-public class DefaultMethodType implements MethodType {
+public class MethodTypeWrapper implements TypeWrapper {
     protected final MethodWrapper src;
     protected Class<?> parameterClass;
 
-    public DefaultMethodType(MethodWrapper src, Class<?> parameterClass) {
+    public MethodTypeWrapper(MethodWrapper src, Class<?> parameterClass) {
         this.src = src;
         this.parameterClass = parameterClass;
     }
@@ -24,7 +24,7 @@ public class DefaultMethodType implements MethodType {
 
     protected static Class<?> resolveType(Type type, MethodWrapper src) {
         if (type instanceof Class) {
-            return TypeWrapper.resolvePrimitiveType((Class<?>) type);
+            return PrimitiveTypeResolver.resolve((Class<?>) type);
         } else if (type instanceof ParameterizedType) {
             return (Class<?>) ((ParameterizedType) type).getRawType();
         }
@@ -36,5 +36,4 @@ public class DefaultMethodType implements MethodType {
             return resolvedType;
         }
     }
-
 }

@@ -20,7 +20,7 @@ public class FunctionRuntimeContext implements RuntimeContext {
     private final Map<String, String> config;
     private final MethodWrapper method;
     private Map<String, Object> attributes = new HashMap<>();
-    private List<FunctionInvoker> configuredInvokers = Arrays.asList(new CloudThreadsContinuationInvoker(), new MethodFunctionInvoker());
+    private List<FunctionInvoker> configuredInvokers = new ArrayList<>();
 
     private Object instance;
 
@@ -32,6 +32,7 @@ public class FunctionRuntimeContext implements RuntimeContext {
     public FunctionRuntimeContext(MethodWrapper method, Map<String, String> config) {
         this.method = method;
         this.config = Objects.requireNonNull(config);
+        configuredInvokers.addAll(Arrays.asList(new CloudThreadsContinuationInvoker(), new MethodFunctionInvoker()));
     }
 
     @Override
@@ -116,8 +117,8 @@ public class FunctionRuntimeContext implements RuntimeContext {
      * @param targetMethod The user function method
      * @param param        The index of the parameter
      */
-    List<InputCoercion> getInputCoercions(Method targetMethod, int param) {
-        Annotation parameterAnnotations[] = targetMethod.getParameterAnnotations()[param];
+    List<InputCoercion> getInputCoercions(MethodWrapper targetMethod, int param) {
+        Annotation parameterAnnotations[] = targetMethod.getTargetMethod().getParameterAnnotations()[param];
         Optional<Annotation> coercionAnnotation = Arrays.stream(parameterAnnotations)
                 .filter((ann) -> ann.annotationType().equals(InputBinding.class))
                 .findFirst();

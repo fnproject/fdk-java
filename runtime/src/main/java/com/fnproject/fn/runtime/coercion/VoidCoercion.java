@@ -9,8 +9,8 @@ import java.util.Optional;
 
 public class VoidCoercion implements OutputCoercion {
     @Override
-    public Optional<OutputEvent> wrapFunctionResult(InvocationContext ctx, Object value) {
-        if (ctx.getRuntimeContext().getMethod().getReturnType().getParameterClass().equals(Void.class)) {
+    public Optional<OutputEvent> wrapFunctionResult(InvocationContext ctx, MethodWrapper method, Object value) {
+        if (method.getReturnType().getParameterClass().equals(Void.class)) {
             return Optional.of(OutputEvent.emptyResult(true));
         } else {
             return Optional.empty();

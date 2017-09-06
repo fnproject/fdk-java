@@ -95,7 +95,6 @@ class HttpEventCodec implements EventCodec {
 
     }
 
-
     @Override
     public boolean shouldContinue() {
         return true;

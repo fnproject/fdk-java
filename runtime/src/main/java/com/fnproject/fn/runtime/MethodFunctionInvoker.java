@@ -7,7 +7,6 @@ import com.fnproject.fn.runtime.exception.InternalFunctionInvocationException;
 import com.fnproject.fn.runtime.exception.FunctionOutputHandlingException;
 
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.Optional;
 
 /**
@@ -27,11 +26,11 @@ public class MethodFunctionInvoker implements FunctionInvoker {
      */
     @Override
     public Optional<OutputEvent> tryInvoke(InvocationContext ctx, InputEvent evt) throws InternalFunctionInvocationException {
-
-        Object[] userFunctionParams = doInputCoercions(ctx, evt);
-
         FunctionRuntimeContext runtimeContext = (FunctionRuntimeContext) ctx.getRuntimeContext();
         MethodWrapper method = runtimeContext.getMethodWrapper();
+
+        Object[] userFunctionParams = coerceParameters(ctx, method, evt);
+
         Object rawResult;
 
         try {
@@ -40,27 +39,17 @@ public class MethodFunctionInvoker implements FunctionInvoker {
             throw new InternalFunctionInvocationException(e.getCause().getMessage(), e.getCause());
         }
 
-        return doOutputCoercion(ctx, runtimeContext, method, rawResult);
-
+        return coerceReturnValue(ctx, method, rawResult);
     }
 
-    protected Object[] doInputCoercions(InvocationContext ctx, InputEvent evt) {
+    protected Object[] coerceParameters(InvocationContext ctx, MethodWrapper targetMethod, InputEvent evt) {
         try {
-            FunctionRuntimeContext runtimeContext = (FunctionRuntimeContext) ctx.getRuntimeContext();
-            Method targetMethod = runtimeContext.getMethod().getTargetMethod();
-            Class<?>[] paramTypes = targetMethod.getParameterTypes();
-
-            Object[] userFunctionParams = new Object[paramTypes.length];
+            Object[] userFunctionParams = new Object[targetMethod.getParameterCount()];
 
             for (int i = 0; i < userFunctionParams.length; i++) {
                 int param = i;
-                Optional<Object> arg = runtimeContext.getInputCoercions(targetMethod, param)
-                        .stream()
-                        .map((c) -> c.tryCoerceParam(ctx, param, evt))
-                        .filter(Optional::isPresent)
-                        .map(Optional::get).findFirst();
-
-                userFunctionParams[i] = arg.orElseThrow(() -> new FunctionInputHandlingException("No type coercion for argument " + param + " of " + targetMethod + " of found"));
+                Object coercedParameter = coerceParameter(ctx, targetMethod, param, evt);
+                userFunctionParams[i] = coercedParameter;
             }
 
             return userFunctionParams;
@@ -68,16 +57,25 @@ public class MethodFunctionInvoker implements FunctionInvoker {
         } catch (RuntimeException e) {
             throw new FunctionInputHandlingException("An exception was thrown during Input Coercion: " + e.getMessage(), e);
         }
-
     }
 
+    private Object coerceParameter(InvocationContext ctx, MethodWrapper targetMethod, int param, InputEvent evt) {
+        FunctionRuntimeContext runtimeContext = (FunctionRuntimeContext) ctx.getRuntimeContext();
 
-    protected Optional<OutputEvent> doOutputCoercion(InvocationContext ctx, FunctionRuntimeContext runtimeContext, MethodWrapper method, Object rawResult) {
+        return runtimeContext.getInputCoercions(targetMethod, param)
+                .stream()
+                .map((c) -> c.tryCoerceParam(ctx, param, evt, targetMethod))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .findFirst()
+                .orElseThrow(() -> new FunctionInputHandlingException("No type coercion for argument " + param + " of " + targetMethod + " of found"));
+    }
 
+    protected Optional<OutputEvent> coerceReturnValue(InvocationContext ctx, MethodWrapper method, Object rawResult) {
         try {
-            return Optional.of(runtimeContext.getOutputCoercions(method.getTargetMethod())
+            return Optional.of(((FunctionRuntimeContext) ctx.getRuntimeContext()).getOutputCoercions(method.getTargetMethod())
                     .stream()
-                    .map((c) -> c.wrapFunctionResult(ctx, rawResult))
+                    .map((c) -> c.wrapFunctionResult(ctx, method, rawResult))
                     .filter(Optional::isPresent)
                     .map(Optional::get)
                     .findFirst()
@@ -87,4 +85,5 @@ public class MethodFunctionInvoker implements FunctionInvoker {
             throw new FunctionOutputHandlingException("An exception was thrown during Output Coercion: " + e.getMessage(), e);
         }
     }
+
 }

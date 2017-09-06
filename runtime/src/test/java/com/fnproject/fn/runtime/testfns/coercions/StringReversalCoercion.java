@@ -9,7 +9,7 @@ import java.util.Optional;
 
 public class StringReversalCoercion implements InputCoercion<String>, OutputCoercion {
     @Override
-    public Optional<String> tryCoerceParam(InvocationContext currentContext, int arg, InputEvent input) {
+    public Optional<String> tryCoerceParam(InvocationContext currentContext, int arg, InputEvent input, MethodWrapper methodWrapper) {
         return Optional.of(
                 input.consumeBody(is -> {
                     try {
@@ -22,7 +22,7 @@ public class StringReversalCoercion implements InputCoercion<String>, OutputCoer
     }
 
     @Override
-    public Optional<OutputEvent> wrapFunctionResult(InvocationContext ctx, Object value) {
+    public Optional<OutputEvent> wrapFunctionResult(InvocationContext ctx, MethodWrapper method, Object value) {
         if (ctx.getRuntimeContext().getMethod().getTargetMethod().getReturnType().equals(String.class)) {
             try {
                 String reversedOutput = new StringBuffer((String) value).reverse().toString();

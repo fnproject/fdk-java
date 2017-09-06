@@ -3,7 +3,7 @@ package com.fnproject.fn.runtime;
 import java.util.HashMap;
 import java.util.Map;
 
-public class TypeWrapper {
+public class PrimitiveTypeResolver {
     private static Map<Class<?>, Class<?>> boxedTypes = new HashMap<>();
     static {
         boxedTypes.put(void.class, Void.class);
@@ -20,7 +20,7 @@ public class TypeWrapper {
     /**
      * Resolves cls from a possibly primitive class to a boxed type otherwise just returns cls
      */
-    public static Class<?> resolvePrimitiveType(Class<?> cls) {
+    public static Class<?> resolve(Class<?> cls) {
         if (cls.isPrimitive()) {
             return boxedTypes.get(cls);
         }

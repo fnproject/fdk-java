@@ -25,18 +25,18 @@ public interface MethodWrapper {
     Method getTargetMethod();
 
     /**
-     * Get the {@link MethodType} for a parameter specified by {@code index}
+     * Get the {@link TypeWrapper} for a parameter specified by {@code index}
      * @param index    index of the parameter whose type to retrieve
      * @return the type of the parameter at {@code index}, reified generics will resolve to the reified type
      *         and not {@link Object}
      */
-    MethodType getParamType(int index);
+    TypeWrapper getParamType(int index);
 
     /**
-     * Get the {@link MethodType} for the return type of the method.
+     * Get the {@link TypeWrapper} for the return type of the method.
      * @return the return type, reified generics will resolve to the reified type and not {@link Object}
      */
-    MethodType getReturnType();
+    TypeWrapper getReturnType();
 
     /**
      * Get the name of the method including the package path built from {@link Class#getCanonicalName()} and
@@ -46,5 +46,9 @@ public interface MethodWrapper {
      */
     default String getLongName() {
         return getTargetClass().getCanonicalName() + "::" + getTargetMethod().getName();
+    }
+
+    default int getParameterCount() {
+        return getTargetMethod().getParameterTypes().length;
     }
 }
