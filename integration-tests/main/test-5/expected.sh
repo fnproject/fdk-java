@@ -21,7 +21,7 @@ do
 
 sleep 5
 ATTEMPT=$((ATTEMPT + 1))
-if [ $ATTEMPT -ge 12 ];
+if [ $ATTEMPT -ge 24 ];
 then
   echo "Did not find termination hook output"
   exit 1
