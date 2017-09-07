@@ -6,11 +6,15 @@ import org.apache.commons.io.IOUtils;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static com.fnproject.fn.runtime.cloudthreads.CloudCompleterApiClient.*;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -70,6 +74,74 @@ public class CloudCompleterApiClientTest {
 
         // Then
         assertThat(result).isInstanceOf(HttpResponse.class);
+    }
+
+    @Test
+    public void waitForCompletionShouldBlock() throws Exception {
+        // Given
+        HttpClient.HttpResponse response = new HttpClient.HttpResponse(200);
+        response.addHeader(DATUM_TYPE_HEADER, DATUM_TYPE_HTTP_RESP);
+        response.addHeader(RESULT_STATUS_HEADER, RESULT_STATUS_SUCCESS);
+        response.addHeader(RESULT_CODE_HEADER, "200");
+        response.addHeader(CONTENT_TYPE_HEADER, "application/json");
+        response.addHeader(USER_HEADER_PREFIX + "Custom-Header", "myValue");
+        response.setEntity(IOUtils.toInputStream("{ \"some\": \"json\" }", "utf-8"));
+        when((Object) mockHttpClient.execute(any())).thenAnswer(inv -> {
+            try {
+                Thread.sleep(1000);
+            } catch(Exception e) { }
+            return response;
+        });
+
+        // When
+        CloudCompleterApiClient completerClient = new CloudCompleterApiClient("", mockHttpClient);
+        Object result = completerClient
+                .waitForCompletion(new ThreadId("1"), new CompletionId("2"), getClass().getClassLoader(), 0 , TimeUnit.SECONDS);
+
+        // Then
+        assertThat(result).isInstanceOf(HttpResponse.class);
+    }
+
+    @Test(expected = TimeoutException.class)
+    public void waitForCompletionWithTimeoutShouldThrowTimeoutException() throws Exception {
+        // Given
+        HttpClient.HttpResponse response = new HttpClient.HttpResponse(200);
+        response.addHeader(DATUM_TYPE_HEADER, DATUM_TYPE_HTTP_RESP);
+        response.addHeader(RESULT_STATUS_HEADER, RESULT_STATUS_SUCCESS);
+        response.addHeader(RESULT_CODE_HEADER, "200");
+        response.addHeader(CONTENT_TYPE_HEADER, "application/json");
+        response.addHeader(USER_HEADER_PREFIX + "Custom-Header", "myValue");
+        response.setEntity(IOUtils.toInputStream("{ \"some\": \"json\" }", "utf-8"));
+        when((Object) mockHttpClient.execute(any())).thenAnswer(inv -> {
+            throw new TimeoutException();
+        });
+
+        // When
+        CloudCompleterApiClient completerClient = new CloudCompleterApiClient("", mockHttpClient);
+        completerClient.waitForCompletion(new ThreadId("1"), new CompletionId("2"), getClass().getClassLoader(), 100 , TimeUnit.MILLISECONDS);
+    }
+
+    @Test
+    public void waitForCompletionWithoutTimeoutShouldWrapTimeoutException() throws Exception {
+        // Given
+        HttpClient.HttpResponse response = new HttpClient.HttpResponse(200);
+        response.addHeader(DATUM_TYPE_HEADER, DATUM_TYPE_HTTP_RESP);
+        response.addHeader(RESULT_STATUS_HEADER, RESULT_STATUS_SUCCESS);
+        response.addHeader(RESULT_CODE_HEADER, "200");
+        response.addHeader(CONTENT_TYPE_HEADER, "application/json");
+        response.addHeader(USER_HEADER_PREFIX + "Custom-Header", "myValue");
+        response.setEntity(IOUtils.toInputStream("{ \"some\": \"json\" }", "utf-8"));
+        when((Object) mockHttpClient.execute(any())).thenAnswer(inv -> {
+            throw new TimeoutException();
+        });
+
+        // When
+        CloudCompleterApiClient completerClient = new CloudCompleterApiClient("", mockHttpClient);
+        try {
+            completerClient.waitForCompletion(new ThreadId("1"), new CompletionId("2"), getClass().getClassLoader());
+        }  catch (PlatformException e) {
+            assertThat(e.getCause()).isInstanceOf(TimeoutException.class);
+        }
     }
 
     @Test

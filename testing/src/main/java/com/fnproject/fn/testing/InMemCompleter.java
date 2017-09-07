@@ -273,6 +273,40 @@ class InMemCompleter implements CompleterClient {
     }
 
     @Override
+    public Object waitForCompletion(ThreadId threadId, CompletionId completionId, ClassLoader loader, long timeout, TimeUnit unit) throws TimeoutException {
+        try {
+            return withActiveGraph(threadId, (graph) -> graph.withNode(completionId, (node) -> {
+                try {
+                    return node.outputFuture().toCompletableFuture().get(timeout, unit).toJavaObject(loader);
+                } catch (ExecutionException e) {
+                    if (e.getCause() instanceof ResultException) {
+
+                        Result r = ((ResultException) e.getCause()).toResult();
+                        Object err = r.toJavaObject(loader);
+                        if (err instanceof Throwable) {
+                            throw new CloudCompletionException((Throwable) err);
+                        } else if (err instanceof HttpResponse && !r.isSuccess()) {
+                            throw new CloudCompletionException(new FunctionInvocationException((HttpResponse) err));
+                        } else if (err instanceof HttpRequest && !r.isSuccess()) {
+                            throw new CloudCompletionException(new ExternalCompletionException((HttpRequest) err));
+                        }
+                        throw new PlatformException(e);
+                    } else {
+                        throw new PlatformException(e);
+                    }
+                } catch (Exception e) {
+                    throw new PlatformException(e);
+                }
+            }));
+        } catch (PlatformException e) {
+            if (e.getCause() instanceof TimeoutException) {
+                throw (TimeoutException)e.getCause();
+            }
+            else throw e;
+        }
+    }
+
+    @Override
     public CompletionId thenAccept(ThreadId threadId, CompletionId completionId, Serializable code) {
         return withActiveGraph(threadId,
                 (graph) -> graph.withNode(completionId,
