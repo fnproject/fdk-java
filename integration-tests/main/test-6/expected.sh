@@ -26,7 +26,7 @@ do
   ATTEMPT=$((ATTEMPT + 1))
   if [ $ATTEMPT -ge 120 ];
   then
-    echo "Did not find termination hook output"
+    echo "Did not find expected output"
     exit 1
   fi
 done
