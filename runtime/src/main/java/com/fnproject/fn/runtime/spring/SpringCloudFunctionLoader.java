@@ -17,9 +17,9 @@ public class SpringCloudFunctionLoader {
     public static final String DEFAULT_CONSUMER_BEAN = "consumer";
     public static final String DEFAULT_FUNCTION_BEAN = "function";
 
-    public static final String SYSTEM_PROP_KEY_SUPPLIER_NAME = "supplier.name";
-    private static final String SYSTEM_PROP_KEY_CONSUMER_NAME = "consumer.name";
-    private static final String SYSTEM_PROP_KEY_FUNCTION_NAME = "function.name";
+    public static final String ENV_VAR_FUNCTION_NAME = "FN_SPRING_FUNCTION";
+    public static final String ENV_VAR_CONSUMER_NAME = "FN_SPRING_CONSUMER";
+    public static final String ENV_VAR_SUPPLIER_NAME = "FN_SPRING_SUPPLIER";
 
     private final FunctionCatalog catalog;
     private final FunctionInspector inspector;
@@ -37,9 +37,7 @@ public class SpringCloudFunctionLoader {
     }
 
     void loadFunction() {
-        boolean foundName = checkForBeanNameInSystemProps();
-        // TODO: Check environment variables for SPRING_CLOUD_FUNCTION/SPRING_CLOUD_CONSUMER/SPRING_CLOUD_SUPPLIER and
-        // use them in preference to system props
+        boolean foundName = checkForBeanNameInEnvVars();
         if (foundName) {
             if (functionName != null) {
                 function = this.catalog.lookupFunction(functionName);
@@ -62,18 +60,18 @@ public class SpringCloudFunctionLoader {
         // TODO throw exception if no function found
     }
 
-    private boolean checkForBeanNameInSystemProps() {
-        String functionName = System.getProperty(SYSTEM_PROP_KEY_FUNCTION_NAME);
+    private boolean checkForBeanNameInEnvVars() {
+        String functionName = System.getenv(ENV_VAR_FUNCTION_NAME);
         if (functionName != null) {
             this.functionName = functionName;
             return true;
         }
-        String consumerName = System.getProperty(SYSTEM_PROP_KEY_CONSUMER_NAME);
+        String consumerName = System.getenv(ENV_VAR_CONSUMER_NAME);
         if (consumerName != null) {
             this.consumerName = consumerName;
             return true;
         }
-        String supplierName = System.getProperty(SYSTEM_PROP_KEY_SUPPLIER_NAME);
+        String supplierName = System.getenv(ENV_VAR_SUPPLIER_NAME);
         if (supplierName != null) {
             this.supplierName = supplierName;
             return true;

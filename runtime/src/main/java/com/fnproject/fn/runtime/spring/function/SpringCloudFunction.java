@@ -8,9 +8,9 @@ import reactor.core.publisher.Flux;
 import java.util.function.Function;
 
 public class SpringCloudFunction extends SpringCloudMethod {
-    private Function<Object, Object> function;
+    private Function<?, ?> function;
 
-    public SpringCloudFunction(Function<Object, Object> function, FunctionInspector inspector) {
+    public SpringCloudFunction(Function<?, ?> function, FunctionInspector inspector) {
         super(inspector);
         this.function = function;
     }
@@ -27,6 +27,6 @@ public class SpringCloudFunction extends SpringCloudMethod {
 
     @Override
     public Flux<?> invoke(Object... userFunctionParams) {
-        return (Flux<?>) function.apply(userFunctionParams[0]);
+        return (Flux<?>) ((Function<Object, Object>) function).apply(userFunctionParams[0]);
     }
 }

@@ -1,12 +1,9 @@
-package com.fnproject.fn.runtime.spring.testfns;
+package com.fnproject.fn.examples;
 
 import com.fnproject.fn.api.FnConfiguration;
 import com.fnproject.fn.api.RuntimeContext;
 import com.fnproject.fn.runtime.spring.SpringCloudFunctionInvoker;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.function.context.ContextFunctionCatalogAutoConfiguration;
-import org.springframework.cloud.function.context.FunctionInspector;
-import org.springframework.cloud.function.context.FunctionScan;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -19,47 +16,32 @@ import java.util.function.Supplier;
 @Configuration
 @Import(ContextFunctionCatalogAutoConfiguration.class)
 public class FunctionConfig {
-    public static String consumedValue;
-    public static String suppliedValue = "Hello";
-
     @FnConfiguration
     public static void configure(RuntimeContext ctx) {
         ctx.setInvoker(new SpringCloudFunctionInvoker(FunctionConfig.class));
     }
+
+    // Empty entrypoint that isn't used but necessary for the EntryPoint. Our invoker ignores this and loads our own
+    // function to invoke
     public void handleRequest() { }
 
     @Bean
     public Supplier<String> supplier() {
-        return () -> suppliedValue;
+        return () -> "hello";
     }
 
     @Bean
     public Consumer<String> consumer() {
-        return (str) -> consumedValue = str;
+        return System.out::println;
     }
 
     @Bean
     public Function<String, String> function() {
-        return String::toLowerCase;
-    }
-    @Bean
-    public Function<String, String> upperCaseFunction() {
         return String::toUpperCase;
     }
 
     @Bean
-    public String notAFunction() { return "NotAFunction"; }
-
-    // Empty entrypoint that isn't used but necessary for the EntryPoint. Our invoker ignores this and loads our own
-    // function to invoke
-
-    public static class Name {
-        public final String first;
-        public final String last;
-
-        public Name(String first, String last) {
-            this.first = first;
-            this.last = last;
-        }
+    public Function<String, String> lowerCase() {
+        return String::toLowerCase;
     }
 }

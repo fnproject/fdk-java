@@ -2,7 +2,9 @@ package com.fnproject.fn.runtime.spring;
 
 import com.fnproject.fn.runtime.spring.function.SpringCloudMethod;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.contrib.java.lang.system.EnvironmentVariables;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -18,6 +20,9 @@ import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SpringCloudFunctionLoaderTests {
+    @Rule
+    public final EnvironmentVariables environmentVariables = new EnvironmentVariables();
+
     private SpringCloudFunctionLoader loader;
     @Mock
     private FunctionCatalog catalog;
@@ -26,13 +31,6 @@ public class SpringCloudFunctionLoaderTests {
     public void setUp() {
         loader = new SpringCloudFunctionLoader(catalog, null);
         setUpCatalogToReturnNullForLookupByDefault();
-        clearFunctionSystemProperties();
-    }
-
-    private void clearFunctionSystemProperties() {
-        System.clearProperty("function.name");
-        System.clearProperty("consumer.name");
-        System.clearProperty("supplier.name");
     }
 
     private void setUpCatalogToReturnNullForLookupByDefault() {
@@ -66,25 +64,26 @@ public class SpringCloudFunctionLoaderTests {
     }
 
     @Test
-    public void shouldLoadUserSpecifiedSupplierInSystemPropsOverDefaultFunctionIsSpecified() {
+    public void shouldLoadUserSpecifiedSupplierInEnvVarOverDefaultFunction() {
         String supplierBeanName = "mySupplier";
         Supplier<Object> supplier = () -> "x";
         Function<Object, Object> function = (x) -> x;
 
-        System.setProperty("supplier.name", supplierBeanName);
+        setSupplierEnvVar(supplierBeanName);
         stubCatalogToReturnFunction(function);
         stubCatalogToReturnSupplier(supplierBeanName, supplier);
 
         assertThat(getDiscoveredFunction().getTargetClass()).isEqualTo(supplier.getClass());
     }
 
+
     @Test
-    public void shouldLoadUserSpecifiedConsumerInSystemPropsOverDefaultFunctionIsSpecified() {
+    public void shouldLoadUserSpecifiedConsumerInEnvVarOverDefaultFunction() {
         String beanName = "myConsumer";
         Consumer<Object> consumer = (x) -> {};
         Function<Object, Object> function = (x) -> x;
 
-        System.setProperty("consumer.name", beanName);
+        setConsumerEnvVar(beanName);
         stubCatalogToReturnFunction(function);
         stubCatalogToReturnConsumer(beanName, consumer);
 
@@ -92,12 +91,12 @@ public class SpringCloudFunctionLoaderTests {
     }
 
     @Test
-    public void shouldLoadUserSpecifiedFunctionOverDefaultFunction() {
+    public void shouldLoadUserSpecifiedFunctionInEnvVarOverDefaultFunction() {
         String functionBeanName = "myFunction";
         Function<Object, Object> defaultFunction = (x) -> x;
         Function<Object, Object> myFunction = (x) -> x.toString();
 
-        System.setProperty("function.name", functionBeanName);
+        setFunctionEnvVar(functionBeanName);
         stubCatalogToReturnFunction(defaultFunction);
         stubCatalogToReturnFunction(functionBeanName, myFunction);
 
@@ -128,6 +127,17 @@ public class SpringCloudFunctionLoaderTests {
         stubCatalogToReturnConsumer("consumer", consumer);
     }
 
+    private void setFunctionEnvVar(String beanName) {
+        environmentVariables.set(SpringCloudFunctionLoader.ENV_VAR_FUNCTION_NAME, beanName);
+    }
+
+    private void setConsumerEnvVar(String beanName) {
+        environmentVariables.set(SpringCloudFunctionLoader.ENV_VAR_CONSUMER_NAME, beanName);
+    }
+
+    private void setSupplierEnvVar(String supplierBeanName) {
+        environmentVariables.set(SpringCloudFunctionLoader.ENV_VAR_SUPPLIER_NAME, supplierBeanName);
+    }
 
     private SpringCloudMethod getDiscoveredFunction() {
         loader.loadFunction();

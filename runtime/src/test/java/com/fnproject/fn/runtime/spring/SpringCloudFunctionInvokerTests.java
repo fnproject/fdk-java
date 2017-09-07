@@ -1,33 +1,66 @@
 package com.fnproject.fn.runtime.spring;
 
 import com.fnproject.fn.api.*;
-import com.fnproject.fn.runtime.*;
-import com.fnproject.fn.runtime.spring.testfns.FunctionConfig;
-import org.junit.Ignore;
-import org.junit.Rule;
+import com.fnproject.fn.runtime.FunctionLoader;
+import com.fnproject.fn.runtime.FunctionRuntimeContext;
+import com.fnproject.fn.runtime.QueryParametersImpl;
+import com.fnproject.fn.runtime.ReadOnceInputEvent;
+import com.fnproject.fn.runtime.spring.function.SpringCloudFunction;
+import org.apache.commons.io.input.NullInputStream;
+import org.junit.Before;
 import org.junit.Test;
-import org.springframework.util.ClassUtils;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.internal.matchers.Not;
+import org.mockito.junit.MockitoJUnitRunner;
+import reactor.core.publisher.Flux;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.util.Collections;
-import java.util.Optional;
+import java.util.Arrays;
+import java.util.List;
+import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 
 public class SpringCloudFunctionInvokerTests {
-    @Rule
-    public final FnTestHarness fn = new FnTestHarness();
+    private SpringCloudFunctionInvoker invoker;
+
+    @Before
+    public void setUp() {
+        invoker = new SpringCloudFunctionInvoker((SpringCloudFunctionLoader) null);
+    }
 
     @Test
-    public void shouldInvokeFunction() throws IOException {
-        fn.givenDefaultEvent().withBody("HELLO").enqueue();
+    public void invokesFunctionWithEmptyFlux() {
+        Function<Flux<String>, Flux<String>> fn = x -> x;
+        SpringCloudFunction fnWrapper = new SpringCloudFunction(fn, new SimpleFunctionInspector());
 
-        fn.thenRun(FunctionConfig.class, "handleRequest");
+        Object result = invoker.tryInvoke(fnWrapper, new Object[0]);
 
-        String output = fn.getStdOutAsString();
-        assertThat(output).isEqualTo("hello");
+        assertThat(result).isNull();
     }
-}
 
+    @Test
+    public void invokesFunctionWithFluxOfSingleItem() {
+        Function<Flux<String>, Flux<String>> fn = x -> x;
+        SpringCloudFunction fnWrapper = new SpringCloudFunction(fn, new SimpleFunctionInspector());
+
+        Object result = invoker.tryInvoke(fnWrapper, new Object[]{ "hello" });
+
+        assertThat(result).isInstanceOf(String.class);
+        assertThat(result).isEqualTo("hello");
+    }
+
+    @Test
+    public void invokesFunctionWithFluxOfMultipleItems() {
+        Function<Flux<String>, Flux<String>> fn = x -> x;
+        SpringCloudFunction fnWrapper = new SpringCloudFunction(fn, new SimpleFunctionInspector());
+
+        Object result = invoker.tryInvoke(fnWrapper, new Object[]{ Arrays.asList("hello", "world") });
+
+        assertThat(result).isInstanceOf(List.class);
+        assertThat((List) result).containsSequence("hello", "world");
+    }
+
+}

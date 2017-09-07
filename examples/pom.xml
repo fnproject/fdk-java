@@ -22,6 +22,7 @@
         <module>regex-query</module>
         <module>qr-code</module>
         <module>async-thumbnails</module>
+        <module>spring-fn</module>
     </modules>
 
     <build>
