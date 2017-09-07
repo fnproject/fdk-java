@@ -15,14 +15,9 @@ jobs:
       - checkout
       - restore_cache:
           key: mvn-cache
-
       - run:
-          name: Build and Package. (without tests)
-          command: mvn package -DskipTests
-
-      - run:
-          name: Run unit tests
-          command: mvn test
+          name: Build
+          command: mvn package
       - store_test_results:
           path: runtime/target/surefire-reports
       - store_test_results:
@@ -46,6 +41,7 @@ jobs:
       - run:
          name: Update Docker to latest
          command: ./.circleci/install-docker.sh
+
       - run:
          name: Login to Docker
          command: docker login -u $DOCKER_USER -p $DOCKER_PASS
