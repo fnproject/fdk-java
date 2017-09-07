@@ -11,6 +11,7 @@ public class CompleterFunction {
         try {
             return rt.supply(() -> { Thread.sleep(10000); return 42; }).get(1000, TimeUnit.MILLISECONDS);
         } catch(TimeoutException t) {
+            System.err.println("Caught timeout");
             return 20;
         }
     }
