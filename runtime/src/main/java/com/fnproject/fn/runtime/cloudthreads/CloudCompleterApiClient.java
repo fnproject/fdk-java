@@ -213,7 +213,7 @@ public class CloudCompleterApiClient implements CompleterClient {
 
         try (HttpClient.HttpResponse response = httpClient.execute(req)) {
             if (response.getStatusCode() == HTTP_CODE_REQUEST_TIMEOUT) {
-                throw new TimeoutException("Timed out waiting for completion");
+                throw new TimeoutException("Timed out waiting getting stage from completer service");
             }
             validateSuccessful(response);
 
@@ -247,7 +247,7 @@ public class CloudCompleterApiClient implements CompleterClient {
             return waitForCompletion(threadId, id, ignored, 0, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
             // should never happen if completer's default timeout is larger than fn invocation timeout
-            throw new PlatformException("Request to completer service timed out");
+            throw new PlatformException(e);
         }
     }
 
