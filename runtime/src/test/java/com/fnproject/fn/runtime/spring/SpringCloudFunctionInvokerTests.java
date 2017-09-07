@@ -33,8 +33,7 @@ public class SpringCloudFunctionInvokerTests {
 
     @Test
     public void invokesFunctionWithEmptyFlux() {
-        Function<Flux<String>, Flux<String>> fn = x -> x;
-        SpringCloudFunction fnWrapper = new SpringCloudFunction(fn, new SimpleFunctionInspector());
+        SpringCloudFunction fnWrapper = new SpringCloudFunction(x -> x, new SimpleFunctionInspector());
 
         Object result = invoker.tryInvoke(fnWrapper, new Object[0]);
 
@@ -43,8 +42,7 @@ public class SpringCloudFunctionInvokerTests {
 
     @Test
     public void invokesFunctionWithFluxOfSingleItem() {
-        Function<Flux<String>, Flux<String>> fn = x -> x;
-        SpringCloudFunction fnWrapper = new SpringCloudFunction(fn, new SimpleFunctionInspector());
+        SpringCloudFunction fnWrapper = new SpringCloudFunction(x -> x, new SimpleFunctionInspector());
 
         Object result = invoker.tryInvoke(fnWrapper, new Object[]{ "hello" });
 
@@ -54,8 +52,7 @@ public class SpringCloudFunctionInvokerTests {
 
     @Test
     public void invokesFunctionWithFluxOfMultipleItems() {
-        Function<Flux<String>, Flux<String>> fn = x -> x;
-        SpringCloudFunction fnWrapper = new SpringCloudFunction(fn, new SimpleFunctionInspector());
+        SpringCloudFunction fnWrapper = new SpringCloudFunction(x -> x, new SimpleFunctionInspector());
 
         Object result = invoker.tryInvoke(fnWrapper, new Object[]{ Arrays.asList("hello", "world") });
 

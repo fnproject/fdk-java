@@ -41,24 +41,34 @@ public class SpringCloudFunctionInvoker extends MethodFunctionInvoker implements
     }
 
     protected Object tryInvoke(SpringCloudMethod method, Object[] userFunctionParams) {
-        return convertFromFlux(method.invoke(convertToFlux(userFunctionParams)));
+        Object userFunctionParam = null;
+        if (userFunctionParams.length > 0) {
+            userFunctionParam = userFunctionParams[0];
+        }
+        Flux<?> input = convertToFlux(userFunctionParams);
+        Flux<?> result = method.invoke(input);
+        return convertFromFlux(userFunctionParam, result);
     }
 
-    private Object convertFromFlux(Flux<?> output) {
+    private Object convertFromFlux(Object preFluxifiedInput, Flux<?> output) {
         List<Object> result = new ArrayList<>();
         for (Object val : output.toIterable()) {
             result.add(val);
         }
         if (result.isEmpty()) {
             return null;
-        } else if (result.size() == 1) {
+        } else if (isSingleValue(preFluxifiedInput) && result.size() == 1) {
             return result.get(0);
         } else {
             return result;
         }
     }
 
-    private Object convertToFlux(Object[] params) {
+    private boolean isSingleValue(Object input) {
+        return !(input instanceof Collection);
+    }
+
+    private Flux<?> convertToFlux(Object[] params) {
         if (params.length == 0) {
             return Flux.empty();
         }

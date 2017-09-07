@@ -7,6 +7,7 @@ import com.fnproject.fn.runtime.spring.function.SpringCloudSupplier;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.function.context.FunctionInspector;
 import org.springframework.cloud.function.registry.FunctionCatalog;
+import reactor.core.publisher.Flux;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -24,9 +25,9 @@ public class SpringCloudFunctionLoader {
     private final FunctionCatalog catalog;
     private final FunctionInspector inspector;
 
-    private Function<Object, Object> function;
-    private Consumer<Object> consumer;
-    private Supplier<Object> supplier;
+    private Function<Flux<?>, Flux<?>> function;
+    private Consumer<Flux<?>> consumer;
+    private Supplier<Flux<?>> supplier;
     private String functionName;
     private String supplierName;
     private String consumerName;

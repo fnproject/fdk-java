@@ -3,12 +3,8 @@ package com.fnproject.fn.runtime.spring.testfns;
 import com.fnproject.fn.api.FnConfiguration;
 import com.fnproject.fn.api.RuntimeContext;
 import com.fnproject.fn.runtime.spring.SpringCloudFunctionInvoker;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.function.context.ContextFunctionCatalogAutoConfiguration;
-import org.springframework.cloud.function.context.FunctionInspector;
-import org.springframework.cloud.function.context.FunctionScan;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
@@ -19,9 +15,6 @@ import java.util.function.Supplier;
 @Configuration
 @Import(ContextFunctionCatalogAutoConfiguration.class)
 public class FunctionConfig {
-    public static String consumedValue;
-    public static String suppliedValue = "Hello";
-
     @FnConfiguration
     public static void configure(RuntimeContext ctx) {
         ctx.setInvoker(new SpringCloudFunctionInvoker(FunctionConfig.class));
@@ -30,12 +23,12 @@ public class FunctionConfig {
 
     @Bean
     public Supplier<String> supplier() {
-        return () -> suppliedValue;
+        return () -> "Hello";
     }
 
     @Bean
     public Consumer<String> consumer() {
-        return (str) -> consumedValue = str;
+        return System.out::println;
     }
 
     @Bean

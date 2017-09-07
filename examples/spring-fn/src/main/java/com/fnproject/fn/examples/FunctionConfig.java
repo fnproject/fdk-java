@@ -44,4 +44,9 @@ public class FunctionConfig {
     public Function<String, String> lowerCase() {
         return String::toLowerCase;
     }
+
+    @Bean
+    public Function<String, String> upperCase() {
+        return String::toUpperCase;
+    }
 }
