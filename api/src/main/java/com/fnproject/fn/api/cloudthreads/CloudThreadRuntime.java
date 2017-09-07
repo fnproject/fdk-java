@@ -166,9 +166,8 @@ public interface CloudThreadRuntime extends Serializable {
      */
     CloudFuture<Void> allOf(CloudFuture<?>... cloudFutures);
 
-
     /**
-     * Wait any of a list of tasks to complete
+     * Wait for any of a list of tasks to complete
      * <blockquote><pre>{@code
      *         CloudThreadRuntime rt = CloudThreads.currentRuntime();
      *         CloudFuture<Integer> f1 = rt.delay(5, TimeUnit.SECONDS).thenApply((ignored)-> 10);
@@ -186,4 +185,40 @@ public interface CloudThreadRuntime extends Serializable {
      */
     CloudFuture<Object> anyOf(CloudFuture<?>... cloudFutures);
 
+    /**
+     * Represents the possible end states of a Cloud Thread object, i.e. of the whole collection of tasks in the flow.
+     * <ul>
+     * <li>UNKNOWN indicates that the state of the cloud thread is unknown or invalid</li>
+     * <li>SUCCEEDED indicates that the cloud thread ran to completion (i.e. all stages completed successfully or exceptionally)</li>
+     * <li>FAILED indicates that the cloud thread failed during its execution, e.g. due to corrupted internal state</li>
+     * <li>CANCELLED indicates that the cloud thread was cancelled by the user</li>
+     * <li>KILLED indicates that the cloud thread was killed by the user</li>
+     * </ul>
+     */
+    enum CloudThreadState {
+        UNKNOWN,
+        SUCCEEDED,
+        FAILED,
+        CANCELLED,
+        KILLED;
+    }
+
+    /**
+     * Adds a termination hook that will be executed upon completion of the whole cloud thread; the provided hook will
+     * received input according to how the cloud thread terminated.
+     * <p>
+     * The framework will make a best effort attempt to execute the termination hooks in LIFO order with respect to when
+     * they were added.
+     * <blockquote><pre>{@code
+     *         CloudThreadRuntime rt = CloudThreads.currentRuntime();
+     *         rt.addTerminationHook( (ignored) -> { System.err.println("Cloud thread terminated"); } )
+     *           .addTerminationHook( (endState) -> { System.err.println("End state was " + endState.asText()); } );
+     * }</pre></blockquote>
+     * This example will first run a stage that prints the end state, and then run a stage that prints 'Cloud thread
+     * terminated'.
+     *
+     * @param hook The code to execute
+     * @return This same CloudThreadRuntime, so that calls can be chained
+     */
+    CloudThreadRuntime addTerminationHook(CloudThreads.SerConsumer<CloudThreadState> hook);
 }

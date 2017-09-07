@@ -185,6 +185,12 @@ public final class RemoteCloudThreadRuntime implements CloudThreadRuntime, Seria
         CompletionId cid = getClient().anyOf(threadId, cids);
         return new RemoteCloudFuture<>(cid);
     }
+
+    @Override
+    public CloudThreadRuntime addTerminationHook(CloudThreads.SerConsumer<CloudThreadState> hook) {
+        getClient().addTerminationHook(threadId, hook);
+        return this;
+    }
 }
 
 

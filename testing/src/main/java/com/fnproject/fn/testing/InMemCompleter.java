@@ -19,6 +19,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.regex.Matcher;
@@ -215,8 +216,8 @@ class InMemCompleter implements CompleterClient {
         if (g == null) {
             throw new PlatformException("unknown graph " + t.getId());
         }
-        if (g.complete.get()) {
-            throw new PlatformException("graph already completed");
+        if (g.mainFinished.get()) {
+            throw new PlatformException("graph already run");
         }
         return act.apply(g);
     }
@@ -396,6 +397,25 @@ class InMemCompleter implements CompleterClient {
         withActiveGraph(threadId, Graph::commit);
     }
 
+    @Override
+    public void addTerminationHook(ThreadId threadId, Serializable code) {
+        withActiveGraph(threadId, (g) -> {
+            g.addTerminationHook(serializeClosure(code));
+
+            return null;
+        });
+    }
+
+
+    private static class TerminationHook {
+        private final CompletionId id;
+        private final Datum.Blob code;
+
+        private TerminationHook(CompletionId id, Datum.Blob code) {
+            this.id = id;
+            this.code = code;
+        }
+    }
 
     class Graph {
         private final String functionId;
@@ -404,7 +424,10 @@ class InMemCompleter implements CompleterClient {
         private final AtomicInteger nodeCount = new AtomicInteger();
         private final AtomicInteger activeCount = new AtomicInteger();
         private final Map<CompletionId, Node> nodes = new ConcurrentHashMap<>();
-        private AtomicBoolean complete = new AtomicBoolean(false);
+        private final AtomicBoolean mainFinished = new AtomicBoolean(false);
+        private final AtomicReference<CloudThreadRuntime.CloudThreadState> terminationSTate = new AtomicReference<>();
+        private final AtomicBoolean complete = new AtomicBoolean(false);
+        private final List<TerminationHook> terminationHooks = Collections.synchronizedList(new ArrayList<>());
 
         Graph(String functionId, ThreadId graphId) {
             this.functionId = functionId;
@@ -412,12 +435,28 @@ class InMemCompleter implements CompleterClient {
         }
 
         boolean isCompleted() {
-            return committed.get() && activeCount.get() == 0;
+            return complete.get();
         }
 
         private void checkCompletion() {
-            if (committed.get() && activeCount.get() == 0) {
+            if (!mainFinished.get()) {
+                if (committed.get() && activeCount.get() == 0) {
+                    mainFinished.set(true);
+                    workShutdown();
+                }
+            }
+        }
+
+        private void workShutdown() {
+
+            if (terminationHooks.size() != 0) {
+                TerminationHook hook = terminationHooks.remove(0);
+                CompletableFuture.runAsync(() -> {
+                    completerInvokeClient.invokeStage(functionId, graphId, hook.id, hook.code, Arrays.asList(Result.success(new Datum.StateDatum(CloudThreadRuntime.CloudThreadState.SUCCEEDED))));
+                }).whenComplete((r, e) -> this.workShutdown());
+            } else {
                 complete.set(true);
+
             }
         }
 
@@ -529,6 +568,11 @@ class InMemCompleter implements CompleterClient {
             return (node, trigger) -> trigger.thenApplyAsync((input) -> {
                 return completerInvokeClient.invokeStage(functionId, graphId, node.id, closure, input);
             }, faasExecutor);
+        }
+
+        private void addTerminationHook(Datum.Blob closure) {
+            this.terminationHooks.add(0,new TerminationHook(newNodeId(), closure));
+
         }
 
 
