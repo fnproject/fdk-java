@@ -1,5 +1,5 @@
 name: fn-example/spring-fn
-version: 0.0.16
+version: 0.0.1
 runtime: java
 cmd: com.fnproject.fn.examples.FunctionConfig::handleRequest
 format: http
