@@ -31,6 +31,7 @@ public class CloudCompleterApiClient implements CompleterClient {
     public static final String STAGE_ID_HEADER = HEADER_PREFIX + "StageID";
     public static final String METHOD_HEADER = HEADER_PREFIX + "Method";
     public static final String USER_HEADER_PREFIX = HEADER_PREFIX + "Header-";
+    public static final String STATE_TYPE_HEADER = HEADER_PREFIX + "Statetype";
 
     public static final String CONTENT_TYPE_HEADER = "Content-Type";
     public static final String CONTENT_TYPE_JAVA_OBJECT = "application/java-serialized-object";
@@ -40,6 +41,7 @@ public class CloudCompleterApiClient implements CompleterClient {
     public static final String DATUM_TYPE_BLOB = "blob";
     public static final String DATUM_TYPE_EMPTY = "empty";
     public static final String DATUM_TYPE_ERROR = "error";
+    public static final String DATUM_TYPE_STATE = "state";
     public static final String DATUM_TYPE_STAGEREF = "stageref";
     public static final String DATUM_TYPE_HTTP_REQ = "httpreq";
     public static final String DATUM_TYPE_HTTP_RESP = "httpresp";
@@ -280,6 +282,11 @@ public class CloudCompleterApiClient implements CompleterClient {
         }
     }
 
+    @Override
+    public void addTerminationHook(ThreadId threadId, Serializable code) {
+        requestTerminationHook("/graph/" + threadId.getId() + "/terminationHook", Function.identity(), code);
+    }
+
     private CompletionId chainThis(ThreadId threadId, CompletionId completionId, String op, Serializable fn) {
         return requestCompletionWithBody("/graph/" + threadId.getId() + "/stage/" + completionId.getId() + "/" + op, Function.identity(), fn);
     }
@@ -326,6 +333,26 @@ public class CloudCompleterApiClient implements CompleterClient {
                     .withHeader(CONTENT_TYPE_HEADER, CONTENT_TYPE_JAVA_OBJECT)
                     .withHeader(DATUM_TYPE_HEADER, DATUM_TYPE_BLOB)
                     .withBody(serBytes)));
+        } catch (IOException e) {
+            throw new LambdaSerializationException("Failed to serialize the lambda: " + e.getMessage());
+        }
+    }
+
+    private void requestTerminationHook(String url, Function<HttpClient.HttpRequest, HttpClient.HttpRequest> fn, Serializable ser) {
+        try {
+            byte[] serBytes = SerUtils.serialize(ser);
+            HttpClient.HttpRequest req = fn.apply(
+                    HttpClient.preparePost(apiUrlBase + url)
+                            .withHeader(CONTENT_TYPE_HEADER, CONTENT_TYPE_JAVA_OBJECT)
+                            .withHeader(DATUM_TYPE_HEADER, DATUM_TYPE_BLOB)
+                            .withBody(serBytes));
+            try (com.fnproject.fn.runtime.cloudthreads.HttpClient.HttpResponse resp = httpClient.execute(req)) {
+                validateSuccessful(resp);
+            } catch (PlatformException e) {
+                throw e;
+            } catch (Exception e) {
+                throw new PlatformException("Failed to get response from completer: " + e.getMessage());
+            }
         } catch (IOException e) {
             throw new LambdaSerializationException("Failed to serialize the lambda: " + e.getMessage());
         }

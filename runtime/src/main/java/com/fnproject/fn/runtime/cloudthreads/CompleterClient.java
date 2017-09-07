@@ -1,6 +1,8 @@
 package com.fnproject.fn.runtime.cloudthreads;
 
 import com.fnproject.fn.api.Headers;
+import com.fnproject.fn.api.cloudthreads.CloudThreadRuntime;
+import com.fnproject.fn.api.cloudthreads.CloudThreads;
 import com.fnproject.fn.api.cloudthreads.HttpMethod;
 
 import java.io.Serializable;
@@ -85,5 +87,7 @@ public interface CompleterClient {
     CompletionId thenCombine(ThreadId threadId, CompletionId completionId, Serializable fn, CompletionId alternate);
 
     void commit(ThreadId threadId);
+
+    void addTerminationHook(ThreadId threadId, Serializable code);
 
 }

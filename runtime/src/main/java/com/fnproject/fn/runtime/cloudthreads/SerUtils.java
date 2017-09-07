@@ -64,6 +64,7 @@ final class SerUtils {
     FnProject-DatumType: blob
     FnProject-DatumType: empty
     FnProject-DatumType: error
+    FnProject-DatumType: state
     FnProject-DatumType: stageref
     FnProject-DatumType: httpreq
     FnProject-DatumType: httpresp
@@ -111,6 +112,30 @@ final class SerUtils {
                 default:
                     return new ContentPart(dt, contentType, new PlatformException(errorMessage));
             }
+        });
+
+        registerDeserializer(DATUM_TYPE_STATE, (dt, h, is) -> {
+            String stateType = h.getHeaderValue(STATE_TYPE_HEADER).orElseThrow(() -> new Deserializer.DeserializeException("Missing state type header"));
+
+            CloudThreadRuntime.CloudThreadState state;
+            switch (stateType) {
+                case "succeeded":
+                    state = CloudThreadRuntime.CloudThreadState.SUCCEEDED;
+                    break;
+                case "failed":
+                    state = CloudThreadRuntime.CloudThreadState.FAILED;
+                    break;
+                case "cancelled":
+                    state = CloudThreadRuntime.CloudThreadState.CANCELLED;
+                    break;
+                case "killed":
+                    state = CloudThreadRuntime.CloudThreadState.KILLED;
+                    break;
+                default:
+                    state = CloudThreadRuntime.CloudThreadState.UNKNOWN;
+
+            }
+            return new ContentPart(dt, null, state);
         });
 
         registerDeserializer(DATUM_TYPE_HTTP_RESP, (dt, h, is) -> {
