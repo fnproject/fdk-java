@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -201,41 +203,51 @@ public class CloudCompleterApiClient implements CompleterClient {
 
     // wait for completion  -> result
     @Override
-    public Object waitForCompletion(ThreadId threadId, CompletionId id, ClassLoader ignored) {
-        while (true) {
-            long time = System.currentTimeMillis();
-            try (HttpClient.HttpResponse response = httpClient.execute(HttpClient
-                    .prepareGet(apiUrlBase + "/graph/" + threadId.getId() + "/stage/" + id.getId()))
-            ) {
-                if (response.getStatusCode() == HTTP_CODE_REQUEST_TIMEOUT) {
-                    long delay = Math.max(0, MAX_POLL_INTERVAL_MS - (System.currentTimeMillis() - time));
-                    Thread.sleep(delay);
-                    continue;
-                }
-                validateSuccessful(response);
+    public Object waitForCompletion(ThreadId threadId, CompletionId id, ClassLoader ignored, long timeout, TimeUnit unit) throws TimeoutException {
+        long timeoutMs = unit.toMillis(timeout);
+        HttpClient.HttpRequest req = HttpClient
+                .prepareGet(apiUrlBase + "/graph/" + threadId.getId() + "/stage/" + id.getId());
+        if (timeoutMs > 0) {
+            req = req.withQueryParam("timeoutMs", Long.toString(timeoutMs));
+        }
 
-                SerUtils.ContentPart result = SerUtils.ContentPart.readFromStream(response);
-
-                // check if the response headers indicate that the response body is an Exception/Error
-                if (resultingInException(response)) {
-                    if (resultingFromExternalFunctionInvocation(response) ||
-                            resultingFromUserException(response) ||
-                            resultingFromExternallyCompletedStage(response)) {
-                        Throwable userException = (Throwable) result.get();
-                        throw new CloudCompletionException(userException);
-                    } else if (resultingFromPlatformError(response)) {
-                        throw (PlatformException) result.get();
-                    }
-                }
-
-                return result.get();
-            } catch (CloudCompletionException e) {
-                throw e;
-            } catch (ClassNotFoundException | IOException | SerUtils.Deserializer.DeserializeException e) {
-                throw new ResultSerializationException("Unable to deserialize result received from the completer service", e);
-            } catch (Exception e) {
-                throw new PlatformException("Request to completer service failed");
+        try (HttpClient.HttpResponse response = httpClient.execute(req)) {
+            if (response.getStatusCode() == HTTP_CODE_REQUEST_TIMEOUT) {
+                throw new TimeoutException("Timed out waiting for completion");
             }
+            validateSuccessful(response);
+
+            SerUtils.ContentPart result = SerUtils.ContentPart.readFromStream(response);
+
+            // check if the response headers indicate that the response body is an Exception/Error
+            if (resultingInException(response)) {
+                if (resultingFromExternalFunctionInvocation(response) ||
+                        resultingFromUserException(response) ||
+                        resultingFromExternallyCompletedStage(response)) {
+                    Throwable userException = (Throwable) result.get();
+                    throw new CloudCompletionException(userException);
+                } else if (resultingFromPlatformError(response)) {
+                    throw (PlatformException) result.get();
+                }
+            }
+
+            return result.get();
+        } catch (CloudCompletionException | TimeoutException e) {
+            throw e;
+        } catch (ClassNotFoundException | IOException | SerUtils.Deserializer.DeserializeException e) {
+            throw new ResultSerializationException("Unable to deserialize result received from the completer service", e);
+        } catch (Exception e) {
+            throw new PlatformException("Request to completer service failed");
+        }
+    }
+
+    @Override
+    public Object waitForCompletion(ThreadId threadId, CompletionId id, ClassLoader ignored){
+        try {
+            return waitForCompletion(threadId, id, ignored, 0, TimeUnit.SECONDS);
+        } catch (TimeoutException e) {
+            // should never happen if completer's default timeout is larger than fn invocation timeout
+            throw new PlatformException("Request to completer service timed out");
         }
     }
 

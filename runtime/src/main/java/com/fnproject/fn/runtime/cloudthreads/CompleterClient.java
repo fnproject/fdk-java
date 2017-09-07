@@ -6,6 +6,8 @@ import com.fnproject.fn.api.cloudthreads.HttpMethod;
 import java.io.Serializable;
 import java.net.URI;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Internal interface to a remote completion service
@@ -48,7 +50,10 @@ public interface CompleterClient {
     CompletionId thenCompose(ThreadId threadId, CompletionId completionId, Serializable fn);
 
     // block (indefinitely) until the completion completes
-    Object waitForCompletion(ThreadId threadID, CompletionId id, ClassLoader loader);
+    Object waitForCompletion(ThreadId threadId, CompletionId id, ClassLoader loader);
+
+    // block until the timeout for the completion to complete and throw a TimeoutException upon reaching timeout
+    Object waitForCompletion(ThreadId threadId, CompletionId id, ClassLoader loader, long timeout, TimeUnit unit) throws TimeoutException;
 
     CompletionId thenAccept(ThreadId threadId, CompletionId completionId, Serializable fn);
 

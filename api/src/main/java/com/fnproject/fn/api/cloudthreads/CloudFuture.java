@@ -2,6 +2,8 @@ package com.fnproject.fn.api.cloudthreads;
 
 import java.io.Serializable;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -339,6 +341,7 @@ public interface CloudFuture<T> extends Serializable {
      */
     <X> CloudFuture<X> handle(CloudThreads.SerBiFunction<? super T, Throwable, ? extends X> fn);
 
+
     /**
      * Handle exceptional completion of this future and convert exceptions to the original type of this future.
      * <p>
@@ -361,7 +364,7 @@ public interface CloudFuture<T> extends Serializable {
      *  });
      * }</pre></blockquote>
      *
-     * @param fn a handler to trap errors .
+     * @param fn a handler to trap errors
      * @return a new future that completes with the original value if this future completes successfully or with the
      *         result of calling {@code fn} on the exception value if it completes exceptionally.
      * @see java.util.concurrent.CompletionStage#exceptionally(Function)
@@ -381,4 +384,36 @@ public interface CloudFuture<T> extends Serializable {
      * @throws CloudCompletionException when this future fails with an exception;
      */
     T get();
+
+
+    /**
+     * Get the result of this future, indicating not to wait over the specified timeout.
+     * <p>
+     * This method blocks until either the current future completes or the given timeout period elapses,
+     * in which case it throws a TimeoutException.
+     * <p>
+     * <em> Warning: </em> This method should be used carefully. Blocking within a fn call (triggered by a HTTP request)
+     * will result in the calling function remaining active while the underlying computation completes.
+     *
+     * @param timeout the time period after which this blocking get may time out
+     * @param unit the time unit of the timeout argument
+     * @return the completed value of this future.
+     * @throws CloudCompletionException when this future fails with an exception;
+     * @throws TimeoutException if the future did not complete within at least the specified timeout
+     */
+    T get(long timeout, TimeUnit unit) throws TimeoutException;
+
+
+    /**
+     * Get the result of this future if completed or the provided value if absent.
+     * <p>
+     * This method returns the result of the current future if it is complete. Otherwise, it returns the given
+     * valueIfAbsent.
+     * <p>
+     *
+     * @param valueIfAbsent the value to return if not completed
+     * @return the value of this future, if completed, else the given valueIfAbsent
+     * @throws CloudCompletionException when this future fails with an exception;
+     */
+    T getNow(T valueIfAbsent);
 }

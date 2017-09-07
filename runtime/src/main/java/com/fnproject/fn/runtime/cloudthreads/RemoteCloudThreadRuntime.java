@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 /**
@@ -120,6 +121,20 @@ public final class RemoteCloudThreadRuntime implements CloudThreadRuntime, Seria
         @Override
         public T get() {
             return (T) getClient().waitForCompletion(threadId, completionId, getClass().getClassLoader());
+        }
+
+        @Override
+        public T get(long timeout, TimeUnit unit) throws TimeoutException {
+           return (T) getClient().waitForCompletion(threadId, completionId, getClass().getClassLoader(), timeout, unit);
+        }
+
+        @Override
+        public T getNow(T valueIfAbsent) {
+            try {
+                return get(1, TimeUnit.SECONDS);
+            } catch (TimeoutException e) {
+                return valueIfAbsent;
+            }
         }
 
         public String id() {
