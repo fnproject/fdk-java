@@ -1,0 +1,4 @@
+name: tteggel/saga
+version: 0.0.19
+runtime: java
+cmd: com.example.fn.BookingFlow::handleRequest
