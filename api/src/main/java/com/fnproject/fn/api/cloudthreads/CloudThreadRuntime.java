@@ -31,10 +31,13 @@ public interface CloudThreadRuntime extends Serializable {
      * <p>
      * }</pre></blockquote>
      *
-     * @param functionId Function ID of function to tryInvoke - this should have the form APPNAME/FUNCTION_PATH  (e.g. "myapp/path/to/function" )
+     * Function IDs should be of the form "APPID/path/in/app" (without leading slash) where APPID may either be a named application or ".", indicating the appID of the current (calling) function.
+     *
+     * @param functionId Function ID of function to tryInvoke - this should have the form APPNAME/FUNCTION_PATH  (e.g. "myapp/path/to/function"  or "./path/to/function").
      * @param method     HTTP method to invoke function
      * @param headers    Headers to add to the HTTP request representing the function invocation
      * @param data       input data to function as a byte array -
+     *
      * @return a future which completes normally if the function succeeded and fails if it fails
      */
     CloudFuture<HttpResponse> invokeFunction(String functionId, HttpMethod method, Headers headers, byte[] data);
@@ -43,7 +46,7 @@ public interface CloudThreadRuntime extends Serializable {
      * Invoke a function by ID with headers and  an empty body
      * <p>
      *
-     * @param functionId Function ID of function to tryInvoke - this should have the form APPNAME/FUNCTION_PATH  (e.g. "myapp/path/to/function" )
+     * @param functionId Function ID of function to tryInvoke - this should have the form APPNAME/FUNCTION_PATH  (e.g. "myapp/path/to/function"  or "./path/to/function").
      * @param method     HTTP method to invoke function
      * @param headers    Headers to add to the HTTP request representing the function invocation
      * @return a future which completes normally if the function succeeded and fails if it fails
@@ -57,7 +60,7 @@ public interface CloudThreadRuntime extends Serializable {
      * Invoke a function by ID with no headers
      * <p>
      *
-     * @param functionId Function ID of function to tryInvoke - this should have the form APPNAME/FUNCTION_PATH  (e.g. "myapp/path/to/function" )
+     * @param functionId Function ID of function to tryInvoke - this should have the form APPNAME/FUNCTION_PATH  (e.g. "myapp/path/to/function"  or "./path/to/function").
      * @param method     HTTP method to invoke function
      * @return a future which completes normally if the function succeeded and fails if it fails
      * @see #invokeFunction(String, HttpMethod, Headers, byte[])
