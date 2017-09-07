@@ -47,7 +47,13 @@ jobs:
          command: docker login -u $DOCKER_USER -p $DOCKER_PASS
 
       - run:
-          name: Build fn-java-fdk Docker image
+          name: Build fn-java-fdk Docker build image
+          command: |
+            cd build-image
+            docker build -t fnproject/fn-java-fdk:build .
+
+      - run:
+          name: Build fn-java-fdk Docker runtime image
           command: |
             cd runtime
             docker build -t fnproject/fn-java-fdk .
@@ -89,7 +95,13 @@ jobs:
                   deploy
             fi
       - deploy:
-          name: Deploy fn-java-fdk Docker image
+          name: Deploy fn-java-fdk Docker build image
+          command: |
+            if [ "${CIRCLE_BRANCH}" == "master" ]; then
+              docker push fnproject/fn-java-fdk:build
+            fi
+      - deploy:
+          name: Deploy fn-java-fdk Docker runtime image
           command: |
             if [ "${CIRCLE_BRANCH}" == "master" ]; then
               docker push fnproject/fn-java-fdk
