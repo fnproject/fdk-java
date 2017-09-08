@@ -27,7 +27,18 @@ fn apps config set saga COMPELTER_BASE_URL "http://172.17.0.3:8081"
 fn deploy saga
 ```
 
+## Run
 
+Visit `http://localhost:3000/` in a browser.
+
+```sh
+# Run a successful booking:
+cat sample-data.json | fn call saga /saga
+```
+
+You should see some calls appearing on the dashboard.
+
+Use the dashboard to set a 500 response for one of the endpoints and re-run. You should see some compensating actions be performed.
 
 ## Clean Up
 ```sh
