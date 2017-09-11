@@ -1,12 +1,11 @@
 package com.example.fn;
 
-import com.fnproject.fn.api.cloudthreads.CloudThreadRuntime;
-import com.fnproject.fn.api.cloudthreads.CloudThreads;
+import com.fnproject.fn.api.flow.Flow;
+import com.fnproject.fn.api.flow.Flows;
 
 import org.apache.http.client.fluent.Request;
 import org.apache.http.entity.ContentType;
 
-import java.io.IOException;
 import java.io.Serializable;
 
 public class BookingFlow implements Serializable {
@@ -27,87 +26,45 @@ public class BookingFlow implements Serializable {
 
     public void handleRequest(BookingRequest request) {
 
-        CloudThreadRuntime rt = CloudThreads.currentRuntime();
+        Flow rt = Flows.currentFlow();
 
-        rt.supply(bookFlight(request.flightRequest))
+        rt.supply(post("/flight", request.flightRequest))
             .thenCombine(
-                rt.supply(bookHotel(request.hotelRequest)),
-                (hotelConfirmation, flightConfirmation) -> {
+                rt.supply(post("/hotel", request.hotelRequest)),
+                (flightConfirmation, hotelConfirmation) -> {
                     BookingResult r = new BookingResult();
                     r.flightConfirmation = flightConfirmation;
                     r.hotelConfirmation = hotelConfirmation;
                     return r;
             }).thenCombine(
-                    rt.supply(bookCarRental(request.carRentalRequest)),
+                    rt.supply(post("/car", request.carRentalRequest)),
                     (bookingResult, carRentalConfirmation) -> {
                         bookingResult.carRentalConfirmation = carRentalConfirmation;
                         return bookingResult;
             }).whenComplete(
                 (result, exception)  -> {
                     if (exception == null) {
-                        rt.supply(sendConfirmationMail(result));
+                        String message = String.format("Great success! Your trip is all booked. Here are your confirmation numbers - Flight: %s; Hotel: %s; Car Rental: %s.",
+                                result.flightConfirmation, result.hotelConfirmation, result.carRentalConfirmation);
+                        rt.supply(post("/email", message));
                     } else {
                         rt.allOf(
-                            Retry.exponentialWithJitter(cancelCarRental(request.carRentalRequest)),
-                            Retry.exponentialWithJitter(cancelHotel(request.hotelRequest)),
-                            Retry.exponentialWithJitter(cancelFlight(request.flightRequest))
-                    );
+                                Retry.exponentialWithJitter(delete("/car")),
+                                Retry.exponentialWithJitter(delete("/hotel")),
+                                Retry.exponentialWithJitter(delete("/flight"))
+                    ).whenComplete((r,e) -> post("/email", "We failed to books your trip. LOL."));
                 }
         });
     }
 
-    private CloudThreads.SerCallable<String> sendConfirmationMail(BookingResult confirmations) {
-        String message = String.format("Great success! Your trip is all booked. Here are your confirmation numbers:\nFlight: %s\nHotel: %s\nCar Rental: %s",
-                confirmations.flightConfirmation, confirmations.hotelConfirmation, confirmations.carRentalConfirmation);
-        return post("/email", message);
-    }
-
-    private CloudThreads.SerCallable<String>  bookCarRental(String request)  {
-        return post("/car", request);
-    }
-
-    private CloudThreads.SerCallable<String>  bookHotel(String request) {
-        return post("/hotel", request);
-    }
-
-    private CloudThreads.SerCallable<String>  bookFlight(String request) {
-        return post("/flight", request);
-    }
-
-    private CloudThreads.SerCallable<String>  cancelCarRental(String request)  {
-        return delete("/car");
-    }
-
-    private CloudThreads.SerCallable<String>  cancelHotel(String request) {
-        return delete("/hotel");
-    }
-
-    private CloudThreads.SerCallable<String>  cancelFlight(String request) {
-        return delete("/flight");
-    }
-
-    private static CloudThreads.SerCallable<String> post(String path, String body) {
-        return () -> {
-            try {
-                return Request
-                        .Post(API_BASE_URL + path)
+    private static Flows.SerCallable<String> post(String path, String body) {
+        return () -> Request.Post(API_BASE_URL + path)
                         .bodyString("{ \"request\": \"" + body + "\" }", ContentType.APPLICATION_JSON)
-                        .execute().returnContent().asString();
-            } catch (IOException e) {
-                throw new RuntimeException("Failed to make HTTP request.");
-            }
-        };
+                        .execute().returnContent().asString().replace("\"", "");
     }
 
-    private static CloudThreads.SerCallable<String> delete(String path) {
-       return () -> {
-            try {
-                return Request
-                        .Delete(API_BASE_URL + path)
+    private static Flows.SerCallable<String> delete(String path) {
+        return () -> Request.Delete(API_BASE_URL + path)
                         .execute().returnContent().asString();
-            } catch (IOException e) {
-                throw new RuntimeException("Failed to make HTTP request.");
-            }
-        };
     }
 }
