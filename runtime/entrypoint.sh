@@ -19,8 +19,8 @@ FUNCTION_ENTRYPOINT="${1}"
 JVM_ARGS=" -XX:+UnlockExperimentalVMOptions "
 JVM_ARGS+="-XX:+UseCGroupMemoryLimitForHeap "
 JVM_ARGS+="-XX:MaxRAMFraction=2 "
-JVM_ARGS+="-XX:+UseSerialGC"
-JVM_ARGS+="-Xshare:on"
+JVM_ARGS+="-XX:+UseSerialGC "
+JVM_ARGS+="-Xshare:on "
 
 exec java \
     ${JVM_ARGS} \
