@@ -137,11 +137,11 @@ class FnHttpEventBuilder {
     public Map<String, String> currentEventEnv() {
         verify();
         Map<String, String> env = new HashMap<>();
-        headers.forEach((k, v) -> env.put("HEADER_" + k.toUpperCase().replaceAll("-", "_"), v));
-        env.put("METHOD", method);
-        env.put("APP_NAME", appName);
-        env.put("ROUTE", route);
-        env.put("REQUEST_URL", requestUrl);
+        headers.forEach((k, v) -> env.put("FN_HEADER_" + k.toUpperCase().replaceAll("-", "_"), v));
+        env.put("FN_METHOD", method);
+        env.put("FN_APP_NAME", appName);
+        env.put("FN_ROUTE", route);
+        env.put("FN_REQUEST_URL", requestUrl);
         return env;
     }
 
@@ -153,14 +153,15 @@ class FnHttpEventBuilder {
 
         inputString.append(method);
         inputString.append(" / HTTP/1.1\r\n");
-        inputString.append("App_name: ").append(appName).append("\r\n");
-        inputString.append("Method: ").append(method).append("\r\n");
-        inputString.append("Route: ").append(route).append("\r\n");
-        inputString.append("Request_url: ").append(requestUrl);
+        inputString.append("Fn_App_name: ").append(appName).append("\r\n");
+        inputString.append("Fn_Method: ").append(method).append("\r\n");
+        inputString.append("Fn_Route: ").append(route).append("\r\n");
+        inputString.append("Fn_Request_url: ").append(requestUrl);
         if (!queryParamsFullString.isEmpty()) {
             inputString.append("?").append(queryParamsFullString);
         }
         inputString.append("\r\n");
+
 
         inputString.append("Content-length: ").append(Integer.toString(contentLength)).append("\r\n");
         headers.forEach((k, v) -> inputString.append(k).append(": ").append(String.join(", ", v)).append("\r\n"));

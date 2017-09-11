@@ -27,12 +27,12 @@ public class HttpEventCodecTest {
             "Accept-Encoding: gzip\n" +
             "User-Agent: useragent\n" +
             "Accept: text/html, text/plain;q=0.9\n" +
-            "Request_url: http//localhost:8080/r/testapp/test\n" +
-            "Route: /test\n" +
-            "Method: POST\n" +
+            "Fn_Request_url: http//localhost:8080/r/testapp/test\n" +
+            "Fn_Route: /test\n" +
+            "Fn_Method: POST\n" +
             "Content-Length: 11\n" +
-            "App_name: testapp\n" +
-            "Call_id: task-id\n" +
+            "Fn_App_name: testapp\n" +
+            "Fn_Call_id: task-id\n" +
             "Myconfig: fooconfig\n" +
             "Content-Type: text/plain\n\n" +
             "Hello World";
@@ -41,12 +41,12 @@ public class HttpEventCodecTest {
     private final String getReq = "GET /test HTTP/1.1\n" +
             "Accept-Encoding: gzip\n" +
             "User-Agent: useragent\n" +
-            "Request_url: http//localhost:8080/r/testapp/test\n" +
-            "Route: /test2\n" +
-            "Method: GET\n" +
+            "Fn_Request_url: http//localhost:8080/r/testapp/test\n" +
+            "Fn_Route: /test2\n" +
+            "Fn_Method: GET\n" +
             "Content-Length: 0\n" +
-            "App_name: testapp\n" +
-            "Task-Id: task-id2\n" +
+            "Fn_App_name: testapp\n" +
+            "Fn_Call_Id: task-id2\n" +
             "Myconfig: fooconfig\n\n";
 
     private final Map<String, String> emptyConfig = new HashMap<>();
@@ -106,10 +106,10 @@ public class HttpEventCodecTest {
     public void shouldRejectMissingHttpHeaders() {
         Map<String, String> requiredHeaders = new HashMap<>();
 
-        requiredHeaders.put("request_url", "request_url");
-        requiredHeaders.put("route", "/route");
-        requiredHeaders.put("method", "GET");
-        requiredHeaders.put("app_name", "app_name");
+        requiredHeaders.put("fn_request_url", "request_url");
+        requiredHeaders.put("fn_route", "/route");
+        requiredHeaders.put("fn_method", "GET");
+        requiredHeaders.put("fn_app_name", "app_name");
 
         for (String key : requiredHeaders.keySet()) {
             Map<String, String> newMap = new HashMap<>(requiredHeaders);
