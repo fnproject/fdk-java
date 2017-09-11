@@ -3,7 +3,7 @@ package com.fnproject.fn.runtime.cloudthreads;
 import java.util.Objects;
 
 /**
- * Globals for injecting testing state into cloudthreads
+ * Globals for injecting testing state into flow
  */
 public class CloudThreadsRuntimeGlobals {
     private static CompleterClientFactory completerClientFactory = null;

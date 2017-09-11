@@ -1,7 +1,7 @@
 package com.fnproject.fn.runtime.cloudthreads;
 
 import com.fnproject.fn.api.*;
-import com.fnproject.fn.api.cloudthreads.*;
+import com.fnproject.fn.api.flow.*;
 import com.fnproject.fn.runtime.exception.FunctionInputHandlingException;
 import com.fnproject.fn.runtime.exception.InternalFunctionInvocationException;
 
@@ -75,19 +75,19 @@ public final class CloudThreadsContinuationInvoker implements FunctionInvoker {
             }
 
             final ThreadId threadId = new ThreadId(graphIdOption.get());
-            CloudThreads.RuntimeSource attachedSource = new CloudThreads.RuntimeSource() {
-                CloudThreadRuntime runtime;
+            Flows.RuntimeSource attachedSource = new Flows.RuntimeSource() {
+                Flow runtime;
 
                 @Override
-                public synchronized CloudThreadRuntime currentRuntime() {
+                public synchronized Flow currentRuntime() {
                     if (runtime == null) {
-                        runtime = new RemoteCloudThreadRuntime(threadId);
+                        runtime = new RemoteFlow(threadId);
                     }
                     return runtime;
                 }
             };
 
-            CloudThreads.setCurrentRuntimeSource(attachedSource);
+            Flows.setCurrentRuntimeSource(attachedSource);
 
 
             try {
@@ -134,20 +134,20 @@ public final class CloudThreadsContinuationInvoker implements FunctionInvoker {
                 });
 
             } finally {
-                CloudThreads.setCurrentRuntimeSource(null);
+                Flows.setCurrentRuntimeSource(null);
             }
 
         } else {
-            CloudThreads.RuntimeSource deferredSource = new CloudThreads.RuntimeSource() {
-                CloudThreadRuntime runtime;
+            Flows.RuntimeSource deferredSource = new Flows.RuntimeSource() {
+                Flow runtime;
 
                 @Override
-                public synchronized CloudThreadRuntime currentRuntime() {
+                public synchronized Flow currentRuntime() {
                     if (runtime == null) {
                         String functionId = evt.getAppName() + evt.getRoute();
                         CompleterClientFactory factory = getOrCreateCompleterClientFactory(completerBaseUrl);
                         final ThreadId threadId = factory.get().createThread(functionId);
-                        runtime = new RemoteCloudThreadRuntime(threadId);
+                        runtime = new RemoteFlow(threadId);
 
                         InvocationListener threadInvocationListener = new InvocationListener() {
                             @Override
@@ -166,7 +166,7 @@ public final class CloudThreadsContinuationInvoker implements FunctionInvoker {
             };
 
             // Not a cloud-threads invocation
-            CloudThreads.setCurrentRuntimeSource(deferredSource);
+            Flows.setCurrentRuntimeSource(deferredSource);
             return Optional.empty();
         }
     }
@@ -190,12 +190,12 @@ public final class CloudThreadsContinuationInvoker implements FunctionInvoker {
         try {
             if (result == null) {
                 return constructEmptyOutputEvent();
-            } else if (result instanceof CloudFuture) {
-                if (!(result instanceof RemoteCloudThreadRuntime.RemoteCloudFuture)) {
+            } else if (result instanceof FlowFuture) {
+                if (!(result instanceof RemoteFlow.RemoteFlowFuture)) {
                     // TODO: bubble up as stage failed exception
                     throw new InternalFunctionInvocationException("Error handling function response", new IllegalStateException("Unsupported cloud future type return by function"));
                 }
-                return constructStageRefOutputEvent((RemoteCloudThreadRuntime.RemoteCloudFuture) result);
+                return constructStageRefOutputEvent((RemoteFlow.RemoteFlowFuture) result);
             } else {
                 return constructJavaObjectOutputEvent(result);
             }
@@ -309,7 +309,7 @@ public final class CloudThreadsContinuationInvoker implements FunctionInvoker {
         return new ContinuationOutputEvent(false, CONTENT_TYPE_JAVA_OBJECT, Collections.singletonMap(DATUM_TYPE_HEADER, DATUM_TYPE_BLOB), serializedException);
     }
 
-    private static OutputEvent constructStageRefOutputEvent(RemoteCloudThreadRuntime.RemoteCloudFuture future) {
+    private static OutputEvent constructStageRefOutputEvent(RemoteFlow.RemoteFlowFuture future) {
         Map<String, String> headers = new HashMap<>();
         headers.put(DATUM_TYPE_HEADER, DATUM_TYPE_STAGEREF);
         headers.put(STAGE_ID_HEADER, future.id());

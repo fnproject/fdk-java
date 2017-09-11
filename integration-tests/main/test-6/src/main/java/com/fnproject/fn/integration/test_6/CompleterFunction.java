@@ -1,7 +1,7 @@
 package com.fnproject.fn.integration.test_6;
 
-import com.fnproject.fn.api.cloudthreads.CloudThreadRuntime;
-import com.fnproject.fn.api.cloudthreads.CloudThreads;
+import com.fnproject.fn.api.flow.Flow;
+import com.fnproject.fn.api.flow.Flows;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -9,7 +9,7 @@ import java.util.concurrent.TimeoutException;
 public class CompleterFunction {
 
     public Integer handleRequest(String input) {
-        CloudThreadRuntime rt = CloudThreads.currentRuntime();
+        Flow rt = Flows.currentRuntime();
         try {
             return rt.supply(() -> {
                 Thread.sleep(10000);

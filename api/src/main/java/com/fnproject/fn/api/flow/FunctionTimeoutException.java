@@ -1,4 +1,4 @@
-package com.fnproject.fn.api.cloudthreads;
+package com.fnproject.fn.api.flow;
 
 /**
  * Exception thrown when a function execution exceeds its configured timeout.

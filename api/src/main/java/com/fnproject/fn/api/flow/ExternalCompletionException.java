@@ -1,4 +1,4 @@
-package com.fnproject.fn.api.cloudthreads;
+package com.fnproject.fn.api.flow;
 
 /**
  * Exception thrown into the graph when an an external future is marked as failed

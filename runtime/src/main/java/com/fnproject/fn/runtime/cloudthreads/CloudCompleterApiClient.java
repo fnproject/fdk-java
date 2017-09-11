@@ -1,7 +1,7 @@
 package com.fnproject.fn.runtime.cloudthreads;
 
 import com.fnproject.fn.api.Headers;
-import com.fnproject.fn.api.cloudthreads.*;
+import com.fnproject.fn.api.flow.*;
 import com.fnproject.fn.runtime.exception.PlatformCommunicationException;
 
 import java.io.IOException;
@@ -227,14 +227,14 @@ public class CloudCompleterApiClient implements CompleterClient {
                         resultingFromUserException(response) ||
                         resultingFromExternallyCompletedStage(response)) {
                     Throwable userException = (Throwable) result.get();
-                    throw new CloudCompletionException(userException);
+                    throw new FlowCompletionException(userException);
                 } else if (resultingFromPlatformError(response)) {
                     throw (PlatformException) result.get();
                 }
             }
 
             return result.get();
-        } catch (CloudCompletionException | TimeoutException e) {
+        } catch (FlowCompletionException | TimeoutException e) {
             throw e;
         } catch (ClassNotFoundException | IOException | SerUtils.Deserializer.DeserializeException e) {
             throw new ResultSerializationException("Unable to deserialize result received from the completer service", e);

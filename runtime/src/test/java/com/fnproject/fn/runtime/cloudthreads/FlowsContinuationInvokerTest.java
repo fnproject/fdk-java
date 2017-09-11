@@ -1,7 +1,7 @@
 package com.fnproject.fn.runtime.cloudthreads;
 
 import com.fnproject.fn.api.*;
-import com.fnproject.fn.api.cloudthreads.*;
+import com.fnproject.fn.api.flow.*;
 import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.runtime.QueryParametersImpl;
 import com.fnproject.fn.runtime.ReadOnceInputEvent;
@@ -25,9 +25,8 @@ import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 
-public class CloudThreadsContinuationInvokerTest {
+public class FlowsContinuationInvokerTest {
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
@@ -42,7 +41,7 @@ public class CloudThreadsContinuationInvokerTest {
         final Integer testValue = 3;
 
         HttpMultipartSerialization ser = new HttpMultipartSerialization()
-                .addJavaEntity((CloudThreads.SerCallable<Integer>) () -> testValue);
+                .addJavaEntity((Flows.SerCallable<Integer>) () -> testValue);
 
         InputEvent event = constructContinuationInputEvent(ser);
 
@@ -65,7 +64,7 @@ public class CloudThreadsContinuationInvokerTest {
         final Integer testValue = 3;
 
         HttpMultipartSerialization ser = new HttpMultipartSerialization()
-                .addJavaEntity((CloudThreads.SerCallable<Integer>) () -> testValue);
+                .addJavaEntity((Flows.SerCallable<Integer>) () -> testValue);
 
         InputEvent event = new InputEventBuilder()
                 .withHeaders(ser.getHeaders())
@@ -87,7 +86,7 @@ public class CloudThreadsContinuationInvokerTest {
         final Integer testValue = 3;
 
         HttpMultipartSerialization ser = new HttpMultipartSerialization()
-                .addJavaEntity((CloudThreads.SerFunction<Integer,Integer>) (x) -> x + testValue)
+                .addJavaEntity((Flows.SerFunction<Integer,Integer>) (x) -> x + testValue)
                 .addJavaEntity(testValue);
 
         InputEvent event = constructContinuationInputEvent(ser);
@@ -111,7 +110,7 @@ public class CloudThreadsContinuationInvokerTest {
         final Integer testValue = 3;
 
         HttpMultipartSerialization ser = new HttpMultipartSerialization()
-                .addJavaEntity((CloudThreads.SerFunction<Integer,Integer>) (x) -> x + testValue);
+                .addJavaEntity((Flows.SerFunction<Integer,Integer>) (x) -> x + testValue);
 
         InputEvent event = constructContinuationInputEvent(ser);
 
@@ -132,7 +131,7 @@ public class CloudThreadsContinuationInvokerTest {
         final Integer testValue = 3;
 
         HttpMultipartSerialization ser = new HttpMultipartSerialization()
-                .addJavaEntity((CloudThreads.SerFunction<Integer,Integer>) (x) -> x + testValue)
+                .addJavaEntity((Flows.SerFunction<Integer,Integer>) (x) -> x + testValue)
                 .addJavaEntity(testValue)
                 .addJavaEntity(testValue);
 
@@ -157,7 +156,7 @@ public class CloudThreadsContinuationInvokerTest {
         final Integer testValue = 3;
 
         HttpMultipartSerialization ser = new HttpMultipartSerialization()
-                .addJavaEntity((CloudThreads.SerSupplier) () -> testValue)
+                .addJavaEntity((Flows.SerSupplier) () -> testValue)
                 .addJavaEntity(testValue);
 
         InputEvent event = constructContinuationInputEvent(ser);
@@ -181,7 +180,7 @@ public class CloudThreadsContinuationInvokerTest {
         final Integer testValue = 3;
 
         HttpMultipartSerialization ser = new HttpMultipartSerialization()
-                .addEntity(CONTENT_TYPE_JAVA_OBJECT, serializeToBytes((CloudThreads.SerCallable<Integer>) () -> testValue), Collections.emptyMap());
+                .addEntity(CONTENT_TYPE_JAVA_OBJECT, serializeToBytes((Flows.SerCallable<Integer>) () -> testValue), Collections.emptyMap());
 
         InputEvent event = constructContinuationInputEvent(ser);
 
@@ -198,7 +197,7 @@ public class CloudThreadsContinuationInvokerTest {
     public void emptyValueCorrectlySerialized() throws IOException, ClassNotFoundException {
         // Given
         HttpMultipartSerialization ser = new HttpMultipartSerialization()
-                .addJavaEntity((CloudThreads.SerFunction) (x) -> x)
+                .addJavaEntity((Flows.SerFunction) (x) -> x)
                 .addEmptyEntity();
 
         InputEvent event = constructContinuationInputEvent(ser);
@@ -222,7 +221,7 @@ public class CloudThreadsContinuationInvokerTest {
 
         String functionResponse = "{ \"some\": \"json\" }";
         HttpMultipartSerialization ser = new HttpMultipartSerialization()
-                .addJavaEntity((CloudThreads.SerFunction<HttpResponse, Boolean>) (result) -> {
+                .addJavaEntity((Flows.SerFunction<HttpResponse, Boolean>) (result) -> {
                     // Expect
                     assertThat(result.getStatusCode()).isEqualTo(200);
                     assertThat(new String(result.getBodyAsBytes())).isEqualTo(functionResponse);
@@ -248,7 +247,7 @@ public class CloudThreadsContinuationInvokerTest {
 
         String functionResponse = "{ \"some\": \"json\" }";
         HttpMultipartSerialization ser = new HttpMultipartSerialization()
-                .addJavaEntity((CloudThreads.SerFunction<HttpResponse, Boolean>) (result) -> {
+                .addJavaEntity((Flows.SerFunction<HttpResponse, Boolean>) (result) -> {
                     // Then
                     assertThat(result.getStatusCode()).isEqualTo(500);
                     assertThat(new String(result.getBodyAsBytes())).isEqualTo(functionResponse);
@@ -277,7 +276,7 @@ public class CloudThreadsContinuationInvokerTest {
 
         String postedResult = "{ \"some\": \"json\" }";
         HttpMultipartSerialization ser = new HttpMultipartSerialization()
-                .addJavaEntity((CloudThreads.SerFunction<Throwable, String>) (result) ->
+                .addJavaEntity((Flows.SerFunction<Throwable, String>) (result) ->
                         new String(((FunctionInvocationException) result).getFunctionResponse().getBodyAsBytes()))
                 .addFnResultEntity(500, headers, "application/json", postedResult);
 
@@ -298,7 +297,7 @@ public class CloudThreadsContinuationInvokerTest {
 
         String postedResult = "{ \"some\": \"json\" }";
         HttpMultipartSerialization ser = new HttpMultipartSerialization()
-                .addJavaEntity((CloudThreads.SerFunction<HttpRequest, Boolean>) (result) -> {
+                .addJavaEntity((Flows.SerFunction<HttpRequest, Boolean>) (result) -> {
                     // Expect
                     assertThat(result.getMethod()).isEqualTo(HttpMethod.POST);
                     assertThat(new String(result.getBodyAsBytes())).isEqualTo(postedResult);
@@ -328,7 +327,7 @@ public class CloudThreadsContinuationInvokerTest {
 
         String postedResult = "{ \"some\": \"json\" }";
         HttpMultipartSerialization ser = new HttpMultipartSerialization()
-                .addJavaEntity((CloudThreads.SerBiFunction<Object, Throwable, String>) (result, error) ->
+                .addJavaEntity((Flows.SerBiFunction<Object, Throwable, String>) (result, error) ->
                                 new String(((ExternalCompletionException) error).getExternalRequest().getBodyAsBytes()))
                 .addEmptyEntity()
                 .addExternalCompletionEntity("POST", headers, "application/json", postedResult);
@@ -349,7 +348,7 @@ public class CloudThreadsContinuationInvokerTest {
 
         HttpMultipartSerialization ser = new HttpMultipartSerialization()
                 .addEntity(CONTENT_TYPE_JAVA_OBJECT,
-                        concat(serializeToBytes((CloudThreads.SerFunction<Integer,Integer>) (x) -> x + testValue), new byte[1024]),
+                        concat(serializeToBytes((Flows.SerFunction<Integer,Integer>) (x) -> x + testValue), new byte[1024]),
                         Collections.singletonMap(DATUM_TYPE_HEADER, DATUM_TYPE_BLOB))
                 .addJavaEntity(testValue);
 
@@ -374,7 +373,7 @@ public class CloudThreadsContinuationInvokerTest {
 
         HttpMultipartSerialization ser = new HttpMultipartSerialization()
                 .addEntity("application/octet-stream",
-                        serializeToBytes((CloudThreads.SerCallable<Integer>) () -> testValue),
+                        serializeToBytes((Flows.SerCallable<Integer>) () -> testValue),
                         Collections.singletonMap(DATUM_TYPE_HEADER, DATUM_TYPE_BLOB));
 
         InputEvent event = constructContinuationInputEvent(ser);
@@ -409,7 +408,7 @@ public class CloudThreadsContinuationInvokerTest {
     public void platformErrorsBecomeExceptions() throws IOException, ClassNotFoundException {
         // Given
         HttpMultipartSerialization ser = new HttpMultipartSerialization()
-                .addJavaEntity((CloudThreads.SerFunction) (x) -> x)
+                .addJavaEntity((Flows.SerFunction) (x) -> x)
                 .addErrorEntity(ERROR_TYPE_FUNCTION_TIMEOUT);
 
         InputEvent event = constructContinuationInputEvent(ser);
@@ -446,7 +445,7 @@ public class CloudThreadsContinuationInvokerTest {
     public void functionInvocationExceptionThrownIfStageResultIsNotSerializable() throws IOException, ClassNotFoundException {
         // Given
         HttpMultipartSerialization ser = new HttpMultipartSerialization()
-                .addJavaEntity((CloudThreads.SerSupplier) Object::new);
+                .addJavaEntity((Flows.SerSupplier) Object::new);
 
         InputEvent event = constructContinuationInputEvent(ser);
 
@@ -471,7 +470,7 @@ public class CloudThreadsContinuationInvokerTest {
         final String exceptionMessage = "oh no";
 
         HttpMultipartSerialization ser = new HttpMultipartSerialization()
-                .addJavaEntity((CloudThreads.SerSupplier) () -> {throw new RuntimeException(exceptionMessage);});
+                .addJavaEntity((Flows.SerSupplier) () -> {throw new RuntimeException(exceptionMessage);});
 
         InputEvent event = constructContinuationInputEvent(ser);
 

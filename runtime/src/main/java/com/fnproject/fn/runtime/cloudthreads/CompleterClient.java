@@ -1,9 +1,7 @@
 package com.fnproject.fn.runtime.cloudthreads;
 
 import com.fnproject.fn.api.Headers;
-import com.fnproject.fn.api.cloudthreads.CloudThreadRuntime;
-import com.fnproject.fn.api.cloudthreads.CloudThreads;
-import com.fnproject.fn.api.cloudthreads.HttpMethod;
+import com.fnproject.fn.api.flow.HttpMethod;
 
 import java.io.Serializable;
 import java.net.URI;

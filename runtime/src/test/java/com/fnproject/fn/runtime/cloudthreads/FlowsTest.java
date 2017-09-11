@@ -1,6 +1,6 @@
 package com.fnproject.fn.runtime.cloudthreads;
 
-import com.fnproject.fn.api.cloudthreads.CloudThreads;
+import com.fnproject.fn.api.flow.Flows;
 import com.fnproject.fn.runtime.FnTestHarness;
 import com.fnproject.fn.runtime.TestSerUtils;
 import com.fnproject.fn.runtime.testfns.CloudThreadsFn;
@@ -26,7 +26,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.*;
 
-public class CloudThreadsTest {
+public class FlowsTest {
 
     @Rule
     public FnTestHarness fnTestHarness = new FnTestHarness();
@@ -99,7 +99,7 @@ public class CloudThreadsTest {
         when(mockCompleterClient.createThread(FUNCTION_ID)).thenReturn(THREAD_ID);
 
         when(mockCompleterClient.supply(eq(THREAD_ID),
-                isA(CloudThreads.SerCallable.class)))
+                isA(Flows.SerCallable.class)))
                 .thenAnswer(invokeContinuation(completionId, continuationResult, "supplyAndGetResult"));
         when(mockCompleterClient.waitForCompletion(eq(THREAD_ID), eq(completionId), eq(getClass().getClassLoader())))
                 .thenAnswer(invocationOnMock -> continuationResult.get());
@@ -110,7 +110,7 @@ public class CloudThreadsTest {
         FnTestHarness.ParsedHttpResponse response = getSingleItem(fnTestHarness.getParsedHttpResponses());
         assertThat(response.getBodyAsString()).isEqualTo(continuationResult.toString());
         verify(mockCompleterClient, times(1))
-                .supply(eq(THREAD_ID), isA(CloudThreads.SerCallable.class));
+                .supply(eq(THREAD_ID), isA(Flows.SerCallable.class));
         verify(mockCompleterClient, times(1))
                 .waitForCompletion(eq(THREAD_ID), eq(completionId), eq(getClass().getClassLoader()));
     }
@@ -132,7 +132,7 @@ public class CloudThreadsTest {
         return fn -> {
             if (fn.getArguments().length == 2) {
 
-                CloudThreads.SerCallable closure = fn.getArgument(1);
+                Flows.SerCallable closure = fn.getArgument(1);
 
                 TestSerUtils.HttpMultipartSerialization ser = new TestSerUtils.HttpMultipartSerialization()
                         .addJavaEntity(closure);
@@ -169,7 +169,7 @@ public class CloudThreadsTest {
     @Test
     public void capturedCallableIsInvoked() throws Exception {
 
-        Callable<String> r = (CloudThreads.SerCallable<String>) () -> "Foo Bar";
+        Callable<String> r = (Flows.SerCallable<String>) () -> "Foo Bar";
 
         TestSerUtils.HttpMultipartSerialization ser = new TestSerUtils.HttpMultipartSerialization()
                 .addJavaEntity(r);
@@ -187,7 +187,7 @@ public class CloudThreadsTest {
 
     @Test
     public void capturedRunnableIsInvoked() throws Exception {
-        Runnable r = (CloudThreads.SerRunnable) () -> {
+        Runnable r = (Flows.SerRunnable) () -> {
             tag.set(true);
         };
 
@@ -207,7 +207,7 @@ public class CloudThreadsTest {
 
     @Test
     public void capturedFunctionWithArgsIsInvoked() throws Exception {
-        Function<String,String> func = (CloudThreads.SerFunction<String,String>) (in) ->"Foo" + in;
+        Function<String,String> func = (Flows.SerFunction<String,String>) (in) ->"Foo" + in;
 
         TestSerUtils.HttpMultipartSerialization ser = new TestSerUtils.HttpMultipartSerialization()
                 .addJavaEntity(func)
@@ -249,8 +249,8 @@ public class CloudThreadsTest {
 
     @Test
     public void capturedRunnableCanGetCurrentCloudThreadRuntime() throws Exception {
-        Callable<String> r = (CloudThreads.SerCallable<String>) () -> {
-            return CloudThreads.currentRuntime().getClass().getName();
+        Callable<String> r = (Flows.SerCallable<String>) () -> {
+            return Flows.currentRuntime().getClass().getName();
         };
 
         TestSerUtils.HttpMultipartSerialization ser = new TestSerUtils.HttpMultipartSerialization()
@@ -264,7 +264,7 @@ public class CloudThreadsTest {
 
         fnTestHarness.thenRun(CloudThreadsFn.class, "supply");
 
-        assertThat(getResultObjectFromSingleResponse(fnTestHarness)).isEqualTo(RemoteCloudThreadRuntime.class.getName());
+        assertThat(getResultObjectFromSingleResponse(fnTestHarness)).isEqualTo(RemoteFlow.class.getName());
     }
 
     //NotSerializedResult

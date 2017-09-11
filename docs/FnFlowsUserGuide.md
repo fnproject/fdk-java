@@ -96,8 +96,8 @@ following contents:
 ```java
 package com.example.fn;
 
-import com.fnproject.fn.api.cloudthreads.CloudThreadRuntime;
-import com.fnproject.fn.api.cloudthreads.CloudThreads;
+import com.fnproject.fn.api.flow.Flow;
+import com.fnproject.fn.api.flow.Flows;
 
 public class PrimeFunction {
 
@@ -212,10 +212,10 @@ For instance the following is valid because all passed variables and return
 values are serializable:
 
 ```java
-CloudThreadRuntime rt = CloudThreads.currentRuntime();
+Flow rt = Flows.currentRuntime();
  int x = 10;
 
- CloudFuture<String> f1 = rt.supply(()->{
+ FlowFuture<String> f1 = rt.supply(()->{
        String result = String.valueOf(x * 10); // x is serialized into the remote computation
         return result; // result is serialized as a result into the captured cloud future
  });
@@ -225,10 +225,10 @@ However, the following example is invalid, as the variable referenced inside
 the lambda, and the return type wrapped by `CloudFuture` are not serializable:
 
 ```java
-CloudThreadRuntime rt = CloudThreads.currentRuntime();
+Flow rt = Flows.currentRuntime();
 Optional<String> result = Optional.of("hello");
 
-CloudFuture<NotSerializableClass> f1 = rt.supply(()->{
+FlowFuture<NotSerializableClass> f1 = rt.supply(()->{
        String result = optional.orElse("foo"); // this will fail  as Optionals are not serializable
 
        return new NonSerializableClass(result);;
@@ -244,7 +244,7 @@ public class MyFunction{
    private String config  = "foo";
 
    public void run(){
-      CloudThreads.currentRuntime().supply(()->{
+      Flows.currentRuntime().supply(()->{
          // this will fail as MyFunction is not serializable
          System.err.println(config);
 
@@ -296,7 +296,7 @@ public class MyFunction{
       final String config = this.config;
       String dbVal = db.getValue();
 
-      CloudThreads.currentRuntime().supply(()->{
+      Flows.currentRuntime().supply(()->{
          System.err.println(config );
         });
    }
@@ -326,7 +326,7 @@ public class MyFunction implements Serialiable{
       final String config = this.config;
       String dbVal = getDb().getValue();
 
-      CloudThreads.currentRuntime().supply(()->{
+      Flows.currentRuntime().supply(()->{
          System.err.println(config  + getDb().getValue());
         });
    }
@@ -361,7 +361,7 @@ captured clases) must be serializable:
 public class MyFunction{
    public void run(){
       Function<Integer,Integer > myfn = (Serializable  & Function<Integer,Integer>) (x)->x+1;
-      CloudThreads.currentRuntime()
+      Flows.currentRuntime()
         .supply(()->{
            int result = myfn.apply(10);
            System.err.println(result);
@@ -387,7 +387,7 @@ Generally, we recommend that you call methods on `CloudThreadRuntime` and
 `CloudFuture` directly (i.e. including the lambda inline with the argument) :
 
 ```java
-      CloudThreads.currentRuntime()
+      Flows.currentRuntime()
         .supply(()->{
            int result = myfn.apply(10);
            System.err.println(result);
@@ -395,7 +395,7 @@ Generally, we recommend that you call methods on `CloudThreadRuntime` and
 ```
 and
 ```java
-      CloudFuture<String> f1 = ...;
+      FlowFuture<String> f1 = ...;
       f1.thenApply(String::toUpperCase);
 ```
 
@@ -403,9 +403,9 @@ In the case where you want to capture these lambdas as variables, you will need
 to use the `CloudThreads.Ser*` types at the point of declaration:
 
 ```java
-      CloudThreads.SerFunction<String,String> fn = String::toUpperCase;
+      Flows.SerFunction<String,String> fn = String::toUpperCase;
 
-      CloudFuture<String> f1 = ...;
+      FlowFuture<String> f1 = ...;
       f1.thenApply(fn);
 ```
 
@@ -427,7 +427,7 @@ public class MyFunction{
    public void run(){
       java.util.concurrent.atomic.AtomicInteger myInt = new AtomicInteger(0);
 
-      CloudThreads.currentRuntime()
+      Flows.currentRuntime()
         .supply(()->{
            // will print "0"
            System.err.println(myInt);
@@ -448,7 +448,7 @@ public class MyFunction{
    public void run(){
       java.util.concurrent.atomic.AtomicInteger myInt = new AtomicInteger(0);
 
-      CloudThreads.currentRuntime()
+      Flows.currentRuntime()
         .supply(()->{
            // will print "0"
            System.err.println(myInt.get());
@@ -492,12 +492,12 @@ public class MyFunction{
    public void run(){
       java.util.concurrent.atomic.AtomicInteger myInt = new AtomicInteger(0);
 
-      CloudThreads.currentRuntime()
+      Flows.currentRuntime()
         .supply(()->{
            throw new MyException("bad times");
         }).exceptionally((e)->{
-            // e will be an instance of com.fnproject.fn.api.cloudthreads.WrappedFunctionException here.
-            System.err.println(e.getMessage()); // prints "bad times"
+            flow
+            System.err.com.fnproject.fn.api.flows "bad times"
             e.printStackTrace(); // prints the original stack trace of the throw exception
         });
    }

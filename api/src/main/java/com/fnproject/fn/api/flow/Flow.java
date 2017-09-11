@@ -1,4 +1,4 @@
-package com.fnproject.fn.api.cloudthreads;
+package com.fnproject.fn.api.flow;
 
 import com.fnproject.fn.api.Headers;
 
@@ -10,12 +10,12 @@ import java.util.concurrent.TimeUnit;
  * <p>
  * This provides an API that can be used to trigger asynchronous work within a cloud thread.
  * <p>
- * The methods return {@link CloudFuture} objects that act as the root of an asynchronous computation
+ * The methods return {@link FlowFuture} objects that act as the root of an asynchronous computation
  * <p>
  *
- * @see CloudFuture for details of how to chain subsequent work onto these initial methods.
+ * @see FlowFuture for details of how to chain subsequent work onto these initial methods.
  */
-public interface CloudThreadRuntime extends Serializable {
+public interface Flow extends Serializable {
 
     /**
      * Invoke a fn function and yield the result
@@ -23,7 +23,7 @@ public interface CloudThreadRuntime extends Serializable {
      * When this function is called, the completer will send a request with the body to the given function ID within
      * the fn and provide a future that can chain on the response of the function.
      * <blockquote><pre>{@code
-     *         CloudThreadRuntime rt = CloudThreads.currentRuntime();
+     *         Flow rt = Flows.currentRuntime();
      *         rt.invokeFunction("myapp/myfn","input".getBytes())
      *           .thenAccept((result)->{
      *               System.err.println("Result was " + new String(result));
@@ -40,7 +40,7 @@ public interface CloudThreadRuntime extends Serializable {
      *
      * @return a future which completes normally if the function succeeded and fails if it fails
      */
-    CloudFuture<HttpResponse> invokeFunction(String functionId, HttpMethod method, Headers headers, byte[] data);
+    FlowFuture<HttpResponse> invokeFunction(String functionId, HttpMethod method, Headers headers, byte[] data);
 
     /**
      * Invoke a function by ID with headers and  an empty body
@@ -52,7 +52,7 @@ public interface CloudThreadRuntime extends Serializable {
      * @return a future which completes normally if the function succeeded and fails if it fails
      * @see #invokeFunction(String, HttpMethod, Headers, byte[])
      */
-    default CloudFuture<HttpResponse> invokeFunction(String functionId, HttpMethod method, Headers headers) {
+    default FlowFuture<HttpResponse> invokeFunction(String functionId, HttpMethod method, Headers headers) {
         return invokeFunction(functionId, method, headers, new byte[]{});
     }
 
@@ -65,7 +65,7 @@ public interface CloudThreadRuntime extends Serializable {
      * @return a future which completes normally if the function succeeded and fails if it fails
      * @see #invokeFunction(String, HttpMethod, Headers, byte[])
      */
-    default CloudFuture<HttpResponse> invokeFunction(String functionId, HttpMethod method) {
+    default FlowFuture<HttpResponse> invokeFunction(String functionId, HttpMethod method) {
         return invokeFunction(functionId, method, Headers.emptyHeaders(), new byte[]{});
     }
 
@@ -73,7 +73,7 @@ public interface CloudThreadRuntime extends Serializable {
     /**
      * Invoke an asynchronous task that yields a value
      * <blockquote><pre>{@code
-     *         CloudThreadRuntime rt = CloudThreads.currentRuntime();
+     *         Flow rt = Flows.currentRuntime();
      *         rt.supply(()->{
      *            int someVal
      *            someVal = ... // some long running computation.
@@ -85,15 +85,15 @@ public interface CloudThreadRuntime extends Serializable {
      *
      * @param c   a callable value to tryInvoke via a thread
      * @param <T> the type of the future
-     * @return a com.fnproject.fn.api.cloudthreads.CloudFuture  on
+     * @return a com.fnproject.fn.api.flow.FlowFuture  on
      */
-    <T> CloudFuture<T> supply(CloudThreads.SerCallable<T> c);
+    <T> FlowFuture<T> supply(Flows.SerCallable<T> c);
 
 
     /**
      * Invoke an asynchronous task that does not yield a value
      * <blockquote><pre>{@code
-     *         CloudThreadRuntime rt = CloudThreads.currentRuntime();
+     *         Flow rt = Flows.currentRuntime();
      *         rt.supply(()->{
      *            System.err.println("I have run asynchronously");
      *         });
@@ -103,12 +103,12 @@ public interface CloudThreadRuntime extends Serializable {
      * @param runnable a serializable runnable object
      * @return a completable future that yields when the runnable completes
      */
-    CloudFuture<Void> supply(CloudThreads.SerRunnable runnable);
+    FlowFuture<Void> supply(Flows.SerRunnable runnable);
 
     /**
      * Create a future that completes successfully after a specified delay
      * <blockquote><pre>{@code
-     *         CloudThreadRuntime rt = CloudThreads.currentRuntime();
+     *         Flow rt = Flows.currentRuntime();
      *         rt.delay(5,TimeUnit.Seconds)
      *            .thenAccept((ignored)->{
      *               System.err.println("I have run asynchronously");
@@ -119,12 +119,12 @@ public interface CloudThreadRuntime extends Serializable {
      * @param tu time unit
      * @return a completable future that completes when the delay expires
      */
-    CloudFuture<Void> delay(long i, TimeUnit tu);
+    FlowFuture<Void> delay(long i, TimeUnit tu);
 
     /**
      * Create a completed future for a specified value.
      * <blockquote><pre>{@code
-     *         CloudThreadRuntime rt = CloudThreads.currentRuntime();
+     *         Flow rt = Flows.currentRuntime();
      *         rt.delay(5,TimeUnit.Seconds)
      *            .thenCompose((ignored)->{
      *                if(shouldRunFn){
@@ -140,23 +140,23 @@ public interface CloudThreadRuntime extends Serializable {
      * @param <T>   the type of the future value
      * @return a completed cloud future based on the specified value
      */
-    <T extends Serializable> CloudFuture<T> completedValue(T value);
+    <T extends Serializable> FlowFuture<T> completedValue(T value);
 
     /**
      * Create an externally completable future that can be completed successfully or exceptionally by POSTing data to a public URL.
      *
      * @return an external future
-     * @see ExternalCloudFuture for details of how to complete external futures.
+     * @see ExternalFlowFuture for details of how to complete external futures.
      */
-    ExternalCloudFuture<HttpRequest> createExternalFuture();
+    ExternalFlowFuture<HttpRequest> createExternalFuture();
 
     /**
      * Wait for all a list of tasks to complete
      * <blockquote><pre>{@code
-     *         CloudThreadRuntime rt = CloudThreads.currentRuntime();
-     *         CloudFuture<Integer> f1 = rt.delay(5, TimeUnit.SECONDS).thenApply((ignored)-> 10);
-     *         CloudFuture<String> f2 = rt.delay(3, TimeUnit.SECONDS).thenApply((ignored)-> "Hello");
-     *         CloudFuture<Void> f3 = rt.delay(1, TimeUnit.SECONDS);
+     *         Flow rt = Flows.currentRuntime();
+     *         FlowFuture<Integer> f1 = rt.delay(5, TimeUnit.SECONDS).thenApply((ignored)-> 10);
+     *         FlowFuture<String> f2 = rt.delay(3, TimeUnit.SECONDS).thenApply((ignored)-> "Hello");
+     *         FlowFuture<Void> f3 = rt.delay(1, TimeUnit.SECONDS);
      *         rt.allOf(f1,f2,f3)
      *            .thenAccept((ignored)->{
      *            System.err.println("all done");
@@ -164,18 +164,18 @@ public interface CloudThreadRuntime extends Serializable {
      * }</pre></blockquote>
      * The resulting future will complete successfully if all provided futures complete successfully and will complete exception as soon as any of the provided futures do.
      *
-     * @param cloudFutures a list of futures to aggregate, must contain at least one future.
+     * @param flowFutures a list of futures to aggregate, must contain at least one future.
      * @return a future that completes when all futures are complete and fails when any one fails
      */
-    CloudFuture<Void> allOf(CloudFuture<?>... cloudFutures);
+    FlowFuture<Void> allOf(FlowFuture<?>... flowFutures);
 
     /**
      * Wait for any of a list of tasks to complete
      * <blockquote><pre>{@code
-     *         CloudThreadRuntime rt = CloudThreads.currentRuntime();
-     *         CloudFuture<Integer> f1 = rt.delay(5, TimeUnit.SECONDS).thenApply((ignored)-> 10);
-     *         CloudFuture<String> f2 = rt.delay(3, TimeUnit.SECONDS).thenApply((ignored)-> "Hello");
-     *         CloudFuture<Void> f3 = rt.supply(()->throw new RuntimeException("err"));
+     *         Flow rt = Flows.currentRuntime();
+     *         FlowFuture<Integer> f1 = rt.delay(5, TimeUnit.SECONDS).thenApply((ignored)-> 10);
+     *         FlowFuture<String> f2 = rt.delay(3, TimeUnit.SECONDS).thenApply((ignored)-> "Hello");
+     *         FlowFuture<Void> f3 = rt.supply(()->throw new RuntimeException("err"));
      *         rt.anyOf(f1,f2,f3)
      *            .thenAccept((ignored)->{
      *            System.err.println("at least one done");
@@ -183,10 +183,10 @@ public interface CloudThreadRuntime extends Serializable {
      * }</pre></blockquote>
      * The resulting future will complete successfully as soon as any of the provided futures completes successfully  and only completes exceptionally if all provided futures do.
      *
-     * @param cloudFutures a list of futures to aggregate, must contain at least one future
+     * @param flowFutures a list of futures to aggregate, must contain at least one future
      * @return a future that completes when all futures are complete and fails when any one fails
      */
-    CloudFuture<Object> anyOf(CloudFuture<?>... cloudFutures);
+    FlowFuture<Object> anyOf(FlowFuture<?>... flowFutures);
 
     /**
      * Represents the possible end states of a Cloud Thread object, i.e. of the whole collection of tasks in the flow.
@@ -213,7 +213,7 @@ public interface CloudThreadRuntime extends Serializable {
      * The framework will make a best effort attempt to execute the termination hooks in LIFO order with respect to when
      * they were added.
      * <blockquote><pre>{@code
-     *         CloudThreadRuntime rt = CloudThreads.currentRuntime();
+     *         Flow rt = Flows.currentRuntime();
      *         rt.addTerminationHook( (ignored) -> { System.err.println("Cloud thread terminated"); } )
      *           .addTerminationHook( (endState) -> { System.err.println("End state was " + endState.asText()); } );
      * }</pre></blockquote>
@@ -221,7 +221,7 @@ public interface CloudThreadRuntime extends Serializable {
      * terminated'.
      *
      * @param hook The code to execute
-     * @return This same CloudThreadRuntime, so that calls can be chained
+     * @return This same Flow, so that calls can be chained
      */
-    CloudThreadRuntime addTerminationHook(CloudThreads.SerConsumer<CloudThreadState> hook);
+    Flow addTerminationHook(Flows.SerConsumer<CloudThreadState> hook);
 }

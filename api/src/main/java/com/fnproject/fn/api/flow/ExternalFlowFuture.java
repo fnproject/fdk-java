@@ -1,9 +1,9 @@
-package com.fnproject.fn.api.cloudthreads;
+package com.fnproject.fn.api.flow;
 
 import java.net.URI;
 
 /**
- * A variant of {@link CloudFuture} that can be completed via an HTTP request.
+ * A variant of {@link FlowFuture} that can be completed via an HTTP request.
  * <p>
  * This can be used to integrate one-off events with a cloud thread by passing the completion and/or failure URL to a third party system in order for it to trigger an event within the thread.
  * <p>
@@ -23,7 +23,7 @@ import java.net.URI;
  * For Failures the
  *
  */
-public interface ExternalCloudFuture<V> extends CloudFuture<V> {
+public interface ExternalFlowFuture<V> extends FlowFuture<V> {
 
     /**
      * The URL to post data to to complete this future normally.

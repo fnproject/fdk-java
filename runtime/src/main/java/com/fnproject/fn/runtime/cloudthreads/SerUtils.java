@@ -1,7 +1,7 @@
 package com.fnproject.fn.runtime.cloudthreads;
 
 import com.fnproject.fn.api.Headers;
-import com.fnproject.fn.api.cloudthreads.*;
+import com.fnproject.fn.api.flow.*;
 import com.fnproject.fn.runtime.exception.FunctionInputHandlingException;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.NullOutputStream;
@@ -117,22 +117,22 @@ final class SerUtils {
         registerDeserializer(DATUM_TYPE_STATE, (dt, h, is) -> {
             String stateType = h.getHeaderValue(STATE_TYPE_HEADER).orElseThrow(() -> new Deserializer.DeserializeException("Missing state type header"));
 
-            CloudThreadRuntime.CloudThreadState state;
+            Flow.CloudThreadState state;
             switch (stateType) {
                 case "succeeded":
-                    state = CloudThreadRuntime.CloudThreadState.SUCCEEDED;
+                    state = Flow.CloudThreadState.SUCCEEDED;
                     break;
                 case "failed":
-                    state = CloudThreadRuntime.CloudThreadState.FAILED;
+                    state = Flow.CloudThreadState.FAILED;
                     break;
                 case "cancelled":
-                    state = CloudThreadRuntime.CloudThreadState.CANCELLED;
+                    state = Flow.CloudThreadState.CANCELLED;
                     break;
                 case "killed":
-                    state = CloudThreadRuntime.CloudThreadState.KILLED;
+                    state = Flow.CloudThreadState.KILLED;
                     break;
                 default:
-                    state = CloudThreadRuntime.CloudThreadState.UNKNOWN;
+                    state = Flow.CloudThreadState.UNKNOWN;
 
             }
             return new ContentPart(dt, null, state);
@@ -197,7 +197,7 @@ final class SerUtils {
 
                 String contentType = h.getHeaderValue(CONTENT_TYPE_HEADER).orElse(null);
 
-                com.fnproject.fn.api.cloudthreads.HttpRequest req = new com.fnproject.fn.api.cloudthreads.HttpRequest() {
+                com.fnproject.fn.api.flow.HttpRequest req = new com.fnproject.fn.api.flow.HttpRequest() {
                     @Override
                     public HttpMethod getMethod() {
                         return method;

@@ -1,9 +1,9 @@
-package com.fnproject.fn.api.cloudthreads;
+package com.fnproject.fn.api.flow;
 
 /**
  * Enum representing the different HTTP types that can be used to invoke an external function
  *
- * @see CloudThreadRuntime#invokeFunction
+ * @see Flow#invokeFunction
  */
 public enum HttpMethod {
     GET("GET"),

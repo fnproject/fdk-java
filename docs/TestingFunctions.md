@@ -155,7 +155,7 @@ You can test that this is all handled correctly as follows:
 
 # Testing Cloud Threads
 
-You can use `FnTestingRule` to test [Cloud Threads](CloudThreadsUserGuide.md) within your functions.  If threads are started by functions within `thenRun` then the testing rule will execute the stages of those threads locally, returning when all spawned threads are complete. 
+You can use `FnTestingRule` to test [Cloud Threads](FnFlowsUserGuide.md) within your functions.  If threads are started by functions within `thenRun` then the testing rule will execute the stages of those threads locally, returning when all spawned threads are complete. 
 
 `FnTestingRule` supports  mocking  the behaviour of Fn functions invoked by the  `invokeFunction()` API within cloud threads. 
 

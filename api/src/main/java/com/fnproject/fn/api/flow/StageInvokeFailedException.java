@@ -1,4 +1,4 @@
-package com.fnproject.fn.api.cloudthreads;
+package com.fnproject.fn.api.flow;
 
 /**
  * Exception thrown when a a completion stage invocation failed within Fn - the stage may or may not have been invoked

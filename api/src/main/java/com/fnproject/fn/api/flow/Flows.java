@@ -1,4 +1,4 @@
-package com.fnproject.fn.api.cloudthreads;
+package com.fnproject.fn.api.flow;
 
 import java.io.Serializable;
 import java.util.Objects;
@@ -6,9 +6,9 @@ import java.util.concurrent.Callable;
 import java.util.function.*;
 
 /**
- * Cloud Threads  API entry point class  - this provides access to the current {@link CloudThreadRuntime} for the current function invocation.
+ * Cloud Threads  API entry point class  - this provides access to the current {@link Flow} for the current function invocation.
  */
-public class CloudThreads {
+public class Flows {
 
     private static RuntimeSource runtimeSource;
 
@@ -25,7 +25,7 @@ public class CloudThreads {
      * Defines a  supplier for the current runtime-
      */
     public interface RuntimeSource {
-        CloudThreadRuntime currentRuntime();
+        Flow currentRuntime();
     }
 
     /**
@@ -34,8 +34,8 @@ public class CloudThreads {
      *
      * @return the current cloud thread runtime
      */
-    public synchronized static CloudThreadRuntime currentRuntime() {
-        Objects.requireNonNull(runtimeSource, "CloudThreads.runtimeSource is not set  - CloudThreads.currentRuntime() should only be called from within a FaaS function invocation");
+    public synchronized static Flow currentRuntime() {
+        Objects.requireNonNull(runtimeSource, "Flows.runtimeSource is not set  - Flows.currentRuntime() should only be called from within a FaaS function invocation");
         return runtimeSource.currentRuntime();
     }
 
@@ -47,7 +47,7 @@ public class CloudThreads {
      * @param runtimeSource a function that instantiates a runtime on demand
      */
     public synchronized static void setCurrentRuntimeSource(RuntimeSource runtimeSource) {
-        CloudThreads.runtimeSource = runtimeSource;
+        Flows.runtimeSource = runtimeSource;
     }
 
 

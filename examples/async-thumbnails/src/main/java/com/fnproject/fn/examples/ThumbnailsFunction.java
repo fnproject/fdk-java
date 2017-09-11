@@ -2,9 +2,9 @@ package com.fnproject.fn.examples;
 
 import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.RuntimeContext;
-import com.fnproject.fn.api.cloudthreads.CloudThreadRuntime;
-import com.fnproject.fn.api.cloudthreads.CloudThreads;
-import com.fnproject.fn.api.cloudthreads.HttpMethod;
+import com.fnproject.fn.api.flow.Flow;
+import com.fnproject.fn.api.flow.Flows;
+import com.fnproject.fn.api.flow.HttpMethod;
 import io.minio.MinioClient;
 
 import java.io.ByteArrayInputStream;
@@ -32,7 +32,7 @@ public class ThumbnailsFunction implements Serializable {
 
     public Response handleRequest(byte[] imageBuffer) {
         String id = java.util.UUID.randomUUID().toString();
-        CloudThreadRuntime runtime = CloudThreads.currentRuntime();
+        Flow runtime = Flows.currentRuntime();
 
         runtime.allOf(
                 runtime.invokeFunction("myapp/resize128", HttpMethod.POST, Headers.emptyHeaders(), imageBuffer)

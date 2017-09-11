@@ -1,9 +1,9 @@
-package com.fnproject.fn.api.cloudthreads;
+package com.fnproject.fn.api.flow;
 
 /**
  * Exception thrown when the completion facility fails to operate on a completion graph
  */
-public class PlatformException extends CloudCompletionException {
+public class PlatformException extends FlowCompletionException {
     public PlatformException(Throwable t) {
         super(t);
     }

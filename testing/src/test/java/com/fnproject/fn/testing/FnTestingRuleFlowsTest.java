@@ -2,7 +2,7 @@ package com.fnproject.fn.testing;
 
 import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.RuntimeContext;
-import com.fnproject.fn.api.cloudthreads.*;
+import com.fnproject.fn.api.flow.*;
 import org.junit.AssumptionViolatedException;
 import org.junit.Before;
 import org.junit.Rule;
@@ -14,7 +14,7 @@ import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class FnTestingRuleCloudThreadsTest {
+public class FnTestingRuleFlowsTest {
     private static final int HTTP_OK = 200;
 
     @Rule
@@ -25,7 +25,7 @@ public class FnTestingRuleCloudThreadsTest {
         public static int COUNT = 5;
 
         public String repeat(String s) {
-            CloudThreadRuntime rt = CloudThreads.currentRuntime();
+            Flow rt = Flows.currentRuntime();
 
             return rt
                     .completedValue(new Triple<>(COUNT, s, ""))
@@ -34,11 +34,11 @@ public class FnTestingRuleCloudThreadsTest {
         }
 
 
-        public static CloudFuture<String> loop(Triple<Integer, String, String> triple) {
+        public static FlowFuture<String> loop(Triple<Integer, String, String> triple) {
             int i = triple.first;
             String s = triple.second;
             String acc = triple.third;
-            CloudThreadRuntime rt = CloudThreads.currentRuntime();
+            Flow rt = Flows.currentRuntime();
 
             if (i == 0) {
                 return rt.completedValue(acc);
@@ -67,7 +67,7 @@ public class FnTestingRuleCloudThreadsTest {
 
     @Before
     public void setup() {
-        fn.addSharedClass(FnTestingRuleCloudThreadsTest.class);
+        fn.addSharedClass(FnTestingRuleFlowsTest.class);
         fn.addSharedClass(Result.class);
 
         reset();
@@ -281,19 +281,19 @@ public class FnTestingRuleCloudThreadsTest {
         }
 
         public void completedValue() {
-            CloudThreads.currentRuntime()
+            Flows.currentRuntime()
                     .completedValue(Result.CompletedValue).thenAccept((r) -> result = r);
         }
 
         public void supply() {
-            CloudThreads.currentRuntime()
+            Flows.currentRuntime()
                     .supply(() -> {
                         return Result.Supply;
                     }).thenAccept((r) -> result = r);
         }
 
         public void allOf() {
-            CloudThreadRuntime rt = CloudThreads.currentRuntime();
+            Flow rt = Flows.currentRuntime();
             rt.allOf(
                     rt.completedValue(1),
                     rt.completedValue(-1)
@@ -303,7 +303,7 @@ public class FnTestingRuleCloudThreadsTest {
         }
 
         public void anyOf() {
-            CloudThreadRuntime rt = CloudThreads.currentRuntime();
+            Flow rt = Flows.currentRuntime();
             rt.anyOf(
                     rt.completedValue(1),
                     rt.completedValue(-1)
@@ -311,7 +311,7 @@ public class FnTestingRuleCloudThreadsTest {
         }
 
         public void thenCompose() {
-            CloudThreadRuntime rt = CloudThreads.currentRuntime();
+            Flow rt = Flows.currentRuntime();
             rt.completedValue(1)
                     .thenCompose((x) ->
                             rt.completedValue(1)
@@ -322,13 +322,13 @@ public class FnTestingRuleCloudThreadsTest {
         }
 
         public void invokeFunctionEcho() {
-            CloudThreadRuntime rt = CloudThreads.currentRuntime();
+            Flow rt = Flows.currentRuntime();
             rt.invokeFunction("user/echo", HttpMethod.GET, Headers.emptyHeaders(), Result.InvokeFunctionEcho.name().getBytes())
                     .thenAccept((r) -> result = Result.valueOf(new String(r.getBodyAsBytes())));
         }
 
         public void invokeFunctionError() {
-            CloudThreadRuntime rt = CloudThreads.currentRuntime();
+            Flow rt = Flows.currentRuntime();
             rt.invokeFunction("user/error", HttpMethod.GET, Headers.emptyHeaders(), new byte[]{})
                     .exceptionally((e) -> {
                         result = Result.Exceptionally;
@@ -338,7 +338,7 @@ public class FnTestingRuleCloudThreadsTest {
         }
 
         public void completeExceptionally() {
-            CloudThreadRuntime rt = CloudThreads.currentRuntime();
+            Flow rt = Flows.currentRuntime();
             rt.supply(() -> {
                 throw new RuntimeException("This function should fail");
             })
@@ -346,7 +346,7 @@ public class FnTestingRuleCloudThreadsTest {
         }
 
         public void completeExceptionallyEarly() {
-            CloudThreadRuntime rt = CloudThreads.currentRuntime();
+            Flow rt = Flows.currentRuntime();
             rt.completedValue(null)
                     .thenApply((x) -> {
                         throw new RuntimeException("This function should fail");
@@ -360,7 +360,7 @@ public class FnTestingRuleCloudThreadsTest {
 
 
         public void logToStdErrInContinuation() {
-            CloudThreadRuntime rt = CloudThreads.currentRuntime();
+            Flow rt = Flows.currentRuntime();
             rt.completedValue(1)
                     .thenApply((x) -> {
                         System.err.println("TestFn logging: " + x);
@@ -370,7 +370,7 @@ public class FnTestingRuleCloudThreadsTest {
         }
 
         public void logToStdOutInContinuation() {
-            CloudThreadRuntime rt = CloudThreads.currentRuntime();
+            Flow rt = Flows.currentRuntime();
             rt.completedValue(1)
                     .thenApply((x) -> {
                         System.err.println("TestFn logging: " + x);
@@ -380,7 +380,7 @@ public class FnTestingRuleCloudThreadsTest {
         }
 
         public void cannotReadConfigVarInContinuation() {
-            CloudThreadRuntime rt = CloudThreads.currentRuntime();
+            Flow rt = Flows.currentRuntime();
             TO_ADD = 3;
             rt.completedValue(1)
                     .thenAccept((x) -> {
@@ -389,7 +389,7 @@ public class FnTestingRuleCloudThreadsTest {
         }
 
         public void terminationHooks() {
-            CloudThreadRuntime rt = CloudThreads.currentRuntime();
+            Flow rt = Flows.currentRuntime();
 
             rt.supply(() -> 1)
                     .thenAccept((i) -> {

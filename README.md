@@ -335,7 +335,7 @@ function, but you don't want to pay for execution time while you're waiting for
 someone else to do their work.
 
 If this sounds like you, then have a look at the [Cloud Threads
-quickstart](docs/CloudThreadsUserGuide.md).
+quickstart](docs/FnFlowsUserGuide.md).
 
 # Contributing
 

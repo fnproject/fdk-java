@@ -1,8 +1,8 @@
 package com.fnproject.fn.runtime.cloudthreads;
 
-import com.fnproject.fn.api.cloudthreads.CloudThreads;
+import com.fnproject.fn.api.flow.Flows;
 import com.fnproject.fn.api.Headers;
-import com.fnproject.fn.api.cloudthreads.HttpMethod;
+import com.fnproject.fn.api.flow.HttpMethod;
 import com.fnproject.fn.runtime.TestSerUtils;
 import org.junit.Before;
 import org.junit.Test;
@@ -57,7 +57,7 @@ public class CloudThreadHttpContractTest {
 
     @Test public void supplyStageCreation() throws IOException {
         String stageCreationPath = "/graph/" + THREAD_ID + "/supply";
-        CloudThreads.SerSupplier<Integer> supplier = () -> 1;
+        Flows.SerSupplier<Integer> supplier = () -> 1;
         byte[] serializedBody = TestSerUtils.serializeToBytes(supplier);
         when(httpClient.execute(any(HttpClient.HttpRequest.class))).thenReturn(
                 new HttpClient.HttpResponse(200)

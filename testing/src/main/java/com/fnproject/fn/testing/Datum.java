@@ -1,7 +1,7 @@
 package com.fnproject.fn.testing;
 
 import com.fnproject.fn.api.Headers;
-import com.fnproject.fn.api.cloudthreads.*;
+import com.fnproject.fn.api.flow.*;
 import com.fnproject.fn.runtime.cloudthreads.CompletionId;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
@@ -84,9 +84,9 @@ abstract class Datum {
     }
 
     public static class StateDatum extends Datum {
-        private final CloudThreadRuntime.CloudThreadState state;
+        private final Flow.CloudThreadState state;
 
-        public StateDatum(CloudThreadRuntime.CloudThreadState state) {
+        public StateDatum(Flow.CloudThreadState state) {
             this.state = Objects.requireNonNull(state);
         }
 
@@ -203,7 +203,7 @@ abstract class Datum {
                 case stage_timeout:
                     return new StageTimeoutException(message);
                 case stage_failed:
-                    return new CloudCompletionException(new StageInvokeFailedException(message));
+                    return new FlowCompletionException(new StageInvokeFailedException(message));
                 case function_timeout:
                     return new FunctionTimeoutException(message);
                 case function_invoke_failed:

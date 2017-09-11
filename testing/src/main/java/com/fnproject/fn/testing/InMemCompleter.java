@@ -1,7 +1,7 @@
 package com.fnproject.fn.testing;
 
 import com.fnproject.fn.api.Headers;
-import com.fnproject.fn.api.cloudthreads.*;
+import com.fnproject.fn.api.flow.*;
 import com.fnproject.fn.runtime.cloudthreads.CloudCompleterApiClient;
 import com.fnproject.fn.runtime.cloudthreads.CompleterClient;
 import com.fnproject.fn.runtime.cloudthreads.CompletionId;
@@ -255,11 +255,11 @@ class InMemCompleter implements CompleterClient {
                     Result r = ((ResultException) e.getCause()).toResult();
                     Object err = r.toJavaObject(loader);
                     if (err instanceof Throwable) {
-                        throw new CloudCompletionException((Throwable) err);
+                        throw new FlowCompletionException((Throwable) err);
                     } else if (err instanceof HttpResponse && !r.isSuccess()) {
-                        throw new CloudCompletionException(new FunctionInvocationException((HttpResponse) err));
+                        throw new FlowCompletionException(new FunctionInvocationException((HttpResponse) err));
                     } else if (err instanceof HttpRequest && !r.isSuccess()) {
-                        throw new CloudCompletionException(new ExternalCompletionException((HttpRequest) err));
+                        throw new FlowCompletionException(new ExternalCompletionException((HttpRequest) err));
                     }
                     throw new PlatformException(e);
                 } else {
@@ -284,11 +284,11 @@ class InMemCompleter implements CompleterClient {
                         Result r = ((ResultException) e.getCause()).toResult();
                         Object err = r.toJavaObject(loader);
                         if (err instanceof Throwable) {
-                            throw new CloudCompletionException((Throwable) err);
+                            throw new FlowCompletionException((Throwable) err);
                         } else if (err instanceof HttpResponse && !r.isSuccess()) {
-                            throw new CloudCompletionException(new FunctionInvocationException((HttpResponse) err));
+                            throw new FlowCompletionException(new FunctionInvocationException((HttpResponse) err));
                         } else if (err instanceof HttpRequest && !r.isSuccess()) {
-                            throw new CloudCompletionException(new ExternalCompletionException((HttpRequest) err));
+                            throw new FlowCompletionException(new ExternalCompletionException((HttpRequest) err));
                         }
                         throw new PlatformException(e);
                     } else {
@@ -459,7 +459,7 @@ class InMemCompleter implements CompleterClient {
         private final AtomicInteger activeCount = new AtomicInteger();
         private final Map<CompletionId, Node> nodes = new ConcurrentHashMap<>();
         private final AtomicBoolean mainFinished = new AtomicBoolean(false);
-        private final AtomicReference<CloudThreadRuntime.CloudThreadState> terminationSTate = new AtomicReference<>();
+        private final AtomicReference<Flow.CloudThreadState> terminationSTate = new AtomicReference<>();
         private final AtomicBoolean complete = new AtomicBoolean(false);
         private final List<TerminationHook> terminationHooks = Collections.synchronizedList(new ArrayList<>());
 
@@ -486,7 +486,7 @@ class InMemCompleter implements CompleterClient {
             if (terminationHooks.size() != 0) {
                 TerminationHook hook = terminationHooks.remove(0);
                 CompletableFuture.runAsync(() -> {
-                    completerInvokeClient.invokeStage(functionId, graphId, hook.id, hook.code, Arrays.asList(Result.success(new Datum.StateDatum(CloudThreadRuntime.CloudThreadState.SUCCEEDED))));
+                    completerInvokeClient.invokeStage(functionId, graphId, hook.id, hook.code, Arrays.asList(Result.success(new Datum.StateDatum(Flow.CloudThreadState.SUCCEEDED))));
                 }).whenComplete((r, e) -> this.workShutdown());
             } else {
                 complete.set(true);

@@ -1,13 +1,11 @@
 package com.fnproject.fn.runtime.cloudthreads;
 
-import com.fnproject.fn.api.cloudthreads.*;
+import com.fnproject.fn.api.flow.*;
 import com.fnproject.fn.runtime.exception.PlatformCommunicationException;
 import org.apache.commons.io.IOUtils;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 
 import java.io.*;
 import java.util.HashMap;
@@ -160,7 +158,7 @@ public class CloudCompleterApiClientTest {
         CloudCompleterApiClient completerClient = new CloudCompleterApiClient("", mockHttpClient);
         try {
             Object result = completerClient.waitForCompletion(new ThreadId("1"), new CompletionId("2"), getClass().getClassLoader());
-        } catch (CloudCompletionException e) {
+        } catch (FlowCompletionException e) {
             assertThat(e.getCause()).isInstanceOfAny(FunctionInvocationException.class);
             assertThat(((FunctionInvocationException)e.getCause()).getFunctionResponse().getStatusCode()).isEqualTo(500);
         }
@@ -204,7 +202,7 @@ public class CloudCompleterApiClientTest {
         try {
             completerClient.waitForCompletion(new ThreadId("1"), new CompletionId("2"), getClass().getClassLoader());
             fail("Should have thrown an exception");
-        } catch (CloudCompletionException e) {
+        } catch (FlowCompletionException e) {
             // Just as with thrown exceptions, the ECEx is wrapped in a CCEx on .get
             assertThat(e.getCause()).isInstanceOfAny(ExternalCompletionException.class);
             assertThat(((ExternalCompletionException)e.getCause()).getExternalRequest().getMethod()).isEqualTo(HttpMethod.POST);
@@ -255,7 +253,7 @@ public class CloudCompleterApiClientTest {
     @Test
     public void waitForCompletionThrowsCompletionExceptionIfFailedInHeader() throws Exception {
         for(Throwable stageResult : throwableStageResults) {
-            thrown.expect(CloudCompletionException.class);
+            thrown.expect(FlowCompletionException.class);
             thrown.expectMessage(stageResult.getMessage());
 
             HttpClient.HttpResponse response = new HttpClient.HttpResponse(200);
@@ -295,7 +293,7 @@ public class CloudCompleterApiClientTest {
 
         Optional<String> unserializableValue = Optional.of("hello");
         CloudCompleterApiClient completerClient = new CloudCompleterApiClient("", mockHttpClient);
-        CloudThreads.SerCallable<Optional<String>> unserializableLambda = () -> unserializableValue;
+        Flows.SerCallable<Optional<String>> unserializableLambda = () -> unserializableValue;
 
         completerClient.supply(new ThreadId("thread-id"), unserializableLambda);
     }
@@ -317,7 +315,7 @@ public class CloudCompleterApiClientTest {
         thrown.expectMessage("Failed to get response from completer: Connection refused");
 
         CloudCompleterApiClient completerClient = new CloudCompleterApiClient("", mockHttpClient);
-        CloudThreads.SerCallable<Integer> serializableLambda = () -> 42;
+        Flows.SerCallable<Integer> serializableLambda = () -> 42;
         when((Object) mockHttpClient.execute(any())).thenThrow(new RuntimeException("Connection refused"));
 
         completerClient.supply(new ThreadId("thread-id"), serializableLambda);

@@ -1,31 +1,31 @@
 package com.fnproject.fn.runtime.testfns;
 
-import com.fnproject.fn.api.cloudthreads.CloudThreadRuntime;
-import com.fnproject.fn.api.cloudthreads.CloudThreads;
+import com.fnproject.fn.api.flow.Flow;
+import com.fnproject.fn.api.flow.Flows;
 
 import java.io.Serializable;
 
 public class CloudThreadsFn implements Serializable {
 
     public static void usingCloudThreads() {
-        CloudThreads.currentRuntime();
+        Flows.currentRuntime();
     }
 
     public static void notUsingCloudThreads() {
     }
 
     public static void supply() {
-        CloudThreadRuntime rt = CloudThreads.currentRuntime();
+        Flow rt = Flows.currentRuntime();
         rt.supply(() -> 3);
     }
 
     public static void accessRuntimeMultipleTimes() {
-        CloudThreads.currentRuntime();
-        CloudThreads.currentRuntime();
+        Flows.currentRuntime();
+        Flows.currentRuntime();
     }
 
     public static Integer supplyAndGetResult() {
-        CloudThreadRuntime rt = CloudThreads.currentRuntime();
+        Flow rt = Flows.currentRuntime();
         Integer res =  rt.supply(() -> 3).get();
 
         return res;
