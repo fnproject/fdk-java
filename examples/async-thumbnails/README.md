@@ -1,4 +1,4 @@
-# Example Fn Java FDK / Cloud Threads Project: Asynchronous Thumbnails
+# Example Fn Java FDK / Fn Flows Project: Asynchronous Thumbnails
 
 This example provides an HTTP endpoint for asynchronously creating three
 thumbnails of an image whose data is provided as the body of the HTTP request
@@ -18,7 +18,7 @@ its ID would be linked to the user's ID in a database somewhere.
 
 ## Demonstrated FDK features
 
-This example showcases how to use the Cloud Threads API to invoke other
+This example showcases how to use the Fn Flow API to invoke other
 Fn functions asynchronously in a workflow expressed in code.
 
 
@@ -31,7 +31,7 @@ this example. Run:
 ./setup/setup.sh
 ```
 
-This will start a local functions service, a local cloud threads completion
+This will start a local functions service, a local flow completion
 service, and will set up a `myapp` application and three routes: `/resize128`,
 `/resize256` and `/resize512`. The routes are implemented as Fn functions
 which just invoke `imagemagick` to convert the images to the specified sizes.
@@ -139,7 +139,7 @@ public class ThumbnailsFunction {
 }
 ```
 
-The main method of the function makes use of the Cloud Threads API, spawning three concurrent asynchronous tasks, each
+The main method of the function makes use of the Fn Flow API, spawning three concurrent asynchronous tasks, each
 of which performs the creation of one thumbnail and its upload to the object storage server. The original image is also
 uploaded alongside the thumbnails.
 
@@ -152,7 +152,7 @@ public class ThumbnailsFunction {
 
     public Response handleRequest(byte[] imageBuffer) {
         String id = java.util.UUID.randomUUID().toString();
-        CloudThreadRuntime runtime = CloudThreads.currentRuntime();
+        Flow runtime = Flows.currentRuntime();
 
         runtime.allOf(
                 runtime.invokeFunction("myapp/resize128", HttpMethod.POST, Headers.emptyHeaders(), imageBuffer)

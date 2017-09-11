@@ -77,7 +77,7 @@ public class RemoteCompleterApiClient implements CompleterClient {
             validateSuccessful(resp);
             return new FlowId(resp.getHeader(THREAD_ID_HEADER));
         } catch (Exception e) {
-            throw new PlatformCommunicationException("Failed to create cloud thread: " + e.getMessage());
+            throw new PlatformCommunicationException("Failed to create flow: " + e.getMessage());
         }
     }
 

@@ -459,7 +459,7 @@ class InMemCompleter implements CompleterClient {
         private final AtomicInteger activeCount = new AtomicInteger();
         private final Map<CompletionId, Node> nodes = new ConcurrentHashMap<>();
         private final AtomicBoolean mainFinished = new AtomicBoolean(false);
-        private final AtomicReference<Flow.CloudThreadState> terminationSTate = new AtomicReference<>();
+        private final AtomicReference<Flow.FlowState> terminationSTate = new AtomicReference<>();
         private final AtomicBoolean complete = new AtomicBoolean(false);
         private final List<TerminationHook> terminationHooks = Collections.synchronizedList(new ArrayList<>());
 
@@ -486,7 +486,7 @@ class InMemCompleter implements CompleterClient {
             if (terminationHooks.size() != 0) {
                 TerminationHook hook = terminationHooks.remove(0);
                 CompletableFuture.runAsync(() -> {
-                    completerInvokeClient.invokeStage(functionId, graphId, hook.id, hook.code, Arrays.asList(Result.success(new Datum.StateDatum(Flow.CloudThreadState.SUCCEEDED))));
+                    completerInvokeClient.invokeStage(functionId, graphId, hook.id, hook.code, Arrays.asList(Result.success(new Datum.StateDatum(Flow.FlowState.SUCCEEDED))));
                 }).whenComplete((r, e) -> this.workShutdown());
             } else {
                 complete.set(true);

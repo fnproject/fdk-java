@@ -99,7 +99,7 @@ public final class FnTestingRule implements TestRule {
     }
 
     /**
-     * Create an instance of the testing {@link org.junit.Rule}, without Cloud Threads support
+     * Create an instance of the testing {@link org.junit.Rule}, with Flows support
      *
      * @return a new test rule
      */
@@ -160,8 +160,8 @@ public final class FnTestingRule implements TestRule {
     }
 
     /**
-     * Runs the function runtime with the specified class and method (and waits for Cloud Threads completions to finish
-     * if the test spawns any Cloud Thread)
+     * Runs the function runtime with the specified class and method (and waits for Flow stages to finish
+     * if the test spawns any flows)
      *
      * @param cls    class to thenRun
      * @param method the method name
@@ -172,8 +172,8 @@ public final class FnTestingRule implements TestRule {
 
 
     /**
-     * Runs the function runtime with the specified class and method (and waits for Cloud Threads completions to finish
-     * if the test spawns any Cloud Thread)
+     * Runs the function runtime with the specified class and method (and waits for Flow stages to finish
+     * if the test spawns any Flow)
      *
      * @param cls    class to thenRun
      * @param method the method name

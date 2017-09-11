@@ -11,27 +11,27 @@ import java.util.function.Function;
 
 /**
  * This class exposes operations (with a similar API to {@link java.util.concurrent.CompletionStage}) that allow
- * asynchronous computation to be chained into the current execution graph of a Cloud Thread.
+ * asynchronous computation to be chained into the current execution graph of a Flow.
  * <p>
  * All asynchronous operations start with a call to an operation on {@link Flow}  - for instance to create a simple asynchronous step call :
  * <blockquote><pre>{@code
- * Flow rt = CloudThreads.currentRuntime();
+ * Flow rt = Flows.currentRuntime();
  * int var = 100;
  * // Create a deferred asynchronous computation
- * CloudFuture<Integer>  intFuture = rt.supply(() -> { return 10 * var ;});
+ * FlowFuture<Integer>  intFuture = rt.supply(() -> { return 10 * var ;});
  * // Chain future computation onto the completion of the previous computation
- * CloudFuture<String>  stringFuture = intFuture.thenApply(String::valueOf);
+ * FlowFuture<String>  stringFuture = intFuture.thenApply(String::valueOf);
  * }</pre></blockquote>
  * <p>
- * CloudFutures are non-blocking by default - once a chained computation has been added to the current thread it will run independently of the calling thread once any
- * dependent CloudFutures are  complete (or immediately if it has no dependencies or dependent  stages  are  already completed).
+ * FlowFutures are non-blocking by default - once a chained computation has been added to the current thread it will run independently of the calling thread once any
+ * dependent FlowFutures are  complete (or immediately if it has no dependencies or dependent  stages  are  already completed).
  * <p>
- * As computation is executed remotely (in the form of a captured lambda passed as an argument to a CloudFuture method), the <em>captured context</em> of each of the
+ * As computation is executed remotely (in the form of a captured lambda passed as an argument to a FlowFuture method), the <em>captured context</em> of each of the
  * chained lambdas must be serializable. This includes any captured variables passed into the lambda.
  * <p>
  * For instance, in the above example, the variable {@code x} will be serialized and copied into the execution of the captured lambda.
  * <p>
- * Generally, if a CloudFuture completes exceptionally, it will propagate its exception to any chained dependencies, however {@link #handle(Flows.SerBiFunction)},
+ * Generally, if a FlowFuture completes exceptionally, it will propagate its exception to any chained dependencies, however {@link #handle(Flows.SerBiFunction)},
  * {@link #whenComplete(Flows.SerBiConsumer)} and {@link #exceptionally(Flows.SerFunction)} allow errors to be caught and handled and
  * {@link #applyToEither(FlowFuture, Flows.SerFunction)} and {@link #acceptEither(FlowFuture, Flows.SerConsumer)} will only propagate errors if all
  * dependent futures fail with an error.
@@ -131,7 +131,7 @@ public interface FlowFuture<T> extends Serializable {
      * <p>
      * Only one of these two parameters will be set, with the other being null.
      * <blockquote><pre>{@code
-     *  Flow rt = CloudThreads.currentRuntime();
+     *  Flow rt = Flows.currentRuntime();
      *  FlowFuture<Integer> f1 = rt.supply(() -> {
      *     if(System.currentTimeMillis() % 2L == 0L) {
      *       throw new RuntimeException("Error in stage");
@@ -186,12 +186,12 @@ public interface FlowFuture<T> extends Serializable {
      * Run an action when the first of two futures completes successfully.
      * <blockquote><pre>{@code
      *  Flow rt = Flows.currentRuntime();
-     *  CloudFuture<Integer> f1 = rt.supply(() -> {
+     *  FlowFuture<Integer> f1 = rt.supply(() -> {
      *        int var;
      *        // some long-running computation
      *        return var;
      *  });
-     *  CloudFuture<Integer> f2 = rt.supply(() -> {
+     *  FlowFuture<Integer> f2 = rt.supply(() -> {
      *       int var;
      *       // some long-running computation
      *       return var;
@@ -222,12 +222,12 @@ public interface FlowFuture<T> extends Serializable {
      * Transform the outcome of the  first of two futures  to complete successfully.
      * <blockquote><pre>{@code
      *   Flow rt = Flows.currentRuntime();
-     *   CloudFuture<Integer> f1 = rt.supply(() -> {
+     *   FlowFuture<Integer> f1 = rt.supply(() -> {
      *        int var;
      *        // some long-running computation
      *        return var;
      *   });
-     *   CloudFuture<Integer> f2 = rt.supply(() -> {
+     *   FlowFuture<Integer> f2 = rt.supply(() -> {
      *        int var;
      *        // some long-running computation
      *        return var;
@@ -316,7 +316,7 @@ public interface FlowFuture<T> extends Serializable {
      * <p>
      * Only one of these two parameters will be set, with the other being null.
      * <blockquote><pre>{@code
-     *  Flow rt = CloudThreads.currentRuntime();
+     *  Flow rt = FlowThreads.currentRuntime();
      *  FlowFuture<String> f1 = rt.supply(() -> {
      *     if(System.currentTimeMillis() % 2L == 0L) {
      *       throw new RuntimeException("Error in stage");
@@ -353,7 +353,7 @@ public interface FlowFuture<T> extends Serializable {
      * this future.
      *
      * <blockquote><pre>{@code
-     *  Flow rt = CloudThreads.currentRuntime();
+     *  Flow rt = FlowThreads.currentRuntime();
      *  FlowFuture<Integer> f1 = rt.supply(() -> {
      *     if(System.currentTimeMillis() % 2L == 0L) {
      *       throw new RuntimeException("Error in stage");

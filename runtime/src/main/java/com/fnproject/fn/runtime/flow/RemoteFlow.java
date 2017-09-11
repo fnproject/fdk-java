@@ -13,7 +13,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 /**
- * REST cloud threads runtime
+ * REST flows runtime
  * <p>
  * This
  */
@@ -202,7 +202,7 @@ public final class RemoteFlow implements Flow, Serializable {
     }
 
     @Override
-    public Flow addTerminationHook(Flows.SerConsumer<CloudThreadState> hook) {
+    public Flow addTerminationHook(Flows.SerConsumer<FlowState> hook) {
         getClient().addTerminationHook(flowId, hook);
         return this;
     }

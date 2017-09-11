@@ -6,9 +6,9 @@ import java.io.Serializable;
 import java.util.concurrent.TimeUnit;
 
 /**
- * A reference to the Cloud Thread object attached to the current invocation context.
+ * A reference to the Flow object attached to the current invocation context.
  * <p>
- * This provides an API that can be used to trigger asynchronous work within a cloud thread.
+ * This provides an API that can be used to trigger asynchronous work within a flow.
  * <p>
  * The methods return {@link FlowFuture} objects that act as the root of an asynchronous computation
  * <p>
@@ -138,7 +138,7 @@ public interface Flow extends Serializable {
      *
      * @param value a value to assign to the futures
      * @param <T>   the type of the future value
-     * @return a completed cloud future based on the specified value
+     * @return a completed flow future based on the specified value
      */
     <T extends Serializable> FlowFuture<T> completedValue(T value);
 
@@ -189,16 +189,16 @@ public interface Flow extends Serializable {
     FlowFuture<Object> anyOf(FlowFuture<?>... flowFutures);
 
     /**
-     * Represents the possible end states of a Cloud Thread object, i.e. of the whole collection of tasks in the flow.
+     * Represents the possible end states of a Flow object, i.e. of the whole collection of tasks in the flow.
      * <ul>
-     * <li>UNKNOWN indicates that the state of the cloud thread is unknown or invalid</li>
-     * <li>SUCCEEDED indicates that the cloud thread ran to completion (i.e. all stages completed successfully or exceptionally)</li>
-     * <li>FAILED indicates that the cloud thread failed during its execution, e.g. due to corrupted internal state</li>
-     * <li>CANCELLED indicates that the cloud thread was cancelled by the user</li>
-     * <li>KILLED indicates that the cloud thread was killed by the user</li>
+     * <li>UNKNOWN indicates that the state of the flow is unknown or invalid</li>
+     * <li>SUCCEEDED indicates that the flow ran to completion (i.e. all stages completed successfully or exceptionally)</li>
+     * <li>FAILED indicates that the flow failed during its execution, e.g. due to corrupted internal state</li>
+     * <li>CANCELLED indicates that the flow was cancelled by the user</li>
+     * <li>KILLED indicates that the flow was killed by the user</li>
      * </ul>
      */
-    enum CloudThreadState {
+    enum FlowState {
         UNKNOWN,
         SUCCEEDED,
         FAILED,
@@ -207,21 +207,20 @@ public interface Flow extends Serializable {
     }
 
     /**
-     * Adds a termination hook that will be executed upon completion of the whole cloud thread; the provided hook will
-     * received input according to how the cloud thread terminated.
+     * Adds a termination hook that will be executed upon completion of the whole flow; the provided hook will
+     * received input according to how the flow terminated.
      * <p>
      * The framework will make a best effort attempt to execute the termination hooks in LIFO order with respect to when
      * they were added.
      * <blockquote><pre>{@code
      *         Flow rt = Flows.currentRuntime();
-     *         rt.addTerminationHook( (ignored) -> { System.err.println("Cloud thread terminated"); } )
+     *         rt.addTerminationHook( (ignored) -> { System.err.println("Flow terminated"); } )
      *           .addTerminationHook( (endState) -> { System.err.println("End state was " + endState.asText()); } );
      * }</pre></blockquote>
-     * This example will first run a stage that prints the end state, and then run a stage that prints 'Cloud thread
-     * terminated'.
+     * This example will first run a stage that prints the end state, and then run a stage that prints 'Flow terminated'.
      *
      * @param hook The code to execute
      * @return This same Flow, so that calls can be chained
      */
-    Flow addTerminationHook(Flows.SerConsumer<CloudThreadState> hook);
+    Flow addTerminationHook(Flows.SerConsumer<FlowState> hook);
 }

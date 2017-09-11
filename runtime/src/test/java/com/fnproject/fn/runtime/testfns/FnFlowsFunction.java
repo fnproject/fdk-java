@@ -5,13 +5,13 @@ import com.fnproject.fn.api.flow.Flows;
 
 import java.io.Serializable;
 
-public class CloudThreadsFn implements Serializable {
+public class FnFlowsFunction implements Serializable {
 
-    public static void usingCloudThreads() {
+    public static void usingFlows() {
         Flows.currentRuntime();
     }
 
-    public static void notUsingCloudThreads() {
+    public static void notUsingFlows() {
     }
 
     public static void supply() {

@@ -117,22 +117,22 @@ final class SerUtils {
         registerDeserializer(DATUM_TYPE_STATE, (dt, h, is) -> {
             String stateType = h.getHeaderValue(STATE_TYPE_HEADER).orElseThrow(() -> new Deserializer.DeserializeException("Missing state type header"));
 
-            Flow.CloudThreadState state;
+            Flow.FlowState state;
             switch (stateType) {
                 case "succeeded":
-                    state = Flow.CloudThreadState.SUCCEEDED;
+                    state = Flow.FlowState.SUCCEEDED;
                     break;
                 case "failed":
-                    state = Flow.CloudThreadState.FAILED;
+                    state = Flow.FlowState.FAILED;
                     break;
                 case "cancelled":
-                    state = Flow.CloudThreadState.CANCELLED;
+                    state = Flow.FlowState.CANCELLED;
                     break;
                 case "killed":
-                    state = Flow.CloudThreadState.KILLED;
+                    state = Flow.FlowState.KILLED;
                     break;
                 default:
-                    state = Flow.CloudThreadState.UNKNOWN;
+                    state = Flow.FlowState.UNKNOWN;
 
             }
             return new ContentPart(dt, null, state);

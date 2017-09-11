@@ -25,7 +25,7 @@ public class FlowRuntimeGlobals {
     }
 
     /**
-     * return the current  cloud threads client factory;
+     * return the current flow client factory;
      *
      * @return
      */

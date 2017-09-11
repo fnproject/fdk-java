@@ -20,7 +20,7 @@ import static com.fnproject.fn.runtime.flow.RemoteCompleterApiClient.*;
 
 
 /**
- * Invoker that handles cloud thread continuations
+ * Invoker that handles flow stages
  */
 public final class FlowContinuationInvoker implements FunctionInvoker {
 
@@ -165,7 +165,7 @@ public final class FlowContinuationInvoker implements FunctionInvoker {
                 }
             };
 
-            // Not a cloud-threads invocation
+            // Not a flow invocation
             Flows.setCurrentRuntimeSource(deferredSource);
             return Optional.empty();
         }
@@ -179,7 +179,7 @@ public final class FlowContinuationInvoker implements FunctionInvoker {
         } catch (InvocationTargetException ite) {
             ite.printStackTrace(System.err);
             throw new InternalFunctionInvocationException(
-                    "Error invoking cloud threads lambda",
+                    "Error invoking flows lambda",
                     ite.getCause(),
                     constructExceptionOutputEvent(ite.getCause())
             );
@@ -193,7 +193,7 @@ public final class FlowContinuationInvoker implements FunctionInvoker {
             } else if (result instanceof FlowFuture) {
                 if (!(result instanceof RemoteFlow.RemoteFlowFuture)) {
                     // TODO: bubble up as stage failed exception
-                    throw new InternalFunctionInvocationException("Error handling function response", new IllegalStateException("Unsupported cloud future type return by function"));
+                    throw new InternalFunctionInvocationException("Error handling function response", new IllegalStateException("Unsupported flow future type return by function"));
                 }
                 return constructStageRefOutputEvent((RemoteFlow.RemoteFlowFuture) result);
             } else {
@@ -202,7 +202,7 @@ public final class FlowContinuationInvoker implements FunctionInvoker {
         } catch (IOException e) {
             ResultSerializationException rse = new ResultSerializationException("Result returned by stage is not serializable: " + e.getMessage(), e);
             throw new InternalFunctionInvocationException(
-                    "Error handling response from cloud threads lambda",
+                    "Error handling response from flow stage lambda",
                     rse,
                     constructExceptionOutputEvent(rse)
             );

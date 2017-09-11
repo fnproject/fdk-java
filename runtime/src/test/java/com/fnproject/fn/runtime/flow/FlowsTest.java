@@ -3,7 +3,7 @@ package com.fnproject.fn.runtime.flow;
 import com.fnproject.fn.api.flow.Flows;
 import com.fnproject.fn.runtime.FnTestHarness;
 import com.fnproject.fn.runtime.TestSerUtils;
-import com.fnproject.fn.runtime.testfns.CloudThreadsFn;
+import com.fnproject.fn.runtime.testfns.FnFlowsFunction;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -63,7 +63,7 @@ public class FlowsTest {
     public void completerNotCalledIfCloudThreadsRuntimeUnused() throws Exception {
 
         eventToTestFN().enqueue();
-        fnTestHarness.thenRun(CloudThreadsFn.class, "notUsingCloudThreads");
+        fnTestHarness.thenRun(FnFlowsFunction.class, "notUsingFlows");
 
         verify(mockCompleterClient, never()).createThread(any());
     }
@@ -74,7 +74,7 @@ public class FlowsTest {
         when(mockCompleterClient.createThread(FUNCTION_ID)).thenReturn(THREAD_ID);
 
         eventToTestFN().enqueue();
-        fnTestHarness.thenRun(CloudThreadsFn.class, "usingCloudThreads");
+        fnTestHarness.thenRun(FnFlowsFunction.class, "usingFlows");
 
         verify(mockCompleterClient, times(1)).createThread(FUNCTION_ID);
     }
@@ -85,7 +85,7 @@ public class FlowsTest {
         when(mockCompleterClient.createThread(FUNCTION_ID)).thenReturn(THREAD_ID);
 
         eventToTestFN().enqueue();
-        fnTestHarness.thenRun(CloudThreadsFn.class, "accessRuntimeMultipleTimes");
+        fnTestHarness.thenRun(FnFlowsFunction.class, "accessRuntimeMultipleTimes");
 
         verify(mockCompleterClient, times(1)).createThread(FUNCTION_ID);
     }
@@ -105,7 +105,7 @@ public class FlowsTest {
                 .thenAnswer(invocationOnMock -> continuationResult.get());
 
         httpEventToTestFN().enqueue();
-        fnTestHarness.thenRun(CloudThreadsFn.class, "supplyAndGetResult");
+        fnTestHarness.thenRun(FnFlowsFunction.class, "supplyAndGetResult");
 
         FnTestHarness.ParsedHttpResponse response = getSingleItem(fnTestHarness.getParsedHttpResponses());
         assertThat(response.getBodyAsString()).isEqualTo(continuationResult.toString());
@@ -144,7 +144,7 @@ public class FlowsTest {
                         .withHeaders(ser.getHeaders())
                         .enqueue();
 
-                fnTestHarness.thenRun(CloudThreadsFn.class, methodName);
+                fnTestHarness.thenRun(FnFlowsFunction.class, methodName);
 
                 FnTestHarness.ParsedHttpResponse response = getInnerResponse(fnTestHarness);
                 try {
@@ -180,7 +180,7 @@ public class FlowsTest {
                 .withBody(ser.getContentStream())
                 .enqueue();
 
-        fnTestHarness.thenRun(CloudThreadsFn.class, "supply");
+        fnTestHarness.thenRun(FnFlowsFunction.class, "supply");
 
         assertThat(getResultObjectFromSingleResponse(fnTestHarness)).isEqualTo("Foo Bar");
     }
@@ -200,7 +200,7 @@ public class FlowsTest {
                 .withBody(ser.getContentStream())
                 .enqueue();
 
-        fnTestHarness.thenRun(CloudThreadsFn.class, "supply");
+        fnTestHarness.thenRun(FnFlowsFunction.class, "supply");
         assertThat(tag.get()).isTrue();
     }
 
@@ -219,7 +219,7 @@ public class FlowsTest {
                 .withBody(ser.getContentStream())
                 .enqueue();
 
-        fnTestHarness.thenRun(CloudThreadsFn.class, "supply");
+        fnTestHarness.thenRun(FnFlowsFunction.class, "supply");
 
         assertThat(getResultObjectFromSingleResponse(fnTestHarness)).isEqualTo("FooBAR");
     }
@@ -262,7 +262,7 @@ public class FlowsTest {
                 .withBody(ser.getContentStream())
                 .enqueue();
 
-        fnTestHarness.thenRun(CloudThreadsFn.class, "supply");
+        fnTestHarness.thenRun(FnFlowsFunction.class, "supply");
 
         assertThat(getResultObjectFromSingleResponse(fnTestHarness)).isEqualTo(RemoteFlow.class.getName());
     }

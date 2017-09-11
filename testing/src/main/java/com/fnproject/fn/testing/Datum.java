@@ -84,9 +84,9 @@ abstract class Datum {
     }
 
     public static class StateDatum extends Datum {
-        private final Flow.CloudThreadState state;
+        private final Flow.FlowState state;
 
-        public StateDatum(Flow.CloudThreadState state) {
+        public StateDatum(Flow.FlowState state) {
             this.state = Objects.requireNonNull(state);
         }
 
