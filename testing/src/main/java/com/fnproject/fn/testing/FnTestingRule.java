@@ -494,7 +494,7 @@ public final class FnTestingRule implements TestRule {
 
 
         @Override
-        public Result invokeStage(String fnId, FlowId thread, CompletionId stageId, Datum.Blob closure, List<Result> input) {
+        public Result invokeStage(String fnId, FlowId flowId, CompletionId stageId, Datum.Blob closure, List<Result> input) {
             // Construct a new ClassLoader hierarchy with a copy of the statics embedded in the runtime.
             // Initialise it appropriately.
             FnTestingClassLoader fcl = new FnTestingClassLoader(functionClassLoader, sharedPrefixes);
@@ -531,7 +531,7 @@ public final class FnTestingRule implements TestRule {
                     .withRoute("/route").withRequestUrl("http://some/url")
                     .withMethod("POST")
                     .withHeader(RemoteCompleterApiClient.CONTENT_TYPE_HEADER, String.format("multipart/mixed; boundary=\"%s\"", boundary))
-                    .withHeader(RemoteCompleterApiClient.THREAD_ID_HEADER, thread.getId()).withHeader(RemoteCompleterApiClient.STAGE_ID_HEADER, stageId.getId()).currentEventInputStream();
+                    .withHeader(RemoteCompleterApiClient.FLOW_ID_HEADER, flowId.getId()).withHeader(RemoteCompleterApiClient.STAGE_ID_HEADER, stageId.getId()).currentEventInputStream();
 
             ByteArrayOutputStream output = new ByteArrayOutputStream();
             Map<String, String> mutableEnv = new HashMap<>();

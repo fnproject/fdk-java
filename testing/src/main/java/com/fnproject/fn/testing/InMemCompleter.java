@@ -186,8 +186,8 @@ class InMemCompleter implements CompleterClient {
     }
 
     @Override
-    public FlowId createThread(String functionId) {
-        FlowId id = new FlowId("thread-" + threadCount.incrementAndGet());
+    public FlowId createFlow(String functionId) {
+        FlowId id = new FlowId("flow-" + threadCount.incrementAndGet());
         graphs.put(id, new Graph(functionId, id));
 
         return id;

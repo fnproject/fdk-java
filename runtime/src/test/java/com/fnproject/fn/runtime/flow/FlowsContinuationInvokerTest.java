@@ -31,7 +31,7 @@ public class FlowsContinuationInvokerTest {
     @Rule
     public ExpectedException thrown = ExpectedException.none();
 
-    private final String THREAD_ID = UUID.randomUUID().toString();
+    private final String FLOW_ID = UUID.randomUUID().toString();
     private final String STAGE_ID = Integer.toString(new Random().nextInt(32));
 
     @Test
@@ -567,7 +567,7 @@ public class FlowsContinuationInvokerTest {
 
     private InputEvent constructContinuationInputEvent(HttpMultipartSerialization ser) throws IOException {
         return new InputEventBuilder()
-                .withHeader(THREAD_ID_HEADER, THREAD_ID)
+                .withHeader(FLOW_ID_HEADER, FLOW_ID)
                 .withHeader(STAGE_ID_HEADER, STAGE_ID)
                 .withHeaders(ser.getHeaders())
                 .withBody(ser.getContentStream())

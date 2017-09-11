@@ -21,8 +21,8 @@ public final class RemoteFlow implements Flow, Serializable {
     private transient CompleterClient client;
     private final FlowId flowId;
 
-    RemoteFlow(FlowId thread) {
-        this.flowId = Objects.requireNonNull(thread);
+    RemoteFlow(FlowId flowId) {
+        this.flowId = Objects.requireNonNull(flowId);
     }
 
     private CompleterClient getClient() {

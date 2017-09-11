@@ -65,7 +65,7 @@ public final class FlowContinuationInvoker implements FunctionInvoker {
      */
     @Override
     public Optional<OutputEvent> tryInvoke(InvocationContext ctx, InputEvent evt) {
-        Optional<String> graphIdOption = evt.getHeaders().get(THREAD_ID_HEADER);
+        Optional<String> graphIdOption = evt.getHeaders().get(FLOW_ID_HEADER);
 
         final String completerBaseUrl = ctx.getRuntimeContext().getConfigurationByKey(COMPLETER_BASE_URL).orElse(DEFAULT_COMPLETER_BASE_URL);
 
@@ -146,10 +146,10 @@ public final class FlowContinuationInvoker implements FunctionInvoker {
                     if (runtime == null) {
                         String functionId = evt.getAppName() + evt.getRoute();
                         CompleterClientFactory factory = getOrCreateCompleterClientFactory(completerBaseUrl);
-                        final FlowId flowId = factory.get().createThread(functionId);
+                        final FlowId flowId = factory.get().createFlow(functionId);
                         runtime = new RemoteFlow(flowId);
 
-                        InvocationListener threadInvocationListener = new InvocationListener() {
+                        InvocationListener flowInvocationListener = new InvocationListener() {
                             @Override
                             public void onSuccess() {
                                 factory.get().commit(flowId);
@@ -159,7 +159,7 @@ public final class FlowContinuationInvoker implements FunctionInvoker {
                                 factory.get().commit(flowId);
                             }
                         };
-                        ctx.addListener(threadInvocationListener);
+                        ctx.addListener(flowInvocationListener);
                     }
                     return runtime;
                 }

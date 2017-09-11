@@ -32,7 +32,7 @@ public class FlowsTest {
     public FnTestHarness fnTestHarness = new FnTestHarness();
 
     private final String FUNCTION_ID = "app/testfn";
-    private final FlowId THREAD_ID = new FlowId("test-thread-id");
+    private final FlowId FLOW_ID = new FlowId("test-flow-id");
 
     // static to avoid issues with serialized AtomicRefs
     static AtomicBoolean tag = new AtomicBoolean(false);
@@ -65,29 +65,29 @@ public class FlowsTest {
         eventToTestFN().enqueue();
         fnTestHarness.thenRun(FnFlowsFunction.class, "notUsingFlows");
 
-        verify(mockCompleterClient, never()).createThread(any());
+        verify(mockCompleterClient, never()).createFlow(any());
     }
 
     @Test
     public void completerCalledWhenFlowRuntimeIsAccessed() {
 
-        when(mockCompleterClient.createThread(FUNCTION_ID)).thenReturn(THREAD_ID);
+        when(mockCompleterClient.createFlow(FUNCTION_ID)).thenReturn(FLOW_ID);
 
         eventToTestFN().enqueue();
         fnTestHarness.thenRun(FnFlowsFunction.class, "usingFlows");
 
-        verify(mockCompleterClient, times(1)).createThread(FUNCTION_ID);
+        verify(mockCompleterClient, times(1)).createFlow(FUNCTION_ID);
     }
 
     @Test
     public void onlyOneThreadIsCreatedWhenRuntimeIsAccessedMultipleTimes() {
 
-        when(mockCompleterClient.createThread(FUNCTION_ID)).thenReturn(THREAD_ID);
+        when(mockCompleterClient.createFlow(FUNCTION_ID)).thenReturn(FLOW_ID);
 
         eventToTestFN().enqueue();
         fnTestHarness.thenRun(FnFlowsFunction.class, "accessRuntimeMultipleTimes");
 
-        verify(mockCompleterClient, times(1)).createThread(FUNCTION_ID);
+        verify(mockCompleterClient, times(1)).createFlow(FUNCTION_ID);
     }
 
     @Test
@@ -96,12 +96,12 @@ public class FlowsTest {
         AtomicReference<Object> continuationResult = new AtomicReference<>();
         CompletionId completionId = new CompletionId("continuation-completion-id");
 
-        when(mockCompleterClient.createThread(FUNCTION_ID)).thenReturn(THREAD_ID);
+        when(mockCompleterClient.createFlow(FUNCTION_ID)).thenReturn(FLOW_ID);
 
-        when(mockCompleterClient.supply(eq(THREAD_ID),
+        when(mockCompleterClient.supply(eq(FLOW_ID),
                 isA(Flows.SerCallable.class)))
                 .thenAnswer(invokeContinuation(completionId, continuationResult, "supplyAndGetResult"));
-        when(mockCompleterClient.waitForCompletion(eq(THREAD_ID), eq(completionId), eq(getClass().getClassLoader())))
+        when(mockCompleterClient.waitForCompletion(eq(FLOW_ID), eq(completionId), eq(getClass().getClassLoader())))
                 .thenAnswer(invocationOnMock -> continuationResult.get());
 
         httpEventToTestFN().enqueue();
@@ -110,9 +110,9 @@ public class FlowsTest {
         FnTestHarness.ParsedHttpResponse response = getSingleItem(fnTestHarness.getParsedHttpResponses());
         assertThat(response.getBodyAsString()).isEqualTo(continuationResult.toString());
         verify(mockCompleterClient, times(1))
-                .supply(eq(THREAD_ID), isA(Flows.SerCallable.class));
+                .supply(eq(FLOW_ID), isA(Flows.SerCallable.class));
         verify(mockCompleterClient, times(1))
-                .waitForCompletion(eq(THREAD_ID), eq(completionId), eq(getClass().getClassLoader()));
+                .waitForCompletion(eq(FLOW_ID), eq(completionId), eq(getClass().getClassLoader()));
     }
 
 
@@ -140,7 +140,7 @@ public class FlowsTest {
                 FnTestHarness fnTestHarness = new FnTestHarness();
                 fnTestHarness.givenHttpEvent().withAppName("app").withRoute("/testfn")
                         .withBody(ser.getContentStream())
-                        .withHeader(THREAD_ID_HEADER, THREAD_ID.getId())
+                        .withHeader(FLOW_ID_HEADER, FLOW_ID.getId())
                         .withHeaders(ser.getHeaders())
                         .enqueue();
 
@@ -175,7 +175,7 @@ public class FlowsTest {
                 .addJavaEntity(r);
 
         httpEventToTestFN()
-                .withHeader(THREAD_ID_HEADER, THREAD_ID.getId())
+                .withHeader(FLOW_ID_HEADER, FLOW_ID.getId())
                 .withHeaders(ser.getHeaders())
                 .withBody(ser.getContentStream())
                 .enqueue();
@@ -195,7 +195,7 @@ public class FlowsTest {
                 .addJavaEntity(r);
 
         httpEventToTestFN()
-                .withHeader(THREAD_ID_HEADER, THREAD_ID.getId())
+                .withHeader(FLOW_ID_HEADER, FLOW_ID.getId())
                 .withHeaders(ser.getHeaders())
                 .withBody(ser.getContentStream())
                 .enqueue();
@@ -214,7 +214,7 @@ public class FlowsTest {
                 .addJavaEntity("BAR");
 
         httpEventToTestFN()
-                .withHeader(THREAD_ID_HEADER, THREAD_ID.getId())
+                .withHeader(FLOW_ID_HEADER, FLOW_ID.getId())
                 .withHeaders(ser.getHeaders())
                 .withBody(ser.getContentStream())
                 .enqueue();
@@ -257,7 +257,7 @@ public class FlowsTest {
                 .addJavaEntity(r);
 
         httpEventToTestFN()
-                .withHeader(THREAD_ID_HEADER, THREAD_ID.getId())
+                .withHeader(FLOW_ID_HEADER, FLOW_ID.getId())
                 .withHeaders(ser.getHeaders())
                 .withBody(ser.getContentStream())
                 .enqueue();

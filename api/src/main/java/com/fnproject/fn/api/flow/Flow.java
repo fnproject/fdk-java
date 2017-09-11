@@ -83,7 +83,7 @@ public interface Flow extends Serializable {
      *         });
      * }</pre></blockquote>
      *
-     * @param c   a callable value to tryInvoke via a thread
+     * @param c   a callable value to tryInvoke via a flow
      * @param <T> the type of the future
      * @return a com.fnproject.fn.api.flow.FlowFuture  on
      */

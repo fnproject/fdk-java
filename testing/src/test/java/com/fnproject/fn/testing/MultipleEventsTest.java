@@ -89,7 +89,7 @@ public class MultipleEventsTest {
     }
 
     @Test
-    public void OverlappingThreadInvocationsShouldWork() {
+    public void OverlappingFlowInvocationsShouldWork() {
         fn.addSharedClass(MultipleEventsTest.class);
 
         oneGo = new Semaphore(0);

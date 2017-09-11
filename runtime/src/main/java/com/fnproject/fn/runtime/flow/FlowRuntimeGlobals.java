@@ -18,14 +18,14 @@ public class FlowRuntimeGlobals {
     /**
      * override the default completer client factory
      *
-     * @param currentClientFactory a new client factory to be used to create threads
+     * @param currentClientFactory a new client factory to be used to create flows
      */
     public static void setCompleterClientFactory(CompleterClientFactory currentClientFactory) {
         completerClientFactory = Objects.requireNonNull(currentClientFactory);
     }
 
     /**
-     * return the current flow client factory;
+     * return the current Fn Flow client factory;
      *
      * @return
      */

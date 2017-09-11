@@ -25,7 +25,7 @@ import static org.mockito.Mockito.*;
 @RunWith(MockitoJUnitRunner.class)
 public class FlowHttpContractTest {
     public RemoteCompleterApiClient client;
-    private final String THREAD_ID = UUID.randomUUID().toString();
+    private final String FLOW_ID = UUID.randomUUID().toString();
     private final String EXTERNAL_FUNCTION_ID = "/not-my-application/function/route";
     private final String FUNCTION_ID = "function/my_func";
 
@@ -43,20 +43,20 @@ public class FlowHttpContractTest {
     @Test public void runtimeShouldParseAFlowId() throws IOException {
         String createFlowPath = "/graph?functionId=" + FUNCTION_ID;
         when(httpClient.execute(any(HttpClient.HttpRequest.class))).thenReturn(
-                new HttpClient.HttpResponse(200).addHeader(THREAD_ID_HEADER, THREAD_ID)
+                new HttpClient.HttpResponse(200).addHeader(FLOW_ID_HEADER, FLOW_ID)
         );
 
-        FlowId tid = client.createThread(FUNCTION_ID);
+        FlowId tid = client.createFlow(FUNCTION_ID);
         verify(httpClient, times(1)).execute(requestCaptor.capture());
         HttpClient.HttpRequest capturedRequest = requestCaptor.getValue();
 
         assertThat(capturedRequest.url).contains(createFlowPath);
         assertThat(capturedRequest.method).isEqualTo("POST");
-        assertThat(tid.getId()).isEqualTo(THREAD_ID);
+        assertThat(tid.getId()).isEqualTo(FLOW_ID);
     }
 
     @Test public void supplyStageCreation() throws IOException {
-        String stageCreationPath = "/graph/" + THREAD_ID + "/supply";
+        String stageCreationPath = "/graph/" + FLOW_ID + "/supply";
         Flows.SerSupplier<Integer> supplier = () -> 1;
         byte[] serializedBody = TestSerUtils.serializeToBytes(supplier);
         when(httpClient.execute(any(HttpClient.HttpRequest.class))).thenReturn(
@@ -65,7 +65,7 @@ public class FlowHttpContractTest {
         );
 
 
-        CompletionId cid = client.supply(new FlowId(THREAD_ID), supplier);
+        CompletionId cid = client.supply(new FlowId(FLOW_ID), supplier);
         verify(httpClient, times(1)).execute(requestCaptor.capture());
         HttpClient.HttpRequest capturedRequest = requestCaptor.getValue();
 
@@ -80,7 +80,7 @@ public class FlowHttpContractTest {
 
     @Test
     public void invokeFunctionReturnsStageId() throws IOException {
-        String stageCreationPath = "/graph/" + THREAD_ID + "/invokeFunction";
+        String stageCreationPath = "/graph/" + FLOW_ID + "/invokeFunction";
         byte[] inputToFunction = "{ \"field\": \"contents\" }".getBytes();
         HashMap<String, String> headersCollection = new HashMap<>();
         headersCollection.put("My-Custom-Header", "Value");
@@ -91,7 +91,7 @@ public class FlowHttpContractTest {
                         .addHeader(STAGE_ID_HEADER, "1")
         );
 
-        CompletionId cid = client.invokeFunction(new FlowId(THREAD_ID), EXTERNAL_FUNCTION_ID, inputToFunction, HttpMethod.POST, headers);
+        CompletionId cid = client.invokeFunction(new FlowId(FLOW_ID), EXTERNAL_FUNCTION_ID, inputToFunction, HttpMethod.POST, headers);
         verify(httpClient, times(1)).execute(requestCaptor.capture());
         HttpClient.HttpRequest capturedRequest = requestCaptor.getValue();
 

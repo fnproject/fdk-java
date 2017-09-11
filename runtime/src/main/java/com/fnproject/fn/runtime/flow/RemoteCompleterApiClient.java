@@ -27,7 +27,7 @@ public class RemoteCompleterApiClient implements CompleterClient {
     // TODO: move these to SerUtils
 
     private static final String HEADER_PREFIX = "FnProject-";
-    public static final String THREAD_ID_HEADER = HEADER_PREFIX + "ThreadID";
+    public static final String FLOW_ID_HEADER = HEADER_PREFIX + "ThreadID";
     public static final String STAGE_ID_HEADER = HEADER_PREFIX + "StageID";
     public static final String METHOD_HEADER = HEADER_PREFIX + "Method";
     public static final String USER_HEADER_PREFIX = HEADER_PREFIX + "Header-";
@@ -71,11 +71,11 @@ public class RemoteCompleterApiClient implements CompleterClient {
     }
 
     @Override
-    public FlowId createThread(String functionId) {
+    public FlowId createFlow(String functionId) {
         HttpClient.HttpRequest request = HttpClient.preparePost(apiUrlBase + "/graph?functionId=" + functionId);
         try (HttpClient.HttpResponse resp = httpClient.execute(request)) {
             validateSuccessful(resp);
-            return new FlowId(resp.getHeader(THREAD_ID_HEADER));
+            return new FlowId(resp.getHeader(FLOW_ID_HEADER));
         } catch (Exception e) {
             throw new PlatformCommunicationException("Failed to create flow: " + e.getMessage());
         }

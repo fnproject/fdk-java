@@ -5,7 +5,8 @@ import java.net.URI;
 /**
  * A variant of {@link FlowFuture} that can be completed via an HTTP request.
  * <p>
- * This can be used to integrate one-off events with a flow by passing the completion and/or failure URL to a third party system in order for it to trigger an event within the thread.
+ * This can be used to integrate one-off events with a flow by passing the completion and/or failure URL to a third
+ * party system in order for it to trigger an event within the flow.
  * <p>
  * For successful external futures, POST should include the desired body of the external event:
  *
@@ -17,7 +18,7 @@ import java.net.URI;
  *  {"result" : "good"}
  * </pre>
  *
- * The content type may be anything and the future will yield the byte array of the posted value back to the thread.
+ * The content type may be anything and the future will yield the byte array of the posted value back to the flow.
  *
  *
  * For Failures the

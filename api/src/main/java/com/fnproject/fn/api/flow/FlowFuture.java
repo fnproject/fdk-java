@@ -23,8 +23,8 @@ import java.util.function.Function;
  * FlowFuture<String>  stringFuture = intFuture.thenApply(String::valueOf);
  * }</pre></blockquote>
  * <p>
- * FlowFutures are non-blocking by default - once a chained computation has been added to the current thread it will run independently of the calling thread once any
- * dependent FlowFutures are  complete (or immediately if it has no dependencies or dependent  stages  are  already completed).
+ * FlowFutures are non-blocking by default - once a chained computation has been added to the current flow it will run independently of the calling thread once any
+ * dependent FlowFutures are complete (or immediately if it has no dependencies or dependent stages are already completed).
  * <p>
  * As computation is executed remotely (in the form of a captured lambda passed as an argument to a FlowFuture method), the <em>captured context</em> of each of the
  * chained lambdas must be serializable. This includes any captured variables passed into the lambda.
@@ -316,7 +316,7 @@ public interface FlowFuture<T> extends Serializable {
      * <p>
      * Only one of these two parameters will be set, with the other being null.
      * <blockquote><pre>{@code
-     *  Flow rt = FlowThreads.currentRuntime();
+     *  Flow rt = Flows.currentRuntime();
      *  FlowFuture<String> f1 = rt.supply(() -> {
      *     if(System.currentTimeMillis() % 2L == 0L) {
      *       throw new RuntimeException("Error in stage");
@@ -353,7 +353,7 @@ public interface FlowFuture<T> extends Serializable {
      * this future.
      *
      * <blockquote><pre>{@code
-     *  Flow rt = FlowThreads.currentRuntime();
+     *  Flow rt = Flows.currentRuntime();
      *  FlowFuture<Integer> f1 = rt.supply(() -> {
      *     if(System.currentTimeMillis() % 2L == 0L) {
      *       throw new RuntimeException("Error in stage");

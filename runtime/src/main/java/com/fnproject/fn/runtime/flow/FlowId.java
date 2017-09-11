@@ -4,7 +4,7 @@ import java.io.Serializable;
 import java.util.Objects;
 
 /**
- * Thread Identifier
+ * Flow Identifier
  * <p>
  * This may be serialized within the runtime class
  */
@@ -33,6 +33,6 @@ public final class FlowId implements Serializable {
     }
 
     public String toString() {
-        return "thread." + getId();
+        return "flow." + getId();
     }
 }

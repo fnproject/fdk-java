@@ -26,12 +26,12 @@ public interface CompleterClient {
     }
 
     /**
-     * create a new thread against the completer
+     * create a new flow against the completer
      *
      * @param functionId
      * @return
      */
-    FlowId createThread(String functionId);
+    FlowId createFlow(String functionId);
 
     CompletionId supply(FlowId flowID, Serializable code);
 

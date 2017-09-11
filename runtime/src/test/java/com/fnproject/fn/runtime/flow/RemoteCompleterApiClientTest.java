@@ -295,18 +295,18 @@ public class RemoteCompleterApiClientTest {
         RemoteCompleterApiClient completerClient = new RemoteCompleterApiClient("", mockHttpClient);
         Flows.SerCallable<Optional<String>> unserializableLambda = () -> unserializableValue;
 
-        completerClient.supply(new FlowId("thread-id"), unserializableLambda);
+        completerClient.supply(new FlowId("flow-id"), unserializableLambda);
     }
 
     @Test
-    public void throwsPlatformExceptionIfFailedToCreateThread() throws Exception {
+    public void throwsPlatformExceptionIfFailedToCreateFlow() throws Exception {
         thrown.expect(PlatformCommunicationException.class);
         thrown.expectMessage("Failed to create flow: Connection refused");
 
         when((Object) mockHttpClient.execute(any())).thenThrow(new RuntimeException("Connection refused"));
 
         RemoteCompleterApiClient completerClient = new RemoteCompleterApiClient("", mockHttpClient);
-        completerClient.createThread("function-id");
+        completerClient.createFlow("function-id");
     }
 
     @Test
@@ -318,6 +318,6 @@ public class RemoteCompleterApiClientTest {
         Flows.SerCallable<Integer> serializableLambda = () -> 42;
         when((Object) mockHttpClient.execute(any())).thenThrow(new RuntimeException("Connection refused"));
 
-        completerClient.supply(new FlowId("thread-id"), serializableLambda);
+        completerClient.supply(new FlowId("flow-id"), serializableLambda);
     }
 }
