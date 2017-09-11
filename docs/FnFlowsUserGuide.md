@@ -1,13 +1,13 @@
-# Cloud Threads for Fn Java FDK - User Guide
+# Flows for Fn Java FDK - User Guide
 
 By following this step-by-step guide you will learn to create, run and deploy
-a simple Java app in Fn that leverages the Cloud Threads asynchronous execution
+a simple Java app in Fn that leverages the Fn Flow asynchronous execution
 APIs.
 
 
-## What are Cloud Threads?
+## What are Flows?
 
-Cloud Threads consists of a set of completerInvokeClient-side APIs for you to use within your
+Fn Flow consists of a set of cient-side APIs for you to use within your
 Fn apps, as well as a long-running server component (the _completer_) that
 orchestrates computation beyond the life-cycle of your functions. Together,
 these components enable non-blocking asynchronous execution flows, where your
@@ -56,7 +56,7 @@ In a terminal, start the functions server:
 $ fn start
 ```
 
-Similarly, start the Cloud Threads completer server by running its docker image
+Similarly, start the Flows completer server by running its docker image
 locally and linking it to the functions container:
 
 ```
@@ -64,23 +64,23 @@ $ docker run -p 8081:8081 -d --name completer --link=functions -e API_URL=http:/
 ```
 
 
-## Your first Cloud Thread
+## Your first Fn Flow
 
-### 1. Create your first Cloud Thread application
+### 1. Create your first Flow application
 
 Create a Maven-based Java Function using the instructions from the Fn Java FDK
 [Quickstart](../README.md). For example:
 
 ```
-$ mkdir example-cloudthreads-function && cd example-cloudthreads-function
-$ fn init --runtime=java your_dockerhub_account/cloudthread-primes
+$ mkdir example-flow-function && cd example-flow-function
+$ fn init --runtime=java your_dockerhub_account/flow-primes
 Runtime: java
 function boilerplate generated.
 func.yaml created
 
 ```
 
-### 2. Create a Cloud Thread within your Function
+### 2. Create a Flow within your Function
 
 You will create a function that produces the nth prime number and then returns
 an informational message once the prime number has been computed. In this
@@ -103,7 +103,7 @@ public class PrimeFunction {
 
     public String handleRequest(int nth) {
 
-        CloudThreadRuntime rt = CloudThreads.currentRuntime();
+        Flow rt = Flows.currentRuntime();
 
         return rt.supply(
                 () -> {
@@ -135,7 +135,7 @@ Edit your `func.yaml` by changing ...
 
 
 ```
-name: your_dockerhub_account/cloudthread-primes
+name: your_dockerhub_account/flow-primes
 version: 0.0.1
 runtime: java
 cmd: com.example.fn.PrimeFunction::handleRequest
@@ -147,62 +147,62 @@ path: /primes
 Create your app and deploy your function:
 
 ```
-$ fn apps create cloudthreads-example
-Successfully created app: cloudthreads-example
+$ fn apps create flows-example
+Successfully created app: flows-example
 
-$ fn deploy cloudthreads-example
-Updating route /primes using image your_dockerhub_account/cloudthread-primes::0.0.2...
+$ fn deploy flows-example
+Updating route /primes using image your_dockerhub_account/flow-primes::0.0.2...
 ```
 
 Configure your function to talk to the local completer endpoint:
 
 ```
 $ COMPLETER_SERVER_IP=`docker inspect --type container -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' completer`
-$ fn apps config set cloudthreads-example COMPLETER_BASE_URL http://${COMPLETER_SERVER_IP}:8081
+$ fn apps config set flows-example COMPLETER_BASE_URL http://${COMPLETER_SERVER_IP}:8081
 ```
 
-### 4. Run your Cloud Thread function
+### 4. Run your Flow function
 
 You can now run your function using `fn call` or HTTP and curl:
 
 ```
-$ echo 10 | fn call cloudthreads-example /primes
+$ echo 10 | fn call flows-example /primes
 The 10th prime number is 29
 ```
 
 ```
-$ curl -XPOST -d "10" http://localhost:8080/r/cloudthreads-example/primes
+$ curl -XPOST -d "10" http://localhost:8080/r/flows-example/primes
 The 10th prime number is 29
 ```
 
 ### 5. Where Do I Go from Here?
 
 For a more realistic application that leverages the non-blocking functionality
-of Cloud Threads, please take a look at the asynchronous [thumbnail generation
+of Fn Flow, please take a look at the asynchronous [thumbnail generation
 example](../examples/async-thumbnails/README.md).
 
 
 # Passing data between completion stages
 
-Cloud threads executes your code asynchronously and where possible in parallel
+Fn Flow executes your code asynchronously and where possible in parallel
 in a distributed environment on the Fn platform - you should assume that each
-Cloud Threads *stage* (a lambda attached to a step of the computation) may
+Flow *stage* (a lambda attached to a step of the computation) may
 execute on a different machine within the network.
 
 In order to facilitate this, the Fn Java FDK will serialize each of the stage
 lambdas (and any captured variables) using [Java
 Serialization](https://docs.oracle.com/javase/8/docs/api/java/io/Serializable.html)
 and store them remotely on the completer before executing them on the functions
-platform. In order to write Cloud Threads applications, you should be aware of
+platform. In order to write Flows applications, you should be aware of
 the impact of this within your code, and how this might differ from your
 experience of programming within a single JVM.
 
 The following lists the key areas that you should be aware of:
 
 ### Serializable data and captured variables
-In order for the Cloud Threads completer to execute each computation stage
-remotely, it must transmit captured data and values attached to `CloudFuture`s
-over the network. Cloud Threads uses standard Java Serialization to convert
+In order for the Flows completer to execute each computation stage
+remotely, it must transmit captured data and values attached to `FlowFuture`s
+over the network. Fn Flow uses standard Java Serialization to convert
 objects and lambda expressions in memory into a collection of bytes for
 transmission over the network. Hence, all values returned by stages, passed in
 as arguments to stages, or captured by lambdas as variables, must be
@@ -222,7 +222,7 @@ Flow rt = Flows.currentRuntime();
 ```
 
 However, the following example is invalid, as the variable referenced inside
-the lambda, and the return type wrapped by `CloudFuture` are not serializable:
+the lambda, and the return type wrapped by `FlowFuture` are not serializable:
 
 ```java
 Flow rt = Flows.currentRuntime();
@@ -338,7 +338,7 @@ of serializable lambdas.
 ### Capturing lambdas as variables
 
 Java lambdas are not serializable by default, and as such cannot be used in
-captured variables to Cloud Thread stages, e.g.
+captured variables to Flow stages, e.g.
 
 ```java
 public class MyFunction{
@@ -360,7 +360,7 @@ captured clases) must be serializable:
 ```java
 public class MyFunction{
    public void run(){
-      Function<Integer,Integer > myfn = (Serializable  & Function<Integer,Integer>) (x)->x+1;
+      Function<Integer,Integer > myfn = (Serializable & Function<Integer,Integer>) (x)->x+1;
       Flows.currentRuntime()
         .supply(()->{
            int result = myfn.apply(10);
@@ -372,19 +372,19 @@ public class MyFunction{
 
 
 
-### Cloud Threads stage lambda types:
+### Flow stage lambda types:
 
-The Cloud Threads API does not take standard Java `java.util.function` types as
+The Fn Flow API does not take standard Java `java.util.function` types as
 arguments (e.g. `java.util.function.Function`) - instead, it subclasses these
 types to include `Serializable` (e.g.
-[CloudThreads.SerFunction](../api/src/main/java/com/fnproject/fn/api/cloudthreads/CloudThreads.java)).
+[Flows.SerFunction](../api/src/main/java/com/fnproject/fn/api/flow/Flows.java)).
 
 This is necessary, as by default the Java compiler does not generate the
 necessary code to serialize and deserialze generated lambda objects.
 
 
-Generally, we recommend that you call methods on `CloudThreadRuntime` and
-`CloudFuture` directly (i.e. including the lambda inline with the argument) :
+Generally, we recommend that you call methods on `Flow` and
+`FlowFuture` directly (i.e. including the lambda inline with the argument) :
 
 ```java
       Flows.currentRuntime()
@@ -400,7 +400,7 @@ and
 ```
 
 In the case where you want to capture these lambdas as variables, you will need
-to use the `CloudThreads.Ser*` types at the point of declaration:
+to use the `Flows.Ser*` types at the point of declaration:
 
 ```java
       Flows.SerFunction<String,String> fn = String::toUpperCase;
@@ -410,13 +410,13 @@ to use the `CloudThreads.Ser*` types at the point of declaration:
 ```
 
 
-### Data is passed between CloudThread stages by value
+### Data is passed between Flow stages by value
 
 A side effect of data being serialized and deserialized as it is passed between
 stages is that instances are always passed by value when they are handled by
-`CloudFuture` or captured in lambdas. As a result, changes to objects within
+`FlowFuture` or captured in lambdas. As a result, changes to objects within
 one stage will not impact other objects in other stages, unless they are
-explicitly passed between stages as a CloudFuture value.
+explicitly passed between stages as a FlowFuture value.
 
 For primitive types the *effectively final* constraint of the compiler prevents
 modification of captured variables. However, for reference types this is not
@@ -440,7 +440,7 @@ public class MyFunction{
 }
 ```
 
-Instead modified values should be passed between stages via `CloudFuture`
+Instead modified values should be passed between stages via `FlowFuture`
 methods:
 
 ```java
@@ -464,14 +464,14 @@ public class MyFunction{
 
 
 ### Exceptions should be serializable
-Finally, exceptions thrown by `CloudThread` lambda stages will be be propagated
+Finally, exceptions thrown by `Flow` lambda stages will be be propagated
 as error values to other stages - this means that those exceptions should be
 serializable. Exceptions are serializable by default, so generally you do not
 have to do anything.
 
 If your code does throw exceptions that contain non-serializable fields, the
 exception will be converted into
-a [WrappedException](../api/src/main/java/com/fnproject/fn/api/cloudthreads/WrappedFunctionException.java)
+a [WrappedException](../api/src/main/java/com/fnproject/fn/api/flow/WrappedFunctionException.java)
 - this is a a `RuntimeException` that will preserve the original message and
 stacktrace of the source exception, but not any fields on the original
 exception.

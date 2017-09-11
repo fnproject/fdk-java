@@ -23,7 +23,7 @@ import static org.mockito.Mockito.*;
 
 
 @RunWith(MockitoJUnitRunner.class)
-public class CloudThreadHttpContractTest {
+public class FlowHttpContractTest {
     public RemoteCompleterApiClient client;
     private final String THREAD_ID = UUID.randomUUID().toString();
     private final String EXTERNAL_FUNCTION_ID = "/not-my-application/function/route";
@@ -40,8 +40,8 @@ public class CloudThreadHttpContractTest {
     }
 
 
-    @Test public void runtimeShouldParseACloudThreadId() throws IOException {
-        String createCloudThreadPath = "/graph?functionId=" + FUNCTION_ID;
+    @Test public void runtimeShouldParseAFlowId() throws IOException {
+        String createFlowPath = "/graph?functionId=" + FUNCTION_ID;
         when(httpClient.execute(any(HttpClient.HttpRequest.class))).thenReturn(
                 new HttpClient.HttpResponse(200).addHeader(THREAD_ID_HEADER, THREAD_ID)
         );
@@ -50,7 +50,7 @@ public class CloudThreadHttpContractTest {
         verify(httpClient, times(1)).execute(requestCaptor.capture());
         HttpClient.HttpRequest capturedRequest = requestCaptor.getValue();
 
-        assertThat(capturedRequest.url).contains(createCloudThreadPath);
+        assertThat(capturedRequest.url).contains(createFlowPath);
         assertThat(capturedRequest.method).isEqualTo("POST");
         assertThat(tid.getId()).isEqualTo(THREAD_ID);
     }
