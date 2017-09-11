@@ -217,7 +217,7 @@ Flow rt = Flows.currentRuntime();
 
  FlowFuture<String> f1 = rt.supply(()->{
        String result = String.valueOf(x * 10); // x is serialized into the remote computation
-        return result; // result is serialized as a result into the captured cloud future
+        return result; // result is serialized as a result into the captured flow future
  });
 ```
 
@@ -265,7 +265,7 @@ public class MyFunction implements Serializable{
    private String config  = "foo";
 
    public void run(){
-      CloudThreads.currentRuntime().supply(()->{
+      Flows.currentRuntime().supply(()->{
          // this will work as MyFunction is captured and serialized into the lambda
          System.err.println(config);
         });
@@ -344,7 +344,7 @@ captured variables to Flow stages, e.g.
 public class MyFunction{
    public void run(){
       Function<int,int> myfn =(x)->x+1;
-      CloudThreads.currentRuntime()
+      Flows.currentRuntime()
         .supply(()->{ // this will fail as myfn is not serializable
          int result = myfn.apply(10);
          System.err.println(result);
