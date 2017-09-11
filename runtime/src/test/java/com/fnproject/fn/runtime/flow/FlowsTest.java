@@ -60,7 +60,7 @@ public class FlowsTest {
     }
 
     @Test
-    public void completerNotCalledIfCloudThreadsRuntimeUnused() throws Exception {
+    public void completerNotCalledIfFlowRuntimeUnused() throws Exception {
 
         eventToTestFN().enqueue();
         fnTestHarness.thenRun(FnFlowsFunction.class, "notUsingFlows");
@@ -69,7 +69,7 @@ public class FlowsTest {
     }
 
     @Test
-    public void completerCalledWhenCloudThreadsRuntimeIsAccessed() {
+    public void completerCalledWhenFlowRuntimeIsAccessed() {
 
         when(mockCompleterClient.createThread(FUNCTION_ID)).thenReturn(THREAD_ID);
 
@@ -248,7 +248,7 @@ public class FlowsTest {
     }
 
     @Test
-    public void capturedRunnableCanGetCurrentCloudThreadRuntime() throws Exception {
+    public void capturedRunnableCanGetCurrentFlowRuntime() throws Exception {
         Callable<String> r = (Flows.SerCallable<String>) () -> {
             return Flows.currentRuntime().getClass().getName();
         };
