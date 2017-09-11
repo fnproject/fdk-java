@@ -301,7 +301,7 @@ public class RemoteCompleterApiClientTest {
     @Test
     public void throwsPlatformExceptionIfFailedToCreateThread() throws Exception {
         thrown.expect(PlatformCommunicationException.class);
-        thrown.expectMessage("Failed to create cloud thread: Connection refused");
+        thrown.expectMessage("Failed to create flow: Connection refused");
 
         when((Object) mockHttpClient.execute(any())).thenThrow(new RuntimeException("Connection refused"));
 

@@ -452,7 +452,7 @@ public class FlowsContinuationInvokerTest {
         // Then
         thrown.expect(InternalFunctionInvocationException.class);
         thrown.expectCause(instanceOf(ResultSerializationException.class));
-        thrown.expectMessage("Error handling response from cloud threads lambda");
+        thrown.expectMessage("Error handling response from flow stage lambda");
 
         // When
         try {
@@ -477,7 +477,7 @@ public class FlowsContinuationInvokerTest {
         // Then
         thrown.expect(InternalFunctionInvocationException.class);
         thrown.expectCause(instanceOf(RuntimeException.class));
-        thrown.expectMessage("Error invoking cloud threads lambda");
+        thrown.expectMessage("Error invoking flows lambda");
 
         // When
         try {
