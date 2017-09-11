@@ -496,8 +496,8 @@ public class MyFunction{
         .supply(()->{
            throw new MyException("bad times");
         }).exceptionally((e)->{
-            flow
-            System.err.com.fnproject.fn.api.flows "bad times"
+            // e will be an instance of com.fnproject.fn.api.flow.WrappedFunctionException here.
+            System.err.println(e.getMessage()); // prints "bad times"
             e.printStackTrace(); // prints the original stack trace of the throw exception
         });
    }
