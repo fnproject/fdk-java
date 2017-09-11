@@ -25,7 +25,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 
-import static com.fnproject.fn.runtime.cloudthreads.CloudCompleterApiClient.CONTENT_TYPE_HEADER;
+import static com.fnproject.fn.runtime.flow.RemoteCompleterApiClient.CONTENT_TYPE_HEADER;
 
 /**
  * Reads input via an InputStream as an HTTP request.

@@ -2,8 +2,8 @@ package com.fnproject.fn.testing;
 
 import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.InputEvent;
-import com.fnproject.fn.api.cloudthreads.*;
-import com.fnproject.fn.runtime.cloudthreads.HttpClient;
+import com.fnproject.fn.api.flow.*;
+import com.fnproject.fn.runtime.flow.HttpClient;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.TeeOutputStream;
 
@@ -30,31 +30,31 @@ public class ExerciseEverything {
 
     @Test(1)
     @Test.Expect("completed value")
-    public CloudFuture<String> completedValue(CloudThreadRuntime rt) {
-        return rt.completedValue("completed value");
+    public FlowFuture<String> completedValue(Flow fl) {
+        return fl.completedValue("completed value");
     }
 
     @Test(2)
     @Test.Expect("supply")
-    public CloudFuture<String> supply(CloudThreadRuntime rt) {
-        return rt.supply(() -> "supply");
+    public FlowFuture<String> supply(Flow fl) {
+        return fl.supply(() -> "supply");
     }
 
     @Test(3)
-    public CloudFuture<Void> allOfWithCompletedValue(CloudThreadRuntime rt) {
-        return rt.allOf(
-                rt.completedValue(1),
-                rt.completedValue(2),
-                rt.completedValue(3)
+    public FlowFuture<Void> allOfWithCompletedValue(Flow fl) {
+        return fl.allOf(
+                fl.completedValue(1),
+                fl.completedValue(2),
+                fl.completedValue(3)
         );
     }
 
     @Test(4)
-    public CloudFuture<Void> allOfWithSuppliedValue(CloudThreadRuntime rt) {
-        return rt.allOf(
-                rt.supply(() -> 1),
-                rt.supply(() -> 2),
-                rt.supply(() -> 3)
+    public FlowFuture<Void> allOfWithSuppliedValue(Flow fl) {
+        return fl.allOf(
+                fl.supply(() -> 1),
+                fl.supply(() -> 2),
+                fl.supply(() -> 3)
         );
     }
 
@@ -62,11 +62,11 @@ public class ExerciseEverything {
     @Test.Expect("1")
     @Test.Expect("2")
     @Test.Expect("3")
-    public CloudFuture<Object> anyOfWithCompletedValue(CloudThreadRuntime rt) {
-        return rt.anyOf(
-                rt.completedValue("1"),
-                rt.completedValue("2"),
-                rt.completedValue("3")
+    public FlowFuture<Object> anyOfWithCompletedValue(Flow fl) {
+        return fl.anyOf(
+                fl.completedValue("1"),
+                fl.completedValue("2"),
+                fl.completedValue("3")
         );
     }
 
@@ -74,24 +74,24 @@ public class ExerciseEverything {
     @Test.Expect("1")
     @Test.Expect("2")
     @Test.Expect("3")
-    public CloudFuture<Object> anyOfWithSuppliedValue(CloudThreadRuntime rt) {
-        return rt.anyOf(
-                rt.supply(() -> "1"),
-                rt.supply(() -> "2"),
-                rt.supply(() -> "3")
+    public FlowFuture<Object> anyOfWithSuppliedValue(Flow fl) {
+        return fl.anyOf(
+                fl.supply(() -> "1"),
+                fl.supply(() -> "2"),
+                fl.supply(() -> "3")
         );
     }
 
     @Test(7)
     @Test.Expect("test exception")
-    public CloudFuture<Exception> completeWithAnException(CloudThreadRuntime rt) {
-        return rt.completedValue(new Exception("test exception"));
+    public FlowFuture<Exception> completeWithAnException(Flow fl) {
+        return fl.completedValue(new Exception("test exception"));
     }
 
     @Test(8)
-    @Test.Catch({CloudCompletionException.class, MyException.class})
-    public CloudFuture<String> supplyAnException(CloudThreadRuntime rt) {
-        return rt.supply(() -> {
+    @Test.Catch({FlowCompletionException.class, MyException.class})
+    public FlowFuture<String> supplyAnException(Flow fl) {
+        return fl.supply(() -> {
             throw new MyException("test exception");
         });
     }
@@ -104,8 +104,8 @@ public class ExerciseEverything {
 
     @Test(9)
     @Test.Expect("4")
-    public CloudFuture<Integer> chainThenApply(CloudThreadRuntime rt) {
-        CloudFuture<Integer> cf = rt.completedValue(0);
+    public FlowFuture<Integer> chainThenApply(Flow fl) {
+        FlowFuture<Integer> cf = fl.completedValue(0);
 
         for (int i = 0; i < 4; i++) {
             cf = cf.thenApply((x) -> x + 1);
@@ -116,8 +116,8 @@ public class ExerciseEverything {
 
     @Test(10)
     @Test.Expect("-3")
-    public CloudFuture<Integer> catchBubbledException(CloudThreadRuntime rt) {
-        return rt.completedValue(0)
+    public FlowFuture<Integer> catchBubbledException(Flow fl) {
+        return fl.completedValue(0)
                 .thenApply((x) -> x + 1)
                 .thenApply((x) -> {
                     if (x == 1) throw new MyException("boom");
@@ -129,15 +129,15 @@ public class ExerciseEverything {
     }
 
     @Test(11)
-    @Test.Catch({CloudCompletionException.class, FunctionInvocationException.class})
-    public CloudFuture<HttpResponse> nonexistentExternalEvaluation(CloudThreadRuntime rt) {
-        return rt.invokeFunction("nonexistent/nonexistent", HttpMethod.POST, Headers.emptyHeaders(), new byte[0]);
+    @Test.Catch({FlowCompletionException.class, FunctionInvocationException.class})
+    public FlowFuture<HttpResponse> nonexistentExternalEvaluation(Flow fl) {
+        return fl.invokeFunction("nonexistent/nonexistent", HttpMethod.POST, Headers.emptyHeaders(), new byte[0]);
     }
 
     @Test(12)
     @Test.Expect("okay")
-    public CloudFuture<String> checkPassingExternalInvocation(CloudThreadRuntime rt) {
-        return rt.invokeFunction(inputEvent.getAppName() + inputEvent.getRoute(), HttpMethod.POST, Headers.emptyHeaders(), "PASS".getBytes())
+    public FlowFuture<String> checkPassingExternalInvocation(Flow fl) {
+        return fl.invokeFunction(inputEvent.getAppName() + inputEvent.getRoute(), HttpMethod.POST, Headers.emptyHeaders(), "PASS".getBytes())
                 .thenApply((resp) -> {
                     return resp.getStatusCode() != 200 ? "failure" : new String(resp.getBodyAsBytes());
                 });
@@ -146,18 +146,18 @@ public class ExerciseEverything {
     // There is currently no way for a hot function to signal failure in the Fn platform.
     // This test will only work in default mode.
     @Test(13)
-    @Test.Catch({CloudCompletionException.class, FunctionInvocationException.class})
-    public CloudFuture<HttpResponse> checkFailingExternalInvocation(CloudThreadRuntime rt) {
-        return rt.invokeFunction(inputEvent.getAppName() + inputEvent.getRoute(), HttpMethod.POST, Headers.emptyHeaders(), "FAIL".getBytes());
+    @Test.Catch({FlowCompletionException.class, FunctionInvocationException.class})
+    public FlowFuture<HttpResponse> checkFailingExternalInvocation(Flow fl) {
+        return fl.invokeFunction(inputEvent.getAppName() + inputEvent.getRoute(), HttpMethod.POST, Headers.emptyHeaders(), "FAIL".getBytes());
     }
 
     // This original version captures the RT, which captures the factory, which is not serializable
     @Test(14)
     @Test.Expect("X")
-    public CloudFuture<String> simpleThenCompose(CloudThreadRuntime rt) {
-        return rt.completedValue("x").thenCompose((s) -> {
+    public FlowFuture<String> simpleThenCompose(Flow fl) {
+        return fl.completedValue("x").thenCompose((s) -> {
             System.err.println("I am in the thenCompose stage, s = " + s);
-            CloudFuture<String> retVal = rt.completedValue(s.toUpperCase());
+            FlowFuture<String> retVal = fl.completedValue(s.toUpperCase());
             System.err.println("my retVal = " + retVal + "; type is " + retVal.getClass());
             return retVal;
         });
@@ -165,19 +165,19 @@ public class ExerciseEverything {
 
     @Test(15)
     @Test.Expect("hello world")
-    public CloudFuture<String> thenCompose(CloudThreadRuntime rt) {
-        return rt.completedValue("hello")
+    public FlowFuture<String> thenCompose(Flow fl) {
+        return fl.completedValue("hello")
                 .thenCompose((s) ->
-                        rt.supply(() -> s)
+                        fl.supply(() -> s)
                                 .thenApply((s2) -> s2 + " world")
                 );
     }
 
     @Test(16)
     @Test.Expect("foo")
-    public CloudFuture<String> thenComposeThenError(CloudThreadRuntime rt) {
-        return rt.completedValue("hello")
-                .thenCompose((s) -> rt.supply(() -> {
+    public FlowFuture<String> thenComposeThenError(Flow fl) {
+        return fl.completedValue("hello")
+                .thenCompose((s) -> fl.supply(() -> {
                     if (s.equals("hello")) throw new MyException("foo");
                     else return s;
                 }))
@@ -186,11 +186,11 @@ public class ExerciseEverything {
 
     @Test(17)
     @Test.Expect("foo")
-    public CloudFuture<String> thenComposeWithErrorInBody(CloudThreadRuntime rt) {
-        return rt.completedValue("hello")
+    public FlowFuture<String> thenComposeWithErrorInBody(Flow fl) {
+        return fl.completedValue("hello")
                 .thenCompose((s) -> {
                     if (s.equals("hello")) throw new MyException("foo");
-                    else return rt.completedValue(s);
+                    else return fl.completedValue(s);
                 })
                 .exceptionally(Throwable::getMessage);
     }
@@ -198,33 +198,33 @@ public class ExerciseEverything {
     @Test(18)
     @Test.Expect("a")
     @Test.Expect("b")
-    public CloudFuture<String> applyToEither(CloudThreadRuntime rt) {
-        return rt.completedValue("a").applyToEither(rt.completedValue("b"), (x) -> x);
+    public FlowFuture<String> applyToEither(Flow fl) {
+        return fl.completedValue("a").applyToEither(fl.completedValue("b"), (x) -> x);
     }
 
     @Test(19)
     @Test.Expect("a")
     @Test.Expect("b")
-    public CloudFuture<String> applyToEitherLikelyPathB(CloudThreadRuntime rt) {
-        return rt.supply(() -> "a").applyToEither(rt.completedValue("b"), (x) -> x);
+    public FlowFuture<String> applyToEitherLikelyPathB(Flow fl) {
+        return fl.supply(() -> "a").applyToEither(fl.completedValue("b"), (x) -> x);
     }
 
     @Test(20)
-    public CloudFuture<Void> harmlessAcceptBoth(CloudThreadRuntime rt) {
-        return rt.completedValue("a")
+    public FlowFuture<Void> harmlessAcceptBoth(Flow fl) {
+        return fl.completedValue("a")
                 .thenAcceptBoth(
-                        rt.completedValue("b"),
+                        fl.completedValue("b"),
                         (a, b) -> System.err.println(a + "; " + b)
                 );
     }
 
     @Test(21)
-    @Test.Catch({CloudCompletionException.class, MyException.class})
+    @Test.Catch({FlowCompletionException.class, MyException.class})
     @Test.Expect("ab")
-    public CloudFuture<Void> acceptBoth(CloudThreadRuntime rt) {
-        return rt.completedValue("a")
+    public FlowFuture<Void> acceptBoth(Flow fl) {
+        return fl.completedValue("a")
                 .thenAcceptBoth(
-                        rt.completedValue("b"),
+                        fl.completedValue("b"),
                         (a, b) -> {
                             System.err.println("A is " + a + " and B is " + b);
                             throw new MyException(a + b);
@@ -232,13 +232,13 @@ public class ExerciseEverything {
     }
 
     @Test(22)
-    @Test.Catch({CloudCompletionException.class, MyException.class})
+    @Test.Catch({FlowCompletionException.class, MyException.class})
     @Test.Expect("a")
     @Test.Expect("b")
-    public CloudFuture<Void> acceptEither(CloudThreadRuntime rt) {
-        return rt.completedValue("a")
+    public FlowFuture<Void> acceptEither(Flow fl) {
+        return fl.completedValue("a")
                 .acceptEither(
-                        rt.completedValue("b"),
+                        fl.completedValue("b"),
                         (x) -> {
                             throw new MyException(x);
                         }
@@ -247,28 +247,28 @@ public class ExerciseEverything {
 
     @Test(23)
     @Test.Expect("foobar")
-    public CloudFuture<String> thenCombine(CloudThreadRuntime rt) {
-        return rt.completedValue("foo")
-                .thenCombine(rt.completedValue("bar"),
+    public FlowFuture<String> thenCombine(Flow fl) {
+        return fl.completedValue("foo")
+                .thenCombine(fl.completedValue("bar"),
                         (a, b) -> a + b);
     }
 
     @Test(24)
     @Test.Expect("foo")
-    public CloudFuture<String> thenCombineE1(CloudThreadRuntime rt) {
-        return rt.supply(() -> {
+    public FlowFuture<String> thenCombineE1(Flow fl) {
+        return fl.supply(() -> {
             throw new MyException("foo");
         })
-                .thenCombine(rt.completedValue("bar"),
+                .thenCombine(fl.completedValue("bar"),
                         (a, b) -> a + b)
                 .exceptionally(Throwable::getMessage);
     }
 
     @Test(25)
     @Test.Expect("bar")
-    public CloudFuture<String> thenCombineE2(CloudThreadRuntime rt) {
-        return rt.completedValue("foo")
-                .thenCombine(rt.supply(() -> {
+    public FlowFuture<String> thenCombineE2(Flow fl) {
+        return fl.completedValue("foo")
+                .thenCombine(fl.supply(() -> {
                             throw new MyException("bar");
                         }),
                         (a, b) -> a + b)
@@ -278,9 +278,9 @@ public class ExerciseEverything {
 
     @Test(26)
     @Test.Expect("foobar")
-    public CloudFuture<String> thenCombineE3(CloudThreadRuntime rt) {
-        return rt.completedValue("foo")
-                .thenCombine(rt.completedValue("bar"),
+    public FlowFuture<String> thenCombineE3(Flow fl) {
+        return fl.completedValue("foo")
+                .thenCombine(fl.completedValue("bar"),
                         (a, b) -> {
                             if (!a.equals(b)) throw new MyException(a + b);
                             else return "baz";
@@ -290,15 +290,15 @@ public class ExerciseEverything {
 
     @Test(27)
     @Test.Expect("foo")
-    public CloudFuture<String> handleNoError(CloudThreadRuntime rt) {
-        return rt.completedValue("foo")
+    public FlowFuture<String> handleNoError(Flow fl) {
+        return fl.completedValue("foo")
                 .handle((v, e) -> v);
     }
 
     @Test(28)
     @Test.Expect("bar")
-    public CloudFuture<String> handleWithError(CloudThreadRuntime rt) {
-        return rt.supply(() -> {
+    public FlowFuture<String> handleWithError(Flow fl) {
+        return fl.supply(() -> {
             throw new MyException("bar");
         })
                 .handle((v, e) -> e.getMessage());
@@ -306,8 +306,8 @@ public class ExerciseEverything {
 
     @Test(29)
     @Test.Expect("foo")
-    public CloudFuture<String> whenCompleteNoError(CloudThreadRuntime rt) {
-        return rt.completedValue("foo")
+    public FlowFuture<String> whenCompleteNoError(Flow fl) {
+        return fl.completedValue("foo")
                 .whenComplete((v, e) -> {
                     throw new MyException(v);
                 })
@@ -316,8 +316,8 @@ public class ExerciseEverything {
 
     @Test(30)
     @Test.Expect("bar")
-    public CloudFuture<String> whenCompleteWithError(CloudThreadRuntime rt) {
-        return rt.supply(() -> {
+    public FlowFuture<String> whenCompleteWithError(Flow fl) {
+        return fl.supply(() -> {
             if (true) throw new MyException("bar");
             else return "";
         })
@@ -329,8 +329,8 @@ public class ExerciseEverything {
 
     @Test(31)
     @Test.Expect("foobar")
-    public CloudFuture<String> externallyCompletable(CloudThreadRuntime rt) throws IOException {
-        ExternalCloudFuture<HttpRequest> cf = rt.createExternalFuture();
+    public FlowFuture<String> externallyCompletable(Flow fl) throws IOException {
+        ExternalFlowFuture<HttpRequest> cf = fl.createExternalFuture();
         HttpClient httpClient = new HttpClient();
         httpClient.execute(httpClient
                 .preparePost(cf.completionUrl().toString())
@@ -344,8 +344,8 @@ public class ExerciseEverything {
 
     @Test(32)
     @Test.Expect("bar")
-    public CloudFuture<HttpRequest> externallyCompletableDirectGet(CloudThreadRuntime rt) throws IOException {
-        ExternalCloudFuture<HttpRequest> cf = rt.createExternalFuture();
+    public FlowFuture<HttpRequest> externallyCompletableDirectGet(Flow fl) throws IOException {
+        ExternalFlowFuture<HttpRequest> cf = fl.createExternalFuture();
         HttpClient httpClient = new HttpClient();
         httpClient.execute(HttpClient
                 .preparePost(cf.completionUrl().toString())
@@ -357,10 +357,10 @@ public class ExerciseEverything {
 
 
     @Test(33)
-    @Test.Catch({CloudCompletionException.class, ExternalCompletionException.class})
+    @Test.Catch({FlowCompletionException.class, ExternalCompletionException.class})
     @Test.Expect("External completion failed")
-    public CloudFuture<HttpRequest> externalFutureFailureAndGet(CloudThreadRuntime rt) throws IOException {
-        ExternalCloudFuture<HttpRequest> cf = rt.createExternalFuture();
+    public FlowFuture<HttpRequest> externalFutureFailureAndGet(Flow fl) throws IOException {
+        ExternalFlowFuture<HttpRequest> cf = fl.createExternalFuture();
         HttpClient httpClient = new HttpClient();
         httpClient.execute(HttpClient
                 .preparePost(cf.failUrl().toString())
@@ -373,8 +373,8 @@ public class ExerciseEverything {
 
     @Test(34)
     @Test.Expect("foobar")
-    public CloudFuture<String> externallyCompletableFailure(CloudThreadRuntime rt) throws IOException {
-        ExternalCloudFuture<HttpRequest> cf = rt.createExternalFuture();
+    public FlowFuture<String> externallyCompletableFailure(Flow fl) throws IOException {
+        ExternalFlowFuture<HttpRequest> cf = fl.createExternalFuture();
         HttpClient httpClient = new HttpClient();
         httpClient.execute(HttpClient
                 .preparePost(cf.failUrl().toString())
@@ -418,10 +418,10 @@ public class ExerciseEverything {
             throw new MyException("failure demanded");
         }
         testSelector = selector;
-        CloudThreadRuntime rt = CloudThreads.currentRuntime();
+        Flow fl = Flows.currentFlow();
 
         out.println("In main function");
-        Map<Integer, CloudFuture<Object>> awaiting = new TreeMap<>();
+        Map<Integer, FlowFuture<Object>> awaiting = new TreeMap<>();
 
         for (Map.Entry<Integer, Method> e : findTests(this).entrySet()) {
             id = e.getKey();
@@ -433,7 +433,7 @@ public class ExerciseEverything {
             String[] values = expectedValues(m);
 
             try {
-                awaiting.put(id, (CloudFuture<Object>) m.invoke(this, rt));
+                awaiting.put(id, (FlowFuture<Object>) m.invoke(this, fl));
             } catch (InvocationTargetException ex) {
                 out.println("Failure setting up test " + id + ": " + ex.getCause());
                 ex.printStackTrace(out);
@@ -451,7 +451,7 @@ public class ExerciseEverything {
             Test.Catch exWanted = m.getAnnotation(Test.Catch.class);
             String[] values = expectedValues(m);
             try {
-                CloudFuture<Object> cf = awaiting.get(id);
+                FlowFuture<Object> cf = awaiting.get(id);
                 if (cf == null) {
                     continue;
                 }
