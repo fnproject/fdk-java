@@ -21,7 +21,7 @@ public class MultipleEventsTest {
         public void handleRequest(String s) {
             switch (s) {
                 case "1":
-                    Flows.currentRuntime().supply(() -> one());
+                    Flows.currentFlow().supply(() -> one());
                     break;
                 case "2":
                     try {
@@ -30,18 +30,18 @@ public class MultipleEventsTest {
                         e.printStackTrace();
                     }
 
-                    Flows.currentRuntime().supply(() -> two());
+                    Flows.currentFlow().supply(() -> two());
                     break;
             }
         }
 
         static void one() {
             System.err.println("In one, making rt");
-            Flow rt1 = Flows.currentRuntime();
+            Flow fl1 = Flows.currentFlow();
             System.err.println("In one, completedValue(1)");
-            rt1.completedValue(1);
+            fl1.completedValue(1);
 
-            System.err.println("One: Does rt1 == currentRuntime? " + (rt1 == Flows.currentRuntime()));
+            System.err.println("One: Does fl1 == currentFlow? " + (fl1 == Flows.currentFlow()));
 
             System.err.println("In one, letting two proceed");
             MultipleEventsTest.twoGo.release();
@@ -54,13 +54,13 @@ public class MultipleEventsTest {
             }
 
             System.err.println("In one, making second rt");
-            Flow rt3 = Flows.currentRuntime();
+            Flow fl3 = Flows.currentFlow();
             System.err.println("In one, completedValue(3)");
-            rt3.completedValue(3);
+            fl3.completedValue(3);
 
-            success = rt1 == rt3;
-            System.err.println("One: Does rt3 == currentRuntime? " + (rt3 == Flows.currentRuntime()));
-            System.err.println("One: Does rt1 == rt3? " + success);
+            success = fl1 == fl3;
+            System.err.println("One: Does fl3 == currentFlow? " + (fl3 == Flows.currentFlow()));
+            System.err.println("One: Does fl1 == fl3? " + success);
 
             MultipleEventsTest.twoGo.release();
             System.err.println("one completes");
@@ -70,11 +70,11 @@ public class MultipleEventsTest {
             System.err.println("In two, awaiting signal to proceed");
 
             System.err.println("In two, making rt");
-            Flow rt2 = Flows.currentRuntime();
+            Flow fl2 = Flows.currentFlow();
             System.err.println("In two, completedValue(2)");
-            rt2.completedValue(2);
+            fl2.completedValue(2);
 
-            System.err.println("Two: Does rt2 == currentRuntime? " + (rt2 == Flows.currentRuntime()));
+            System.err.println("Two: Does fl2 == currentFlow? " + (fl2 == Flows.currentFlow()));
 
             System.err.println("In two, letting one proceed");
             MultipleEventsTest.oneGo.release();

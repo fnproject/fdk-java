@@ -32,7 +32,7 @@ public class ThumbnailsFunction implements Serializable {
 
     public Response handleRequest(byte[] imageBuffer) {
         String id = java.util.UUID.randomUUID().toString();
-        Flow runtime = Flows.currentRuntime();
+        Flow runtime = Flows.currentFlow();
 
         runtime.allOf(
                 runtime.invokeFunction("myapp/resize128", HttpMethod.POST, Headers.emptyHeaders(), imageBuffer)

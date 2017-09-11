@@ -250,7 +250,7 @@ public class FlowsTest {
     @Test
     public void capturedRunnableCanGetCurrentFlowRuntime() throws Exception {
         Callable<String> r = (Flows.SerCallable<String>) () -> {
-            return Flows.currentRuntime().getClass().getName();
+            return Flows.currentFlow().getClass().getName();
         };
 
         TestSerUtils.HttpMultipartSerialization ser = new TestSerUtils.HttpMultipartSerialization()

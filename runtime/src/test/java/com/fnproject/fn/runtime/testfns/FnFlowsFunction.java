@@ -8,25 +8,25 @@ import java.io.Serializable;
 public class FnFlowsFunction implements Serializable {
 
     public static void usingFlows() {
-        Flows.currentRuntime();
+        Flows.currentFlow();
     }
 
     public static void notUsingFlows() {
     }
 
     public static void supply() {
-        Flow rt = Flows.currentRuntime();
-        rt.supply(() -> 3);
+        Flow fl = Flows.currentFlow();
+        fl.supply(() -> 3);
     }
 
     public static void accessRuntimeMultipleTimes() {
-        Flows.currentRuntime();
-        Flows.currentRuntime();
+        Flows.currentFlow();
+        Flows.currentFlow();
     }
 
     public static Integer supplyAndGetResult() {
-        Flow rt = Flows.currentRuntime();
-        Integer res =  rt.supply(() -> 3).get();
+        Flow fl = Flows.currentFlow();
+        Integer res =  fl.supply(() -> 3).get();
 
         return res;
     }

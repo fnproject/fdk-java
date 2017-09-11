@@ -10,22 +10,22 @@ import java.util.function.*;
  */
 public class Flows {
 
-    private static RuntimeSource runtimeSource;
+    private static FlowSource flowSource;
 
     /**
      * Gets the current supplier of the flow runtime
      *
      * @return the current supplier of the flow runtime
      */
-    public static RuntimeSource getCurrentRuntimeSource() {
-        return runtimeSource;
+    public static FlowSource getCurrentFlowSource() {
+        return flowSource;
     }
 
     /**
      * Defines a  supplier for the current runtime-
      */
-    public interface RuntimeSource {
-        Flow currentRuntime();
+    public interface FlowSource {
+        Flow currentFlow();
     }
 
     /**
@@ -34,20 +34,20 @@ public class Flows {
      *
      * @return the current flow runtime
      */
-    public synchronized static Flow currentRuntime() {
-        Objects.requireNonNull(runtimeSource, "Flows.runtimeSource is not set  - Flows.currentRuntime() should only be called from within a FaaS function invocation");
-        return runtimeSource.currentRuntime();
+    public synchronized static Flow currentFlow() {
+        Objects.requireNonNull(flowSource, "Flows.flowSource is not set  - Flows.currentFlow() should only be called from within a FaaS function invocation");
+        return flowSource.currentFlow();
     }
 
     /**
-     * Set the current runtime source  - this determines how {@link #currentRuntime()} behaves
+     * Set the current runtime source  - this determines how {@link #currentFlow()} behaves
      * <p>
      * This is provided for testing and internal use - users should not normally need to modify the runtime source.
      *
-     * @param runtimeSource a function that instantiates a runtime on demand
+     * @param flowSource a function that instantiates a runtime on demand
      */
-    public synchronized static void setCurrentRuntimeSource(RuntimeSource runtimeSource) {
-        Flows.runtimeSource = runtimeSource;
+    public synchronized static void setCurrentFlowSource(FlowSource flowSource) {
+        Flows.flowSource = flowSource;
     }
 
 

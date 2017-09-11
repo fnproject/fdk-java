@@ -15,10 +15,10 @@ import java.util.function.Function;
  * <p>
  * All asynchronous operations start with a call to an operation on {@link Flow}  - for instance to create a simple asynchronous step call :
  * <blockquote><pre>{@code
- * Flow rt = Flows.currentRuntime();
+ * Flow fl = Flows.currentFlow();
  * int var = 100;
  * // Create a deferred asynchronous computation
- * FlowFuture<Integer>  intFuture = rt.supply(() -> { return 10 * var ;});
+ * FlowFuture<Integer>  intFuture = fl.supply(() -> { return 10 * var ;});
  * // Chain future computation onto the completion of the previous computation
  * FlowFuture<String>  stringFuture = intFuture.thenApply(String::valueOf);
  * }</pre></blockquote>
@@ -46,8 +46,8 @@ public interface FlowFuture<T> extends Serializable {
      * This method allows simple sequential chaining of functions together - each stage may be executed independently
      * in a different environment.
      * <blockquote><pre>{@code
-     *         Flow rt = Flows.currentRuntime();
-     *         rt.supply(() -> {
+     *         Flow fl = Flows.currentFlow();
+     *         fl.supply(() -> {
      *         })
      * }</pre></blockquote>
      *
@@ -67,11 +67,11 @@ public interface FlowFuture<T> extends Serializable {
      * For instance you may create tail-recursive loops or retrying operations with this call:
      * <blockquote><pre>{@code
      *    private static FlowFuture<String> doSomethingWithRetry(String input, int attemptsLeft) {
-     *         Flow rt = Flows.currentRuntime();
+     *         Flow fl = Flows.currentFlow();
      *         try{
      *             // some computation that may thrown an error
      *             String result = someUnreliableComputation(input);
-     *             return rt.completedValue(result);
+     *             return fl.completedValue(result);
      *         }catch(Exception e){
      *             if(attemptsLeft > 0){
      *                  // delay and retry the computation later.
@@ -96,14 +96,14 @@ public interface FlowFuture<T> extends Serializable {
     /**
      * Combine the result of this future and another future into a single value when both have completed normally:
      * <blockquote><pre>{@code
-     *  Flow rt = Flows.currentRuntime();
-     *  FlowFuture<Integer> f1 = rt.supply(() -> {
+     *  Flow fl = Flows.currentFlow();
+     *  FlowFuture<Integer> f1 = fl.supply(() -> {
      *    int x;
      *    // some complex computation
      *    return x;
      *  });
      *
-     *  FlowFuture<String> combinedResult = rt.supply(() -> {
+     *  FlowFuture<String> combinedResult = fl.supply(() -> {
      *   int y;
      *   // some complex computation
      *   return x;
@@ -131,8 +131,8 @@ public interface FlowFuture<T> extends Serializable {
      * <p>
      * Only one of these two parameters will be set, with the other being null.
      * <blockquote><pre>{@code
-     *  Flow rt = Flows.currentRuntime();
-     *  FlowFuture<Integer> f1 = rt.supply(() -> {
+     *  Flow fl = Flows.currentFlow();
+     *  FlowFuture<Integer> f1 = fl.supply(() -> {
      *     if(System.currentTimeMillis() % 2L == 0L) {
      *       throw new RuntimeException("Error in stage");
      *     }
@@ -161,9 +161,9 @@ public interface FlowFuture<T> extends Serializable {
      * <p>
      * This allows you to consume the successful result of a future without returning a new value to future stages.
      * <blockquote><pre>{@code
-     *  Flow rt = Flows.currentRuntime();
+     *  Flow fl = Flows.currentFlow();
      *  DataBase db;
-     *  FlowFuture<Integer> f1 = rt.supply(() -> {
+     *  FlowFuture<Integer> f1 = fl.supply(() -> {
      *        int var;
      *        // some computation
      *        return var;
@@ -185,13 +185,13 @@ public interface FlowFuture<T> extends Serializable {
     /**
      * Run an action when the first of two futures completes successfully.
      * <blockquote><pre>{@code
-     *  Flow rt = Flows.currentRuntime();
-     *  FlowFuture<Integer> f1 = rt.supply(() -> {
+     *  Flow fl = Flows.currentFlow();
+     *  FlowFuture<Integer> f1 = fl.supply(() -> {
      *        int var;
      *        // some long-running computation
      *        return var;
      *  });
-     *  FlowFuture<Integer> f2 = rt.supply(() -> {
+     *  FlowFuture<Integer> f2 = fl.supply(() -> {
      *       int var;
      *       // some long-running computation
      *       return var;
@@ -221,13 +221,13 @@ public interface FlowFuture<T> extends Serializable {
     /**
      * Transform the outcome of the  first of two futures  to complete successfully.
      * <blockquote><pre>{@code
-     *   Flow rt = Flows.currentRuntime();
-     *   FlowFuture<Integer> f1 = rt.supply(() -> {
+     *   Flow fl = Flows.currentFlow();
+     *   FlowFuture<Integer> f1 = fl.supply(() -> {
      *        int var;
      *        // some long-running computation
      *        return var;
      *   });
-     *   FlowFuture<Integer> f2 = rt.supply(() -> {
+     *   FlowFuture<Integer> f2 = fl.supply(() -> {
      *        int var;
      *        // some long-running computation
      *        return var;
@@ -257,13 +257,13 @@ public interface FlowFuture<T> extends Serializable {
     /**
      * Perform an action when this and another future have both completed normally:
      * <blockquote><pre>{@code
-     *  Flow rt = Flows.currentRuntime();
-     *  FlowFuture<Integer> f1 = rt.supply(() -> {
+     *  Flow fl = Flows.currentFlow();
+     *  FlowFuture<Integer> f1 = fl.supply(() -> {
      *      int x;
      *      // some complex computation
      *      return x;
      *  });
-     *  FlowFuture<String> combinedResult = rt.supply(() -> {
+     *  FlowFuture<String> combinedResult = fl.supply(() -> {
      *      int y;
      *      // some complex computation
      *      return x;
@@ -289,8 +289,8 @@ public interface FlowFuture<T> extends Serializable {
     /**
      * Run an action when this future has completed normally.
      * <blockquote><pre>{@code
-     *  Flow rt = Flows.currentRuntime();
-     *  FlowFuture<Integer> f1 = rt.supply(() -> {
+     *  Flow fl = Flows.currentFlow();
+     *  FlowFuture<Integer> f1 = fl.supply(() -> {
      *      int x;
      *      // some complex computation
      *      return x;
@@ -316,8 +316,8 @@ public interface FlowFuture<T> extends Serializable {
      * <p>
      * Only one of these two parameters will be set, with the other being null.
      * <blockquote><pre>{@code
-     *  Flow rt = Flows.currentRuntime();
-     *  FlowFuture<String> f1 = rt.supply(() -> {
+     *  Flow fl = Flows.currentFlow();
+     *  FlowFuture<String> f1 = fl.supply(() -> {
      *     if(System.currentTimeMillis() % 2L == 0L) {
      *       throw new RuntimeException("Error in stage");
      *     }
@@ -353,8 +353,8 @@ public interface FlowFuture<T> extends Serializable {
      * this future.
      *
      * <blockquote><pre>{@code
-     *  Flow rt = Flows.currentRuntime();
-     *  FlowFuture<Integer> f1 = rt.supply(() -> {
+     *  Flow fl = Flows.currentFlow();
+     *  FlowFuture<Integer> f1 = fl.supply(() -> {
      *     if(System.currentTimeMillis() % 2L == 0L) {
      *       throw new RuntimeException("Error in stage");
      *     }

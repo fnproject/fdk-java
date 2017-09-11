@@ -9,9 +9,9 @@ import java.util.concurrent.TimeoutException;
 public class CompleterFunction {
 
     public Integer handleRequest(String input) {
-        Flow rt = Flows.currentRuntime();
+        Flow fl = Flows.currentFlow();
         try {
-            return rt.supply(() -> {
+            return fl.supply(() -> {
                 Thread.sleep(10000);
                 return 42;
             }).get(1000, TimeUnit.MILLISECONDS);

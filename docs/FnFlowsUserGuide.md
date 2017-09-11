@@ -103,9 +103,9 @@ public class PrimeFunction {
 
     public String handleRequest(int nth) {
 
-        Flow rt = Flows.currentRuntime();
+        Flow fl = Flows.currentFlow();
 
-        return rt.supply(
+        return fl.supply(
                 () -> {
                     int num = 1, count = 0, i = 0;
 
@@ -212,10 +212,10 @@ For instance the following is valid because all passed variables and return
 values are serializable:
 
 ```java
-Flow rt = Flows.currentRuntime();
+Flow fl = Flows.currentFlow();
  int x = 10;
 
- FlowFuture<String> f1 = rt.supply(()->{
+ FlowFuture<String> f1 = fl.supply(()->{
        String result = String.valueOf(x * 10); // x is serialized into the remote computation
         return result; // result is serialized as a result into the captured flow future
  });
@@ -225,10 +225,10 @@ However, the following example is invalid, as the variable referenced inside
 the lambda, and the return type wrapped by `FlowFuture` are not serializable:
 
 ```java
-Flow rt = Flows.currentRuntime();
+Flow fl = Flows.currentFlow();
 Optional<String> result = Optional.of("hello");
 
-FlowFuture<NotSerializableClass> f1 = rt.supply(()->{
+FlowFuture<NotSerializableClass> f1 = fl.supply(()->{
        String result = optional.orElse("foo"); // this will fail  as Optionals are not serializable
 
        return new NonSerializableClass(result);;
@@ -244,7 +244,7 @@ public class MyFunction{
    private String config  = "foo";
 
    public void run(){
-      Flows.currentRuntime().supply(()->{
+      Flows.currentFlow().supply(()->{
          // this will fail as MyFunction is not serializable
          System.err.println(config);
 
@@ -265,7 +265,7 @@ public class MyFunction implements Serializable{
    private String config  = "foo";
 
    public void run(){
-      Flows.currentRuntime().supply(()->{
+      Flows.currentFlow().supply(()->{
          // this will work as MyFunction is captured and serialized into the lambda
          System.err.println(config);
         });
@@ -296,7 +296,7 @@ public class MyFunction{
       final String config = this.config;
       String dbVal = db.getValue();
 
-      Flows.currentRuntime().supply(()->{
+      Flows.currentFlow().supply(()->{
          System.err.println(config );
         });
    }
@@ -326,7 +326,7 @@ public class MyFunction implements Serialiable{
       final String config = this.config;
       String dbVal = getDb().getValue();
 
-      Flows.currentRuntime().supply(()->{
+      Flows.currentFlow().supply(()->{
          System.err.println(config  + getDb().getValue());
         });
    }
@@ -344,7 +344,7 @@ captured variables to Flow stages, e.g.
 public class MyFunction{
    public void run(){
       Function<int,int> myfn =(x)->x+1;
-      Flows.currentRuntime()
+      Flows.currentFlow()
         .supply(()->{ // this will fail as myfn is not serializable
          int result = myfn.apply(10);
          System.err.println(result);
@@ -361,7 +361,7 @@ captured clases) must be serializable:
 public class MyFunction{
    public void run(){
       Function<Integer,Integer > myfn = (Serializable & Function<Integer,Integer>) (x)->x+1;
-      Flows.currentRuntime()
+      Flows.currentFlow()
         .supply(()->{
            int result = myfn.apply(10);
            System.err.println(result);
@@ -387,7 +387,7 @@ Generally, we recommend that you call methods on `Flow` and
 `FlowFuture` directly (i.e. including the lambda inline with the argument) :
 
 ```java
-      Flows.currentRuntime()
+      Flows.currentFlow()
         .supply(()->{
            int result = myfn.apply(10);
            System.err.println(result);
@@ -427,7 +427,7 @@ public class MyFunction{
    public void run(){
       java.util.concurrent.atomic.AtomicInteger myInt = new AtomicInteger(0);
 
-      Flows.currentRuntime()
+      Flows.currentFlow()
         .supply(()->{
            // will print "0"
            System.err.println(myInt);
@@ -448,7 +448,7 @@ public class MyFunction{
    public void run(){
       java.util.concurrent.atomic.AtomicInteger myInt = new AtomicInteger(0);
 
-      Flows.currentRuntime()
+      Flows.currentFlow()
         .supply(()->{
            // will print "0"
            System.err.println(myInt.get());
@@ -492,7 +492,7 @@ public class MyFunction{
    public void run(){
       java.util.concurrent.atomic.AtomicInteger myInt = new AtomicInteger(0);
 
-      Flows.currentRuntime()
+      Flows.currentFlow()
         .supply(()->{
            throw new MyException("bad times");
         }).exceptionally((e)->{

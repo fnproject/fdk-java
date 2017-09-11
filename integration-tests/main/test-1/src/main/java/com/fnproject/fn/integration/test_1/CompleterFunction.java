@@ -6,9 +6,9 @@ import com.fnproject.fn.api.flow.Flows;
 public class CompleterFunction {
 
     public Integer handleRequest(String input) {
-        Flow rt = Flows.currentRuntime();
+        Flow fl = Flows.currentFlow();
 
-        return rt.supply(() -> Integer.parseInt(input))
+        return fl.supply(() -> Integer.parseInt(input))
                 .thenApply((i) -> i + 3)
                 .get();
     }

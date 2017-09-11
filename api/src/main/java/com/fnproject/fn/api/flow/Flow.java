@@ -23,8 +23,8 @@ public interface Flow extends Serializable {
      * When this function is called, the completer will send a request with the body to the given function ID within
      * the fn and provide a future that can chain on the response of the function.
      * <blockquote><pre>{@code
-     *         Flow rt = Flows.currentRuntime();
-     *         rt.invokeFunction("myapp/myfn","input".getBytes())
+     *         Flow fl = Flows.currentFlow();
+     *         fl.invokeFunction("myapp/myfn","input".getBytes())
      *           .thenAccept((result)->{
      *               System.err.println("Result was " + new String(result));
      *           });
@@ -73,8 +73,8 @@ public interface Flow extends Serializable {
     /**
      * Invoke an asynchronous task that yields a value
      * <blockquote><pre>{@code
-     *         Flow rt = Flows.currentRuntime();
-     *         rt.supply(()->{
+     *         Flow fl = Flows.currentFlow();
+     *         fl.supply(()->{
      *            int someVal
      *            someVal = ... // some long running computation.
      *            return someVal;
@@ -93,8 +93,8 @@ public interface Flow extends Serializable {
     /**
      * Invoke an asynchronous task that does not yield a value
      * <blockquote><pre>{@code
-     *         Flow rt = Flows.currentRuntime();
-     *         rt.supply(()->{
+     *         Flow fl = Flows.currentFlow();
+     *         fl.supply(()->{
      *            System.err.println("I have run asynchronously");
      *         });
      * <p>
@@ -108,8 +108,8 @@ public interface Flow extends Serializable {
     /**
      * Create a future that completes successfully after a specified delay
      * <blockquote><pre>{@code
-     *         Flow rt = Flows.currentRuntime();
-     *         rt.delay(5,TimeUnit.Seconds)
+     *         Flow fl = Flows.currentFlow();
+     *         fl.delay(5,TimeUnit.Seconds)
      *            .thenAccept((ignored)->{
      *               System.err.println("I have run asynchronously");
      *            });
@@ -124,8 +124,8 @@ public interface Flow extends Serializable {
     /**
      * Create a completed future for a specified value.
      * <blockquote><pre>{@code
-     *         Flow rt = Flows.currentRuntime();
-     *         rt.delay(5,TimeUnit.Seconds)
+     *         Flow fl = Flows.currentFlow();
+     *         fl.delay(5,TimeUnit.Seconds)
      *            .thenCompose((ignored)->{
      *                if(shouldRunFn){
      *                    return rt.invokeAsync("testapp/testfn","input".getBytes()).thenApply(String::new);
@@ -153,11 +153,11 @@ public interface Flow extends Serializable {
     /**
      * Wait for all a list of tasks to complete
      * <blockquote><pre>{@code
-     *         Flow rt = Flows.currentRuntime();
-     *         FlowFuture<Integer> f1 = rt.delay(5, TimeUnit.SECONDS).thenApply((ignored)-> 10);
-     *         FlowFuture<String> f2 = rt.delay(3, TimeUnit.SECONDS).thenApply((ignored)-> "Hello");
-     *         FlowFuture<Void> f3 = rt.delay(1, TimeUnit.SECONDS);
-     *         rt.allOf(f1,f2,f3)
+     *         Flow fl = Flows.currentFlow();
+     *         FlowFuture<Integer> f1 = fl.delay(5, TimeUnit.SECONDS).thenApply((ignored)-> 10);
+     *         FlowFuture<String> f2 = fl.delay(3, TimeUnit.SECONDS).thenApply((ignored)-> "Hello");
+     *         FlowFuture<Void> f3 = fl.delay(1, TimeUnit.SECONDS);
+     *         fl.allOf(f1,f2,f3)
      *            .thenAccept((ignored)->{
      *            System.err.println("all done");
      *         });
@@ -172,11 +172,11 @@ public interface Flow extends Serializable {
     /**
      * Wait for any of a list of tasks to complete
      * <blockquote><pre>{@code
-     *         Flow rt = Flows.currentRuntime();
-     *         FlowFuture<Integer> f1 = rt.delay(5, TimeUnit.SECONDS).thenApply((ignored)-> 10);
-     *         FlowFuture<String> f2 = rt.delay(3, TimeUnit.SECONDS).thenApply((ignored)-> "Hello");
-     *         FlowFuture<Void> f3 = rt.supply(()->throw new RuntimeException("err"));
-     *         rt.anyOf(f1,f2,f3)
+     *         Flow fl = Flows.currentFlow();
+     *         FlowFuture<Integer> f1 = fl.delay(5, TimeUnit.SECONDS).thenApply((ignored)-> 10);
+     *         FlowFuture<String> f2 = fl.delay(3, TimeUnit.SECONDS).thenApply((ignored)-> "Hello");
+     *         FlowFuture<Void> f3 = fl.supply(()->throw new RuntimeException("err"));
+     *         fl.anyOf(f1,f2,f3)
      *            .thenAccept((ignored)->{
      *            System.err.println("at least one done");
      *         });
@@ -213,8 +213,8 @@ public interface Flow extends Serializable {
      * The framework will make a best effort attempt to execute the termination hooks in LIFO order with respect to when
      * they were added.
      * <blockquote><pre>{@code
-     *         Flow rt = Flows.currentRuntime();
-     *         rt.addTerminationHook( (ignored) -> { System.err.println("Flow terminated"); } )
+     *         Flow fl = Flows.currentFlow();
+     *         fl.addTerminationHook( (ignored) -> { System.err.println("Flow terminated"); } )
      *           .addTerminationHook( (endState) -> { System.err.println("End state was " + endState.asText()); } );
      * }</pre></blockquote>
      * This example will first run a stage that prints the end state, and then run a stage that prints 'Flow terminated'.

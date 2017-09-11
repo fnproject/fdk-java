@@ -75,11 +75,11 @@ public final class FlowContinuationInvoker implements FunctionInvoker {
             }
 
             final FlowId flowId = new FlowId(graphIdOption.get());
-            Flows.RuntimeSource attachedSource = new Flows.RuntimeSource() {
+            Flows.FlowSource attachedSource = new Flows.FlowSource() {
                 Flow runtime;
 
                 @Override
-                public synchronized Flow currentRuntime() {
+                public synchronized Flow currentFlow() {
                     if (runtime == null) {
                         runtime = new RemoteFlow(flowId);
                     }
@@ -87,7 +87,7 @@ public final class FlowContinuationInvoker implements FunctionInvoker {
                 }
             };
 
-            Flows.setCurrentRuntimeSource(attachedSource);
+            Flows.setCurrentFlowSource(attachedSource);
 
 
             try {
@@ -134,15 +134,15 @@ public final class FlowContinuationInvoker implements FunctionInvoker {
                 });
 
             } finally {
-                Flows.setCurrentRuntimeSource(null);
+                Flows.setCurrentFlowSource(null);
             }
 
         } else {
-            Flows.RuntimeSource deferredSource = new Flows.RuntimeSource() {
+            Flows.FlowSource deferredSource = new Flows.FlowSource() {
                 Flow runtime;
 
                 @Override
-                public synchronized Flow currentRuntime() {
+                public synchronized Flow currentFlow() {
                     if (runtime == null) {
                         String functionId = evt.getAppName() + evt.getRoute();
                         CompleterClientFactory factory = getOrCreateCompleterClientFactory(completerBaseUrl);
@@ -166,7 +166,7 @@ public final class FlowContinuationInvoker implements FunctionInvoker {
             };
 
             // Not a flow invocation
-            Flows.setCurrentRuntimeSource(deferredSource);
+            Flows.setCurrentFlowSource(deferredSource);
             return Optional.empty();
         }
     }

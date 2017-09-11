@@ -25,9 +25,9 @@ public class FnTestingRuleFlowsTest {
         public static int COUNT = 5;
 
         public String repeat(String s) {
-            Flow rt = Flows.currentRuntime();
+            Flow fl = Flows.currentFlow();
 
-            return rt
+            return fl
                     .completedValue(new Triple<>(COUNT, s, ""))
                     .thenCompose(Loop::loop)
                     .get();
@@ -38,12 +38,12 @@ public class FnTestingRuleFlowsTest {
             int i = triple.first;
             String s = triple.second;
             String acc = triple.third;
-            Flow rt = Flows.currentRuntime();
+            Flow fl = Flows.currentFlow();
 
             if (i == 0) {
-                return rt.completedValue(acc);
+                return fl.completedValue(acc);
             } else {
-                return rt.completedValue(triple(i - 1, s, acc + s))
+                return fl.completedValue(triple(i - 1, s, acc + s))
                         .thenCompose(Loop::loop);
             }
         }
@@ -281,40 +281,40 @@ public class FnTestingRuleFlowsTest {
         }
 
         public void completedValue() {
-            Flows.currentRuntime()
+            Flows.currentFlow()
                     .completedValue(Result.CompletedValue).thenAccept((r) -> result = r);
         }
 
         public void supply() {
-            Flows.currentRuntime()
+            Flows.currentFlow()
                     .supply(() -> {
                         return Result.Supply;
                     }).thenAccept((r) -> result = r);
         }
 
         public void allOf() {
-            Flow rt = Flows.currentRuntime();
-            rt.allOf(
-                    rt.completedValue(1),
-                    rt.completedValue(-1)
+            Flow fl = Flows.currentFlow();
+            fl.allOf(
+                    fl.completedValue(1),
+                    fl.completedValue(-1)
             ).thenAccept((r) -> {
                 result = Result.AllOf;
             });
         }
 
         public void anyOf() {
-            Flow rt = Flows.currentRuntime();
-            rt.anyOf(
-                    rt.completedValue(1),
-                    rt.completedValue(-1)
+            Flow fl = Flows.currentFlow();
+            fl.anyOf(
+                    fl.completedValue(1),
+                    fl.completedValue(-1)
             ).thenAccept((r) -> result = Result.AnyOf);
         }
 
         public void thenCompose() {
-            Flow rt = Flows.currentRuntime();
-            rt.completedValue(1)
+            Flow fl = Flows.currentFlow();
+            fl.completedValue(1)
                     .thenCompose((x) ->
-                            rt.completedValue(1)
+                            fl.completedValue(1)
                                     .thenApply((y) -> x + y)
                     )
                     .thenAccept((r) -> result = Result.AnyOf);
@@ -322,14 +322,14 @@ public class FnTestingRuleFlowsTest {
         }
 
         public void invokeFunctionEcho() {
-            Flow rt = Flows.currentRuntime();
-            rt.invokeFunction("user/echo", HttpMethod.GET, Headers.emptyHeaders(), Result.InvokeFunctionEcho.name().getBytes())
+            Flow fl = Flows.currentFlow();
+            fl.invokeFunction("user/echo", HttpMethod.GET, Headers.emptyHeaders(), Result.InvokeFunctionEcho.name().getBytes())
                     .thenAccept((r) -> result = Result.valueOf(new String(r.getBodyAsBytes())));
         }
 
         public void invokeFunctionError() {
-            Flow rt = Flows.currentRuntime();
-            rt.invokeFunction("user/error", HttpMethod.GET, Headers.emptyHeaders(), new byte[]{})
+            Flow fl = Flows.currentFlow();
+            fl.invokeFunction("user/error", HttpMethod.GET, Headers.emptyHeaders(), new byte[]{})
                     .exceptionally((e) -> {
                         result = Result.Exceptionally;
                         exception = e;
@@ -338,16 +338,16 @@ public class FnTestingRuleFlowsTest {
         }
 
         public void completeExceptionally() {
-            Flow rt = Flows.currentRuntime();
-            rt.supply(() -> {
+            Flow fl = Flows.currentFlow();
+            fl.supply(() -> {
                 throw new RuntimeException("This function should fail");
             })
                     .exceptionally((ex) -> result = Result.Exceptionally);
         }
 
         public void completeExceptionallyEarly() {
-            Flow rt = Flows.currentRuntime();
-            rt.completedValue(null)
+            Flow fl = Flows.currentFlow();
+            fl.completedValue(null)
                     .thenApply((x) -> {
                         throw new RuntimeException("This function should fail");
                     })
@@ -360,8 +360,8 @@ public class FnTestingRuleFlowsTest {
 
 
         public void logToStdErrInContinuation() {
-            Flow rt = Flows.currentRuntime();
-            rt.completedValue(1)
+            Flow fl = Flows.currentFlow();
+            fl.completedValue(1)
                     .thenApply((x) -> {
                         System.err.println("TestFn logging: " + x);
                         return x;
@@ -370,8 +370,8 @@ public class FnTestingRuleFlowsTest {
         }
 
         public void logToStdOutInContinuation() {
-            Flow rt = Flows.currentRuntime();
-            rt.completedValue(1)
+            Flow fl = Flows.currentFlow();
+            fl.completedValue(1)
                     .thenApply((x) -> {
                         System.err.println("TestFn logging: " + x);
                         return x;
@@ -380,33 +380,33 @@ public class FnTestingRuleFlowsTest {
         }
 
         public void cannotReadConfigVarInContinuation() {
-            Flow rt = Flows.currentRuntime();
+            Flow fl = Flows.currentFlow();
             TO_ADD = 3;
-            rt.completedValue(1)
+            fl.completedValue(1)
                     .thenAccept((x) -> {
                         staticConfig = TO_ADD;
                     });
         }
 
         public void terminationHooks() {
-            Flow rt = Flows.currentRuntime();
+            Flow fl = Flows.currentFlow();
 
-            rt.supply(() -> 1)
+            fl.supply(() -> 1)
                     .thenAccept((i) -> {
                         System.err.println("Hello");
                     });
 
-            rt.addTerminationHook((s) -> {
+            fl.addTerminationHook((s) -> {
                 if(staticConfig == 2){
                     result = Result.TerminationHookRun;
                 }
 
             });
 
-            rt.addTerminationHook((s) -> {
+            fl.addTerminationHook((s) -> {
                 staticConfig ++;
             });
-            rt.addTerminationHook((s) -> {
+            fl.addTerminationHook((s) -> {
                 staticConfig =1;
             });
         }
