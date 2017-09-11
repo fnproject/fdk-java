@@ -4,7 +4,7 @@ package com.fnproject.fn.runtime;
 import com.fnproject.fn.api.FunctionInvoker;
 import com.fnproject.fn.api.InputEvent;
 import com.fnproject.fn.api.OutputEvent;
-import com.fnproject.fn.runtime.cloudthreads.CloudThreadsContinuationInvoker;
+import com.fnproject.fn.runtime.flow.FlowContinuationInvoker;
 import com.fnproject.fn.runtime.exception.*;
 
 import java.io.IOException;
@@ -35,7 +35,7 @@ public class EntryPoint {
     }
 
 
-    private List<FunctionInvoker> configuredInvokers = Arrays.asList(new CloudThreadsContinuationInvoker(), new MethodFunctionInvoker());
+    private List<FunctionInvoker> configuredInvokers = Arrays.asList(new FlowContinuationInvoker(), new MethodFunctionInvoker());
 
 
     /**

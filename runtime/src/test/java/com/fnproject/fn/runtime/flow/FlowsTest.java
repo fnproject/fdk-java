@@ -1,4 +1,4 @@
-package com.fnproject.fn.runtime.cloudthreads;
+package com.fnproject.fn.runtime.flow;
 
 import com.fnproject.fn.api.flow.Flows;
 import com.fnproject.fn.runtime.FnTestHarness;
@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static com.fnproject.fn.runtime.cloudthreads.CloudCompleterApiClient.*;
+import static com.fnproject.fn.runtime.flow.RemoteCompleterApiClient.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isA;
@@ -32,7 +32,7 @@ public class FlowsTest {
     public FnTestHarness fnTestHarness = new FnTestHarness();
 
     private final String FUNCTION_ID = "app/testfn";
-    private final ThreadId THREAD_ID = new ThreadId("test-thread-id");
+    private final FlowId THREAD_ID = new FlowId("test-thread-id");
 
     // static to avoid issues with serialized AtomicRefs
     static AtomicBoolean tag = new AtomicBoolean(false);
@@ -44,9 +44,9 @@ public class FlowsTest {
     public void setup() {
         tag.set(false);
         MockitoAnnotations.initMocks(this);
-        CloudThreadsRuntimeGlobals.resetCompleterClientFactory();
+        FlowRuntimeGlobals.resetCompleterClientFactory();
 
-        CloudThreadsRuntimeGlobals.setCompleterClientFactory(() -> mockCompleterClient);
+        FlowRuntimeGlobals.setCompleterClientFactory(() -> mockCompleterClient);
     }
 
     private FnTestHarness.EventBuilder eventToTestFN() {

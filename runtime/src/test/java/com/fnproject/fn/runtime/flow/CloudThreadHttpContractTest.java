@@ -1,4 +1,4 @@
-package com.fnproject.fn.runtime.cloudthreads;
+package com.fnproject.fn.runtime.flow;
 
 import com.fnproject.fn.api.flow.Flows;
 import com.fnproject.fn.api.Headers;
@@ -16,7 +16,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.UUID;
 
-import static com.fnproject.fn.runtime.cloudthreads.CloudCompleterApiClient.*;
+import static com.fnproject.fn.runtime.flow.RemoteCompleterApiClient.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -24,7 +24,7 @@ import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class CloudThreadHttpContractTest {
-    public CloudCompleterApiClient client;
+    public RemoteCompleterApiClient client;
     private final String THREAD_ID = UUID.randomUUID().toString();
     private final String EXTERNAL_FUNCTION_ID = "/not-my-application/function/route";
     private final String FUNCTION_ID = "function/my_func";
@@ -36,7 +36,7 @@ public class CloudThreadHttpContractTest {
 
     @Before
     public void setUp() {
-        client = new CloudCompleterApiClient("http://localhost", httpClient);
+        client = new RemoteCompleterApiClient("http://localhost", httpClient);
     }
 
 
@@ -46,7 +46,7 @@ public class CloudThreadHttpContractTest {
                 new HttpClient.HttpResponse(200).addHeader(THREAD_ID_HEADER, THREAD_ID)
         );
 
-        ThreadId tid = client.createThread(FUNCTION_ID);
+        FlowId tid = client.createThread(FUNCTION_ID);
         verify(httpClient, times(1)).execute(requestCaptor.capture());
         HttpClient.HttpRequest capturedRequest = requestCaptor.getValue();
 
@@ -65,7 +65,7 @@ public class CloudThreadHttpContractTest {
         );
 
 
-        CompletionId cid = client.supply(new ThreadId(THREAD_ID), supplier);
+        CompletionId cid = client.supply(new FlowId(THREAD_ID), supplier);
         verify(httpClient, times(1)).execute(requestCaptor.capture());
         HttpClient.HttpRequest capturedRequest = requestCaptor.getValue();
 
@@ -91,7 +91,7 @@ public class CloudThreadHttpContractTest {
                         .addHeader(STAGE_ID_HEADER, "1")
         );
 
-        CompletionId cid = client.invokeFunction(new ThreadId(THREAD_ID), EXTERNAL_FUNCTION_ID, inputToFunction, HttpMethod.POST, headers);
+        CompletionId cid = client.invokeFunction(new FlowId(THREAD_ID), EXTERNAL_FUNCTION_ID, inputToFunction, HttpMethod.POST, headers);
         verify(httpClient, times(1)).execute(requestCaptor.capture());
         HttpClient.HttpRequest capturedRequest = requestCaptor.getValue();
 

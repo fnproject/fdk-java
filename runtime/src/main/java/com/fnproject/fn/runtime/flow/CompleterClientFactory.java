@@ -1,4 +1,4 @@
-package com.fnproject.fn.runtime.cloudthreads;
+package com.fnproject.fn.runtime.flow;
 
 import java.io.Serializable;
 import java.util.function.Supplier;

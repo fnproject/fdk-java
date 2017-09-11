@@ -1,4 +1,4 @@
-package com.fnproject.fn.runtime.cloudthreads;
+package com.fnproject.fn.runtime.flow;
 
 import com.fnproject.fn.api.*;
 import com.fnproject.fn.api.flow.*;
@@ -19,7 +19,7 @@ import java.util.*;
 import java.util.function.DoubleSupplier;
 
 import static com.fnproject.fn.runtime.TestSerUtils.*;
-import static com.fnproject.fn.runtime.cloudthreads.CloudCompleterApiClient.*;
+import static com.fnproject.fn.runtime.flow.RemoteCompleterApiClient.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.junit.Assert.assertFalse;
@@ -46,7 +46,7 @@ public class FlowsContinuationInvokerTest {
         InputEvent event = constructContinuationInputEvent(ser);
 
         // When
-        CloudThreadsContinuationInvoker invoker = new CloudThreadsContinuationInvoker();
+        FlowContinuationInvoker invoker = new FlowContinuationInvoker();
         Optional<OutputEvent> result = invoker.tryInvoke(new EmptyInvocationContext(), event);
 
         // Then
@@ -72,7 +72,7 @@ public class FlowsContinuationInvokerTest {
                 .build();
 
         // When
-        CloudThreadsContinuationInvoker invoker = new CloudThreadsContinuationInvoker();
+        FlowContinuationInvoker invoker = new FlowContinuationInvoker();
         Optional<OutputEvent> result = invoker.tryInvoke(new EmptyInvocationContext(), event);
 
         // Then
@@ -92,7 +92,7 @@ public class FlowsContinuationInvokerTest {
         InputEvent event = constructContinuationInputEvent(ser);
 
         // When
-        CloudThreadsContinuationInvoker invoker = new CloudThreadsContinuationInvoker();
+        FlowContinuationInvoker invoker = new FlowContinuationInvoker();
         Optional<OutputEvent> result = invoker.tryInvoke(new EmptyInvocationContext(), event);
 
         // Then
@@ -119,7 +119,7 @@ public class FlowsContinuationInvokerTest {
         thrown.expectMessage("Error reading continuation content");
 
         // When
-        CloudThreadsContinuationInvoker invoker = new CloudThreadsContinuationInvoker();
+        FlowContinuationInvoker invoker = new FlowContinuationInvoker();
         invoker.tryInvoke(new EmptyInvocationContext(), event);
     }
 
@@ -138,7 +138,7 @@ public class FlowsContinuationInvokerTest {
         InputEvent event = constructContinuationInputEvent(ser);
 
         // When
-        CloudThreadsContinuationInvoker invoker = new CloudThreadsContinuationInvoker();
+        FlowContinuationInvoker invoker = new FlowContinuationInvoker();
         Optional<OutputEvent> result = invoker.tryInvoke(new EmptyInvocationContext(), event);
 
         // Then
@@ -162,7 +162,7 @@ public class FlowsContinuationInvokerTest {
         InputEvent event = constructContinuationInputEvent(ser);
 
         // When
-        CloudThreadsContinuationInvoker invoker = new CloudThreadsContinuationInvoker();
+        FlowContinuationInvoker invoker = new FlowContinuationInvoker();
         Optional<OutputEvent> result = invoker.tryInvoke(new EmptyInvocationContext(), event);
 
         // Then
@@ -189,7 +189,7 @@ public class FlowsContinuationInvokerTest {
         thrown.expectMessage("Error deserializing closure object");
 
         // When
-        CloudThreadsContinuationInvoker invoker = new CloudThreadsContinuationInvoker();
+        FlowContinuationInvoker invoker = new FlowContinuationInvoker();
         invoker.tryInvoke(new EmptyInvocationContext(), event);
     }
 
@@ -203,7 +203,7 @@ public class FlowsContinuationInvokerTest {
         InputEvent event = constructContinuationInputEvent(ser);
 
         // When
-        CloudThreadsContinuationInvoker invoker = new CloudThreadsContinuationInvoker();
+        FlowContinuationInvoker invoker = new FlowContinuationInvoker();
         Optional<OutputEvent> result = invoker.tryInvoke(new EmptyInvocationContext(), event);
 
         // Then
@@ -235,7 +235,7 @@ public class FlowsContinuationInvokerTest {
         InputEvent event = constructContinuationInputEvent(ser);
 
         // When
-        CloudThreadsContinuationInvoker invoker = new CloudThreadsContinuationInvoker();
+        FlowContinuationInvoker invoker = new FlowContinuationInvoker();
         Optional<OutputEvent> result = invoker.tryInvoke(new EmptyInvocationContext(), event);
     }
 
@@ -261,7 +261,7 @@ public class FlowsContinuationInvokerTest {
         InputEvent event = constructContinuationInputEvent(ser);
 
         // When
-        CloudThreadsContinuationInvoker invoker = new CloudThreadsContinuationInvoker();
+        FlowContinuationInvoker invoker = new FlowContinuationInvoker();
         Optional<OutputEvent> result = invoker.tryInvoke(new EmptyInvocationContext(), event);
     }
 
@@ -283,7 +283,7 @@ public class FlowsContinuationInvokerTest {
         InputEvent event = constructContinuationInputEvent(ser);
 
         // When
-        CloudThreadsContinuationInvoker invoker = new CloudThreadsContinuationInvoker();
+        FlowContinuationInvoker invoker = new FlowContinuationInvoker();
         Optional<OutputEvent> result = invoker.tryInvoke(new EmptyInvocationContext(), event);
         assertThat(result).isPresent();
         assertThat(resultAsObject(result.get())).isEqualTo(postedResult);
@@ -314,7 +314,7 @@ public class FlowsContinuationInvokerTest {
         InputEvent event = constructContinuationInputEvent(ser);
 
         // When
-        CloudThreadsContinuationInvoker invoker = new CloudThreadsContinuationInvoker();
+        FlowContinuationInvoker invoker = new FlowContinuationInvoker();
         Optional<OutputEvent> result = invoker.tryInvoke(new EmptyInvocationContext(), event);
     }
 
@@ -335,7 +335,7 @@ public class FlowsContinuationInvokerTest {
         InputEvent event = constructContinuationInputEvent(ser);
 
         // When
-        CloudThreadsContinuationInvoker invoker = new CloudThreadsContinuationInvoker();
+        FlowContinuationInvoker invoker = new FlowContinuationInvoker();
         Optional<OutputEvent> result = invoker.tryInvoke(new EmptyInvocationContext(), event);
         assertThat(result).isPresent();
         assertThat(resultAsObject(result.get())).isEqualTo(postedResult);
@@ -355,7 +355,7 @@ public class FlowsContinuationInvokerTest {
         InputEvent event = constructContinuationInputEvent(ser);
 
         // When
-        CloudThreadsContinuationInvoker invoker = new CloudThreadsContinuationInvoker();
+        FlowContinuationInvoker invoker = new FlowContinuationInvoker();
         Optional<OutputEvent> result = invoker.tryInvoke(new EmptyInvocationContext(), event);
 
         // Then
@@ -383,7 +383,7 @@ public class FlowsContinuationInvokerTest {
         thrown.expectMessage("Error deserializing closure object");
 
         // When
-        CloudThreadsContinuationInvoker invoker = new CloudThreadsContinuationInvoker();
+        FlowContinuationInvoker invoker = new FlowContinuationInvoker();
         invoker.tryInvoke(new EmptyInvocationContext(), event);
     }
 
@@ -400,7 +400,7 @@ public class FlowsContinuationInvokerTest {
         thrown.expectMessage("Error deserializing closure object");
 
         // When
-        CloudThreadsContinuationInvoker invoker = new CloudThreadsContinuationInvoker();
+        FlowContinuationInvoker invoker = new FlowContinuationInvoker();
         invoker.tryInvoke(new EmptyInvocationContext(), event);
     }
 
@@ -414,7 +414,7 @@ public class FlowsContinuationInvokerTest {
         InputEvent event = constructContinuationInputEvent(ser);
 
         // When
-        CloudThreadsContinuationInvoker invoker = new CloudThreadsContinuationInvoker();
+        FlowContinuationInvoker invoker = new FlowContinuationInvoker();
         Optional<OutputEvent> result = invoker.tryInvoke(new EmptyInvocationContext(), event);
 
         // Then
@@ -437,7 +437,7 @@ public class FlowsContinuationInvokerTest {
         thrown.expectMessage("no dispatch mechanism found for class");
 
         // When
-        CloudThreadsContinuationInvoker invoker = new CloudThreadsContinuationInvoker();
+        FlowContinuationInvoker invoker = new FlowContinuationInvoker();
         invoker.tryInvoke(new EmptyInvocationContext(), event);
     }
 
@@ -456,7 +456,7 @@ public class FlowsContinuationInvokerTest {
 
         // When
         try {
-            CloudThreadsContinuationInvoker invoker = new CloudThreadsContinuationInvoker();
+            FlowContinuationInvoker invoker = new FlowContinuationInvoker();
             invoker.tryInvoke(new EmptyInvocationContext(), event);
         } catch(Exception ex) {
             assertThat(ex.getCause().getMessage()).isEqualTo("Result returned by stage is not serializable: java.lang.Object");
@@ -481,7 +481,7 @@ public class FlowsContinuationInvokerTest {
 
         // When
         try {
-            CloudThreadsContinuationInvoker invoker = new CloudThreadsContinuationInvoker();
+            FlowContinuationInvoker invoker = new FlowContinuationInvoker();
             invoker.tryInvoke(new EmptyInvocationContext(), event);
         } catch(Exception ex) {
             assertThat(ex.getCause().getMessage()).isEqualTo(exceptionMessage);
@@ -490,19 +490,19 @@ public class FlowsContinuationInvokerTest {
     }
 
     private Object resultAsObject(OutputEvent result) throws IOException, ClassNotFoundException {
-        return SerUtils.deserializeObject(((CloudThreadsContinuationInvoker.ContinuationOutputEvent)result).getContentBody());
+        return SerUtils.deserializeObject(((FlowContinuationInvoker.ContinuationOutputEvent)result).getContentBody());
     }
 
     private byte[] resultInnerPayload(OutputEvent result) throws IOException {
-        return ((CloudThreadsContinuationInvoker.ContinuationOutputEvent)result).getContentBody();
+        return ((FlowContinuationInvoker.ContinuationOutputEvent)result).getContentBody();
     }
 
     private Optional<Integer> resultAsInteger(OutputEvent oe) {
-        if (!(oe instanceof CloudThreadsContinuationInvoker.ContinuationOutputEvent)) {
+        if (!(oe instanceof FlowContinuationInvoker.ContinuationOutputEvent)) {
             return Optional.empty();
         }
 
-        CloudThreadsContinuationInvoker.ContinuationOutputEvent coe = (CloudThreadsContinuationInvoker.ContinuationOutputEvent) oe;
+        FlowContinuationInvoker.ContinuationOutputEvent coe = (FlowContinuationInvoker.ContinuationOutputEvent) oe;
 
         // Check Datum Type
         if (!coe.getHeaders().get(DATUM_TYPE_HEADER).map((datumType) -> datumType.equalsIgnoreCase(DATUM_TYPE_BLOB)).isPresent()) {
@@ -525,42 +525,42 @@ public class FlowsContinuationInvokerTest {
     private void assertSucessfulEmptyResult(OutputEvent result) throws IOException {
         assertContinuationOutputEvent(result);
         assertThat(resultInnerPayload(result).length).isEqualTo(0);
-        assertDatumType(DATUM_TYPE_EMPTY, (CloudThreadsContinuationInvoker.ContinuationOutputEvent) result);
-        assertResultStatus(true, (CloudThreadsContinuationInvoker.ContinuationOutputEvent) result);
+        assertDatumType(DATUM_TYPE_EMPTY, (FlowContinuationInvoker.ContinuationOutputEvent) result);
+        assertResultStatus(true, (FlowContinuationInvoker.ContinuationOutputEvent) result);
     }
 
     private void assertSuccessfulResult(OutputEvent result) {
         assertContinuationOutputEvent(result);
-        assertContentType(CONTENT_TYPE_JAVA_OBJECT, (CloudThreadsContinuationInvoker.ContinuationOutputEvent) result);
-        assertResultStatus(true, (CloudThreadsContinuationInvoker.ContinuationOutputEvent) result);
-        assertDatumType(DATUM_TYPE_BLOB, (CloudThreadsContinuationInvoker.ContinuationOutputEvent) result);
+        assertContentType(CONTENT_TYPE_JAVA_OBJECT, (FlowContinuationInvoker.ContinuationOutputEvent) result);
+        assertResultStatus(true, (FlowContinuationInvoker.ContinuationOutputEvent) result);
+        assertDatumType(DATUM_TYPE_BLOB, (FlowContinuationInvoker.ContinuationOutputEvent) result);
     }
 
     private void assertSuccessfulCompletionStageResult(String expectedStageId, OutputEvent result) {
         assertContinuationOutputEvent(result);
-        assertDatumType(DATUM_TYPE_STAGEREF, (CloudThreadsContinuationInvoker.ContinuationOutputEvent) result);
-        assertResultStatus(true, (CloudThreadsContinuationInvoker.ContinuationOutputEvent) result);
-        assertHeader(STAGE_ID_HEADER, expectedStageId, (CloudThreadsContinuationInvoker.ContinuationOutputEvent) result);
+        assertDatumType(DATUM_TYPE_STAGEREF, (FlowContinuationInvoker.ContinuationOutputEvent) result);
+        assertResultStatus(true, (FlowContinuationInvoker.ContinuationOutputEvent) result);
+        assertHeader(STAGE_ID_HEADER, expectedStageId, (FlowContinuationInvoker.ContinuationOutputEvent) result);
     }
 
     private void assertContinuationOutputEvent(OutputEvent result) {
-        assertTrue(result instanceof CloudThreadsContinuationInvoker.ContinuationOutputEvent);
+        assertTrue(result instanceof FlowContinuationInvoker.ContinuationOutputEvent);
     }
 
-    private static void assertContentType(String expectedContentType, CloudThreadsContinuationInvoker.ContinuationOutputEvent result) {
+    private static void assertContentType(String expectedContentType, FlowContinuationInvoker.ContinuationOutputEvent result) {
         String contentType = result.getInternalContentType();
         assertThat(contentType).isEqualTo(expectedContentType);
     }
 
-    private void assertResultStatus(boolean status, CloudThreadsContinuationInvoker.ContinuationOutputEvent result) {
+    private void assertResultStatus(boolean status, FlowContinuationInvoker.ContinuationOutputEvent result) {
         assertThat(result.isSuccess()).isEqualTo(status);
     }
 
-    private void assertDatumType(String datumType, CloudThreadsContinuationInvoker.ContinuationOutputEvent result) {
+    private void assertDatumType(String datumType, FlowContinuationInvoker.ContinuationOutputEvent result) {
         assertHeader(DATUM_TYPE_HEADER, datumType, result);
     }
 
-    private void assertHeader(String header, String value, CloudThreadsContinuationInvoker.ContinuationOutputEvent result) {
+    private void assertHeader(String header, String value, FlowContinuationInvoker.ContinuationOutputEvent result) {
         assertThat(result.getHeaders().get(header))
                 .contains(value);
     }

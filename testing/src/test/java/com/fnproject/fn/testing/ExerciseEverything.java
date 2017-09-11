@@ -3,7 +3,7 @@ package com.fnproject.fn.testing;
 import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.InputEvent;
 import com.fnproject.fn.api.flow.*;
-import com.fnproject.fn.runtime.cloudthreads.HttpClient;
+import com.fnproject.fn.runtime.flow.HttpClient;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.TeeOutputStream;
 

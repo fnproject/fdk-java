@@ -1,4 +1,4 @@
-package com.fnproject.fn.runtime.cloudthreads;
+package com.fnproject.fn.runtime.flow;
 
 import com.fnproject.fn.api.*;
 import com.fnproject.fn.api.flow.*;
@@ -16,13 +16,13 @@ import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.function.*;
 
-import static com.fnproject.fn.runtime.cloudthreads.CloudCompleterApiClient.*;
+import static com.fnproject.fn.runtime.flow.RemoteCompleterApiClient.*;
 
 
 /**
  * Invoker that handles cloud thread continuations
  */
-public final class CloudThreadsContinuationInvoker implements FunctionInvoker {
+public final class FlowContinuationInvoker implements FunctionInvoker {
 
     private static final String DEFAULT_COMPLETER_BASE_URL = "http://completer-svc:8081";
     private static final String COMPLETER_BASE_URL = "COMPLETER_BASE_URL";
@@ -38,7 +38,7 @@ public final class CloudThreadsContinuationInvoker implements FunctionInvoker {
         @Override
         public synchronized CompleterClient get() {
             if (this.client == null) {
-                this.client = new CloudCompleterApiClient(completerBaseUrl, new HttpClient());
+                this.client = new RemoteCompleterApiClient(completerBaseUrl, new HttpClient());
             }
             return this.client;
         }
@@ -50,10 +50,10 @@ public final class CloudThreadsContinuationInvoker implements FunctionInvoker {
      * @param completerBaseUrl the completer base URL to use if and when creating the factory
      */
     private static synchronized CompleterClientFactory getOrCreateCompleterClientFactory(String completerBaseUrl) {
-        if (CloudThreadsRuntimeGlobals.getCompleterClientFactory() == null) {
-            CloudThreadsRuntimeGlobals.setCompleterClientFactory(new URLCompleterClientFactory(completerBaseUrl));
+        if (FlowRuntimeGlobals.getCompleterClientFactory() == null) {
+            FlowRuntimeGlobals.setCompleterClientFactory(new URLCompleterClientFactory(completerBaseUrl));
         }
-        return CloudThreadsRuntimeGlobals.getCompleterClientFactory();
+        return FlowRuntimeGlobals.getCompleterClientFactory();
     }
 
 
@@ -70,18 +70,18 @@ public final class CloudThreadsContinuationInvoker implements FunctionInvoker {
         final String completerBaseUrl = ctx.getRuntimeContext().getConfigurationByKey(COMPLETER_BASE_URL).orElse(DEFAULT_COMPLETER_BASE_URL);
 
         if (graphIdOption.isPresent()) {
-            if (CloudThreadsRuntimeGlobals.getCompleterClientFactory() == null) {
-                CloudThreadsRuntimeGlobals.setCompleterClientFactory(getOrCreateCompleterClientFactory(completerBaseUrl));
+            if (FlowRuntimeGlobals.getCompleterClientFactory() == null) {
+                FlowRuntimeGlobals.setCompleterClientFactory(getOrCreateCompleterClientFactory(completerBaseUrl));
             }
 
-            final ThreadId threadId = new ThreadId(graphIdOption.get());
+            final FlowId flowId = new FlowId(graphIdOption.get());
             Flows.RuntimeSource attachedSource = new Flows.RuntimeSource() {
                 Flow runtime;
 
                 @Override
                 public synchronized Flow currentRuntime() {
                     if (runtime == null) {
-                        runtime = new RemoteFlow(threadId);
+                        runtime = new RemoteFlow(flowId);
                     }
                     return runtime;
                 }
@@ -146,17 +146,17 @@ public final class CloudThreadsContinuationInvoker implements FunctionInvoker {
                     if (runtime == null) {
                         String functionId = evt.getAppName() + evt.getRoute();
                         CompleterClientFactory factory = getOrCreateCompleterClientFactory(completerBaseUrl);
-                        final ThreadId threadId = factory.get().createThread(functionId);
-                        runtime = new RemoteFlow(threadId);
+                        final FlowId flowId = factory.get().createThread(functionId);
+                        runtime = new RemoteFlow(flowId);
 
                         InvocationListener threadInvocationListener = new InvocationListener() {
                             @Override
                             public void onSuccess() {
-                                factory.get().commit(threadId);
+                                factory.get().commit(flowId);
                             }
 
                             public void onFailure() {
-                                factory.get().commit(threadId);
+                                factory.get().commit(flowId);
                             }
                         };
                         ctx.addListener(threadInvocationListener);

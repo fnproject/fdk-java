@@ -1,4 +1,4 @@
-package com.fnproject.fn.runtime.cloudthreads;
+package com.fnproject.fn.runtime.flow;
 
 import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.flow.*;
@@ -19,15 +19,15 @@ import java.util.stream.Collectors;
  */
 public final class RemoteFlow implements Flow, Serializable {
     private transient CompleterClient client;
-    private final ThreadId threadId;
+    private final FlowId flowId;
 
-    RemoteFlow(ThreadId thread) {
-        this.threadId = Objects.requireNonNull(thread);
+    RemoteFlow(FlowId thread) {
+        this.flowId = Objects.requireNonNull(thread);
     }
 
     private CompleterClient getClient() {
         if (client == null) {
-            client = CloudThreadsRuntimeGlobals.getCompleterClientFactory().get();
+            client = FlowRuntimeGlobals.getCompleterClientFactory().get();
         }
         return client;
     }
@@ -63,69 +63,69 @@ public final class RemoteFlow implements Flow, Serializable {
 
         @Override
         public <U> FlowFuture<U> thenApply(Flows.SerFunction<T, U> fn) {
-            CompletionId newcid = getClient().thenApply(threadId, completionId, fn);
+            CompletionId newcid = getClient().thenApply(flowId, completionId, fn);
             return new RemoteFlowFuture<>(newcid);
         }
 
         @Override
         public <X> FlowFuture<X> thenCompose(Flows.SerFunction<T, FlowFuture<X>> fn) {
-            CompletionId newCid = getClient().thenCompose(threadId, completionId, fn);
+            CompletionId newCid = getClient().thenCompose(flowId, completionId, fn);
             return new RemoteFlowFuture<>(newCid);
         }
 
         @Override
         public FlowFuture<T> whenComplete(Flows.SerBiConsumer<T, Throwable> fn) {
-            return new RemoteFlowFuture<>(getClient().whenComplete(threadId, completionId, fn));
+            return new RemoteFlowFuture<>(getClient().whenComplete(flowId, completionId, fn));
         }
 
         @Override
         public FlowFuture<Void> thenAccept(Flows.SerConsumer<T> fn) {
-            return new RemoteFlowFuture<>(getClient().thenAccept(threadId, completionId, fn));
+            return new RemoteFlowFuture<>(getClient().thenAccept(flowId, completionId, fn));
         }
 
         @Override
         public FlowFuture<Void> acceptEither(FlowFuture<? extends T> alt, Flows.SerConsumer<T> fn) {
-            return new RemoteFlowFuture<>(getClient().acceptEither(threadId, completionId, ((RemoteFlowFuture<?>) alt).completionId, fn));
+            return new RemoteFlowFuture<>(getClient().acceptEither(flowId, completionId, ((RemoteFlowFuture<?>) alt).completionId, fn));
         }
 
         @Override
         public <X> FlowFuture<X> applyToEither(FlowFuture<? extends T> alt, Flows.SerFunction<T, X> fn) {
-            return new RemoteFlowFuture<>(getClient().applyToEither(threadId, completionId, ((RemoteFlowFuture<?>) alt).completionId, fn));
+            return new RemoteFlowFuture<>(getClient().applyToEither(flowId, completionId, ((RemoteFlowFuture<?>) alt).completionId, fn));
         }
 
         @Override
         public <X> FlowFuture<Void> thenAcceptBoth(FlowFuture<X> alt, Flows.SerBiConsumer<T, X> fn) {
-            return new RemoteFlowFuture<>(getClient().thenAcceptBoth(threadId, completionId, ((RemoteFlowFuture<?>) alt).completionId, fn));
+            return new RemoteFlowFuture<>(getClient().thenAcceptBoth(flowId, completionId, ((RemoteFlowFuture<?>) alt).completionId, fn));
         }
 
         @Override
         public FlowFuture<Void> thenRun(Flows.SerRunnable fn) {
-            return new RemoteFlowFuture<>(getClient().thenRun(threadId, completionId, fn));
+            return new RemoteFlowFuture<>(getClient().thenRun(flowId, completionId, fn));
         }
 
         @Override
         public <X> FlowFuture<X> handle(Flows.SerBiFunction<? super T, Throwable, ? extends X> fn) {
-            return new RemoteFlowFuture<>(getClient().handle(threadId, completionId, fn));
+            return new RemoteFlowFuture<>(getClient().handle(flowId, completionId, fn));
         }
 
         @Override
         public FlowFuture<T> exceptionally(Flows.SerFunction<Throwable, ? extends T> fn) {
-            return new RemoteFlowFuture<>(getClient().exceptionally(threadId, completionId, fn));
+            return new RemoteFlowFuture<>(getClient().exceptionally(flowId, completionId, fn));
         }
 
         @Override
         public <U, X> FlowFuture<X> thenCombine(FlowFuture<? extends U> other, Flows.SerBiFunction<? super T, ? super U, ? extends X> fn) {
-            return new RemoteFlowFuture<>(getClient().thenCombine(threadId, completionId, fn, ((RemoteFlowFuture<?>) other).completionId));
+            return new RemoteFlowFuture<>(getClient().thenCombine(flowId, completionId, fn, ((RemoteFlowFuture<?>) other).completionId));
         }
 
         @Override
         public T get() {
-            return (T) getClient().waitForCompletion(threadId, completionId, getClass().getClassLoader());
+            return (T) getClient().waitForCompletion(flowId, completionId, getClass().getClassLoader());
         }
 
         @Override
         public T get(long timeout, TimeUnit unit) throws TimeoutException {
-           return (T) getClient().waitForCompletion(threadId, completionId, getClass().getClassLoader(), timeout, unit);
+           return (T) getClient().waitForCompletion(flowId, completionId, getClass().getClassLoader(), timeout, unit);
         }
 
         @Override
@@ -145,19 +145,19 @@ public final class RemoteFlow implements Flow, Serializable {
 
     @Override
     public FlowFuture<HttpResponse> invokeFunction(String functionId, HttpMethod method, Headers headers, byte[] data) {
-        CompletionId cid = getClient().invokeFunction(threadId, functionId, data, method, headers);
+        CompletionId cid = getClient().invokeFunction(flowId, functionId, data, method, headers);
         return new RemoteFlowFuture<>(cid);
     }
 
     @Override
     public <T> FlowFuture<T> supply(Flows.SerCallable<T> c) {
-        CompletionId cid = getClient().supply(threadId, c);
+        CompletionId cid = getClient().supply(flowId, c);
         return new RemoteFlowFuture<>(cid);
     }
 
     @Override
     public FlowFuture<Void> supply(Flows.SerRunnable runnable) {
-        CompletionId cid = getClient().supply(threadId, runnable);
+        CompletionId cid = getClient().supply(flowId, runnable);
         return new RemoteFlowFuture<>(cid);
     }
 
@@ -166,18 +166,18 @@ public final class RemoteFlow implements Flow, Serializable {
         if (i < 0) {
             throw new IllegalArgumentException("Delay value must be non-negative");
         }
-        CompletionId cid = getClient().delay(threadId, tu.toMillis(i));
+        CompletionId cid = getClient().delay(flowId, tu.toMillis(i));
         return new RemoteFlowFuture<>(cid);
     }
 
     @Override
     public <T extends Serializable> FlowFuture<T> completedValue(T value) {
-        return new RemoteFlowFuture<>(getClient().completedValue(threadId, value));
+        return new RemoteFlowFuture<>(getClient().completedValue(flowId, value));
     }
 
     @Override
     public ExternalFlowFuture<HttpRequest> createExternalFuture() {
-        CompleterClient.ExternalCompletion ext = getClient().createExternalCompletion(threadId);
+        CompleterClient.ExternalCompletion ext = getClient().createExternalCompletion(flowId);
         return new RemoteExternalFlowFuture<>(ext.completionId(), ext.completeURI(), ext.failureURI());
     }
 
@@ -187,7 +187,7 @@ public final class RemoteFlow implements Flow, Serializable {
             throw new IllegalArgumentException("at least one future must be specified");
         }
         List<CompletionId> cids = Arrays.stream(flowFutures).map((cf) -> ((RemoteFlowFuture<?>) cf).completionId).collect(Collectors.toList());
-        CompletionId cid = getClient().allOf(threadId, cids);
+        CompletionId cid = getClient().allOf(flowId, cids);
         return new RemoteFlowFuture<>(cid);
     }
 
@@ -197,13 +197,13 @@ public final class RemoteFlow implements Flow, Serializable {
             throw new IllegalArgumentException("at least one future must be specified");
         }
         List<CompletionId> cids = Arrays.stream(flowFutures).map((cf) -> ((RemoteFlowFuture<?>) cf).completionId).collect(Collectors.toList());
-        CompletionId cid = getClient().anyOf(threadId, cids);
+        CompletionId cid = getClient().anyOf(flowId, cids);
         return new RemoteFlowFuture<>(cid);
     }
 
     @Override
     public Flow addTerminationHook(Flows.SerConsumer<CloudThreadState> hook) {
-        getClient().addTerminationHook(threadId, hook);
+        getClient().addTerminationHook(flowId, hook);
         return this;
     }
 }

@@ -2,7 +2,7 @@ package com.fnproject.fn.testing;
 
 import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.flow.*;
-import com.fnproject.fn.runtime.cloudthreads.CompletionId;
+import com.fnproject.fn.runtime.flow.CompletionId;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
 
@@ -11,7 +11,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-import static com.fnproject.fn.runtime.cloudthreads.CloudCompleterApiClient.*;
+import static com.fnproject.fn.runtime.flow.RemoteCompleterApiClient.*;
 
 /**
  * Holder for a function-supplied value that contains an externalised representation of the references that that value contains

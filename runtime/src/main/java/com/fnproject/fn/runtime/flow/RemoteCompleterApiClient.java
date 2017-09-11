@@ -1,4 +1,4 @@
-package com.fnproject.fn.runtime.cloudthreads;
+package com.fnproject.fn.runtime.flow;
 
 import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.flow.*;
@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 /**
  * REST client for accessing completer API
  */
-public class CloudCompleterApiClient implements CompleterClient {
+public class RemoteCompleterApiClient implements CompleterClient {
     private transient final HttpClient httpClient;
     private final String apiUrlBase;
 
@@ -65,70 +65,70 @@ public class CloudCompleterApiClient implements CompleterClient {
     private static final int MAX_POLL_INTERVAL_MS = 1000;
     private static final int HTTP_CODE_REQUEST_TIMEOUT = 408;
 
-    public CloudCompleterApiClient(String apiUrlBase, HttpClient httpClient) {
+    public RemoteCompleterApiClient(String apiUrlBase, HttpClient httpClient) {
         this.apiUrlBase = Objects.requireNonNull(apiUrlBase);
         this.httpClient = Objects.requireNonNull(httpClient);
     }
 
     @Override
-    public ThreadId createThread(String functionId) {
+    public FlowId createThread(String functionId) {
         HttpClient.HttpRequest request = HttpClient.preparePost(apiUrlBase + "/graph?functionId=" + functionId);
         try (HttpClient.HttpResponse resp = httpClient.execute(request)) {
             validateSuccessful(resp);
-            return new ThreadId(resp.getHeader(THREAD_ID_HEADER));
+            return new FlowId(resp.getHeader(THREAD_ID_HEADER));
         } catch (Exception e) {
             throw new PlatformCommunicationException("Failed to create cloud thread: " + e.getMessage());
         }
     }
 
     @Override
-    public CompletionId supply(ThreadId threadId, Serializable supplier) {
-        return requestCompletionWithBody("/graph/" + threadId.getId() + "/supply", Function.identity(), supplier);
+    public CompletionId supply(FlowId flowId, Serializable supplier) {
+        return requestCompletionWithBody("/graph/" + flowId.getId() + "/supply", Function.identity(), supplier);
     }
 
     @Override
-    public CompletionId thenApply(ThreadId threadId, CompletionId completionId, Serializable fn) {
-        return chainThis(threadId, completionId, "thenApply", fn);
+    public CompletionId thenApply(FlowId flowId, CompletionId completionId, Serializable fn) {
+        return chainThis(flowId, completionId, "thenApply", fn);
     }
 
     @Override
-    public CompletionId thenCompose(ThreadId threadId, CompletionId completionId, Serializable fn) {
-        return chainThis(threadId, completionId, "thenCompose", fn);
+    public CompletionId thenCompose(FlowId flowId, CompletionId completionId, Serializable fn) {
+        return chainThis(flowId, completionId, "thenCompose", fn);
     }
 
     @Override
-    public CompletionId whenComplete(ThreadId threadId, CompletionId completionId, Serializable fn) {
-        return chainThis(threadId, completionId, "whenComplete", fn);
+    public CompletionId whenComplete(FlowId flowId, CompletionId completionId, Serializable fn) {
+        return chainThis(flowId, completionId, "whenComplete", fn);
     }
 
     @Override
-    public CompletionId thenAccept(ThreadId threadId, CompletionId completionId, Serializable fn) {
-        return chainThis(threadId, completionId, "thenAccept", fn);
+    public CompletionId thenAccept(FlowId flowId, CompletionId completionId, Serializable fn) {
+        return chainThis(flowId, completionId, "thenAccept", fn);
     }
 
     @Override
-    public CompletionId thenRun(ThreadId threadId, CompletionId completionId, Serializable fn) {
-        return chainThis(threadId, completionId, "thenRun", fn);
+    public CompletionId thenRun(FlowId flowId, CompletionId completionId, Serializable fn) {
+        return chainThis(flowId, completionId, "thenRun", fn);
     }
 
     @Override
-    public CompletionId acceptEither(ThreadId threadId, CompletionId completionId, CompletionId alternate, Serializable fn) {
-        return chainThisWithThat(threadId, completionId, alternate, "acceptEither", fn);
+    public CompletionId acceptEither(FlowId flowId, CompletionId completionId, CompletionId alternate, Serializable fn) {
+        return chainThisWithThat(flowId, completionId, alternate, "acceptEither", fn);
     }
 
     @Override
-    public CompletionId applyToEither(ThreadId threadId, CompletionId completionId, CompletionId alternate, Serializable fn) {
-        return chainThisWithThat(threadId, completionId, alternate, "applyToEither", fn);
+    public CompletionId applyToEither(FlowId flowId, CompletionId completionId, CompletionId alternate, Serializable fn) {
+        return chainThisWithThat(flowId, completionId, alternate, "applyToEither", fn);
     }
 
     @Override
-    public CompletionId thenAcceptBoth(ThreadId threadId, CompletionId completionId, CompletionId alternate, Serializable fn) {
-        return chainThisWithThat(threadId, completionId, alternate, "thenAcceptBoth", fn);
+    public CompletionId thenAcceptBoth(FlowId flowId, CompletionId completionId, CompletionId alternate, Serializable fn) {
+        return chainThisWithThat(flowId, completionId, alternate, "thenAcceptBoth", fn);
     }
 
     @Override
-    public ExternalCompletion createExternalCompletion(ThreadId threadId) {
-        CompletionId completionId = requestCompletion("/graph/" + threadId.getId() + "/externalCompletion", Function.identity());
+    public ExternalCompletion createExternalCompletion(FlowId flowId) {
+        CompletionId completionId = requestCompletion("/graph/" + flowId.getId() + "/externalCompletion", Function.identity());
         return new ExternalCompletion() {
             @Override
             public CompletionId completionId() {
@@ -137,19 +137,19 @@ public class CloudCompleterApiClient implements CompleterClient {
 
             @Override
             public URI completeURI() {
-                return URI.create(apiUrlBase + "/graph/" + threadId.getId() + "/stage/" + completionId.getId() + "/complete");
+                return URI.create(apiUrlBase + "/graph/" + flowId.getId() + "/stage/" + completionId.getId() + "/complete");
             }
 
             @Override
             public URI failureURI() {
-                return URI.create(apiUrlBase + "/graph/" + threadId.getId() + "/stage/" + completionId.getId() + "/fail");
+                return URI.create(apiUrlBase + "/graph/" + flowId.getId() + "/stage/" + completionId.getId() + "/fail");
             }
         };
     }
 
     @Override
-    public CompletionId invokeFunction(ThreadId threadId, String functionId, byte[] data, HttpMethod method, Headers headers) {
-        return requestCompletion("/graph/" + threadId.getId() + "/invokeFunction",
+    public CompletionId invokeFunction(FlowId flowId, String functionId, byte[] data, HttpMethod method, Headers headers) {
+        return requestCompletion("/graph/" + flowId.getId() + "/invokeFunction",
                 req -> req.withQueryParam("functionId", functionId)
                         .withBody(data)
                         .withHeader(DATUM_TYPE_HEADER, DATUM_TYPE_HTTP_REQ)
@@ -166,49 +166,49 @@ public class CloudCompleterApiClient implements CompleterClient {
     }
 
     @Override
-    public CompletionId completedValue(ThreadId threadId, Serializable value) {
-        return requestCompletionWithBody("/graph/" + threadId.getId() + "/completedValue", Function.identity(), value);
+    public CompletionId completedValue(FlowId flowId, Serializable value) {
+        return requestCompletionWithBody("/graph/" + flowId.getId() + "/completedValue", Function.identity(), value);
     }
 
     @Override
-    public CompletionId allOf(ThreadId threadId, List<CompletionId> deps) {
-        return requestCompletion("/graph/" + threadId.getId() + "/allOf",
+    public CompletionId allOf(FlowId flowId, List<CompletionId> deps) {
+        return requestCompletion("/graph/" + flowId.getId() + "/allOf",
                 req -> req.withQueryParam("cids", getCids(deps)));
     }
 
     @Override
-    public CompletionId handle(ThreadId threadId, CompletionId completionId, Serializable fn) {
-        return chainThis(threadId, completionId, "handle", fn);
+    public CompletionId handle(FlowId flowId, CompletionId completionId, Serializable fn) {
+        return chainThis(flowId, completionId, "handle", fn);
     }
 
     @Override
-    public CompletionId exceptionally(ThreadId threadId, CompletionId completionId, Serializable fn) {
-        return chainThis(threadId, completionId, "exceptionally", fn);
+    public CompletionId exceptionally(FlowId flowId, CompletionId completionId, Serializable fn) {
+        return chainThis(flowId, completionId, "exceptionally", fn);
     }
 
     @Override
-    public CompletionId thenCombine(ThreadId threadId, CompletionId completionId, Serializable fn, CompletionId alternate) {
-        return chainThisWithThat(threadId, completionId, alternate, "thenCombine", fn);
+    public CompletionId thenCombine(FlowId flowId, CompletionId completionId, Serializable fn, CompletionId alternate) {
+        return chainThisWithThat(flowId, completionId, alternate, "thenCombine", fn);
     }
 
     @Override
-    public CompletionId anyOf(ThreadId threadId, List<CompletionId> cids) {
-        return requestCompletion("/graph/" + threadId.getId() + "/anyOf",
+    public CompletionId anyOf(FlowId flowId, List<CompletionId> cids) {
+        return requestCompletion("/graph/" + flowId.getId() + "/anyOf",
                 req -> req.withQueryParam("cids", getCids(cids)));
     }
 
     @Override
-    public CompletionId delay(ThreadId threadId, long l) {
-        return requestCompletion("/graph/" + threadId.getId() + "/delay",
+    public CompletionId delay(FlowId flowId, long l) {
+        return requestCompletion("/graph/" + flowId.getId() + "/delay",
                 req -> req.withQueryParam("delayMs", Long.toString(l)));
     }
 
     // wait for completion  -> result
     @Override
-    public Object waitForCompletion(ThreadId threadId, CompletionId id, ClassLoader ignored, long timeout, TimeUnit unit) throws TimeoutException {
+    public Object waitForCompletion(FlowId flowId, CompletionId id, ClassLoader ignored, long timeout, TimeUnit unit) throws TimeoutException {
         long timeoutMs = unit.toMillis(timeout);
         HttpClient.HttpRequest req = HttpClient
-                .prepareGet(apiUrlBase + "/graph/" + threadId.getId() + "/stage/" + id.getId());
+                .prepareGet(apiUrlBase + "/graph/" + flowId.getId() + "/stage/" + id.getId());
         if (timeoutMs > 0) {
             req = req.withQueryParam("timeoutMs", Long.toString(timeoutMs));
         }
@@ -244,9 +244,9 @@ public class CloudCompleterApiClient implements CompleterClient {
     }
 
     @Override
-    public Object waitForCompletion(ThreadId threadId, CompletionId id, ClassLoader ignored){
+    public Object waitForCompletion(FlowId flowId, CompletionId id, ClassLoader ignored){
         try {
-            return waitForCompletion(threadId, id, ignored, 0, TimeUnit.SECONDS);
+            return waitForCompletion(flowId, id, ignored, 0, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
             // should never happen if completer's default timeout is larger than fn invocation timeout
             throw new PlatformException(e);
@@ -274,8 +274,8 @@ public class CloudCompleterApiClient implements CompleterClient {
         return response.getHeaderValue(DATUM_TYPE_HEADER).get().equalsIgnoreCase(DATUM_TYPE_BLOB);
     }
 
-    public void commit(ThreadId threadId) {
-        try (HttpClient.HttpResponse response = httpClient.execute(HttpClient.preparePost(apiUrlBase + "/graph/" + threadId.getId() + "/commit"))) {
+    public void commit(FlowId flowId) {
+        try (HttpClient.HttpResponse response = httpClient.execute(HttpClient.preparePost(apiUrlBase + "/graph/" + flowId.getId() + "/commit"))) {
             validateSuccessful(response);
         } catch (Exception e) {
             throw new PlatformException(e);
@@ -283,16 +283,16 @@ public class CloudCompleterApiClient implements CompleterClient {
     }
 
     @Override
-    public void addTerminationHook(ThreadId threadId, Serializable code) {
-        requestTerminationHook("/graph/" + threadId.getId() + "/terminationHook", Function.identity(), code);
+    public void addTerminationHook(FlowId flowId, Serializable code) {
+        requestTerminationHook("/graph/" + flowId.getId() + "/terminationHook", Function.identity(), code);
     }
 
-    private CompletionId chainThis(ThreadId threadId, CompletionId completionId, String op, Serializable fn) {
-        return requestCompletionWithBody("/graph/" + threadId.getId() + "/stage/" + completionId.getId() + "/" + op, Function.identity(), fn);
+    private CompletionId chainThis(FlowId flowId, CompletionId completionId, String op, Serializable fn) {
+        return requestCompletionWithBody("/graph/" + flowId.getId() + "/stage/" + completionId.getId() + "/" + op, Function.identity(), fn);
     }
 
-    private CompletionId chainThisWithThat(ThreadId threadId, CompletionId currentStage, CompletionId other, String op, Serializable fn) {
-        return requestCompletionWithBody("/graph/" + threadId.getId() + "/stage/" + currentStage.getId() + "/" + op,
+    private CompletionId chainThisWithThat(FlowId flowId, CompletionId currentStage, CompletionId other, String op, Serializable fn) {
+        return requestCompletionWithBody("/graph/" + flowId.getId() + "/stage/" + currentStage.getId() + "/" + op,
                 req -> req.withQueryParam("other", other.getId()), fn);
     }
 
@@ -315,7 +315,7 @@ public class CloudCompleterApiClient implements CompleterClient {
     private CompletionId requestCompletion(String url, Function<HttpClient.HttpRequest, HttpClient.HttpRequest> fn) {
         HttpClient.HttpRequest req = fn.apply(HttpClient.preparePost(apiUrlBase + url));
 
-        try (com.fnproject.fn.runtime.cloudthreads.HttpClient.HttpResponse resp = httpClient.execute(req)) {
+        try (com.fnproject.fn.runtime.flow.HttpClient.HttpResponse resp = httpClient.execute(req)) {
             validateSuccessful(resp);
             String completionId = resp.getHeader(STAGE_ID_HEADER);
             return new CompletionId(completionId);
@@ -346,7 +346,7 @@ public class CloudCompleterApiClient implements CompleterClient {
                             .withHeader(CONTENT_TYPE_HEADER, CONTENT_TYPE_JAVA_OBJECT)
                             .withHeader(DATUM_TYPE_HEADER, DATUM_TYPE_BLOB)
                             .withBody(serBytes));
-            try (com.fnproject.fn.runtime.cloudthreads.HttpClient.HttpResponse resp = httpClient.execute(req)) {
+            try (com.fnproject.fn.runtime.flow.HttpClient.HttpResponse resp = httpClient.execute(req)) {
                 validateSuccessful(resp);
             } catch (PlatformException e) {
                 throw e;

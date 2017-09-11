@@ -1,11 +1,11 @@
-package com.fnproject.fn.runtime.cloudthreads;
+package com.fnproject.fn.runtime.flow;
 
 import java.util.Objects;
 
 /**
  * Globals for injecting testing state into flow
  */
-public class CloudThreadsRuntimeGlobals {
+public class FlowRuntimeGlobals {
     private static CompleterClientFactory completerClientFactory = null;
 
     /**

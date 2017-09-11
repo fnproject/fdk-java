@@ -5,7 +5,7 @@ import com.fnproject.fn.api.InputEvent;
 import com.fnproject.fn.api.OutputEvent;
 import com.fnproject.fn.api.QueryParameters;
 import com.fnproject.fn.api.flow.*;
-import com.fnproject.fn.runtime.cloudthreads.*;
+import com.fnproject.fn.runtime.flow.*;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.TeeOutputStream;
 import org.apache.http.HttpResponse;
@@ -79,7 +79,7 @@ public final class FnTestingRule implements TestRule {
         addSharedClass(CompleterClient.class);
         addSharedClass(CompleterClientFactory.class);
         addSharedClass(CompletionId.class);
-        addSharedClass(ThreadId.class);
+        addSharedClass(FlowId.class);
         addSharedClass(CompleterClient.ExternalCompletion.class);
         addSharedClass(Headers.class);
         addSharedClass(HttpMethod.class);
@@ -201,7 +201,7 @@ public final class FnTestingRule implements TestRule {
 
         InMemCompleter.FnInvokeClient fnInvokeClient = new TestRuleFnInvokeClient();
 
-        // CloudThreadsContinuationInvoker.setTestingMode(true);
+        // FlowContinuationInvoker.setTestingMode(true);
         // The following must be a static: otherwise the factory (the lambda) will not be serializable.
         completer = new InMemCompleter(client, fnInvokeClient);
 
@@ -494,7 +494,7 @@ public final class FnTestingRule implements TestRule {
 
 
         @Override
-        public Result invokeStage(String fnId, ThreadId thread, CompletionId stageId, Datum.Blob closure, List<Result> input) {
+        public Result invokeStage(String fnId, FlowId thread, CompletionId stageId, Datum.Blob closure, List<Result> input) {
             // Construct a new ClassLoader hierarchy with a copy of the statics embedded in the runtime.
             // Initialise it appropriately.
             FnTestingClassLoader fcl = new FnTestingClassLoader(functionClassLoader, sharedPrefixes);
@@ -530,8 +530,8 @@ public final class FnTestingRule implements TestRule {
                     .withAppName("appName")
                     .withRoute("/route").withRequestUrl("http://some/url")
                     .withMethod("POST")
-                    .withHeader(CloudCompleterApiClient.CONTENT_TYPE_HEADER, String.format("multipart/mixed; boundary=\"%s\"", boundary))
-                    .withHeader(CloudCompleterApiClient.THREAD_ID_HEADER, thread.getId()).withHeader(CloudCompleterApiClient.STAGE_ID_HEADER, stageId.getId()).currentEventInputStream();
+                    .withHeader(RemoteCompleterApiClient.CONTENT_TYPE_HEADER, String.format("multipart/mixed; boundary=\"%s\"", boundary))
+                    .withHeader(RemoteCompleterApiClient.THREAD_ID_HEADER, thread.getId()).withHeader(RemoteCompleterApiClient.STAGE_ID_HEADER, stageId.getId()).currentEventInputStream();
 
             ByteArrayOutputStream output = new ByteArrayOutputStream();
             Map<String, String> mutableEnv = new HashMap<>();

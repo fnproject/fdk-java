@@ -1,4 +1,4 @@
-package com.fnproject.fn.runtime.cloudthreads;
+package com.fnproject.fn.runtime.flow;
 
 import java.io.Serializable;
 import java.util.Objects;
@@ -8,10 +8,10 @@ import java.util.Objects;
  * <p>
  * This may be serialized within the runtime class
  */
-public final class ThreadId implements Serializable {
+public final class FlowId implements Serializable {
     private final String id;
 
-    public ThreadId(String id) {
+    public FlowId(String id) {
         this.id = Objects.requireNonNull(id);
     }
 
@@ -19,8 +19,8 @@ public final class ThreadId implements Serializable {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        ThreadId threadId = (ThreadId) o;
-        return Objects.equals(id, threadId.id);
+        FlowId flowId = (FlowId) o;
+        return Objects.equals(id, flowId.id);
     }
 
     @Override

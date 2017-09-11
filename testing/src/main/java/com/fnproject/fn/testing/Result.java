@@ -1,6 +1,6 @@
 package com.fnproject.fn.testing;
 
-import com.fnproject.fn.runtime.cloudthreads.CloudCompleterApiClient;
+import com.fnproject.fn.runtime.flow.RemoteCompleterApiClient;
 import org.apache.http.HttpResponse;
 
 import java.io.IOException;
@@ -42,7 +42,7 @@ class Result {
     void writePart(OutputStream os) throws IOException {
         HeaderWriter hw = new HeaderWriter(os);
 
-        hw.writeHeader(CloudCompleterApiClient.RESULT_STATUS_HEADER, success ? CloudCompleterApiClient.RESULT_STATUS_SUCCESS : CloudCompleterApiClient.RESULT_STATUS_FAILURE);
+        hw.writeHeader(RemoteCompleterApiClient.RESULT_STATUS_HEADER, success ? RemoteCompleterApiClient.RESULT_STATUS_SUCCESS : RemoteCompleterApiClient.RESULT_STATUS_FAILURE);
 
         datum.writeHeaders(hw);
         os.write(new byte[]{'\r', '\n'});
@@ -50,21 +50,21 @@ class Result {
     }
 
     static Result readResult(HttpResponse response) throws IOException {
-        String status = response.getFirstHeader(CloudCompleterApiClient.RESULT_STATUS_HEADER).getValue();
+        String status = response.getFirstHeader(RemoteCompleterApiClient.RESULT_STATUS_HEADER).getValue();
 
         boolean success;
         switch (status) {
-            case CloudCompleterApiClient.RESULT_STATUS_SUCCESS:
+            case RemoteCompleterApiClient.RESULT_STATUS_SUCCESS:
                 success = true;
                 break;
-            case CloudCompleterApiClient.RESULT_STATUS_FAILURE:
+            case RemoteCompleterApiClient.RESULT_STATUS_FAILURE:
                 success = false;
                 break;
             default:
                 throw new RuntimeException("Invalid status");
 
         }
-        String datumTypeString = response.getFirstHeader(CloudCompleterApiClient.DATUM_TYPE_HEADER).getValue();
+        String datumTypeString = response.getFirstHeader(RemoteCompleterApiClient.DATUM_TYPE_HEADER).getValue();
 
         Datum.DatumType datumType = Datum.DatumType.valueOf(datumTypeString);
 

@@ -1,4 +1,4 @@
-package com.fnproject.fn.runtime.cloudthreads;
+package com.fnproject.fn.runtime.flow;
 
 import com.fnproject.fn.api.flow.*;
 import com.fnproject.fn.runtime.exception.PlatformCommunicationException;
@@ -14,14 +14,14 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static com.fnproject.fn.runtime.cloudthreads.CloudCompleterApiClient.*;
+import static com.fnproject.fn.runtime.flow.RemoteCompleterApiClient.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 
-public class CloudCompleterApiClientTest {
+public class RemoteCompleterApiClientTest {
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
@@ -67,8 +67,8 @@ public class CloudCompleterApiClientTest {
         when((Object) mockHttpClient.execute(any())).thenReturn(response);
 
         // When
-        CloudCompleterApiClient completerClient = new CloudCompleterApiClient("", mockHttpClient);
-        Object result = completerClient.waitForCompletion(new ThreadId("1"), new CompletionId("2"), getClass().getClassLoader());
+        RemoteCompleterApiClient completerClient = new RemoteCompleterApiClient("", mockHttpClient);
+        Object result = completerClient.waitForCompletion(new FlowId("1"), new CompletionId("2"), getClass().getClassLoader());
 
         // Then
         assertThat(result).isInstanceOf(HttpResponse.class);
@@ -92,9 +92,9 @@ public class CloudCompleterApiClientTest {
         });
 
         // When
-        CloudCompleterApiClient completerClient = new CloudCompleterApiClient("", mockHttpClient);
+        RemoteCompleterApiClient completerClient = new RemoteCompleterApiClient("", mockHttpClient);
         Object result = completerClient
-                .waitForCompletion(new ThreadId("1"), new CompletionId("2"), getClass().getClassLoader(), 0 , TimeUnit.SECONDS);
+                .waitForCompletion(new FlowId("1"), new CompletionId("2"), getClass().getClassLoader(), 0 , TimeUnit.SECONDS);
 
         // Then
         assertThat(result).isInstanceOf(HttpResponse.class);
@@ -115,8 +115,8 @@ public class CloudCompleterApiClientTest {
         });
 
         // When
-        CloudCompleterApiClient completerClient = new CloudCompleterApiClient("", mockHttpClient);
-        completerClient.waitForCompletion(new ThreadId("1"), new CompletionId("2"), getClass().getClassLoader(), 100 , TimeUnit.MILLISECONDS);
+        RemoteCompleterApiClient completerClient = new RemoteCompleterApiClient("", mockHttpClient);
+        completerClient.waitForCompletion(new FlowId("1"), new CompletionId("2"), getClass().getClassLoader(), 100 , TimeUnit.MILLISECONDS);
     }
 
     @Test
@@ -134,9 +134,9 @@ public class CloudCompleterApiClientTest {
         });
 
         // When
-        CloudCompleterApiClient completerClient = new CloudCompleterApiClient("", mockHttpClient);
+        RemoteCompleterApiClient completerClient = new RemoteCompleterApiClient("", mockHttpClient);
         try {
-            completerClient.waitForCompletion(new ThreadId("1"), new CompletionId("2"), getClass().getClassLoader());
+            completerClient.waitForCompletion(new FlowId("1"), new CompletionId("2"), getClass().getClassLoader());
         }  catch (PlatformException e) {
             assertThat(e.getCause()).isInstanceOf(TimeoutException.class);
         }
@@ -155,9 +155,9 @@ public class CloudCompleterApiClientTest {
         when((Object) mockHttpClient.execute(any())).thenReturn(response);
 
         // When
-        CloudCompleterApiClient completerClient = new CloudCompleterApiClient("", mockHttpClient);
+        RemoteCompleterApiClient completerClient = new RemoteCompleterApiClient("", mockHttpClient);
         try {
-            Object result = completerClient.waitForCompletion(new ThreadId("1"), new CompletionId("2"), getClass().getClassLoader());
+            Object result = completerClient.waitForCompletion(new FlowId("1"), new CompletionId("2"), getClass().getClassLoader());
         } catch (FlowCompletionException e) {
             assertThat(e.getCause()).isInstanceOfAny(FunctionInvocationException.class);
             assertThat(((FunctionInvocationException)e.getCause()).getFunctionResponse().getStatusCode()).isEqualTo(500);
@@ -177,8 +177,8 @@ public class CloudCompleterApiClientTest {
         when((Object) mockHttpClient.execute(any())).thenReturn(response);
 
         // When
-        CloudCompleterApiClient completerClient = new CloudCompleterApiClient("", mockHttpClient);
-        Object result = completerClient.waitForCompletion(new ThreadId("1"), new CompletionId("2"), getClass().getClassLoader());
+        RemoteCompleterApiClient completerClient = new RemoteCompleterApiClient("", mockHttpClient);
+        Object result = completerClient.waitForCompletion(new FlowId("1"), new CompletionId("2"), getClass().getClassLoader());
 
         // Then
         assertThat(result).isInstanceOf(HttpRequest.class);
@@ -198,9 +198,9 @@ public class CloudCompleterApiClientTest {
         when((Object) mockHttpClient.execute(any())).thenReturn(response);
 
         // When
-        CloudCompleterApiClient completerClient = new CloudCompleterApiClient("", mockHttpClient);
+        RemoteCompleterApiClient completerClient = new RemoteCompleterApiClient("", mockHttpClient);
         try {
-            completerClient.waitForCompletion(new ThreadId("1"), new CompletionId("2"), getClass().getClassLoader());
+            completerClient.waitForCompletion(new FlowId("1"), new CompletionId("2"), getClass().getClassLoader());
             fail("Should have thrown an exception");
         } catch (FlowCompletionException e) {
             // Just as with thrown exceptions, the ECEx is wrapped in a CCEx on .get
@@ -223,8 +223,8 @@ public class CloudCompleterApiClientTest {
         when(invalidResponse.entityAsString()).thenReturn(errorResponse);
         when((Object) mockHttpClient.execute(any())).thenReturn(invalidResponse);
 
-        CloudCompleterApiClient completerClient = new CloudCompleterApiClient("", mockHttpClient);
-        completerClient.waitForCompletion(new ThreadId("1"), new CompletionId("2"), getClass().getClassLoader());
+        RemoteCompleterApiClient completerClient = new RemoteCompleterApiClient("", mockHttpClient);
+        completerClient.waitForCompletion(new FlowId("1"), new CompletionId("2"), getClass().getClassLoader());
     }
 
     @Test
@@ -245,8 +245,8 @@ public class CloudCompleterApiClientTest {
 
             when((Object) mockHttpClient.execute(any())).thenReturn(response);
 
-            CloudCompleterApiClient completerClient = new CloudCompleterApiClient("", mockHttpClient);
-            completerClient.waitForCompletion(new ThreadId("1"), new CompletionId("2"), getClass().getClassLoader());
+            RemoteCompleterApiClient completerClient = new RemoteCompleterApiClient("", mockHttpClient);
+            completerClient.waitForCompletion(new FlowId("1"), new CompletionId("2"), getClass().getClassLoader());
         }
     }
 
@@ -263,8 +263,8 @@ public class CloudCompleterApiClientTest {
             response.setEntity(serializeToStream(stageResult));
             when((Object) mockHttpClient.execute(any())).thenReturn(response);
 
-            CloudCompleterApiClient completerClient = new CloudCompleterApiClient("", mockHttpClient);
-            completerClient.waitForCompletion(new ThreadId("1"), new CompletionId("2"), getClass().getClassLoader());
+            RemoteCompleterApiClient completerClient = new RemoteCompleterApiClient("", mockHttpClient);
+            completerClient.waitForCompletion(new FlowId("1"), new CompletionId("2"), getClass().getClassLoader());
         }
     }
 
@@ -282,8 +282,8 @@ public class CloudCompleterApiClientTest {
 
         when((Object) mockHttpClient.execute(any())).thenReturn(response);
 
-        CloudCompleterApiClient completerClient = new CloudCompleterApiClient("", mockHttpClient);
-        completerClient.waitForCompletion(new ThreadId("1"), new CompletionId("2"), getClass().getClassLoader());
+        RemoteCompleterApiClient completerClient = new RemoteCompleterApiClient("", mockHttpClient);
+        completerClient.waitForCompletion(new FlowId("1"), new CompletionId("2"), getClass().getClassLoader());
     }
 
     @Test
@@ -292,10 +292,10 @@ public class CloudCompleterApiClientTest {
         thrown.expectMessage("Failed to serialize the lambda");
 
         Optional<String> unserializableValue = Optional.of("hello");
-        CloudCompleterApiClient completerClient = new CloudCompleterApiClient("", mockHttpClient);
+        RemoteCompleterApiClient completerClient = new RemoteCompleterApiClient("", mockHttpClient);
         Flows.SerCallable<Optional<String>> unserializableLambda = () -> unserializableValue;
 
-        completerClient.supply(new ThreadId("thread-id"), unserializableLambda);
+        completerClient.supply(new FlowId("thread-id"), unserializableLambda);
     }
 
     @Test
@@ -305,7 +305,7 @@ public class CloudCompleterApiClientTest {
 
         when((Object) mockHttpClient.execute(any())).thenThrow(new RuntimeException("Connection refused"));
 
-        CloudCompleterApiClient completerClient = new CloudCompleterApiClient("", mockHttpClient);
+        RemoteCompleterApiClient completerClient = new RemoteCompleterApiClient("", mockHttpClient);
         completerClient.createThread("function-id");
     }
 
@@ -314,10 +314,10 @@ public class CloudCompleterApiClientTest {
         thrown.expect(PlatformException.class);
         thrown.expectMessage("Failed to get response from completer: Connection refused");
 
-        CloudCompleterApiClient completerClient = new CloudCompleterApiClient("", mockHttpClient);
+        RemoteCompleterApiClient completerClient = new RemoteCompleterApiClient("", mockHttpClient);
         Flows.SerCallable<Integer> serializableLambda = () -> 42;
         when((Object) mockHttpClient.execute(any())).thenThrow(new RuntimeException("Connection refused"));
 
-        completerClient.supply(new ThreadId("thread-id"), serializableLambda);
+        completerClient.supply(new FlowId("thread-id"), serializableLambda);
     }
 }

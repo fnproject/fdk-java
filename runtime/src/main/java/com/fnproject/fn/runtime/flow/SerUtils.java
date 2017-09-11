@@ -1,4 +1,4 @@
-package com.fnproject.fn.runtime.cloudthreads;
+package com.fnproject.fn.runtime.flow;
 
 import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.flow.*;
@@ -20,7 +20,7 @@ import java.io.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.fnproject.fn.runtime.cloudthreads.CloudCompleterApiClient.*;
+import static com.fnproject.fn.runtime.flow.RemoteCompleterApiClient.*;
 
 /**
  * Some general serialization utils ... hmmm
