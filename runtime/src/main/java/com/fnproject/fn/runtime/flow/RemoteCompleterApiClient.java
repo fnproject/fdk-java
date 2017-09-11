@@ -27,7 +27,7 @@ public class RemoteCompleterApiClient implements CompleterClient {
     // TODO: move these to SerUtils
 
     private static final String HEADER_PREFIX = "FnProject-";
-    public static final String FLOW_ID_HEADER = HEADER_PREFIX + "ThreadID";
+    public static final String FLOW_ID_HEADER = HEADER_PREFIX + "FlowID";
     public static final String STAGE_ID_HEADER = HEADER_PREFIX + "StageID";
     public static final String METHOD_HEADER = HEADER_PREFIX + "Method";
     public static final String USER_HEADER_PREFIX = HEADER_PREFIX + "Header-";
