@@ -6,16 +6,16 @@ import java.util.concurrent.Callable;
 import java.util.function.*;
 
 /**
- * Cloud Threads  API entry point class  - this provides access to the current {@link Flow} for the current function invocation.
+ * Fn Flow API entry point class  - this provides access to the current {@link Flow} for the current function invocation.
  */
 public class Flows {
 
     private static RuntimeSource runtimeSource;
 
     /**
-     * Gets the current supplier of the cloud threads runtime
+     * Gets the current supplier of the flow runtime
      *
-     * @return the current supplier of the cloud threads runtime
+     * @return the current supplier of the flow runtime
      */
     public static RuntimeSource getCurrentRuntimeSource() {
         return runtimeSource;
@@ -29,10 +29,10 @@ public class Flows {
     }
 
     /**
-     * Return the current cloud threads runtime - this will create a new cloud thread if the current is not already bound to the thread or
-     * an existing thread if one is already bound to the current invocation or if the invocation was triggered from within a cloud thread.
+     * Return the current flow runtime - this will create a new flow if the current is not already bound to the invocation or
+     * an existing flow if one is already bound to the current invocation or if the invocation was triggered from within a flow stage.
      *
-     * @return the current cloud thread runtime
+     * @return the current flow runtime
      */
     public synchronized static Flow currentRuntime() {
         Objects.requireNonNull(runtimeSource, "Flows.runtimeSource is not set  - Flows.currentRuntime() should only be called from within a FaaS function invocation");
