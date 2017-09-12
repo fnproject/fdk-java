@@ -29,31 +29,29 @@ public class BookingFlow implements Serializable {
         Flow rt = Flows.currentFlow();
 
         rt.supply(post("/flight", request.flightRequest))
-            .thenCombine(
-                rt.supply(post("/hotel", request.hotelRequest)),
-                (flightConfirmation, hotelConfirmation) -> {
-                    BookingResult r = new BookingResult();
-                    r.flightConfirmation = flightConfirmation;
-                    r.hotelConfirmation = hotelConfirmation;
-                    return r;
-            }).thenCombine(
-                    rt.supply(post("/car", request.carRentalRequest)),
-                    (bookingResult, carRentalConfirmation) -> {
-                        bookingResult.carRentalConfirmation = carRentalConfirmation;
-                        return bookingResult;
-            }).whenComplete(
-                (result, exception)  -> {
-                    if (exception == null) {
-                        String message = String.format("Great success! Your trip is all booked. Here are your confirmation numbers - Flight: %s; Hotel: %s; Car Rental: %s.",
-                                result.flightConfirmation, result.hotelConfirmation, result.carRentalConfirmation);
-                        rt.supply(post("/email", message));
-                    } else {
-                        rt.allOf(
-                                Retry.exponentialWithJitter(delete("/car")),
-                                Retry.exponentialWithJitter(delete("/hotel")),
-                                Retry.exponentialWithJitter(delete("/flight"))
-                    ).whenComplete((r,e) -> post("/email", "We failed to books your trip. LOL."));
-                }
+        .thenCombine(
+            rt.supply(post("/hotel", request.hotelRequest)),
+            combineFlightAndHotel
+        )
+        .thenCombine(
+            rt.supply(post("/car", request.carRentalRequest)),
+            combineCarRental
+        )
+        .whenComplete(
+            (result, exception)  -> {
+                if (exception == null) {
+                    String message = getSuccessEmailBody(result);
+                    rt.supply(post("/email", message));
+                } else {
+                    rt.allOf(
+                        Retry.exponentialWithJitter(delete("/car")),
+                        Retry.exponentialWithJitter(delete("/hotel")),
+                        Retry.exponentialWithJitter(delete("/flight"))
+                )
+                .whenComplete(
+                    (r,e) -> rt.supply(post("/email", FAIL_EMAIL_BODY))
+                );
+            }
         });
     }
 
@@ -66,5 +64,26 @@ public class BookingFlow implements Serializable {
     private static Flows.SerCallable<String> delete(String path) {
         return () -> Request.Delete(API_BASE_URL + path)
                         .execute().returnContent().asString();
+    }
+
+    private final Flows.SerBiFunction<String, String, BookingResult> combineFlightAndHotel = (flightConfirmation, hotelConfirmation) -> {
+        BookingResult r = new BookingResult();
+        r.flightConfirmation = flightConfirmation;
+        r.hotelConfirmation = hotelConfirmation;
+        return r;
+    };
+
+    private final Flows.SerBiFunction<BookingResult, String, BookingResult> combineCarRental = (bookingResult, carRentalConfirmation) -> {
+        bookingResult.carRentalConfirmation = carRentalConfirmation;
+        return bookingResult;
+    };
+
+
+    private static final String SUCCESS_EMAIL_BODY = "Great success! Your trip is all booked. Here are your confirmation numbers - Flight: %s; Hotel: %s; Car Rental: %s.";
+    private static final String FAIL_EMAIL_BODY = "We failed to books your trip. LOL.";
+
+    private String getSuccessEmailBody(BookingResult result) {
+        return String.format(SUCCESS_EMAIL_BODY,
+                result.flightConfirmation, result.hotelConfirmation, result.carRentalConfirmation);
     }
 }

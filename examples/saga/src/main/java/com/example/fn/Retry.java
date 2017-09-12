@@ -4,7 +4,6 @@ import com.fnproject.fn.api.flow.FlowFuture;
 import com.fnproject.fn.api.flow.Flows;
 
 import java.io.Serializable;
-import java.time.Duration;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
@@ -36,7 +35,7 @@ public class Retry {
             }
         }
     }
-    
+
     public static <T extends Serializable> FlowFuture<T>  exponentialWithJitter(Flows.SerCallable<T> op) {
         return _exponentialWithJitter(op, new RetrySettings(), 0);
     }
