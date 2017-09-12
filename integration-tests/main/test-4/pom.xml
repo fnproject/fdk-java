@@ -5,6 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <fnproject.version>1.0.0-SNAPSHOT</fnproject.version>
     </properties>
     <groupId>com.fnproject.fn</groupId>
     <artifactId>integration-test-4</artifactId>
@@ -16,18 +17,18 @@
         <dependency>
             <groupId>com.fnproject.fn</groupId>
             <artifactId>api</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>${fnproject.version}</version>
         </dependency>
         <!-- We borrow the HttpClient from here -->
         <dependency>
             <groupId>com.fnproject.fn</groupId>
             <artifactId>runtime</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>${fnproject.version}</version>
         </dependency>
         <dependency>
             <groupId>com.fnproject.fn</groupId>
             <artifactId>testing</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>${fnproject.version}</version>
             <scope>test</scope>
         </dependency>
 		<dependency>
