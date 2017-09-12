@@ -4,7 +4,7 @@
 #
 #     https://gitlab-odx.oracle.com/odx/functions-service/tree/master/scripts/fn-service.yml
 #
-# The created service has persistent storage to a single-node MySQL database.
+# The created service has persistent storage to a single-stage MySQL database.
 #
 # Updates are done by:
 #

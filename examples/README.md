@@ -31,6 +31,6 @@ access to data entering the `fn` Java FDK.
 
 ## 4. Asynchronous thumbnails generation
 
-This example showcases the Cloud Threads asynchronous execution API, by
+This example showcases the Fn Flow asynchronous execution API, by
 creating a workflow that takes an image and asynchronously generates three
 thumbnails for it, then uploads them to an object storage.

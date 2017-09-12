@@ -11,7 +11,7 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.fnproject.cloudthreads</groupId>
+    <groupId>com.fnproject.flow</groupId>
     <artifactId>integration-tests</artifactId>
 
     <packaging>pom</packaging>

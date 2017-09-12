@@ -13,7 +13,7 @@ curl -X POST --data-binary @test-image.png -H "Content-type: application/octet-s
 
 echo "Contents of bucket"
 mc ls -r example-storage-server
-echo "Sleeping for 5 seconds to allow cloud threads to complete"
+echo "Sleeping for 5 seconds to allow flows to complete"
 sleep 5
 echo "Contents of bucket"
 mc ls -r example-storage-server

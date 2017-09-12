@@ -12,7 +12,7 @@ import java.io.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.fnproject.fn.runtime.cloudthreads.CloudCompleterApiClient.*;
+import static com.fnproject.fn.runtime.flow.RemoteCompleterApiClient.*;
 
 public class TestSerUtils {
     public static byte[] serializeToBytes(Object o) throws IOException {
