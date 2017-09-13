@@ -1,15 +1,8 @@
 #!/bin/bash
 
 set -ex
-set -x
 USER=fnproject
 SERVICE=fn-java-fdk
-
-#if [ "${CIRCLE_BRANCH}" != "master" ]; then
-#   echo Trying to rev versions on non-master branch
-#   exit 1
-#fi
-
 
 release_version=$(cat release.version)
 if [[ $release_version =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] ; then
@@ -19,7 +12,8 @@ else
    exit 1
 fi
 
-// Calculate new version
+
+# Calculate new version
 version_parts=(${release_version//./ })
 new_minor=$((${version_parts[2]}+1))
 new_version="${version_parts[0]}.${version_parts[1]}.$new_minor"
@@ -41,6 +35,7 @@ echo mvn -s ./settings-deploy.xml \
     -DdeployAtEnd=true \
     clean deploy
 
+
 # Regenerate runtime image and push it
 (
   moving_version=${release_version%.*}-latest
@@ -53,10 +48,9 @@ echo mvn -s ./settings-deploy.xml \
 )
 
 
-
 # Push result to git
 
-echo $next_version > release.version
+echo $new_version > release.version
 git tag -a "$release_version" -m "version $release_version"
 git add release.version
 git commit -m "$SERVICE: post-$release_version version bump [skip ci]"

@@ -19,14 +19,14 @@ jobs:
            name: Fix release version
            command: |
               if [ "${CIRCLE_BRANCH}" == "master" ]; then
-                  ./.circleci/update-version.sh
+                  ./.circleci/update-versions.sh
               fi
       - run:
           name: Build and deploy locally
-          command:  |
-           rm -rf $STAGING_DIR
-           mkdir -p $STAGING_DIR
-           mvn deploy  -DaltDeploymentRepository=localStagingDir::default::file://"$STAGING_DIR"
+          command: |
+            rm -rf $STAGING_DIR
+            mkdir -p $STAGING_DIR
+            mvn deploy -DaltDeploymentRepository=localStagingDir::default::file://"$STAGING_DIR"
       - store_test_results:
           path: runtime/target/surefire-reports
       - store_test_results:
