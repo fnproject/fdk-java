@@ -22,8 +22,6 @@ public class BookingFlow implements Serializable {
         public String carRentalConfirmation;
     }
 
-    private static final String API_BASE_URL = "http://172.17.0.4:3001";
-
     public void handleRequest(BookingRequest request) {
 
         Flow rt = Flows.currentFlow();
@@ -86,4 +84,6 @@ public class BookingFlow implements Serializable {
         return String.format(SUCCESS_EMAIL_BODY,
                 result.flightConfirmation, result.hotelConfirmation, result.carRentalConfirmation);
     }
+
+    private static final String API_BASE_URL = "http://172.17.0.4:3001";
 }
