@@ -121,7 +121,7 @@ public class FlowsTest {
 
         CodeLocation gotLocation = locCaptor.getValue();
         assertThat(gotLocation.getLocation())
-                .matches(Pattern.compile("com\\.fnproject\\.fn\\.runtime\\.testfns\\.FnFlowsFunction\\.supplyAndGetResult\\(.*\\.java\\:.*\\)"));
+                .matches(Pattern.compile("com\\.fnproject\\.fn\\.runtime\\.testfns\\.FnFlowsFunction\\.supplyAndGetResult\\(.*\\.java\\:\\d+\\)"));
         verify(mockCompleterClient, times(1))
                 .waitForCompletion(eq(FLOW_ID), eq(completionId), eq(getClass().getClassLoader()));
     }
