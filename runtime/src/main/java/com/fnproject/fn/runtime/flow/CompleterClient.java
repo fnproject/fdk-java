@@ -36,10 +36,10 @@ public interface CompleterClient {
     CompletionId supply(FlowId flowID, Serializable code, CodeLocation codeLocation);
 
     // thenApply completionID   -> DO NOW  (result) | new parentId
-    CompletionId thenApply(FlowId flowID, CompletionId completionId, Serializable consumer);
+    CompletionId thenApply(FlowId flowID, CompletionId completionId, Serializable consumer, CodeLocation codeLocation);
 
     // thenApply completionID   -> DO NOW  (result) | new parentId
-    CompletionId whenComplete(FlowId flowID, CompletionId completionId, Serializable consumer);
+    CompletionId whenComplete(FlowId flowID, CompletionId completionId, Serializable consumer, CodeLocation codeLocation);
 
     /**
      * Compose a function into the tree
@@ -47,7 +47,7 @@ public interface CompleterClient {
      *
      * @return a completion ID that completes when the completion returned by the inner function completes
      */
-    CompletionId thenCompose(FlowId flowId, CompletionId completionId, Serializable fn);
+    CompletionId thenCompose(FlowId flowId, CompletionId completionId, Serializable fn, CodeLocation codeLocation);
 
     // block (indefinitely) until the completion completes
     Object waitForCompletion(FlowId flowId, CompletionId id, ClassLoader loader);
@@ -55,37 +55,37 @@ public interface CompleterClient {
     // block until the timeout for the completion to complete and throw a TimeoutException upon reaching timeout
     Object waitForCompletion(FlowId flowId, CompletionId id, ClassLoader loader, long timeout, TimeUnit unit) throws TimeoutException;
 
-    CompletionId thenAccept(FlowId flowId, CompletionId completionId, Serializable fn);
+    CompletionId thenAccept(FlowId flowId, CompletionId completionId, Serializable fn, CodeLocation codeLocation);
 
-    CompletionId thenRun(FlowId flowId, CompletionId completionId, Serializable fn);
+    CompletionId thenRun(FlowId flowId, CompletionId completionId, Serializable fn, CodeLocation codeLocation);
 
-    CompletionId acceptEither(FlowId flowId, CompletionId completionId, CompletionId alternate, Serializable fn);
+    CompletionId acceptEither(FlowId flowId, CompletionId completionId, CompletionId alternate, Serializable fn, CodeLocation codeLocation);
 
-    CompletionId applyToEither(FlowId flowId, CompletionId completionId, CompletionId alternate, Serializable fn);
+    CompletionId applyToEither(FlowId flowId, CompletionId completionId, CompletionId alternate, Serializable fn, CodeLocation codeLocation);
 
     CompletionId anyOf(FlowId flowId, List<CompletionId> cids);
 
     CompletionId delay(FlowId flowId, long l);
 
-    CompletionId thenAcceptBoth(FlowId flowId, CompletionId completionId, CompletionId alternate, Serializable fn);
+    CompletionId thenAcceptBoth(FlowId flowId, CompletionId completionId, CompletionId alternate, Serializable fn, CodeLocation codeLocation);
 
     ExternalCompletion createExternalCompletion(FlowId flowId);
 
     CompletionId invokeFunction(FlowId flowId, String functionId, byte[] data, HttpMethod method, Headers headers);
 
-    CompletionId completedValue(FlowId flowId, Serializable value);
+    CompletionId completedValue(FlowId flowId, Serializable value, CodeLocation codeLocation);
 
 
     CompletionId allOf(FlowId flowId, List<CompletionId> cids);
 
-    CompletionId handle(FlowId flowId, CompletionId completionId, Serializable fn);
+    CompletionId handle(FlowId flowId, CompletionId completionId, Serializable fn, CodeLocation codeLocation);
 
-    CompletionId exceptionally(FlowId flowId, CompletionId completionId, Serializable fn);
+    CompletionId exceptionally(FlowId flowId, CompletionId completionId, Serializable fn, CodeLocation codeLocation);
 
-    CompletionId thenCombine(FlowId flowId, CompletionId completionId, Serializable fn, CompletionId alternate);
+    CompletionId thenCombine(FlowId flowId, CompletionId completionId, Serializable fn, CompletionId alternate, CodeLocation codeLocation);
 
     void commit(FlowId flowId);
 
-    void addTerminationHook(FlowId flowId, Serializable code);
+    void addTerminationHook(FlowId flowId, Serializable code, CodeLocation codeLocation);
 
 }

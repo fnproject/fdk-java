@@ -85,43 +85,43 @@ public class RemoteCompleterApiClient implements CompleterClient {
     }
 
     @Override
-    public CompletionId thenApply(FlowId flowId, CompletionId completionId, Serializable fn) {
-        return chainThis(flowId, completionId, "thenApply", fn);
+    public CompletionId thenApply(FlowId flowId, CompletionId completionId, Serializable fn, CodeLocation codeLocation) {
+        return chainThis(flowId, completionId, "thenApply", fn, codeLocation);
     }
 
     @Override
-    public CompletionId thenCompose(FlowId flowId, CompletionId completionId, Serializable fn) {
-        return chainThis(flowId, completionId, "thenCompose", fn);
+    public CompletionId thenCompose(FlowId flowId, CompletionId completionId, Serializable fn, CodeLocation codeLocation) {
+        return chainThis(flowId, completionId, "thenCompose", fn, codeLocation);
     }
 
     @Override
-    public CompletionId whenComplete(FlowId flowId, CompletionId completionId, Serializable fn) {
-        return chainThis(flowId, completionId, "whenComplete", fn);
+    public CompletionId whenComplete(FlowId flowId, CompletionId completionId, Serializable fn, CodeLocation codeLocation) {
+        return chainThis(flowId, completionId, "whenComplete", fn, codeLocation);
     }
 
     @Override
-    public CompletionId thenAccept(FlowId flowId, CompletionId completionId, Serializable fn) {
-        return chainThis(flowId, completionId, "thenAccept", fn);
+    public CompletionId thenAccept(FlowId flowId, CompletionId completionId, Serializable fn, CodeLocation codeLocation) {
+        return chainThis(flowId, completionId, "thenAccept", fn, codeLocation);
     }
 
     @Override
-    public CompletionId thenRun(FlowId flowId, CompletionId completionId, Serializable fn) {
-        return chainThis(flowId, completionId, "thenRun", fn);
+    public CompletionId thenRun(FlowId flowId, CompletionId completionId, Serializable fn, CodeLocation codeLocation) {
+        return chainThis(flowId, completionId, "thenRun", fn, codeLocation);
     }
 
     @Override
-    public CompletionId acceptEither(FlowId flowId, CompletionId completionId, CompletionId alternate, Serializable fn) {
-        return chainThisWithThat(flowId, completionId, alternate, "acceptEither", fn);
+    public CompletionId acceptEither(FlowId flowId, CompletionId completionId, CompletionId alternate, Serializable fn, CodeLocation codeLocation) {
+        return chainThisWithThat(flowId, completionId, alternate, "acceptEither", fn, codeLocation);
     }
 
     @Override
-    public CompletionId applyToEither(FlowId flowId, CompletionId completionId, CompletionId alternate, Serializable fn) {
-        return chainThisWithThat(flowId, completionId, alternate, "applyToEither", fn);
+    public CompletionId applyToEither(FlowId flowId, CompletionId completionId, CompletionId alternate, Serializable fn, CodeLocation codeLocation) {
+        return chainThisWithThat(flowId, completionId, alternate, "applyToEither", fn, codeLocation);
     }
 
     @Override
-    public CompletionId thenAcceptBoth(FlowId flowId, CompletionId completionId, CompletionId alternate, Serializable fn) {
-        return chainThisWithThat(flowId, completionId, alternate, "thenAcceptBoth", fn);
+    public CompletionId thenAcceptBoth(FlowId flowId, CompletionId completionId, CompletionId alternate, Serializable fn, CodeLocation codeLocation) {
+        return chainThisWithThat(flowId, completionId, alternate, "thenAcceptBoth", fn, codeLocation);
     }
 
     @Override
@@ -164,8 +164,8 @@ public class RemoteCompleterApiClient implements CompleterClient {
     }
 
     @Override
-    public CompletionId completedValue(FlowId flowId, Serializable value) {
-        return requestCompletionWithBody("/graph/" + flowId.getId() + "/completedValue", Function.identity(), value, CodeLocation.fromCallerLocation(1));
+    public CompletionId completedValue(FlowId flowId, Serializable value, CodeLocation codeLocation) {
+        return requestCompletionWithBody("/graph/" + flowId.getId() + "/completedValue", Function.identity(), value, codeLocation);
     }
 
     @Override
@@ -175,18 +175,18 @@ public class RemoteCompleterApiClient implements CompleterClient {
     }
 
     @Override
-    public CompletionId handle(FlowId flowId, CompletionId completionId, Serializable fn) {
-        return chainThis(flowId, completionId, "handle", fn);
+    public CompletionId handle(FlowId flowId, CompletionId completionId, Serializable fn, CodeLocation codeLocation) {
+        return chainThis(flowId, completionId, "handle", fn, codeLocation);
     }
 
     @Override
-    public CompletionId exceptionally(FlowId flowId, CompletionId completionId, Serializable fn) {
-        return chainThis(flowId, completionId, "exceptionally", fn);
+    public CompletionId exceptionally(FlowId flowId, CompletionId completionId, Serializable fn, CodeLocation codeLocation) {
+        return chainThis(flowId, completionId, "exceptionally", fn, codeLocation);
     }
 
     @Override
-    public CompletionId thenCombine(FlowId flowId, CompletionId completionId, Serializable fn, CompletionId alternate) {
-        return chainThisWithThat(flowId, completionId, alternate, "thenCombine", fn);
+    public CompletionId thenCombine(FlowId flowId, CompletionId completionId, Serializable fn, CompletionId alternate, CodeLocation codeLocation) {
+        return chainThisWithThat(flowId, completionId, alternate, "thenCombine", fn, codeLocation);
     }
 
     @Override
@@ -281,18 +281,18 @@ public class RemoteCompleterApiClient implements CompleterClient {
     }
 
     @Override
-    public void addTerminationHook(FlowId flowId, Serializable code) {
-        requestTerminationHook("/graph/" + flowId.getId() + "/terminationHook", Function.identity(), code);
+    public void addTerminationHook(FlowId flowId, Serializable code, CodeLocation codeLocation) {
+        requestTerminationHook("/graph/" + flowId.getId() + "/terminationHook", Function.identity(), code, codeLocation);
     }
 
-    private CompletionId chainThis(FlowId flowId, CompletionId completionId, String op, Serializable fn) {
+    private CompletionId chainThis(FlowId flowId, CompletionId completionId, String op, Serializable fn, CodeLocation codeLocation) {
         return requestCompletionWithBody("/graph/" + flowId.getId() + "/stage/" + completionId.getId() + "/" + op, Function.identity(), fn,
-                CodeLocation.fromCallerLocation(2));
+                codeLocation);
     }
 
-    private CompletionId chainThisWithThat(FlowId flowId, CompletionId currentStage, CompletionId other, String op, Serializable fn) {
+    private CompletionId chainThisWithThat(FlowId flowId, CompletionId currentStage, CompletionId other, String op, Serializable fn, CodeLocation codeLocation) {
         return requestCompletionWithBody("/graph/" + flowId.getId() + "/stage/" + currentStage.getId() + "/" + op,
-                req -> req.withQueryParam("other", other.getId()), fn, CodeLocation.fromCallerLocation(2));
+                req -> req.withQueryParam("other", other.getId()), fn, codeLocation);
     }
 
     private static void validateSuccessful(HttpClient.HttpResponse response) {
@@ -339,13 +339,15 @@ public class RemoteCompleterApiClient implements CompleterClient {
         }
     }
 
-    private void requestTerminationHook(String url, Function<HttpClient.HttpRequest, HttpClient.HttpRequest> fn, Serializable ser) {
+    private void requestTerminationHook(String url, Function<HttpClient.HttpRequest, HttpClient.HttpRequest> fn, Serializable ser,
+                                        CodeLocation codeLocation) {
         try {
             byte[] serBytes = SerUtils.serialize(ser);
             HttpClient.HttpRequest req = fn.apply(
                     HttpClient.preparePost(apiUrlBase + url)
                             .withHeader(CONTENT_TYPE_HEADER, CONTENT_TYPE_JAVA_OBJECT)
                             .withHeader(DATUM_TYPE_HEADER, DATUM_TYPE_BLOB)
+                            .withHeader("Fnproject-Codeloc", codeLocation.getLocation())
                             .withBody(serBytes));
             try (com.fnproject.fn.runtime.flow.HttpClient.HttpResponse resp = httpClient.execute(req)) {
                 validateSuccessful(resp);

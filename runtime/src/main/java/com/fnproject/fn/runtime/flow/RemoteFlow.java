@@ -61,59 +61,59 @@ public final class RemoteFlow implements Flow, Serializable {
 
         @Override
         public <U> FlowFuture<U> thenApply(Flows.SerFunction<T, U> fn) {
-            CompletionId newcid = getClient().thenApply(flowId, completionId, fn);
+            CompletionId newcid = getClient().thenApply(flowId, completionId, fn, CodeLocation.fromCallerLocation(1));
             return new RemoteFlowFuture<>(newcid);
         }
 
         @Override
         public <X> FlowFuture<X> thenCompose(Flows.SerFunction<T, FlowFuture<X>> fn) {
-            CompletionId newCid = getClient().thenCompose(flowId, completionId, fn);
+            CompletionId newCid = getClient().thenCompose(flowId, completionId, fn, CodeLocation.fromCallerLocation(1));
             return new RemoteFlowFuture<>(newCid);
         }
 
         @Override
         public FlowFuture<T> whenComplete(Flows.SerBiConsumer<T, Throwable> fn) {
-            return new RemoteFlowFuture<>(getClient().whenComplete(flowId, completionId, fn));
+            return new RemoteFlowFuture<>(getClient().whenComplete(flowId, completionId, fn, CodeLocation.fromCallerLocation(1)));
         }
 
         @Override
         public FlowFuture<Void> thenAccept(Flows.SerConsumer<T> fn) {
-            return new RemoteFlowFuture<>(getClient().thenAccept(flowId, completionId, fn));
+            return new RemoteFlowFuture<>(getClient().thenAccept(flowId, completionId, fn, CodeLocation.fromCallerLocation(1)));
         }
 
         @Override
         public FlowFuture<Void> acceptEither(FlowFuture<? extends T> alt, Flows.SerConsumer<T> fn) {
-            return new RemoteFlowFuture<>(getClient().acceptEither(flowId, completionId, ((RemoteFlowFuture<?>) alt).completionId, fn));
+            return new RemoteFlowFuture<>(getClient().acceptEither(flowId, completionId, ((RemoteFlowFuture<?>) alt).completionId, fn, CodeLocation.fromCallerLocation(1)));
         }
 
         @Override
         public <X> FlowFuture<X> applyToEither(FlowFuture<? extends T> alt, Flows.SerFunction<T, X> fn) {
-            return new RemoteFlowFuture<>(getClient().applyToEither(flowId, completionId, ((RemoteFlowFuture<?>) alt).completionId, fn));
+            return new RemoteFlowFuture<>(getClient().applyToEither(flowId, completionId, ((RemoteFlowFuture<?>) alt).completionId, fn, CodeLocation.fromCallerLocation(1)));
         }
 
         @Override
         public <X> FlowFuture<Void> thenAcceptBoth(FlowFuture<X> alt, Flows.SerBiConsumer<T, X> fn) {
-            return new RemoteFlowFuture<>(getClient().thenAcceptBoth(flowId, completionId, ((RemoteFlowFuture<?>) alt).completionId, fn));
+            return new RemoteFlowFuture<>(getClient().thenAcceptBoth(flowId, completionId, ((RemoteFlowFuture<?>) alt).completionId, fn, CodeLocation.fromCallerLocation(1)));
         }
 
         @Override
         public FlowFuture<Void> thenRun(Flows.SerRunnable fn) {
-            return new RemoteFlowFuture<>(getClient().thenRun(flowId, completionId, fn));
+            return new RemoteFlowFuture<>(getClient().thenRun(flowId, completionId, fn, CodeLocation.fromCallerLocation(1)));
         }
 
         @Override
         public <X> FlowFuture<X> handle(Flows.SerBiFunction<? super T, Throwable, ? extends X> fn) {
-            return new RemoteFlowFuture<>(getClient().handle(flowId, completionId, fn));
+            return new RemoteFlowFuture<>(getClient().handle(flowId, completionId, fn, CodeLocation.fromCallerLocation(1)));
         }
 
         @Override
         public FlowFuture<T> exceptionally(Flows.SerFunction<Throwable, ? extends T> fn) {
-            return new RemoteFlowFuture<>(getClient().exceptionally(flowId, completionId, fn));
+            return new RemoteFlowFuture<>(getClient().exceptionally(flowId, completionId, fn, CodeLocation.fromCallerLocation(1)));
         }
 
         @Override
         public <U, X> FlowFuture<X> thenCombine(FlowFuture<? extends U> other, Flows.SerBiFunction<? super T, ? super U, ? extends X> fn) {
-            return new RemoteFlowFuture<>(getClient().thenCombine(flowId, completionId, fn, ((RemoteFlowFuture<?>) other).completionId));
+            return new RemoteFlowFuture<>(getClient().thenCombine(flowId, completionId, fn, ((RemoteFlowFuture<?>) other).completionId, CodeLocation.fromCallerLocation(1)));
         }
 
         @Override
@@ -172,7 +172,7 @@ public final class RemoteFlow implements Flow, Serializable {
 
     @Override
     public <T extends Serializable> FlowFuture<T> completedValue(T value) {
-        return new RemoteFlowFuture<>(getClient().completedValue(flowId, value));
+        return new RemoteFlowFuture<>(getClient().completedValue(flowId, value, CodeLocation.fromCallerLocation(1)));
     }
 
     @Override
@@ -203,7 +203,7 @@ public final class RemoteFlow implements Flow, Serializable {
 
     @Override
     public Flow addTerminationHook(Flows.SerConsumer<FlowState> hook) {
-        getClient().addTerminationHook(flowId, hook);
+        getClient().addTerminationHook(flowId, hook, CodeLocation.fromCallerLocation(1));
         return this;
     }
 }
