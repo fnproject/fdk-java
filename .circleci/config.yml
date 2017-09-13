@@ -79,7 +79,7 @@ jobs:
       - store_artifacts:
           name: Upload integration test results to artifacts
           path: /tmp/artifacts/tests
-    - deploy:
+      - deploy:
           name: Release new version
           command: |
             if [ "${CIRCLE_BRANCH}" == "master" ]; then
