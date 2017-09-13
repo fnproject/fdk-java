@@ -16,7 +16,11 @@ FUNCTION_ENTRYPOINT="${1}"
 #
 # The max memory value obtained with these args seem to be okay for most memory limits. The exception is when the
 # memory limit is set to 128MiB, in which case maxMemory returns roughly half.
-JVM_ARGS="-XX:+UnlockExperimentalVMOptions -XX:+UseCGroupMemoryLimitForHeap -XX:MaxRAMFraction=2 -XX:+UseSerialGC"
+JVM_ARGS=" -XX:+UnlockExperimentalVMOptions "
+JVM_ARGS+="-XX:+UseCGroupMemoryLimitForHeap "
+JVM_ARGS+="-XX:MaxRAMFraction=2 "
+JVM_ARGS+="-XX:+UseSerialGC "
+JVM_ARGS+="-Xshare:on "
 
 exec java \
     ${JVM_ARGS} \
