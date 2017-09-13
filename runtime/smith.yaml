@@ -1,0 +1,19 @@
+package:  https://registry-1.docker.io/library/openjdk:8-slim
+type: oci
+paths:
+- /usr/lib/jvm/java-8-openjdk-amd64/jre/lib/amd64/server/libjvm.so
+- /usr/lib/x86_64-linux-gnu/libstdc++.so.6
+- /lib/x86_64-linux-gnu/libm.so.6
+- /lib/x86_64-linux-gnu/libdl.so.2
+- /lib/x86_64-linux-gnu/libpthread.so.0
+- /lib/x86_64-linux-gnu/libc.so.6
+- /lib/x86_64-linux-gnu/libgcc_s.so.1
+- /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
+- /usr/lib/jvm/java-8-openjdk-amd64/jre/lib
+# add monotonic clock
+- /lib/x86_64-linux-gnu/librt.so.1
+cmd:
+- /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
+- "-cp"
+- "/read/app/*:/read/runtime/*"
+- "com.fnproject.fn.runtime.EntryPoint"
