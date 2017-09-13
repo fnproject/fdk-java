@@ -50,7 +50,7 @@ jobs:
           name: Build fn-java-fdk Docker build image
           command: |
             cd build-image
-            docker build -t fnproject/fn-java-fdk:build .
+            docker build -t fnproject/fn-java-fdk-build:latest .
 
       - run:
           name: Build fn-java-fdk Docker runtime image
@@ -98,7 +98,7 @@ jobs:
           name: Deploy fn-java-fdk Docker build image
           command: |
             if [ "${CIRCLE_BRANCH}" == "master" ]; then
-              docker push fnproject/fn-java-fdk:build
+              docker push fnproject/fn-java-fdk-build:latest
             fi
       - deploy:
           name: Deploy fn-java-fdk Docker runtime image
