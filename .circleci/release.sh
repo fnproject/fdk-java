@@ -1,34 +1,39 @@
 #!/bin/bash
 
 set -ex
-
+set -x
 USER=fnproject
 SERVICE=fn-java-fdk
 
-# Get current version
-current_snapshot_version=$(mvn help:evaluate -Dexpression=project.version | grep -v '^\[INFO\]')  # sigh
+#if [ "${CIRCLE_BRANCH}" != "master" ]; then
+#   echo Trying to rev versions on non-master branch
+#   exit 1
+#fi
 
-# Confirm that it's a -SNAPSHOT or bail out
-case "$current_snapshot_version" in
-  *.*.*-SNAPSHOT) ;;
-  *)
-     echo "Error: expected *-SNAPSHOT project version, found $current_snapshot_version"
-     exit 1
-     ;;
-esac
 
-# Replace with a release version
-release_version=${current_snapshot_version%-SNAPSHOT}
-mvn versions:set -D newVersion=${release_version} versions:update-child-modules
+release_version=$(cat release.version)
+if [[ $release_version =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] ; then
+   echo "Deploying version $release_version"
+else
+   echo Invalid version $release_version
+   exit 1
+fi
 
-# We need to replace the example dependency versions also
-# (sed syntax for portability between MacOS and gnu)
-find examples -name pom.xml |
-    xargs -n 1 sed -i.bak -e "s|<sdk\\.version>.*</sdk\\.version>|<sdk.version>${release_version}</sdk.version>|"
-find examples -name pom.xml.bak -delete
+// Calculate new version
+version_parts=(${release_version//./ })
+new_minor=$((${version_parts[2]}+1))
+new_version="${version_parts[0]}.${version_parts[1]}.$new_minor"
+
+if [[ $new_version =~  ^[0-9]+\.[0-9]+\.[0-9]+$ ]] ; then
+   echo "Next version $new_version"
+else
+   echo Invalid new version $new_version
+   exit 1
+fi
+
 
 # Deploy to bintray
-mvn -s ./settings-deploy.xml \
+echo mvn -s ./settings-deploy.xml \
     -DskipTests \
     -DaltDeploymentRepository="fnproject-release-repo::default::$MVN_RELEASE_REPO" \
     -Dfnproject-release-repo.username="$MVN_RELEASE_USER" \
@@ -38,44 +43,22 @@ mvn -s ./settings-deploy.xml \
 
 # Regenerate runtime image and push it
 (
-  cd runtime
-  docker build -t $USER/$SERVICE:${release_version} .
   moving_version=${release_version%.*}-latest
-  docker tag $USER/$SERVICE:${release_version} $USER/$SERVICE:${moving_version}
 
+  docker tag $USER/$SERVICE:latest $USER/$SERVICE:${release_version}
+  docker tag $USER/$SERVICE:latest $USER/$SERVICE:${moving_version}
+  docker push $USER/$SERVICE:latest
   docker push $USER/$SERVICE:${release_version}
   docker push $USER/$SERVICE:${moving_version}
 )
 
-# Bump snapshot version
 
-mvn versions:revert
-mvn versions:set -D nextSnapshot=true
-mvn versions:commit
-
-# Get next snapshot version and replace that in the integration tests
-new_snapshot_version=$(mvn help:evaluate -Dexpression=project.version | grep -v '^\[INFO\]')  # sigh, again
-
-find integration-tests/main -name pom.xml |
-    xargs -n 1 sed -i.bak -e "s|<fnproject\\.version>.*</fnproject\\.version>|<fnproject.version>${new_snapshot_version}</fnproject.version>|"
-
-find examples -name pom.xml |
-    xargs -n 1 sed -i.bak -e "s|<sdk\\.version>.*</sdk\\.version>|<sdk.version>${new_snapshot_version}</sdk.version>|"
-
-find integration-tests/main examples -name pom.xml.bak -delete
-
-# The examples are not updated automatically. Do all of those.
-for pom in examples/*/pom.xml; do
-  (
-    cd "$(dirname "$pom")"
-    mvn versions:set -D newVersion=${new_snapshot_version}
-    mvn versions:commit
-  )
-done
 
 # Push result to git
 
+echo $next_version > release.version
 git tag -a "$release_version" -m "version $release_version"
-git commit -a -m "$SERVICE: post-$release_version version bump [skip ci]"
+git add release.version
+git commit -m "$SERVICE: post-$release_version version bump [skip ci]"
 git push
 git push origin "$release_version"

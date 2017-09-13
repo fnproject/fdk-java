@@ -16,8 +16,17 @@ jobs:
       - restore_cache:
           key: mvn-cache
       - run:
-          name: Build
-          command: mvn package
+           name: Fix release version
+           command: |
+              if [ "${CIRCLE_BRANCH}" == "master" ]; then
+                  ./.circleci/update-version.sh
+              fi
+      - run:
+          name: Build and deploy locally
+          command:  |
+           rm -rf $STAGING_DIR
+           mkdir -p $STAGING_DIR
+           mvn deploy  -DaltDeploymentRepository=localStagingDir::default::file://"$STAGING_DIR"
       - store_test_results:
           path: runtime/target/surefire-reports
       - store_test_results:
@@ -32,11 +41,6 @@ jobs:
       - store_artifacts:
           name: Upload FDK artifacts
           path: /tmp/artifacts/fdk
-      - run:
-          name: Perform a local staging deploy of the maven artifacts
-          command: |
-            mkdir -p "$STAGING_DIR"
-            mvn deploy -DskipTests -DaltDeploymentRepository=localStagingDir::default::file://"$STAGING_DIR"
 
       - run:
          name: Update Docker to latest
@@ -75,27 +79,7 @@ jobs:
       - store_artifacts:
           name: Upload integration test results to artifacts
           path: /tmp/artifacts/tests
-
-      - deploy:
-          name: Push to maven repo
-          command: |
-            if [ "${CIRCLE_BRANCH}" == "master" ]; then
-              mvn -s ./settings-deploy.xml \
-                  -DskipTests \
-                  -DaltDeploymentRepository="bmcs-faas-snapshot-repo::default::https://swiftobjectstorage.us-phoenix-1.oraclecloud.com/v1/opc0002/mvnrepo/snapshots" \
-                  -Dbmcs-faas-snapshot-repo.username="$MVN_SNAPSHOT_USER" \
-                  -Dbmcs-faas-snapshot-repo.password="$MVN_SNAPSHOT_PASSWORD" \
-                  -DdeployAtEnd=true \
-                  deploy
-            fi
-      - deploy:
-          name: Deploy fn-java-fdk Docker image
-          command: |
-            if [ "${CIRCLE_BRANCH}" == "master" ]; then
-              docker push fnproject/fn-java-fdk
-            fi
-
-      - deploy:
+    - deploy:
           name: Release new version
           command: |
             if [ "${CIRCLE_BRANCH}" == "master" ]; then
