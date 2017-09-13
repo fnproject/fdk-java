@@ -13,6 +13,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.UUID;
 
@@ -65,7 +66,7 @@ public class FlowHttpContractTest {
         );
 
 
-        CompletionId cid = client.supply(new FlowId(FLOW_ID), supplier);
+        CompletionId cid = client.supply(new FlowId(FLOW_ID), supplier, null);
         verify(httpClient, times(1)).execute(requestCaptor.capture());
         HttpClient.HttpRequest capturedRequest = requestCaptor.getValue();
 

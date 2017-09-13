@@ -2,10 +2,7 @@ package com.fnproject.fn.testing;
 
 import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.flow.*;
-import com.fnproject.fn.runtime.flow.RemoteCompleterApiClient;
-import com.fnproject.fn.runtime.flow.CompleterClient;
-import com.fnproject.fn.runtime.flow.CompletionId;
-import com.fnproject.fn.runtime.flow.FlowId;
+import com.fnproject.fn.runtime.flow.*;
 import com.sun.net.httpserver.HttpServer;
 import org.apache.commons.io.IOUtils;
 
@@ -194,7 +191,7 @@ class InMemCompleter implements CompleterClient {
     }
 
     @Override
-    public CompletionId supply(FlowId flowID, Serializable code) {
+    public CompletionId supply(FlowId flowID, Serializable code, CodeLocation codeLocation) {
         return withActiveGraph(flowID, graph -> graph.addSupplyStage(serializeClosure(code))).getId();
     }
 

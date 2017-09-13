@@ -5,9 +5,7 @@ import com.fnproject.fn.api.flow.*;
 
 import java.io.Serializable;
 import java.net.URI;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
@@ -151,13 +149,15 @@ public final class RemoteFlow implements Flow, Serializable {
 
     @Override
     public <T> FlowFuture<T> supply(Flows.SerCallable<T> c) {
-        CompletionId cid = getClient().supply(flowId, c);
+
+        CompletionId cid = getClient().supply(flowId, c, CodeLocation.fromCallerLocation(1));
         return new RemoteFlowFuture<>(cid);
     }
 
     @Override
     public FlowFuture<Void> supply(Flows.SerRunnable runnable) {
-        CompletionId cid = getClient().supply(flowId, runnable);
+
+        CompletionId cid = getClient().supply(flowId, runnable, CodeLocation.fromCallerLocation(1));
         return new RemoteFlowFuture<>(cid);
     }
 
