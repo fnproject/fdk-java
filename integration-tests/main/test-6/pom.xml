@@ -57,12 +57,8 @@
 
     <repositories>
         <repository>
-            <id>fn-maven-snapshots</id>
-            <url>https://swiftobjectstorage.us-phoenix-1.oraclecloud.com/v1/opc0002/mvnrepo/snapshots</url>
-        </repository>
-        <repository>
             <id>fn-maven-releases</id>
-            <url>https://swiftobjectstorage.us-phoenix-1.oraclecloud.com/v1/opc0002/mvnrepo/snapshots</url>
+            <url>https://dl.bintray.com/fnproject/fnproject/fn-java-fdk</url>
         </repository>
     </repositories>
 </project>
