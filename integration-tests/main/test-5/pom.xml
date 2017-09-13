@@ -5,6 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <fnproject.version>1.0.0-SNAPSHOT</fnproject.version>
     </properties>
     <groupId>com.fnproject.fn</groupId>
     <artifactId>integration-test-5</artifactId>
@@ -16,12 +17,12 @@
         <dependency>
             <groupId>com.fnproject.fn</groupId>
             <artifactId>api</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>${fnproject.version}</version>
         </dependency>
         <dependency>
             <groupId>com.fnproject.fn</groupId>
             <artifactId>testing</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>${fnproject.version}</version>
             <scope>test</scope>
         </dependency>
 		<dependency>
@@ -56,12 +57,8 @@
 
     <repositories>
         <repository>
-            <id>fn-maven-snapshots</id>
-            <url>https://swiftobjectstorage.us-phoenix-1.oraclecloud.com/v1/opc0002/mvnrepo/snapshots</url>
-        </repository>
-        <repository>
             <id>fn-maven-releases</id>
-            <url>https://swiftobjectstorage.us-phoenix-1.oraclecloud.com/v1/opc0002/mvnrepo/snapshots</url>
+            <url>https://dl.bintray.com/fnproject/fnproject/fn-java-fdk</url>
         </repository>
     </repositories>
 </project>
