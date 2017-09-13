@@ -27,7 +27,7 @@ fi
 
 
 # Deploy to bintray
-echo mvn -s ./settings-deploy.xml \
+mvn -s ./settings-deploy.xml \
     -DskipTests \
     -DaltDeploymentRepository="fnproject-release-repo::default::$MVN_RELEASE_REPO" \
     -Dfnproject-release-repo.username="$MVN_RELEASE_USER" \
