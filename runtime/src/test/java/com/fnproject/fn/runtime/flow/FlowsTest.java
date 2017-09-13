@@ -4,20 +4,26 @@ import com.fnproject.fn.api.flow.Flows;
 import com.fnproject.fn.runtime.FnTestHarness;
 import com.fnproject.fn.runtime.TestSerUtils;
 import com.fnproject.fn.runtime.testfns.FnFlowsFunction;
+import com.sun.jdi.connect.Connector;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
+import org.mockito.internal.matchers.NotNull;
 import org.mockito.stubbing.Answer;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.fnproject.fn.runtime.flow.RemoteCompleterApiClient.*;
@@ -99,7 +105,7 @@ public class FlowsTest {
         when(mockCompleterClient.createFlow(FUNCTION_ID)).thenReturn(FLOW_ID);
 
         when(mockCompleterClient.supply(eq(FLOW_ID),
-                isA(Flows.SerCallable.class)))
+                isA(Flows.SerCallable.class),isA(CodeLocation.class)))
                 .thenAnswer(invokeContinuation(completionId, continuationResult, "supplyAndGetResult"));
         when(mockCompleterClient.waitForCompletion(eq(FLOW_ID), eq(completionId), eq(getClass().getClassLoader())))
                 .thenAnswer(invocationOnMock -> continuationResult.get());
@@ -109,8 +115,13 @@ public class FlowsTest {
 
         FnTestHarness.ParsedHttpResponse response = getSingleItem(fnTestHarness.getParsedHttpResponses());
         assertThat(response.getBodyAsString()).isEqualTo(continuationResult.toString());
+        ArgumentCaptor<CodeLocation> locCaptor = ArgumentCaptor.forClass(CodeLocation.class);
         verify(mockCompleterClient, times(1))
-                .supply(eq(FLOW_ID), isA(Flows.SerCallable.class));
+                .supply(eq(FLOW_ID), isA(Flows.SerCallable.class), locCaptor.capture());
+
+        CodeLocation gotLocation = locCaptor.getValue();
+        assertThat(gotLocation.getLocation())
+                .matches(Pattern.compile("com\\.fnproject\\.fn\\.runtime\\.testfns\\.FnFlowsFunction\\.supplyAndGetResult\\(.*\\.java\\:.*\\)"));
         verify(mockCompleterClient, times(1))
                 .waitForCompletion(eq(FLOW_ID), eq(completionId), eq(getClass().getClassLoader()));
     }
@@ -130,7 +141,7 @@ public class FlowsTest {
      */
     private Answer<CompletionId> invokeContinuation(CompletionId completionId, AtomicReference<Object> result, String methodName) {
         return fn -> {
-            if (fn.getArguments().length == 2) {
+            if (fn.getArguments().length == 3) {
 
                 Flows.SerCallable closure = fn.getArgument(1);
 

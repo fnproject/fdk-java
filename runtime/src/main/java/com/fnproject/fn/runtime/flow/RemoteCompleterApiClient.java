@@ -7,14 +7,12 @@ import com.fnproject.fn.runtime.exception.PlatformCommunicationException;
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.URI;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
 
 
 /**
@@ -82,8 +80,8 @@ public class RemoteCompleterApiClient implements CompleterClient {
     }
 
     @Override
-    public CompletionId supply(FlowId flowId, Serializable supplier) {
-        return requestCompletionWithBody("/graph/" + flowId.getId() + "/supply", Function.identity(), supplier);
+    public CompletionId supply(FlowId flowId, Serializable supplier, CodeLocation codeLocation) {
+        return requestCompletionWithBody("/graph/" + flowId.getId() + "/supply", Function.identity(), supplier, codeLocation);
     }
 
     @Override
@@ -167,7 +165,7 @@ public class RemoteCompleterApiClient implements CompleterClient {
 
     @Override
     public CompletionId completedValue(FlowId flowId, Serializable value) {
-        return requestCompletionWithBody("/graph/" + flowId.getId() + "/completedValue", Function.identity(), value);
+        return requestCompletionWithBody("/graph/" + flowId.getId() + "/completedValue", Function.identity(), value, CodeLocation.fromCallerLocation(1));
     }
 
     @Override
@@ -288,12 +286,13 @@ public class RemoteCompleterApiClient implements CompleterClient {
     }
 
     private CompletionId chainThis(FlowId flowId, CompletionId completionId, String op, Serializable fn) {
-        return requestCompletionWithBody("/graph/" + flowId.getId() + "/stage/" + completionId.getId() + "/" + op, Function.identity(), fn);
+        return requestCompletionWithBody("/graph/" + flowId.getId() + "/stage/" + completionId.getId() + "/" + op, Function.identity(), fn,
+                CodeLocation.fromCallerLocation(2));
     }
 
     private CompletionId chainThisWithThat(FlowId flowId, CompletionId currentStage, CompletionId other, String op, Serializable fn) {
         return requestCompletionWithBody("/graph/" + flowId.getId() + "/stage/" + currentStage.getId() + "/" + op,
-                req -> req.withQueryParam("other", other.getId()), fn);
+                req -> req.withQueryParam("other", other.getId()), fn, CodeLocation.fromCallerLocation(2));
     }
 
     private static void validateSuccessful(HttpClient.HttpResponse response) {
@@ -326,12 +325,14 @@ public class RemoteCompleterApiClient implements CompleterClient {
         }
     }
 
-    private CompletionId requestCompletionWithBody(String url, Function<HttpClient.HttpRequest, HttpClient.HttpRequest> fn, Serializable ser) {
+    private CompletionId requestCompletionWithBody(String url, Function<HttpClient.HttpRequest, HttpClient.HttpRequest> fn, Serializable ser,
+                                                   CodeLocation codeLocation) {
         try {
             byte[] serBytes = SerUtils.serialize(ser);
             return requestCompletion(url, req -> fn.apply(req
                     .withHeader(CONTENT_TYPE_HEADER, CONTENT_TYPE_JAVA_OBJECT)
                     .withHeader(DATUM_TYPE_HEADER, DATUM_TYPE_BLOB)
+                    .withHeader("Fnproject-Codeloc", codeLocation.getLocation())
                     .withBody(serBytes)));
         } catch (IOException e) {
             throw new LambdaSerializationException("Failed to serialize the lambda: " + e.getMessage());

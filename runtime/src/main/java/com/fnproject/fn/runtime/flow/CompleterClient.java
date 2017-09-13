@@ -33,7 +33,7 @@ public interface CompleterClient {
      */
     FlowId createFlow(String functionId);
 
-    CompletionId supply(FlowId flowID, Serializable code);
+    CompletionId supply(FlowId flowID, Serializable code, CodeLocation codeLocation);
 
     // thenApply completionID   -> DO NOW  (result) | new parentId
     CompletionId thenApply(FlowId flowID, CompletionId completionId, Serializable consumer);

@@ -8,6 +8,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import java.io.*;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -295,7 +296,7 @@ public class RemoteCompleterApiClientTest {
         RemoteCompleterApiClient completerClient = new RemoteCompleterApiClient("", mockHttpClient);
         Flows.SerCallable<Optional<String>> unserializableLambda = () -> unserializableValue;
 
-        completerClient.supply(new FlowId("flow-id"), unserializableLambda);
+        completerClient.supply(new FlowId("flow-id"), unserializableLambda, null);
     }
 
     @Test
@@ -318,6 +319,6 @@ public class RemoteCompleterApiClientTest {
         Flows.SerCallable<Integer> serializableLambda = () -> 42;
         when((Object) mockHttpClient.execute(any())).thenThrow(new RuntimeException("Connection refused"));
 
-        completerClient.supply(new FlowId("flow-id"), serializableLambda);
+        completerClient.supply(new FlowId("flow-id"), serializableLambda, null);
     }
 }
