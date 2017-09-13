@@ -3,6 +3,8 @@
 set -ex
 USER=fnproject
 SERVICE=fn-java-fdk
+RUNTIME_IMAGE=${SERVICE}
+BUILD_IMAGE=${SERVICE}-build
 
 release_version=$(cat release.version)
 if [[ $release_version =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] ; then
@@ -40,11 +42,16 @@ mvn -s ./settings-deploy.xml \
 (
   moving_version=${release_version%.*}-latest
 
-  docker tag $USER/$SERVICE:latest $USER/$SERVICE:${release_version}
-  docker tag $USER/$SERVICE:latest $USER/$SERVICE:${moving_version}
-  docker push $USER/$SERVICE:latest
-  docker push $USER/$SERVICE:${release_version}
-  docker push $USER/$SERVICE:${moving_version}
+  docker tag $USER/$RUNTIME_IMAGE:latest $USER/$RUNTIME_IMAGE:${release_version}
+  docker tag $USER/$RUNTIME_IMAGE:latest $USER/$RUNTIME_IMAGE:${moving_version}
+  docker push $USER/$RUNTIME_IMAGE:latest
+  docker push $USER/$RUNTIME_IMAGE:${release_version}
+  docker push $USER/$RUNTIME_IMAGE:${moving_version}
+  docker tag $USER/$BUILD_IMAGE:latest $USER/$BUILD_IMAGE:${release_version}
+  docker tag $USER/$BUILD_IMAGE:latest $USER/$BUILD_IMAGE:${moving_version}
+  docker push $USER/$BUILD_IMAGE:latest
+  docker push $USER/$BUILD_IMAGE:${release_version}
+  docker push $USER/$BUILD_IMAGE:${moving_version}
 )
 
 
