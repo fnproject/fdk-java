@@ -46,7 +46,7 @@ mvn -s ./settings-deploy.xml \
   docker push $USER/$SERVICE:${release_version}
   docker push $USER/$SERVICE:${moving_version}
 
-  docker push $USER/$SERVICE:build
+  docker push $USER/$SERVICE:dev
 )
 
 
