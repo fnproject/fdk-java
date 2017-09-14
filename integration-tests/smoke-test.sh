@@ -25,10 +25,10 @@ fi
 
 # Replace the maven repo with a staging location, if required
 if [ -n "$MAVEN_REPOSITORY_LOCATION" ]; then
-    sed -i \
-        -e "s|https://swiftobjectstorage.us-phoenix-1.oraclecloud.com/v1/opc0002/mvnrepo/snapshots|$MAVEN_REPOSITORY_LOCATION|g" \
-        -e "s|https://swiftobjectstorage.us-phoenix-1.oraclecloud.com/v1/opc0002/mvnrepo/releases|$MAVEN_REPOSITORY_LOCATION|g" \
+    sed -i.bak \
+        -e "s|https://dl.bintray.com/fnproject/fnproject|$MAVEN_REPOSITORY_LOCATION|g" \
         pom.xml
+    rm pom.xml.bak
 fi
 
 # Build the integration test
