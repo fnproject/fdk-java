@@ -1,5 +1,6 @@
 package com.fnproject.fn.runtime.flow;
 
+import com.fnproject.fn.api.flow.FlowFuture;
 import com.fnproject.fn.api.flow.Flows;
 import com.fnproject.fn.runtime.FnTestHarness;
 import com.fnproject.fn.runtime.TestSerUtils;
@@ -20,6 +21,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
@@ -125,7 +127,6 @@ public class FlowsTest {
         verify(mockCompleterClient, times(1))
                 .waitForCompletion(eq(FLOW_ID), eq(completionId), eq(getClass().getClassLoader()));
     }
-
 
     /**
      * Mock the behaviour of a call to the Completer service through supply
