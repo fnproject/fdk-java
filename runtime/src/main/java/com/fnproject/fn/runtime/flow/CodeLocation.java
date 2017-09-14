@@ -1,11 +1,13 @@
 package com.fnproject.fn.runtime.flow;
 
+
 import java.util.Objects;
 
 /**
  * Class used to return the code location of the caller
  */
 public class CodeLocation {
+    private  static CodeLocation UNKNOWN_LOCATION= new CodeLocation("unknown location");
     private final String stackTrace;
 
     private CodeLocation(String location) {
@@ -30,10 +32,14 @@ public class CodeLocation {
         }
         StackTraceElement[] stack = Thread.currentThread().getStackTrace();
         if(stack.length < steps + 3){
-            return null;
+            return UNKNOWN_LOCATION;
         } else {
             StackTraceElement elem = stack[steps + 2];
             return new CodeLocation(elem.toString());
         }
+    }
+
+    public static CodeLocation unknownLocation(){
+        return UNKNOWN_LOCATION;
     }
 }

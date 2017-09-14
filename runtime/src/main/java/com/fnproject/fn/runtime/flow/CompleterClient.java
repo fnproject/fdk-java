@@ -63,20 +63,20 @@ public interface CompleterClient {
 
     CompletionId applyToEither(FlowId flowId, CompletionId completionId, CompletionId alternate, Serializable fn, CodeLocation codeLocation);
 
-    CompletionId anyOf(FlowId flowId, List<CompletionId> cids);
+    CompletionId anyOf(FlowId flowId, List<CompletionId> cids, CodeLocation codeLocation);
 
-    CompletionId delay(FlowId flowId, long l);
+    CompletionId delay(FlowId flowId, long l, CodeLocation codeLocation);
 
     CompletionId thenAcceptBoth(FlowId flowId, CompletionId completionId, CompletionId alternate, Serializable fn, CodeLocation codeLocation);
 
     ExternalCompletion createExternalCompletion(FlowId flowId);
 
-    CompletionId invokeFunction(FlowId flowId, String functionId, byte[] data, HttpMethod method, Headers headers);
+    CompletionId invokeFunction(FlowId flowId, String functionId, byte[] data, HttpMethod method, Headers headers, CodeLocation codeLocation);
 
     CompletionId completedValue(FlowId flowId, Serializable value, CodeLocation codeLocation);
 
 
-    CompletionId allOf(FlowId flowId, List<CompletionId> cids);
+    CompletionId allOf(FlowId flowId, List<CompletionId> cids, CodeLocation codeLocation);
 
     CompletionId handle(FlowId flowId, CompletionId completionId, Serializable fn, CodeLocation codeLocation);
 

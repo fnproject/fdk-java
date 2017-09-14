@@ -296,7 +296,7 @@ public class RemoteCompleterApiClientTest {
         RemoteCompleterApiClient completerClient = new RemoteCompleterApiClient("", mockHttpClient);
         Flows.SerCallable<Optional<String>> unserializableLambda = () -> unserializableValue;
 
-        completerClient.supply(new FlowId("flow-id"), unserializableLambda, null);
+        completerClient.supply(new FlowId("flow-id"), unserializableLambda, CodeLocation.unknownLocation());
     }
 
     @Test
@@ -319,6 +319,6 @@ public class RemoteCompleterApiClientTest {
         Flows.SerCallable<Integer> serializableLambda = () -> 42;
         when((Object) mockHttpClient.execute(any())).thenThrow(new RuntimeException("Connection refused"));
 
-        completerClient.supply(new FlowId("flow-id"), serializableLambda, null);
+        completerClient.supply(new FlowId("flow-id"), serializableLambda, CodeLocation.unknownLocation());
     }
 }
