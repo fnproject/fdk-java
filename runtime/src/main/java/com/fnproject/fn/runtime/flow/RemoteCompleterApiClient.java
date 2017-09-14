@@ -204,7 +204,7 @@ public class RemoteCompleterApiClient implements CompleterClient {
     public CompletionId delay(FlowId flowId, long l, CodeLocation codeLocation) {
         return requestCompletion("/graph/" + flowId.getId() + "/delay",
                 req -> req.withQueryParam("delayMs", Long.toString(l))
-                        .withHeader(FN_CODE_LOCATION, codeLocation.getLocation()));
+                          .withHeader(FN_CODE_LOCATION, codeLocation.getLocation()));
     }
 
     // wait for completion  -> result
