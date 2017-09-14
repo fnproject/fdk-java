@@ -367,7 +367,7 @@ class InMemCompleter implements CompleterClient {
     }
 
     @Override
-    public ExternalCompletion createExternalCompletion(FlowId flowId) {
+    public ExternalCompletion createExternalCompletion(FlowId flowId, CodeLocation codeLocation) {
         CompletableFuture<Result> resultFuture = new CompletableFuture<>();
 
         Graph.Stage stage = withActiveGraph(flowId,
@@ -385,8 +385,6 @@ class InMemCompleter implements CompleterClient {
     public CompletionId completedValue(FlowId flowId, Serializable value, CodeLocation codeLocation) {
         return withActiveGraph(flowId, (graph) ->
                 graph.addCompletedValue(new Datum.BlobDatum(serializeClosure(value)))).getId();
-
-
     }
 
     @Override

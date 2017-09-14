@@ -127,8 +127,9 @@ public class RemoteCompleterApiClient implements CompleterClient {
     }
 
     @Override
-    public ExternalCompletion createExternalCompletion(FlowId flowId) {
-        CompletionId completionId = requestCompletion("/graph/" + flowId.getId() + "/externalCompletion", Function.identity());
+    public ExternalCompletion createExternalCompletion(FlowId flowId, CodeLocation codeLocation) {
+        CompletionId completionId = requestCompletion("/graph/" + flowId.getId() + "/externalCompletion",
+                req -> req.withHeader(FN_CODE_LOCATION, codeLocation.getLocation()));
         return new ExternalCompletion() {
             @Override
             public CompletionId completionId() {
