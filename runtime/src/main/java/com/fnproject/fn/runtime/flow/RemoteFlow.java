@@ -149,14 +149,12 @@ public final class RemoteFlow implements Flow, Serializable {
 
     @Override
     public <T> FlowFuture<T> supply(Flows.SerCallable<T> c) {
-
         CompletionId cid = getClient().supply(flowId, c, CodeLocation.fromCallerLocation(1));
         return new RemoteFlowFuture<>(cid);
     }
 
     @Override
     public FlowFuture<Void> supply(Flows.SerRunnable runnable) {
-
         CompletionId cid = getClient().supply(flowId, runnable, CodeLocation.fromCallerLocation(1));
         return new RemoteFlowFuture<>(cid);
     }
@@ -177,7 +175,7 @@ public final class RemoteFlow implements Flow, Serializable {
 
     @Override
     public ExternalFlowFuture<HttpRequest> createExternalFuture() {
-        CompleterClient.ExternalCompletion ext = getClient().createExternalCompletion(flowId);
+        CompleterClient.ExternalCompletion ext = getClient().createExternalCompletion(flowId, CodeLocation.fromCallerLocation(1));
         return new RemoteExternalFlowFuture<>(ext.completionId(), ext.completeURI(), ext.failureURI());
     }
 
