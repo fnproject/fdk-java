@@ -7,6 +7,6 @@ timeout: 450
 format: http
 
 build:
-  - mvn package dependency:copy-dependencies -DincludeScope=runtime -DskipTests=true -Dmdep.prependGroupId=true -DoutputDirectory=target
+  - mvn package dependency:copy-dependencies -DincludeScope=runtime -DskipTests=true -Dmdep.prependGroupId=true -DoutputDirectory=target -U
 
 cmd: com.fnproject.fn.integration.ExerciseEverything::handleRequest

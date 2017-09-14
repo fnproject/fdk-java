@@ -118,11 +118,11 @@ public class ExerciseEverything {
                 .exceptionally((e) -> -3);
     }
 
-//    @Test(11)
-//    @Test.Catch({FlowCompletionException.class, FunctionInvocationException.class})
-//    public FlowFuture<HttpResponse> nonexistentExternalEvaluation(Flow fl) {
-//        return fl.invokeFunction("nonexistent", HttpMethod.POST, Headers.emptyHeaders(), new byte[0]);
-//    }
+    @Test(11)
+    @Test.Catch({FlowCompletionException.class, FunctionInvocationException.class})
+    public FlowFuture<HttpResponse> nonexistentExternalEvaluation(Flow fl) {
+        return fl.invokeFunction("nonexistent/nonexistent", HttpMethod.POST, Headers.emptyHeaders(), new byte[0]);
+    }
 
     @Test(12)
     @Test.Expect("okay")
@@ -280,16 +280,28 @@ public class ExerciseEverything {
     @Test.Expect("foo")
     public FlowFuture<String> whenCompleteNoError(Flow fl) {
         return fl.completedValue("foo")
-                .whenComplete((v, e) -> { throw new MyException(v); })
-                .exceptionally(Throwable::getMessage);
+                .whenComplete((v, e) -> {
+                    System.err.println("In whenComplete, v=" + v);
+                    throw new MyException(v);
+                })
+                .exceptionally(t -> {
+                    // Should *not* get called.
+                    System.err.println("In whenComplete.exceptionally, t=" + t);
+                    return t.getMessage() + "bar";
+                });
     }
 
     @Test(30)
-    @Test.Expect("bar")
+    @Test.Expect("barbaz")
     public FlowFuture<String> whenCompleteWithError(Flow fl) {
-        return fl.supply(() -> { if (true) throw new MyException("bar"); else return ""; })
-                .whenComplete((v, e) -> { throw new MyException(e.getMessage()); })
-                .exceptionally(Throwable::getMessage);
+        return fl.supply(() -> {
+            if (true) throw new MyException("bar");
+            else return "";
+        })
+                .whenComplete((v, e) -> {
+                    throw new MyException(e.getMessage());
+                })
+                .exceptionally(t -> t.getMessage() + "baz");
     }
 
     @Test(31)
