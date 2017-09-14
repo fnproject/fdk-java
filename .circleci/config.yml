@@ -13,14 +13,9 @@ jobs:
       STAGING_DIR: /tmp/staging-repository
     steps:
       - checkout
-      - restore_cache:
-          key: mvn-cache
       - run:
-           name: Fix release version
-           command: |
-              if [ "${CIRCLE_BRANCH}" == "master" ]; then
-                  ./.circleci/update-versions.sh
-              fi
+           name: Determine the release version
+           command: ./.circleci/update-versions.sh
       - run:
           name: Build and deploy locally
           command: |
@@ -95,7 +90,3 @@ jobs:
               ./.circleci/release.sh
             fi
 
-      - save_cache:
-          paths:
-            - ~/.m2
-          key: mvn-cache
