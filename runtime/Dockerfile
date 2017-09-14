@@ -1,4 +1,4 @@
-FROM fnproject/fn-java-fdk:jrebase
+FROM fnproject/fn-java-fdk:micro-jrebase
 COPY target/runtime-*.jar target/dependency/*.jar /function/runtime/
 
 RUN ["/usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java", "-Xshare:dump"]
