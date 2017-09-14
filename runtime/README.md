@@ -1,11 +1,14 @@
 # Building and releasing a new fn-java-fdk base image
 
 ## Pre-requisites
-1. Maven
+1. Maven.
 2. [Smith](https://github.com/oracle/smith).
-3. Docker (obvs).
+3. Docker.
 
 ## Build and publish to Docker Hub
+
+Note: smith needs to be run on Linux.
+
 ```sh
 mvn clean package
 smith
