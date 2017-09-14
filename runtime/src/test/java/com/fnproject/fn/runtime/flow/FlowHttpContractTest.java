@@ -13,7 +13,6 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.UUID;
 
@@ -41,7 +40,8 @@ public class FlowHttpContractTest {
     }
 
 
-    @Test public void runtimeShouldParseAFlowId() throws IOException {
+    @Test
+    public void runtimeShouldParseAFlowId() throws IOException {
         String createFlowPath = "/graph?functionId=" + FUNCTION_ID;
         when(httpClient.execute(any(HttpClient.HttpRequest.class))).thenReturn(
                 new HttpClient.HttpResponse(200).addHeader(FLOW_ID_HEADER, FLOW_ID)
@@ -56,7 +56,8 @@ public class FlowHttpContractTest {
         assertThat(tid.getId()).isEqualTo(FLOW_ID);
     }
 
-    @Test public void supplyStageCreation() throws IOException {
+    @Test
+    public void supplyStageCreation() throws IOException {
         String stageCreationPath = "/graph/" + FLOW_ID + "/supply";
         Flows.SerSupplier<Integer> supplier = () -> 1;
         byte[] serializedBody = TestSerUtils.serializeToBytes(supplier);
@@ -66,7 +67,7 @@ public class FlowHttpContractTest {
         );
 
 
-        CompletionId cid = client.supply(new FlowId(FLOW_ID), supplier, null);
+        CompletionId cid = client.supply(new FlowId(FLOW_ID), supplier, CodeLocation.unknownLocation());
         verify(httpClient, times(1)).execute(requestCaptor.capture());
         HttpClient.HttpRequest capturedRequest = requestCaptor.getValue();
 
@@ -74,7 +75,9 @@ public class FlowHttpContractTest {
         assertThat(capturedRequest.method).isEqualTo("POST");
         assertThat(capturedRequest.headers)
                 .containsEntry(DATUM_TYPE_HEADER, DATUM_TYPE_BLOB)
-                .containsEntry(CONTENT_TYPE_HEADER, CONTENT_TYPE_JAVA_OBJECT);
+                .containsEntry(CONTENT_TYPE_HEADER, CONTENT_TYPE_JAVA_OBJECT)
+                .containsEntry(FN_CODE_LOCATION, "unknown location");
+
         assertThat(capturedRequest.bodyBytes).isEqualTo(serializedBody);
         assertThat(cid.getId()).isEqualTo("1");
     }
@@ -92,7 +95,7 @@ public class FlowHttpContractTest {
                         .addHeader(STAGE_ID_HEADER, "1")
         );
 
-        CompletionId cid = client.invokeFunction(new FlowId(FLOW_ID), EXTERNAL_FUNCTION_ID, inputToFunction, HttpMethod.POST, headers);
+        CompletionId cid = client.invokeFunction(new FlowId(FLOW_ID), EXTERNAL_FUNCTION_ID, inputToFunction, HttpMethod.POST, headers, CodeLocation.unknownLocation());
         verify(httpClient, times(1)).execute(requestCaptor.capture());
         HttpClient.HttpRequest capturedRequest = requestCaptor.getValue();
 
@@ -102,7 +105,8 @@ public class FlowHttpContractTest {
                 .containsEntry(DATUM_TYPE_HEADER, DATUM_TYPE_HTTP_REQ)
                 .containsEntry(METHOD_HEADER, "POST")
                 .containsEntry(USER_HEADER_PREFIX + "My-Custom-Header", "Value")
-                .containsEntry(CONTENT_TYPE_HEADER, "application/json");
+                .containsEntry(CONTENT_TYPE_HEADER, "application/json")
+                .containsEntry(FN_CODE_LOCATION, "unknown location");
         assertThat(capturedRequest.bodyBytes).isEqualTo(inputToFunction);
         assertThat(cid.getId()).isEqualTo("1");
     }

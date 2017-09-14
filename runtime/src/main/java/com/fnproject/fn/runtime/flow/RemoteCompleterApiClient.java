@@ -35,7 +35,7 @@ public class RemoteCompleterApiClient implements CompleterClient {
     public static final String CONTENT_TYPE_JAVA_OBJECT = "application/java-serialized-object";
     public static final String DEFAULT_CONTENT_TYPE = "application/octet-stream";
 
-    public static final String FN_CODE_LOCATION = "Fnproject-Codeloc";
+    public static final String FN_CODE_LOCATION = HEADER_PREFIX + "Codeloc";
 
     public static final String DATUM_TYPE_HEADER = HEADER_PREFIX + "DatumType";
     public static final String DATUM_TYPE_BLOB = "blob";
@@ -148,13 +148,14 @@ public class RemoteCompleterApiClient implements CompleterClient {
     }
 
     @Override
-    public CompletionId invokeFunction(FlowId flowId, String functionId, byte[] data, HttpMethod method, Headers headers) {
+    public CompletionId invokeFunction(FlowId flowId, String functionId, byte[] data, HttpMethod method, Headers headers, CodeLocation codeLocation) {
         return requestCompletion("/graph/" + flowId.getId() + "/invokeFunction",
                 req -> req.withQueryParam("functionId", functionId)
                         .withBody(data)
                         .withHeader(DATUM_TYPE_HEADER, DATUM_TYPE_HTTP_REQ)
                         .withHeader(METHOD_HEADER, method.toString())
                         .withHeader(CONTENT_TYPE_HEADER, headers.get(CONTENT_TYPE_HEADER).orElse(DEFAULT_CONTENT_TYPE))
+                        .withHeader(FN_CODE_LOCATION, codeLocation.getLocation())
                         .withAdditionalHeaders(headers.getAll().entrySet().stream()
                                 .filter((header) -> !header.getKey().equalsIgnoreCase(CONTENT_TYPE_HEADER))
                                 .collect(Collectors.toMap(
@@ -171,9 +172,10 @@ public class RemoteCompleterApiClient implements CompleterClient {
     }
 
     @Override
-    public CompletionId allOf(FlowId flowId, List<CompletionId> deps) {
+    public CompletionId allOf(FlowId flowId, List<CompletionId> deps, CodeLocation codeLocation) {
         return requestCompletion("/graph/" + flowId.getId() + "/allOf",
-                req -> req.withQueryParam("cids", getCids(deps)));
+                req -> req.withQueryParam("cids", getCids(deps))
+                        .withHeader(FN_CODE_LOCATION, codeLocation.getLocation()));
     }
 
     @Override
@@ -192,15 +194,17 @@ public class RemoteCompleterApiClient implements CompleterClient {
     }
 
     @Override
-    public CompletionId anyOf(FlowId flowId, List<CompletionId> cids) {
+    public CompletionId anyOf(FlowId flowId, List<CompletionId> cids, CodeLocation codeLocation) {
         return requestCompletion("/graph/" + flowId.getId() + "/anyOf",
-                req -> req.withQueryParam("cids", getCids(cids)));
+                req -> req.withQueryParam("cids", getCids(cids))
+                          .withHeader(FN_CODE_LOCATION, codeLocation.getLocation()));
     }
 
     @Override
-    public CompletionId delay(FlowId flowId, long l) {
+    public CompletionId delay(FlowId flowId, long l, CodeLocation codeLocation) {
         return requestCompletion("/graph/" + flowId.getId() + "/delay",
-                req -> req.withQueryParam("delayMs", Long.toString(l)));
+                req -> req.withQueryParam("delayMs", Long.toString(l))
+                        .withHeader(FN_CODE_LOCATION, codeLocation.getLocation()));
     }
 
     // wait for completion  -> result

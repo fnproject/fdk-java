@@ -143,7 +143,7 @@ public final class RemoteFlow implements Flow, Serializable {
 
     @Override
     public FlowFuture<HttpResponse> invokeFunction(String functionId, HttpMethod method, Headers headers, byte[] data) {
-        CompletionId cid = getClient().invokeFunction(flowId, functionId, data, method, headers);
+        CompletionId cid = getClient().invokeFunction(flowId, functionId, data, method, headers, CodeLocation.fromCallerLocation(1));
         return new RemoteFlowFuture<>(cid);
     }
 
@@ -166,7 +166,7 @@ public final class RemoteFlow implements Flow, Serializable {
         if (i < 0) {
             throw new IllegalArgumentException("Delay value must be non-negative");
         }
-        CompletionId cid = getClient().delay(flowId, tu.toMillis(i));
+        CompletionId cid = getClient().delay(flowId, tu.toMillis(i), CodeLocation.fromCallerLocation(1));
         return new RemoteFlowFuture<>(cid);
     }
 
@@ -187,7 +187,7 @@ public final class RemoteFlow implements Flow, Serializable {
             throw new IllegalArgumentException("at least one future must be specified");
         }
         List<CompletionId> cids = Arrays.stream(flowFutures).map((cf) -> ((RemoteFlowFuture<?>) cf).completionId).collect(Collectors.toList());
-        CompletionId cid = getClient().allOf(flowId, cids);
+        CompletionId cid = getClient().allOf(flowId, cids, CodeLocation.fromCallerLocation(1));
         return new RemoteFlowFuture<>(cid);
     }
 
@@ -197,7 +197,7 @@ public final class RemoteFlow implements Flow, Serializable {
             throw new IllegalArgumentException("at least one future must be specified");
         }
         List<CompletionId> cids = Arrays.stream(flowFutures).map((cf) -> ((RemoteFlowFuture<?>) cf).completionId).collect(Collectors.toList());
-        CompletionId cid = getClient().anyOf(flowId, cids);
+        CompletionId cid = getClient().anyOf(flowId, cids, CodeLocation.fromCallerLocation(1));
         return new RemoteFlowFuture<>(cid);
     }
 

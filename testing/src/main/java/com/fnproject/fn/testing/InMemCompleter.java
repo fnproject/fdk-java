@@ -340,7 +340,7 @@ class InMemCompleter implements CompleterClient {
     }
 
     @Override
-    public CompletionId anyOf(FlowId flowId, List<CompletionId> cids) {
+    public CompletionId anyOf(FlowId flowId, List<CompletionId> cids, CodeLocation codeLocation) {
         return withActiveGraph(flowId,
                 (graph) ->
                         graph.withStages(cids, graph::addAnyOf).getId());
@@ -348,7 +348,7 @@ class InMemCompleter implements CompleterClient {
     }
 
     @Override
-    public CompletionId delay(FlowId flowId, long l) {
+    public CompletionId delay(FlowId flowId, long l, CodeLocation codeLocation) {
         return withActiveGraph(flowId,
                 (graph) -> graph.addDelayStage(l)).getId();
 
@@ -376,7 +376,7 @@ class InMemCompleter implements CompleterClient {
     }
 
     @Override
-    public CompletionId invokeFunction(FlowId flowId, String functionId, byte[] data, HttpMethod method, Headers headers) {
+    public CompletionId invokeFunction(FlowId flowId, String functionId, byte[] data, HttpMethod method, Headers headers, CodeLocation codeLocation) {
         return withActiveGraph(flowId, (graph) ->
                 graph.addInvokeFunction(functionId, method, headers, data)).getId();
     }
@@ -390,7 +390,7 @@ class InMemCompleter implements CompleterClient {
     }
 
     @Override
-    public CompletionId allOf(FlowId flowId, List<CompletionId> cids) {
+    public CompletionId allOf(FlowId flowId, List<CompletionId> cids, CodeLocation codeLocation) {
         return withActiveGraph(flowId,
                 (graph) ->
                         graph.withStages(cids, graph::addAllOf).getId());
