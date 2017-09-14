@@ -211,8 +211,6 @@ public class FlowsContinuationInvokerTest {
         assertSucessfulEmptyResult(result.get());
     }
 
-
-
     @Test
     public void externalFunctionInvocationPopulatesFunctionResponse() throws Exception {
         // Given

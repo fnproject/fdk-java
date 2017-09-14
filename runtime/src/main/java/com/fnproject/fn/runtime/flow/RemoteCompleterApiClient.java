@@ -35,6 +35,8 @@ public class RemoteCompleterApiClient implements CompleterClient {
     public static final String CONTENT_TYPE_JAVA_OBJECT = "application/java-serialized-object";
     public static final String DEFAULT_CONTENT_TYPE = "application/octet-stream";
 
+    public static final String FN_CODE_LOCATION = "Fnproject-Codeloc";
+
     public static final String DATUM_TYPE_HEADER = HEADER_PREFIX + "DatumType";
     public static final String DATUM_TYPE_BLOB = "blob";
     public static final String DATUM_TYPE_EMPTY = "empty";
@@ -332,7 +334,7 @@ public class RemoteCompleterApiClient implements CompleterClient {
             return requestCompletion(url, req -> fn.apply(req
                     .withHeader(CONTENT_TYPE_HEADER, CONTENT_TYPE_JAVA_OBJECT)
                     .withHeader(DATUM_TYPE_HEADER, DATUM_TYPE_BLOB)
-                    .withHeader("Fnproject-Codeloc", codeLocation.getLocation())
+                    .withHeader(FN_CODE_LOCATION, codeLocation.getLocation())
                     .withBody(serBytes)));
         } catch (IOException e) {
             throw new LambdaSerializationException("Failed to serialize the lambda: " + e.getMessage());
@@ -347,7 +349,7 @@ public class RemoteCompleterApiClient implements CompleterClient {
                     HttpClient.preparePost(apiUrlBase + url)
                             .withHeader(CONTENT_TYPE_HEADER, CONTENT_TYPE_JAVA_OBJECT)
                             .withHeader(DATUM_TYPE_HEADER, DATUM_TYPE_BLOB)
-                            .withHeader("Fnproject-Codeloc", codeLocation.getLocation())
+                            .withHeader(FN_CODE_LOCATION, codeLocation.getLocation())
                             .withBody(serBytes));
             try (com.fnproject.fn.runtime.flow.HttpClient.HttpResponse resp = httpClient.execute(req)) {
                 validateSuccessful(resp);
