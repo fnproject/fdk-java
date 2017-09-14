@@ -16,11 +16,8 @@ jobs:
       - restore_cache:
           key: mvn-cache
       - run:
-           name: Fix release version
-           command: |
-              if [ "${CIRCLE_BRANCH}" == "master" ]; then
-                  ./.circleci/update-versions.sh
-              fi
+           name: Determine the release version
+           command: ./.circleci/update-versions.sh
       - run:
           name: Build and deploy locally
           command: |
