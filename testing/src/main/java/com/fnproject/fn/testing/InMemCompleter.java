@@ -191,7 +191,7 @@ class InMemCompleter implements CompleterClient {
     }
 
     @Override
-    public CompletionId supply(FlowId flowID, Serializable code, CodeLocation codeLocation) {
+    public CompletionId supply(FlowId flowID, Serializable code,  CodeLocation codeLocation) {
         return withActiveGraph(flowID, graph -> graph.addSupplyStage(serializeClosure(code))).getId();
     }
 
@@ -220,14 +220,14 @@ class InMemCompleter implements CompleterClient {
     }
 
     @Override
-    public CompletionId thenApply(FlowId flowID, CompletionId completionId, Serializable code) {
+    public CompletionId thenApply(FlowId flowID, CompletionId completionId, Serializable code, CodeLocation codeLocation) {
         return withActiveGraph(flowID,
                 (graph) -> graph.withStage(completionId,
                         (parent) -> parent.addThenApplyStage(serializeClosure(code)))).getId();
     }
 
     @Override
-    public CompletionId whenComplete(FlowId flowID, CompletionId completionId, Serializable code) {
+    public CompletionId whenComplete(FlowId flowID, CompletionId completionId, Serializable code, CodeLocation codeLocation) {
         return withActiveGraph(flowID,
                 (graph) -> graph.withStage(completionId,
                         (parent) -> parent.addWhenCompleteStage(serializeClosure(code)))).getId();
@@ -235,7 +235,7 @@ class InMemCompleter implements CompleterClient {
     }
 
     @Override
-    public CompletionId thenCompose(FlowId flowId, CompletionId completionId, Serializable code) {
+    public CompletionId thenCompose(FlowId flowId, CompletionId completionId, Serializable code, CodeLocation codeLocation) {
         return withActiveGraph(flowId,
                 (graph) -> graph.withStage(completionId,
                         (parent) -> parent.addThenComposeStage(serializeClosure(code)))).getId();
@@ -304,14 +304,14 @@ class InMemCompleter implements CompleterClient {
     }
 
     @Override
-    public CompletionId thenAccept(FlowId flowId, CompletionId completionId, Serializable code) {
+    public CompletionId thenAccept(FlowId flowId, CompletionId completionId, Serializable code, CodeLocation codeLocation) {
         return withActiveGraph(flowId,
                 (graph) -> graph.withStage(completionId,
                         (parent) -> parent.addThenAcceptStage(serializeClosure(code)))).getId();
     }
 
     @Override
-    public CompletionId thenRun(FlowId flowId, CompletionId completionId, Serializable code) {
+    public CompletionId thenRun(FlowId flowId, CompletionId completionId, Serializable code, CodeLocation codeLocation) {
         return withActiveGraph(flowId,
                 (graph) -> graph.withStage(completionId,
                         (parent) -> parent.addThenRunStage(serializeClosure(code)))).getId();
@@ -319,7 +319,7 @@ class InMemCompleter implements CompleterClient {
     }
 
     @Override
-    public CompletionId acceptEither(FlowId flowId, CompletionId completionId, CompletionId alternate, Serializable code) {
+    public CompletionId acceptEither(FlowId flowId, CompletionId completionId, CompletionId alternate, Serializable code, CodeLocation codeLocation) {
         return withActiveGraph(flowId,
                 (graph) ->
                         graph.withStage(alternate,
@@ -330,7 +330,7 @@ class InMemCompleter implements CompleterClient {
     }
 
     @Override
-    public CompletionId applyToEither(FlowId flowId, CompletionId completionId, CompletionId alternate, Serializable code) {
+    public CompletionId applyToEither(FlowId flowId, CompletionId completionId, CompletionId alternate, Serializable code, CodeLocation codeLocation) {
         return withActiveGraph(flowId,
                 (graph) ->
                         graph.withStage(alternate,
@@ -356,7 +356,7 @@ class InMemCompleter implements CompleterClient {
 
 
     @Override
-    public CompletionId thenAcceptBoth(FlowId flowId, CompletionId completionId, CompletionId alternate, Serializable code) {
+    public CompletionId thenAcceptBoth(FlowId flowId, CompletionId completionId, CompletionId alternate, Serializable code, CodeLocation codeLocation) {
         return withActiveGraph(flowId,
                 (graph) ->
                         graph.withStage(alternate,
@@ -382,7 +382,7 @@ class InMemCompleter implements CompleterClient {
     }
 
     @Override
-    public CompletionId completedValue(FlowId flowId, Serializable value) {
+    public CompletionId completedValue(FlowId flowId, Serializable value, CodeLocation codeLocation) {
         return withActiveGraph(flowId, (graph) ->
                 graph.addCompletedValue(new Datum.BlobDatum(serializeClosure(value)))).getId();
 
@@ -397,7 +397,7 @@ class InMemCompleter implements CompleterClient {
     }
 
     @Override
-    public CompletionId handle(FlowId flowId, CompletionId completionId, Serializable code) {
+    public CompletionId handle(FlowId flowId, CompletionId completionId, Serializable code, CodeLocation codeLocation) {
         return withActiveGraph(flowId,
                 (graph) ->
                         graph.withStage(completionId,
@@ -405,7 +405,7 @@ class InMemCompleter implements CompleterClient {
     }
 
     @Override
-    public CompletionId exceptionally(FlowId flowId, CompletionId completionId, Serializable code) {
+    public CompletionId exceptionally(FlowId flowId, CompletionId completionId, Serializable code, CodeLocation codeLocation) {
         return withActiveGraph(flowId,
                 (graph) ->
                         graph.withStage(completionId,
@@ -413,7 +413,7 @@ class InMemCompleter implements CompleterClient {
     }
 
     @Override
-    public CompletionId thenCombine(FlowId flowId, CompletionId completionId, Serializable code, CompletionId alternate) {
+    public CompletionId thenCombine(FlowId flowId, CompletionId completionId, Serializable code, CompletionId alternate, CodeLocation codeLocation) {
         return withActiveGraph(flowId,
                 (graph) ->
                         graph.withStage(alternate,
@@ -429,7 +429,7 @@ class InMemCompleter implements CompleterClient {
     }
 
     @Override
-    public void addTerminationHook(FlowId flowId, Serializable code) {
+    public void addTerminationHook(FlowId flowId, Serializable code, CodeLocation codeLocation) {
         withActiveGraph(flowId, (g) -> {
             g.addTerminationHook(serializeClosure(code));
 
