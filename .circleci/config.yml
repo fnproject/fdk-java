@@ -13,8 +13,6 @@ jobs:
       STAGING_DIR: /tmp/staging-repository
     steps:
       - checkout
-      - restore_cache:
-          key: mvn-cache
       - run:
            name: Determine the release version
            command: ./.circleci/update-versions.sh
@@ -92,7 +90,3 @@ jobs:
               ./.circleci/release.sh
             fi
 
-      - save_cache:
-          paths:
-            - ~/.m2
-          key: mvn-cache
