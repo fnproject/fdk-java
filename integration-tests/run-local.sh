@@ -16,22 +16,6 @@ set -ex
 : ${COMPLETER_DOCKER_IMAGE:=fnproject/completer}
 
 # ----------------------------------------------------------------------
-# Check for prerequisites
-# ----------------------------------------------------------------------
-
-if [[ `echo nooo | sed -e "s/nooo/ok/"` != "ok" ]]; then
-    echo "You need GNU sed installed, because this script uses 'sed -e'."
-    echo "If you are on Mac, run 'brew install gnu-sed --with-default-names'."
-    exit 2
-fi
-
-if [[ `echo grepme | grep -e "grepme"` != "grepme" ]]; then
-    echo "You need GNU grep installed, because this script uses 'grep -e'."
-    echo "If you are on Mac, run 'brew install gnu-grep --with-default-names'."
-    exit 2
-fi
-
-# ----------------------------------------------------------------------
 # Stand up a local staging maven directory, if needed
 # ----------------------------------------------------------------------
 
