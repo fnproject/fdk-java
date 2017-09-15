@@ -324,6 +324,9 @@ public class RemoteCompleterApiClient implements CompleterClient {
         try (com.fnproject.fn.runtime.flow.HttpClient.HttpResponse resp = httpClient.execute(req)) {
             validateSuccessful(resp);
             String completionId = resp.getHeader(STAGE_ID_HEADER);
+            if(completionId == null){
+                throw new PlatformException("Got successful response from completer but no " + STAGE_ID_HEADER + " was present");
+            }
             return new CompletionId(completionId);
         } catch (PlatformException e) {
             throw e;
