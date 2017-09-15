@@ -15,7 +15,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.stream.Collectors;
-
+@SuppressWarnings("unused")
 public class ExerciseEverything {
 
     private boolean okay = true;
@@ -88,11 +88,15 @@ public class ExerciseEverything {
     @Test(8)
     @Test.Catch({FlowCompletionException.class, MyException.class})
     public FlowFuture<String> supplyAnException(Flow fl) {
-        return fl.supply(() -> { throw new MyException("test exception"); });
+        return fl.supply(() -> {
+            throw new MyException("test exception");
+        });
     }
 
     public static class MyException extends RuntimeException {
-        MyException(String m) { super(m); }
+        MyException(String m) {
+            super(m);
+        }
     }
 
     @Test(9)
@@ -112,7 +116,10 @@ public class ExerciseEverything {
     public FlowFuture<Integer> catchBubbledException(Flow fl) {
         return fl.completedValue(0)
                 .thenApply((x) -> x + 1)
-                .thenApply((x) -> { if (x == 1) throw new MyException("boom"); else return x + 1; })
+                .thenApply((x) -> {
+                    if (x == 1) throw new MyException("boom");
+                    else return x + 1;
+                })
                 .thenApply((x) -> x + 1)
                 .thenApply((x) -> x + 1)
                 .exceptionally((e) -> -3);
@@ -128,9 +135,7 @@ public class ExerciseEverything {
     @Test.Expect("okay")
     public FlowFuture<String> checkPassingExternalInvocation(Flow fl) {
         return fl.invokeFunction(inputEvent.getAppName() + inputEvent.getRoute(), HttpMethod.POST, Headers.emptyHeaders(), "PASS".getBytes())
-                .thenApply((resp) -> {
-                    return resp.getStatusCode() != 200 ? "failure" : new String(resp.getBodyAsBytes());
-                });
+                .thenApply((resp) -> resp.getStatusCode() != 200 ? "failure" : new String(resp.getBodyAsBytes()));
     }
 
     // There is currently no way for a hot function to signal failure in the Fn platform.
@@ -156,17 +161,20 @@ public class ExerciseEverything {
     @Test.Expect("hello world")
     public FlowFuture<String> thenCompose(Flow fl) {
         return fl.completedValue("hello")
-                 .thenCompose((s) ->
+                .thenCompose((s) ->
                         fl.supply(() -> s)
-                          .thenApply((s2) -> s2 + " world")
-                 );
+                                .thenApply((s2) -> s2 + " world")
+                );
     }
 
     @Test(16)
     @Test.Expect("foo")
     public FlowFuture<String> thenComposeThenError(Flow fl) {
         return fl.completedValue("hello")
-                .thenCompose((s) -> fl.supply(() -> { if (s.equals("hello")) throw new MyException("foo"); else return s; }))
+                .thenCompose((s) -> fl.supply(() -> {
+                    if (s.equals("hello")) throw new MyException("foo");
+                    else return s;
+                }))
                 .exceptionally(Throwable::getMessage);
     }
 
@@ -174,7 +182,10 @@ public class ExerciseEverything {
     @Test.Expect("foo")
     public FlowFuture<String> thenComposeWithErrorInBody(Flow fl) {
         return fl.completedValue("hello")
-                .thenCompose((s) -> { if (s.equals("hello")) throw new MyException("foo"); else return fl.completedValue(s); })
+                .thenCompose((s) -> {
+                    if (s.equals("hello")) throw new MyException("foo");
+                    else return fl.completedValue(s);
+                })
                 .exceptionally(Throwable::getMessage);
     }
 
@@ -196,7 +207,7 @@ public class ExerciseEverything {
     public FlowFuture<Void> harmlessAcceptBoth(Flow fl) {
         return fl.completedValue("a")
                 .thenAcceptBoth(
-                    fl.completedValue("b"),
+                        fl.completedValue("b"),
                         (a, b) -> System.err.println(a + "; " + b)
                 );
     }
@@ -207,7 +218,7 @@ public class ExerciseEverything {
     public FlowFuture<Void> acceptBoth(Flow fl) {
         return fl.completedValue("a")
                 .thenAcceptBoth(
-                    fl.completedValue("b"),
+                        fl.completedValue("b"),
                         (a, b) -> {
                             System.err.println("A is " + a + " and B is " + b);
                             throw new MyException(a + b);
@@ -222,7 +233,9 @@ public class ExerciseEverything {
         return fl.completedValue("a")
                 .acceptEither(
                         fl.completedValue("b"),
-                            (x) -> { throw new MyException(x); }
+                        (x) -> {
+                            throw new MyException(x);
+                        }
                 );
     }
 
@@ -237,7 +250,9 @@ public class ExerciseEverything {
     @Test(24)
     @Test.Expect("foo")
     public FlowFuture<String> thenCombineE1(Flow fl) {
-        return fl.supply(() -> { throw new MyException("foo"); })
+        return fl.supply(() -> {
+            throw new MyException("foo");
+        })
                 .thenCombine(fl.completedValue("bar"),
                         (a, b) -> a + b)
                 .exceptionally(Throwable::getMessage);
@@ -247,7 +262,9 @@ public class ExerciseEverything {
     @Test.Expect("bar")
     public FlowFuture<String> thenCombineE2(Flow fl) {
         return fl.completedValue("foo")
-                .thenCombine(fl.supply(() -> { throw new MyException("bar"); }),
+                .thenCombine(fl.supply(() -> {
+                            throw new MyException("bar");
+                        }),
                         (a, b) -> a + b)
                 .exceptionally(Throwable::getMessage);
     }
@@ -258,7 +275,10 @@ public class ExerciseEverything {
     public FlowFuture<String> thenCombineE3(Flow fl) {
         return fl.completedValue("foo")
                 .thenCombine(fl.completedValue("bar"),
-                        (a, b) -> { if (! a.equals(b)) throw new MyException(a + b); else return "baz"; })
+                        (a, b) -> {
+                            if (!a.equals(b)) throw new MyException(a + b);
+                            else return "baz";
+                        })
                 .exceptionally(Throwable::getMessage);
     }
 
@@ -272,7 +292,9 @@ public class ExerciseEverything {
     @Test(28)
     @Test.Expect("bar")
     public FlowFuture<String> handleWithError(Flow fl) {
-        return fl.supply(() -> { throw new MyException("bar"); })
+        return fl.supply(() -> {
+            throw new MyException("bar");
+        })
                 .handle((v, e) -> e.getMessage());
     }
 
@@ -297,11 +319,9 @@ public class ExerciseEverything {
         return fl.supply(() -> {
             if (true) throw new MyException("bar");
             else return "";
-        })
-                .whenComplete((v, e) -> {
-                    throw new MyException(e.getMessage());
-                })
-                .exceptionally(t -> t.getMessage() + "baz");
+        }).whenComplete((v, e) -> {
+            throw new MyException(e.getMessage());
+        }).exceptionally(t -> t.getMessage() + "baz");
     }
 
     @Test(31)
@@ -309,7 +329,7 @@ public class ExerciseEverything {
     public FlowFuture<String> externallyCompletable(Flow fl) throws IOException {
         ExternalFlowFuture<HttpRequest> cf = fl.createExternalFuture();
         HttpClient httpClient = new HttpClient();
-        httpClient.execute(httpClient
+        httpClient.execute(HttpClient
                 .preparePost(cf.completionUrl().toString())
                 .withHeader("My-Header", "foo")
                 .withHeader("FnProject-Method", "post")
@@ -348,8 +368,8 @@ public class ExerciseEverything {
     }
 
 
-   // @Test(34)
-   // @Test.Expect("foobar")
+    // @Test(34)
+    // @Test.Expect("foobar")
     public FlowFuture<String> externallyCompletableFailure(Flow fl) throws IOException {
         ExternalFlowFuture<HttpRequest> cf = fl.createExternalFuture();
         System.err.println("Running against external future:" + cf.completionUrl() + " : " + cf.failUrl());
@@ -360,13 +380,17 @@ public class ExerciseEverything {
                 .withHeader("My-Header", "foo")
                 .withHeader("FnProject-Method", "post")
                 .withBody("bar".getBytes()));
-        return cf.thenApply((req) -> { System.err.println("got here"); return "failed"; })
+        return cf.thenApply((req) -> {
+            System.err.println("got here");
+            return "failed";
+        })
                 .exceptionally(e -> {
-                        System.err.println("Got into exception with e=" + e);
-                        return
-                        ((ExternalCompletionException)e).getExternalRequest().getHeaders().get("my-header").get() +
-                        new String(((ExternalCompletionException)e).getExternalRequest().getBodyAsBytes()); }
-        );
+                            System.err.println("Got into exception with e=" + e);
+                            return
+                                    ((ExternalCompletionException) e).getExternalRequest().getHeaders().get("my-header").get() +
+                                            new String(((ExternalCompletionException) e).getExternalRequest().getBodyAsBytes());
+                        }
+                );
     }
 
     private int id;
@@ -382,7 +406,7 @@ public class ExerciseEverything {
         this.inputEvent = ie;
         String selector = ie.consumeBody((InputStream is) -> {
             try {
-                return IOUtils.toString(is,"utf-8");
+                return IOUtils.toString(is, "utf-8");
             } catch (IOException e) {
                 return "FAIL";
             }
@@ -399,7 +423,7 @@ public class ExerciseEverything {
         out.println("In main function");
         Map<Integer, FlowFuture<Object>> awaiting = new TreeMap<>();
 
-        for (Map.Entry<Integer, Method> e: findTests(this).entrySet()) {
+        for (Map.Entry<Integer, Method> e : findTests(this).entrySet()) {
             id = e.getKey();
             Method m = e.getValue();
 
@@ -414,10 +438,11 @@ public class ExerciseEverything {
                 out.println("Failure setting up test " + id + ": " + ex.getCause());
                 ex.printStackTrace(out);
                 fail();
-            } catch (IllegalAccessException e1) {}
+            } catch (IllegalAccessException e1) {
+            }
         }
 
-        for (Map.Entry<Integer, Method> e: findTests(this).entrySet()) {
+        for (Map.Entry<Integer, Method> e : findTests(this).entrySet()) {
             id = e.getKey();
             Method m = e.getValue();
 
@@ -435,7 +460,7 @@ public class ExerciseEverything {
                 // Coerce returned value to string
                 String rv = coerceToString(r);
 
-                if (! huntForValues(rv, values)) {
+                if (!huntForValues(rv, values)) {
                     fail();
                 }
 
@@ -449,12 +474,13 @@ public class ExerciseEverything {
                     // We have a series of wrapped exceptions that should follow this containment pattern
                     boolean found = false;
 
-                    for (Class<?> c: exWanted.value()) {
+                    for (Class<?> c : exWanted.value()) {
                         if (t == null) {
                             out.println("  end of exception chain, wanted " + c);
                             fail();
                             break;
-                        } if (c.isAssignableFrom(t.getClass())) {
+                        }
+                        if (c.isAssignableFrom(t.getClass())) {
                             out.println("  exception type as wanted: " + t);
                             String message = coerceToString(t);
 
