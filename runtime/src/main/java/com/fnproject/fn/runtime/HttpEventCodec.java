@@ -25,7 +25,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 
-import static com.fnproject.fn.runtime.cloudthreads.CloudCompleterApiClient.CONTENT_TYPE_HEADER;
+import static com.fnproject.fn.runtime.flow.RemoteCompleterApiClient.CONTENT_TYPE_HEADER;
 
 /**
  * Reads input via an InputStream as an HTTP request.
@@ -79,10 +79,10 @@ public class HttpEventCodec implements EventCodec {
         } else {
             bodyStream = new ByteArrayInputStream(new byte[]{});
         }
-        String appName = requiredHeader(req, "app_name");
-        String route = requiredHeader(req, "route");
-        String method = requiredHeader(req, "method");
-        String requestUrl = requiredHeader(req, "request_url");
+        String appName = requiredHeader(req, "fn_app_name");
+        String route = requiredHeader(req, "fn_route");
+        String method = requiredHeader(req, "fn_method");
+        String requestUrl = requiredHeader(req, "fn_request_url");
 
         Map<String, String> headers = new HashMap<>();
         for (Header h : req.getAllHeaders()) {

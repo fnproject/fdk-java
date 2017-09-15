@@ -1,9 +1,9 @@
 package com.fnproject.fn.testing;
 
 import com.fnproject.fn.runtime.EntryPoint;
-import com.fnproject.fn.runtime.cloudthreads.CloudThreadsRuntimeGlobals;
-import com.fnproject.fn.runtime.cloudthreads.CompleterClient;
-import com.fnproject.fn.runtime.cloudthreads.CompleterClientFactory;
+import com.fnproject.fn.runtime.flow.CompleterClient;
+import com.fnproject.fn.runtime.flow.CompleterClientFactory;
+import com.fnproject.fn.runtime.flow.FlowRuntimeGlobals;
 import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
@@ -70,7 +70,7 @@ class FnTestingClassLoader extends ClassLoader {
 
     void setCompleterClient(CompleterClient completer) {
         try {
-            Class<?> completerGlobals = loadClass(CloudThreadsRuntimeGlobals.class.getName());
+            Class<?> completerGlobals = loadClass(FlowRuntimeGlobals.class.getName());
             CompleterClientFactory ccf = (CompleterClientFactory) () -> completer;
             callMethodInFnClassloader(completerGlobals, "setCompleterClientFactory", CompleterClientFactory.class).invoke(completerGlobals, ccf);
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | ClassNotFoundException | IllegalArgumentException e) {

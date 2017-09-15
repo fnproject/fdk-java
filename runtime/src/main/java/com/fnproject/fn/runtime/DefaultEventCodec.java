@@ -41,16 +41,16 @@ class DefaultEventCodec implements EventCodec {
 
     @Override
     public Optional<InputEvent> readEvent() {
-        String method = getRequiredEnv("METHOD");
-        String appName = getRequiredEnv("APP_NAME");
-        String route = getRequiredEnv("ROUTE");
-        String requestUrl = getRequiredEnv("REQUEST_URL");
+        String method = getRequiredEnv("FN_METHOD");
+        String appName = getRequiredEnv("FN_APP_NAME");
+        String route = getRequiredEnv("FN_ROUTE");
+        String requestUrl = getRequiredEnv("FN_REQUEST_URL");
 
         Map<String, String> headers = new HashMap<>();
         for (Map.Entry<String, String> entry : env.entrySet()) {
             String lowerCaseKey = entry.getKey().toLowerCase();
-            if (lowerCaseKey.startsWith("header_")) {
-                headers.put(entry.getKey().substring("header_".length()), entry.getValue());
+            if (lowerCaseKey.startsWith("fn_header_")) {
+                headers.put(entry.getKey().substring("fn_header_".length()), entry.getValue());
             }
         }
 

@@ -4,12 +4,12 @@
 
 # Turn these lines in func.yaml:
 
-# name: jbloggs/cloud-thread-function
+# name: jbloggs/fn-flows-function
 # version: 0.0.1
 
 # into these:
 
-# name: docker-registry:5000/jbloggs/cloud-thread-function
+# name: docker-registry:5000/jbloggs/fn-flows-function
 # version: 4837492387439724389 <- whatever suffix is.
 
 set -ex

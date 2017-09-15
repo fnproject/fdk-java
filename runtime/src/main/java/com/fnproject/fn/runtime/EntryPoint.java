@@ -4,7 +4,7 @@ package com.fnproject.fn.runtime;
 import com.fnproject.fn.api.FunctionInvoker;
 import com.fnproject.fn.api.InputEvent;
 import com.fnproject.fn.api.OutputEvent;
-import com.fnproject.fn.runtime.cloudthreads.CloudThreadsContinuationInvoker;
+import com.fnproject.fn.runtime.flow.FlowContinuationInvoker;
 import com.fnproject.fn.runtime.exception.*;
 
 import java.io.IOException;
@@ -35,7 +35,7 @@ public class EntryPoint {
     }
 
 
-    private List<FunctionInvoker> configuredInvokers = Arrays.asList(new CloudThreadsContinuationInvoker(), new MethodFunctionInvoker());
+    private List<FunctionInvoker> configuredInvokers = Arrays.asList(new FlowContinuationInvoker(), new MethodFunctionInvoker());
 
 
     /**
@@ -174,8 +174,8 @@ public class EntryPoint {
      * any headers that were added to env. Headers are identified as being variables prepended with 'HEADER_'.
      */
     private Map<String, String> excludeInternalConfigAndHeaders(Map<String, String> env) {
-        Set<String> nonConfigEnvKeys = new HashSet<>(Arrays.asList("app_name", "route", "method", "request_url",
-                "fn_format", "content-length", "task-id"));
+        Set<String> nonConfigEnvKeys = new HashSet<>(Arrays.asList("fn_app_name", "fn_route", "fn_method", "fn_request_url",
+                "fn_format", "content-length", "fn_call_id"));
         Map<String, String> config = new HashMap<>();
         for (Map.Entry<String, String> entry : env.entrySet()) {
             String lowerCaseKey = entry.getKey().toLowerCase();

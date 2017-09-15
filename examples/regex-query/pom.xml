@@ -6,7 +6,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <sdk.version>1.0.0-SNAPSHOT</sdk.version>
+        <fnproject.version>1.0.0-SNAPSHOT</fnproject.version>
         <jackson.version>2.8.9</jackson.version>
     </properties>
 
@@ -34,7 +34,7 @@
         <dependency>
             <groupId>com.fnproject.fn</groupId>
             <artifactId>testing</artifactId>
-            <version>${sdk.version}</version>
+            <version>${fnproject.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -74,7 +74,7 @@
         </repository>
         <repository>
             <id>fn-maven-releases</id>
-            <url>https://swiftobjectstorage.us-phoenix-1.oraclecloud.com/v1/opc0002/mvnrepo/releases</url>
+            <url>https://dl.bintray.com/fnproject/fnproject</url>
         </repository>
     </repositories>
 </project>

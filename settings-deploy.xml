@@ -8,5 +8,10 @@
             <username>${bmcs-faas-snapshot-repo.username}</username>
             <password>${bmcs-faas-snapshot-repo.password}</password>
         </server>
+        <server>
+            <id>fnproject-release-repo</id>
+            <username>${fnproject-release-repo.username}</username>
+            <password>${fnproject-release-repo.password}</password>
+        </server>
     </servers>
 </settings>

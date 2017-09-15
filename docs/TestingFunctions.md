@@ -153,11 +153,11 @@ You can test that this is all handled correctly as follows:
   }
 ```
 
-# Testing Cloud Threads
+# Testing Fn Flows
 
-You can use `FnTestingRule` to test [Cloud Threads](CloudThreadsUserGuide.md) within your functions.  If threads are started by functions within `thenRun` then the testing rule will execute the stages of those threads locally, returning when all spawned threads are complete. 
+You can use `FnTestingRule` to test [Fn Flows](FnFlowsUserGuide.md) within your functions.  If flow stages are started by functions within `thenRun` then the testing rule will execute the stages of those flows locally, returning when all spawned flows are complete. 
 
-`FnTestingRule` supports  mocking  the behaviour of Fn functions invoked by the  `invokeFunction()` API within cloud threads. 
+`FnTestingRule` supports  mocking  the behaviour of Fn functions invoked by the  `invokeFunction()` API within flows. 
 
 You can specify that the invocation a function returns a valid value (as a byte array):
 
@@ -208,11 +208,11 @@ used to check some behavior:
 
 The same mechanism can be used to integrate mocking frameworks like [Mockito](http://site.mockito.org/).
 
-Cloud Threads stages may execute in parallel. If you have several `withAction` clauses accessing the same shared state, you must ensure that that access is thread-safe.
+Flow stages may execute in parallel. If you have several `withAction` clauses accessing the same shared state, you must ensure that that access is thread-safe.
 
 # Sharing data between tests and your functions 
-To ensure isolation of each function invocation and/or Cloud Threads completion, and to simulate the behaviour of the
-real Fn platform (where each function invocation can potentially run in a different JVM), the `FnTestingRule` runs each `thenRun` invocation and each Cloud Thread completion using a different Java Class Loader. 
+To ensure isolation of each function invocation and/or flow stage, and to simulate the behaviour of the
+real Fn platform (where each function invocation can potentially run in a different JVM), the `FnTestingRule` runs each `thenRun` invocation and each Flow stage using a different Java Class Loader. 
 
 While this improves the veracity of tests, it prevents your tests from accessing or modifying the state of your functions and vice versa. 
 
@@ -224,4 +224,4 @@ If you need to share objects or static data between your test classes and your f
     testing.addSharedPrefix("com.example.mysubpackage."); // Shares anyhting under a package
 ```
 
-While it is possible, it is not generally correct to share the function class itself with the test Class Loader - doing so may result in unexpected (not representative of the real fn platform) initialisation of static fields on the class. With Cloud Threads sharing the test class may also result in concurrent access to static data (via `@FnConfiguration` methods). 
+While it is possible, it is not generally correct to share the function class itself with the test Class Loader - doing so may result in unexpected (not representative of the real fn platform) initialisation of static fields on the class. With Flows sharing the test class may also result in concurrent access to static data (via `@FnConfiguration` methods). 

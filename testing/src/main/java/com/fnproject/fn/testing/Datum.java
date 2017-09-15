@@ -1,8 +1,8 @@
 package com.fnproject.fn.testing;
 
 import com.fnproject.fn.api.Headers;
-import com.fnproject.fn.api.cloudthreads.*;
-import com.fnproject.fn.runtime.cloudthreads.CompletionId;
+import com.fnproject.fn.api.flow.*;
+import com.fnproject.fn.runtime.flow.CompletionId;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
 
@@ -11,7 +11,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-import static com.fnproject.fn.runtime.cloudthreads.CloudCompleterApiClient.*;
+import static com.fnproject.fn.runtime.flow.RemoteCompleterApiClient.*;
 
 /**
  * Holder for a function-supplied value that contains an externalised representation of the references that that value contains
@@ -84,9 +84,9 @@ abstract class Datum {
     }
 
     public static class StateDatum extends Datum {
-        private final CloudThreadRuntime.CloudThreadState state;
+        private final Flow.FlowState state;
 
-        public StateDatum(CloudThreadRuntime.CloudThreadState state) {
+        public StateDatum(Flow.FlowState state) {
             this.state = Objects.requireNonNull(state);
         }
 
@@ -203,7 +203,7 @@ abstract class Datum {
                 case stage_timeout:
                     return new StageTimeoutException(message);
                 case stage_failed:
-                    return new CloudCompletionException(new StageInvokeFailedException(message));
+                    return new FlowCompletionException(new StageInvokeFailedException(message));
                 case function_timeout:
                     return new FunctionTimeoutException(message);
                 case function_invoke_failed:
