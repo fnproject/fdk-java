@@ -328,7 +328,7 @@ public class RemoteCompleterApiClient implements CompleterClient {
         } catch (PlatformException e) {
             throw e;
         } catch (Exception e) {
-            throw new PlatformException("Failed to get response from completer: " + e.getMessage());
+            throw new PlatformException("Failed to get response from completer: " ,e);
         }
     }
 
@@ -361,10 +361,10 @@ public class RemoteCompleterApiClient implements CompleterClient {
             } catch (PlatformException e) {
                 throw e;
             } catch (Exception e) {
-                throw new PlatformException("Failed to get response from completer: " + e.getMessage());
+                throw new PlatformException("Failed to get response from completer: " , e);
             }
         } catch (IOException e) {
-            throw new LambdaSerializationException("Failed to serialize the lambda: " + e.getMessage());
+            throw new LambdaSerializationException("Failed to serialize the lambda: " ,e);
         }
     }
 
