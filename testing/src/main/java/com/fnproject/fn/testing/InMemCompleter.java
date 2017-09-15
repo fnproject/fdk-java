@@ -693,9 +693,33 @@ class InMemCompleter implements CompleterClient {
             }
 
             private Stage addWhenCompleteStage(Datum.Blob closure) {
-                return addStage(new Stage(outputFuture().handle(this::resultOrError)
-                        , chainInvocation(closure).andThen(c -> outputFuture())
-                ));
+                // This is quite fiddly - because the semantics of whenComplete is.
+                // We need to construct a new completable future that can be completed only once the whenComplete continuation
+                // has been finished.
+                return addStage(new Stage(outputFuture().thenApply(Collections::singletonList),  // result or exception
+                        (stage, inputs) -> {
+                            CompletableFuture<Result> cf = new CompletableFuture<>();
+                            inputs.whenComplete((results, err) -> {
+                                // We have ([result], null) or (null, CompletionException(ResultException(datum=exception)))
+                                // In the latter case, resultOrError will take err as-is.
+                                Result result = results != null ? results.get(0) : null;
+                                chainInvocation(closure).apply(stage, CompletableFuture.completedFuture(resultOrError(result, err)))
+                                        .whenComplete((r, e2) -> {   // Throw away the result of the whenComplete lambda
+                                            if (err != null) {
+                                                cf.completeExceptionally(err);
+                                            } else {
+                                                cf.complete(result);
+                                            }
+
+                                        });
+                            });
+                            return cf;
+                        }));
+
+
+//                return addStage(new Stage(outputFuture().handle(this::resultOrError)
+//                        , chainInvocation(closure).andThen(c -> outputFuture())
+//                ));
             }
 
             private Stage addHandleStage(Datum.Blob closure) {
