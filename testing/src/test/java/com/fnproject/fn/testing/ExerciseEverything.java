@@ -309,22 +309,31 @@ public class ExerciseEverything {
     public FlowFuture<String> whenCompleteNoError(Flow fl) {
         return fl.completedValue("foo")
                 .whenComplete((v, e) -> {
+                    System.err.println("In whenComplete, v=" + v);
                     throw new MyException(v);
                 })
-                .exceptionally(Throwable::getMessage);
+                .exceptionally(t -> {
+                    // Should *not* get called.
+                    System.err.println("In whenComplete.exceptionally, t=" + t);
+                    return t.getMessage() + "bar";
+                });
     }
 
     @Test(30)
-    @Test.Expect("bar")
+    @Test.Expect("barbaz")
     public FlowFuture<String> whenCompleteWithError(Flow fl) {
         return fl.supply(() -> {
             if (true) throw new MyException("bar");
             else return "";
         })
                 .whenComplete((v, e) -> {
+                    System.err.println("In whenComplete, e=" + e);
                     throw new MyException(e.getMessage());
                 })
-                .exceptionally(Throwable::getMessage);
+                .exceptionally(t -> {
+                    System.err.println("In whenComplete (with error) exceptionally , t=" + t);
+                    return t.getMessage() + "baz";
+                });
     }
 
     @Test(31)
