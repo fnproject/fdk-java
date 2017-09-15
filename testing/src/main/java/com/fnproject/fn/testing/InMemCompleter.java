@@ -716,10 +716,6 @@ class InMemCompleter implements CompleterClient {
                             return cf;
                         }));
 
-
-//                return addStage(new Stage(outputFuture().handle(this::resultOrError)
-//                        , chainInvocation(closure).andThen(c -> outputFuture())
-//                ));
             }
 
             private Stage addHandleStage(Datum.Blob closure) {
