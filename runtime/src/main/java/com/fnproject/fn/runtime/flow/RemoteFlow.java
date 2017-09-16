@@ -174,7 +174,7 @@ public final class RemoteFlow implements Flow, Serializable {
     }
 
     @Override
-    public <T> FlowFuture<T> failedFuture​(Throwable ex) {
+    public <T> FlowFuture<T> failedFuture(Throwable ex) {
         return new RemoteFlowFuture<>(getClient().completedValue(flowId, false,ex, CodeLocation.fromCallerLocation(1)));
     }
 

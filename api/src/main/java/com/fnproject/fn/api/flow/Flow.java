@@ -168,7 +168,7 @@ public interface Flow extends Serializable {
      * @param ex an exception to publish to the future
      * @return
      */
-    <T> FlowFuture<T> failedFuture​(Throwable ex);
+    <T> FlowFuture<T> failedFuture(Throwable ex);
 
 
     /**
