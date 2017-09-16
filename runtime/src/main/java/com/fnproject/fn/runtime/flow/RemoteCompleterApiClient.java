@@ -62,7 +62,6 @@ public class RemoteCompleterApiClient implements CompleterClient {
     public static final String ERROR_TYPE_STAGE_LOST = "stage-lost";
     public static final String ERROR_TYPE_INVALID_STAGE_RESPONSE = "invalid-stage-response";
 
-    private static final int MAX_POLL_INTERVAL_MS = 1000;
     private static final int HTTP_CODE_REQUEST_TIMEOUT = 408;
 
     public RemoteCompleterApiClient(String apiUrlBase, HttpClient httpClient) {
@@ -77,7 +76,7 @@ public class RemoteCompleterApiClient implements CompleterClient {
             validateSuccessful(resp);
             return new FlowId(resp.getHeader(FLOW_ID_HEADER));
         } catch (Exception e) {
-            throw new PlatformCommunicationException("Failed to create flow: " + e.getMessage());
+            throw new PlatformCommunicationException("Failed to create flow",e);
         }
     }
 

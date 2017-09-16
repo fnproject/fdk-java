@@ -301,7 +301,7 @@ public class RemoteCompleterApiClientTest {
     @Test
     public void throwsPlatformExceptionIfFailedToCreateFlow() throws Exception {
         thrown.expect(PlatformCommunicationException.class);
-        thrown.expectMessage("Failed to create flow: Connection refused");
+        thrown.expectMessage("Failed to create flow");
 
         when((Object) mockHttpClient.execute(any())).thenThrow(new RuntimeException("Connection refused"));
 
@@ -312,7 +312,7 @@ public class RemoteCompleterApiClientTest {
     @Test
     public void throwsPlatformExceptionIfFailedToRequestCompletion() throws Exception {
         thrown.expect(PlatformException.class);
-        thrown.expectMessage("Failed to get response from completer: Connection refused");
+        thrown.expectMessage("Failed to get response from completer");
 
         RemoteCompleterApiClient completerClient = new RemoteCompleterApiClient("", mockHttpClient);
         Flows.SerCallable<Integer> serializableLambda = () -> 42;

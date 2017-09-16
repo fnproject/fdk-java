@@ -80,6 +80,28 @@ public class StacktraceFilteringTestFunctions {
         public void invoke(){}
     }
 
+
+    public static class CauseStackTraceInResult {
+
+
+        private void throwTwo(){
+
+            try{
+                throwOne();
+            }catch(Exception e){
+                throw new RuntimeException("Throw two",e);
+            }
+        }
+
+        private void throwOne(){
+                throw new RuntimeException("Throw one");
+        }
+
+
+        public void invoke(){
+            throwTwo();
+        }
+    }
     public static class NestedExceptionInConfiguration {
 
         @FnConfiguration
