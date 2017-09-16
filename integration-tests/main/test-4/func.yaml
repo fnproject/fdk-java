@@ -1,12 +1,10 @@
 name: fn-test/test-4
-version: 0.0.1
+version: 0.0.12
 runtime: java
-
-path: /test
-timeout: 450
-format: http
-
-build:
-  - mvn package dependency:copy-dependencies -DincludeScope=runtime -DskipTests=true -Dmdep.prependGroupId=true -DoutputDirectory=target -U
-
 cmd: com.fnproject.fn.integration.ExerciseEverything::handleRequest
+build:
+- mvn package dependency:copy-dependencies -DincludeScope=runtime -DskipTests=true
+  -Dmdep.prependGroupId=true -DoutputDirectory=target -U
+format: http
+timeout: 450
+path: /test
