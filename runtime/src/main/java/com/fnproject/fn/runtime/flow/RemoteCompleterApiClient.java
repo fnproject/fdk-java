@@ -7,12 +7,14 @@ import com.fnproject.fn.runtime.exception.PlatformCommunicationException;
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.URI;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
 
 
 /**
@@ -71,12 +73,12 @@ public class RemoteCompleterApiClient implements CompleterClient {
 
     @Override
     public FlowId createFlow(String functionId) {
-        HttpClient.HttpRequest request = HttpClient.preparePost(apiUrlBase + "/graph?functionId=" + functionId);
+        HttpClient.HttpRequest request = HttpClient.preparePost(apiUrlBase + "/graph").withQueryParam("functionId",functionId);
         try (HttpClient.HttpResponse resp = httpClient.execute(request)) {
             validateSuccessful(resp);
             return new FlowId(resp.getHeader(FLOW_ID_HEADER));
         } catch (Exception e) {
-            throw new PlatformCommunicationException("Failed to create flow",e);
+            throw new PlatformCommunicationException("Failed to create flow " , e);
         }
     }
 
@@ -167,8 +169,9 @@ public class RemoteCompleterApiClient implements CompleterClient {
     }
 
     @Override
-    public CompletionId completedValue(FlowId flowId, Serializable value, CodeLocation codeLocation) {
-        return requestCompletionWithBody("/graph/" + flowId.getId() + "/completedValue", Function.identity(), value, codeLocation);
+    public CompletionId completedValue(FlowId flowId, boolean success, Object value, CodeLocation codeLocation) {
+        return requestCompletionWithBody("/graph/" + flowId.getId() + "/completedValue", (req) -> req.withHeader(RESULT_STATUS_HEADER, success ? RESULT_STATUS_SUCCESS : RESULT_STATUS_FAILURE)
+                , value, codeLocation);
     }
 
     @Override
@@ -197,14 +200,14 @@ public class RemoteCompleterApiClient implements CompleterClient {
     public CompletionId anyOf(FlowId flowId, List<CompletionId> cids, CodeLocation codeLocation) {
         return requestCompletion("/graph/" + flowId.getId() + "/anyOf",
                 req -> req.withQueryParam("cids", getCids(cids))
-                          .withHeader(FN_CODE_LOCATION, codeLocation.getLocation()));
+                        .withHeader(FN_CODE_LOCATION, codeLocation.getLocation()));
     }
 
     @Override
     public CompletionId delay(FlowId flowId, long l, CodeLocation codeLocation) {
         return requestCompletion("/graph/" + flowId.getId() + "/delay",
                 req -> req.withQueryParam("delayMs", Long.toString(l))
-                          .withHeader(FN_CODE_LOCATION, codeLocation.getLocation()));
+                        .withHeader(FN_CODE_LOCATION, codeLocation.getLocation()));
     }
 
     // wait for completion  -> result
@@ -248,7 +251,7 @@ public class RemoteCompleterApiClient implements CompleterClient {
     }
 
     @Override
-    public Object waitForCompletion(FlowId flowId, CompletionId id, ClassLoader ignored){
+    public Object waitForCompletion(FlowId flowId, CompletionId id, ClassLoader ignored) {
         try {
             return waitForCompletion(flowId, id, ignored, 0, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
@@ -334,7 +337,7 @@ public class RemoteCompleterApiClient implements CompleterClient {
         }
     }
 
-    private CompletionId requestCompletionWithBody(String url, Function<HttpClient.HttpRequest, HttpClient.HttpRequest> fn, Serializable ser,
+    private CompletionId requestCompletionWithBody(String url, Function<HttpClient.HttpRequest, HttpClient.HttpRequest> fn, Object ser,
                                                    CodeLocation codeLocation) {
         try {
             byte[] serBytes = SerUtils.serialize(ser);
@@ -371,8 +374,7 @@ public class RemoteCompleterApiClient implements CompleterClient {
     }
 
     private static String getCids(List<CompletionId> cids) {
-        Set<String> completionIds = cids.stream().map(CompletionId::getId).collect(Collectors.toSet());
-        return String.join(",", completionIds);
+        return  cids.stream().map(CompletionId::getId).collect(Collectors.joining(","));
     }
 
 

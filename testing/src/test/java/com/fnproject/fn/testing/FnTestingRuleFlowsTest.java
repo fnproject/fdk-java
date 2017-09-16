@@ -153,6 +153,18 @@ public class FnTestingRuleFlowsTest {
     }
 
     @Test
+    public void invokeFunctionWithFailedFuture() {
+        fn.givenEvent().enqueue();
+
+        fn.thenRun(TestFn.class, "failedFuture");
+
+        assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
+        assertThat(result).isEqualTo(Result.Exceptionally);
+        assertThat(exception).isInstanceOf(RuntimeException.class);
+        assertThat(exception).hasMessage("failedFuture");
+    }
+
+    @Test
     public void invokeFunctionWithPlatformError() {
         fn.givenEvent().enqueue();
         fn.givenFn("user/error")
@@ -345,6 +357,16 @@ public class FnTestingRuleFlowsTest {
                     .exceptionally((ex) -> result = Result.Exceptionally);
         }
 
+        public void failedFuture() {
+            Flow fl = Flows.currentFlow();
+            fl.failedFuture​(new RuntimeException("failedFuture"))
+                    .exceptionally((ex) -> {
+                        result = Result.Exceptionally;
+                        exception = ex;
+                        return null;
+                    });
+        }
+
         public void completeExceptionallyEarly() {
             Flow fl = Flows.currentFlow();
             fl.completedValue(null)
@@ -397,17 +419,17 @@ public class FnTestingRuleFlowsTest {
                     });
 
             fl.addTerminationHook((s) -> {
-                if(staticConfig == 2){
+                if (staticConfig == 2) {
                     result = Result.TerminationHookRun;
                 }
 
             });
 
             fl.addTerminationHook((s) -> {
-                staticConfig ++;
+                staticConfig++;
             });
             fl.addTerminationHook((s) -> {
-                staticConfig =1;
+                staticConfig = 1;
             });
         }
 

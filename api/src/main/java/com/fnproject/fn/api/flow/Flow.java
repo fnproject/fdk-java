@@ -30,14 +30,13 @@ public interface Flow extends Serializable {
      *           });
      * <p>
      * }</pre></blockquote>
-     *
+     * <p>
      * Function IDs should be of the form "APPID/path/in/app" (without leading slash) where APPID may either be a named application or ".", indicating the appID of the current (calling) function.
      *
      * @param functionId Function ID of function to tryInvoke - this should have the form APPNAME/FUNCTION_PATH  (e.g. "myapp/path/to/function"  or "./path/to/function").
      * @param method     HTTP method to invoke function
      * @param headers    Headers to add to the HTTP request representing the function invocation
      * @param data       input data to function as a byte array -
-     *
      * @return a future which completes normally if the function succeeded and fails if it fails
      */
     FlowFuture<HttpResponse> invokeFunction(String functionId, HttpMethod method, Headers headers, byte[] data);
@@ -140,7 +139,37 @@ public interface Flow extends Serializable {
      * @param <T>   the type of the future value
      * @return a completed flow future based on the specified value
      */
-    <T extends Serializable> FlowFuture<T> completedValue(T value);
+    <T> FlowFuture<T> completedValue(T value);
+
+
+    /**
+     * Create a completed future that propagates a failed value
+     * <p>
+     * <blockquote><pre>{@code
+     *         Flow fl = Flows.currentFlow();
+     *         fl.delay(5,TimeUnit.Seconds)
+     *            .thenCompose((ignored)->{
+     *                if(shouldRunFn){
+     *                    return rt.invokeAsync("testapp/testfn","input".getBytes()).thenApply(String::new);
+     *                }else{
+     *                    return rt.<HttpResp>failedFuture(new RuntimeException("Immediate Failure"));
+     *                }
+     *            })
+     *            .whenComplete((x,t)->{
+     *                if (t !=null){
+     *                   // Will print "Immediate Failure";
+     *                   System.err.println("error in flow", t.getMessage());
+     *                }else{
+     *                   System.err.println("Success! , x);
+     *                }
+     *            });
+     * }</pre></blockquote>
+     *
+     * @param ex an exception to publish to the future
+     * @return
+     */
+    <T> FlowFuture<T> failedFuture​(Throwable ex);
+
 
     /**
      * Create an externally completable future that can be completed successfully or exceptionally by POSTing data to a public URL.

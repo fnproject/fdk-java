@@ -73,8 +73,7 @@ public interface CompleterClient {
 
     CompletionId invokeFunction(FlowId flowId, String functionId, byte[] data, HttpMethod method, Headers headers, CodeLocation codeLocation);
 
-    CompletionId completedValue(FlowId flowId, Serializable value, CodeLocation codeLocation);
-
+    CompletionId completedValue(FlowId flowId, boolean success, Object value, CodeLocation codeLocation);
 
     CompletionId allOf(FlowId flowId, List<CompletionId> cids, CodeLocation codeLocation);
 
