@@ -444,6 +444,18 @@ public class RemoteCompleterApiClientTest {
 
 
     @Test
+    public void callsHandle() throws Exception {
+        givenValidStageResponse();
+        verifyStageCreatedOnGraph(completerClient.handle(flowId, parentId,serializableLambda, codeLocation), "stage/parent-id/handle");
+    }
+
+    @Test
+    public void callsExceptionally() throws Exception {
+        givenValidStageResponse();
+        verifyStageCreatedOnGraph(completerClient.exceptionally(flowId, parentId,serializableLambda, codeLocation), "stage/parent-id/exceptionally");
+    }
+
+    @Test
     public void createsExternalFuture() throws Exception {
         givenValidStageResponse();
 
@@ -584,6 +596,26 @@ public class RemoteCompleterApiClientTest {
         HttpClient.HttpRequest req = reqCaptor.getValue();
         assertThat(req.method).isEqualTo("POST");
         assertThat(req.url).isEqualTo("/graph/flow-id/commit");
+    }
+
+
+    @Test
+    public void callsAddTerminationHook() throws Exception{
+        HttpClient.HttpResponse stageResponse = new HttpClient.HttpResponse(200);
+        when(mockHttpClient.execute(any())).thenReturn(stageResponse);
+
+        completerClient.addTerminationHook(flowId,serializableLambda,codeLocation);
+        verify(mockHttpClient, times(1)).execute(reqCaptor.capture());
+        verifyNoMoreInteractions(mockHttpClient);
+
+        HttpClient.HttpRequest req = reqCaptor.getValue();
+        assertThat(req.method).isEqualTo("POST");
+        assertThat(req.url).isEqualTo("/graph/flow-id/terminationHook");
+        assertThat(req.headers).contains(
+                entry(FN_CODE_LOCATION, codeLocation.getLocation()),
+                entry(DATUM_TYPE_HEADER, DATUM_TYPE_BLOB),
+                entry(CONTENT_TYPE_HEADER, CONTENT_TYPE_JAVA_OBJECT));
+        assertThat(req.bodyBytes).isEqualTo(lambdaBytes);
     }
 
     private HttpClient.HttpRequest verifyStageCreatedOnGraph(CompletionId id, String op) throws IOException {

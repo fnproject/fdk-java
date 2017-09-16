@@ -246,7 +246,7 @@ public class RemoteCompleterApiClient implements CompleterClient {
         } catch (ClassNotFoundException | IOException | SerUtils.Deserializer.DeserializeException e) {
             throw new ResultSerializationException("Unable to deserialize result received from the completer service", e);
         } catch (Exception e) {
-            throw new PlatformException("Request to completer service failed");
+            throw new PlatformException("Request to completer service failed",e);
         }
     }
 
@@ -311,7 +311,7 @@ public class RemoteCompleterApiClient implements CompleterClient {
                         "completer: %s", response.getStatusCode(), response.entityAsString()));
             } catch (IOException e) {
                 throw new PlatformException(String.format("Received unexpected response (%d) from " +
-                        "completer. Could not read body.", response.getStatusCode()));
+                        "completer. Could not read body.", response.getStatusCode()),e);
             }
         }
     }
