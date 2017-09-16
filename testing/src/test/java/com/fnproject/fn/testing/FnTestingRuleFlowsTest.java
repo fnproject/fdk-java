@@ -139,6 +139,7 @@ public class FnTestingRuleFlowsTest {
         assertThat(result).isEqualTo(Result.InvokeFunctionFixed);
     }
 
+
     @Test
     public void invokeFunctionWithFunctionError() {
         fn.givenEvent().enqueue();
@@ -243,6 +244,38 @@ public class FnTestingRuleFlowsTest {
         assertThat(result).isEqualTo(Result.AnyOf);
     }
 
+    @Test
+    public void exceptionallyComposeHandle() {
+        fn.givenEvent().enqueue();
+
+        fn.thenRun(TestFn.class, "exceptionallyComposeHandle");
+
+        assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
+        assertThat(count).isEqualTo(2);
+
+    }
+
+
+    @Test
+    public void exceptionallyComposePassThru() {
+        fn.givenEvent().enqueue();
+
+        fn.thenRun(TestFn.class, "exceptionallyComposePassThru");
+        assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
+        assertThat(count).isEqualTo(1);
+
+    }
+
+    @Test
+    public void exceptionallyComposeThrowsError() {
+        fn.givenEvent().enqueue();
+
+        fn.thenRun(TestFn.class, "exceptionallyComposeThrowsError");
+        assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
+        assertThat(count).isEqualTo(1);
+
+    }
+
     @Test()
     public void shouldHandleMultipleEventsForFunctionWithInput() {
         String[] bodies = {"hello", "world", "test"};
@@ -261,7 +294,6 @@ public class FnTestingRuleFlowsTest {
     @Test()
     public void shouldRunShutdownHooksInTest() {
         fn.givenEvent().enqueue();
-
 
         fn.thenRun(TestFn.class, "terminationHooks");
         assertThat(fn.getOnlyResult().getStatus()).isEqualTo(200);
@@ -333,6 +365,58 @@ public class FnTestingRuleFlowsTest {
 
         }
 
+        public void exceptionallyComposeHandle() {
+
+            Flow fl = Flows.currentFlow();
+            fl.<Integer>failedFuture(new RuntimeException("error"))
+                    .exceptionallyCompose((e) -> {
+                        if (count == 0 && e.getMessage().equals("error")) {
+                            count = 1;
+                            return fl.completedValue(1);
+                        }
+                        return fl.completedValue(0);
+                    })
+                    .thenAccept((i) -> {
+                        if (count == 1 && i == 1) {
+                            count++;
+                        }
+                    });
+        }
+
+        public void exceptionallyComposePassThru() {
+
+            Flow fl = Flows.currentFlow();
+            fl.completedValue(-1)
+                    .exceptionallyCompose((e) -> {
+                        count--;
+                        return fl.completedValue(1);
+                    })
+                    .thenAccept((i) -> {
+                        if (count == 0 && i == -1) {
+                            count++;
+                        }
+                    });
+        }
+
+        public void exceptionallyComposeThrowsError() {
+
+            Flow fl = Flows.currentFlow();
+            fl.failedFuture(new RuntimeException("error"))
+                    .exceptionallyCompose((e) -> {
+                        if(e.getMessage().equals("error")){
+                            throw new RuntimeException("foo");
+                        }
+                        count--;
+                        return fl.completedValue(-1);
+                    })
+                    .whenComplete((i,e) -> {
+                        if(e !=null && e.getMessage().equals("foo")){
+                            count++;
+                        }
+                    });
+        }
+
+
         public void invokeFunctionEcho() {
             Flow fl = Flows.currentFlow();
             fl.invokeFunction("user/echo", HttpMethod.GET, Headers.emptyHeaders(), Result.InvokeFunctionEcho.name().getBytes())
@@ -359,7 +443,7 @@ public class FnTestingRuleFlowsTest {
 
         public void failedFuture() {
             Flow fl = Flows.currentFlow();
-            fl.failedFuture​(new RuntimeException("failedFuture"))
+            fl.failedFuture(new RuntimeException("failedFuture"))
                     .exceptionally((ex) -> {
                         result = Result.Exceptionally;
                         exception = ex;
@@ -452,6 +536,7 @@ public class FnTestingRuleFlowsTest {
         result = null;
         exception = null;
         staticConfig = null;
+        count = 0;
     }
 
     // These members are external to the class under test so as to be visible from the unit tests.
@@ -460,5 +545,6 @@ public class FnTestingRuleFlowsTest {
     public static Result result = null;
     public static Throwable exception = null;
     public static Integer staticConfig = null;
+    public static Integer count = 0;
 
 }

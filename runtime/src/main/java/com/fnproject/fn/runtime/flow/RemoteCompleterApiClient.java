@@ -10,7 +10,6 @@ import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
@@ -73,12 +72,12 @@ public class RemoteCompleterApiClient implements CompleterClient {
 
     @Override
     public FlowId createFlow(String functionId) {
-        HttpClient.HttpRequest request = HttpClient.preparePost(apiUrlBase + "/graph").withQueryParam("functionId",functionId);
+        HttpClient.HttpRequest request = HttpClient.preparePost(apiUrlBase + "/graph").withQueryParam("functionId", functionId);
         try (HttpClient.HttpResponse resp = httpClient.execute(request)) {
             validateSuccessful(resp);
             return new FlowId(resp.getHeader(FLOW_ID_HEADER));
         } catch (Exception e) {
-            throw new PlatformCommunicationException("Failed to create flow " , e);
+            throw new PlatformCommunicationException("Failed to create flow ", e);
         }
     }
 
@@ -192,6 +191,11 @@ public class RemoteCompleterApiClient implements CompleterClient {
     }
 
     @Override
+    public CompletionId exceptionallyCompose(FlowId flowId, CompletionId completionId, Serializable fn, CodeLocation codeLocation) {
+        return chainThis(flowId, completionId, "exceptionallyCompose", fn, codeLocation);
+    }
+
+    @Override
     public CompletionId thenCombine(FlowId flowId, CompletionId completionId, Serializable fn, CompletionId alternate, CodeLocation codeLocation) {
         return chainThisWithThat(flowId, completionId, alternate, "thenCombine", fn, codeLocation);
     }
@@ -246,7 +250,7 @@ public class RemoteCompleterApiClient implements CompleterClient {
         } catch (ClassNotFoundException | IOException | SerUtils.Deserializer.DeserializeException e) {
             throw new ResultSerializationException("Unable to deserialize result received from the completer service", e);
         } catch (Exception e) {
-            throw new PlatformException("Request to completer service failed",e);
+            throw new PlatformException("Request to completer service failed", e);
         }
     }
 
@@ -311,7 +315,7 @@ public class RemoteCompleterApiClient implements CompleterClient {
                         "completer: %s", response.getStatusCode(), response.entityAsString()));
             } catch (IOException e) {
                 throw new PlatformException(String.format("Received unexpected response (%d) from " +
-                        "completer. Could not read body.", response.getStatusCode()),e);
+                        "completer. Could not read body.", response.getStatusCode()), e);
             }
         }
     }
@@ -326,14 +330,14 @@ public class RemoteCompleterApiClient implements CompleterClient {
         try (com.fnproject.fn.runtime.flow.HttpClient.HttpResponse resp = httpClient.execute(req)) {
             validateSuccessful(resp);
             String completionId = resp.getHeader(STAGE_ID_HEADER);
-            if(completionId == null){
+            if (completionId == null) {
                 throw new PlatformException("Got successful response from completer but no " + STAGE_ID_HEADER + " was present");
             }
             return new CompletionId(completionId);
         } catch (PlatformException e) {
             throw e;
         } catch (Exception e) {
-            throw new PlatformException("Failed to get response from completer: " ,e);
+            throw new PlatformException("Failed to get response from completer: ", e);
         }
     }
 
@@ -366,15 +370,15 @@ public class RemoteCompleterApiClient implements CompleterClient {
             } catch (PlatformException e) {
                 throw e;
             } catch (Exception e) {
-                throw new PlatformException("Failed to get response from completer: " , e);
+                throw new PlatformException("Failed to get response from completer: ", e);
             }
         } catch (IOException e) {
-            throw new LambdaSerializationException("Failed to serialize the lambda: " ,e);
+            throw new LambdaSerializationException("Failed to serialize the lambda: ", e);
         }
     }
 
     private static String getCids(List<CompletionId> cids) {
-        return  cids.stream().map(CompletionId::getId).collect(Collectors.joining(","));
+        return cids.stream().map(CompletionId::getId).collect(Collectors.joining(","));
     }
 
 
