@@ -24,7 +24,7 @@ public class GoPlacesAirlines implements Serializable {
         request.departureTime = departureTime;
         request.secret = this.secret;
         try {
-            String response = Request.Post(airlineApiUrl + "/flight")
+            String response = Request.Post(airlineApiUrl)
                     .bodyByteArray(
                             jsonify.writeValueAsBytes(request),
                             ContentType.APPLICATION_JSON)
@@ -42,6 +42,6 @@ public class GoPlacesAirlines implements Serializable {
     }
 
     public static class BookingResponse implements Serializable {
-        public String reference;
+        public String confirmation;
     }
 }

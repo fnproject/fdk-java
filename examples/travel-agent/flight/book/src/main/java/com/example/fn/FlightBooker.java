@@ -12,16 +12,16 @@ public class FlightBooker implements Serializable {
     private GoPlacesAirlines apiClient;
 
     public static class FlightBookingRequest implements Serializable {
-        public String FlightCode;
-        public Date DepartureTime;
+        public String flightCode;
+        public Date departureTime;
     }
 
     public static class FlightBookingResponse implements Serializable {
-        public FlightBookingResponse(String confirmationCode) {
-            this.confirmationCode = confirmationCode;
+        public FlightBookingResponse(String confirmation) {
+            this.confirmation = confirmation;
         }
 
-        public String confirmationCode;
+        public String confirmation;
     }
 
     @FnConfiguration
@@ -36,7 +36,7 @@ public class FlightBooker implements Serializable {
     }
 
     public FlightBookingResponse book(FlightBookingRequest flightDetails) {
-        GoPlacesAirlines.BookingResponse apiResponse  = apiClient.bookFlight(flightDetails.FlightCode, flightDetails.DepartureTime);
-        return new FlightBookingResponse(apiResponse.reference);
+        GoPlacesAirlines.BookingResponse apiResponse  = apiClient.bookFlight(flightDetails.flightCode, flightDetails.departureTime);
+        return new FlightBookingResponse(apiResponse.confirmation);
     }
 }

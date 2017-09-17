@@ -7,7 +7,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
     <groupId>com.example.fn</groupId>
-    <artifactId>saga</artifactId>
+    <artifactId>trip</artifactId>
     <version>1.0.0</version>
 
     <repositories>
@@ -50,6 +50,11 @@
           <groupId>org.apache.httpcomponents</groupId>
           <artifactId>fluent-hc</artifactId>
           <version>4.5.3</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>RELEASE</version>
         </dependency>
     </dependencies>
 

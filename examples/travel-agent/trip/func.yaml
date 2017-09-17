@@ -1,5 +1,6 @@
 name: tteggel/book-trip
-version: 0.0.126
+version: 0.0.138
 runtime: java
 cmd: com.example.fn.BookingFlow::handleRequest
 format: http
+path: /trip
