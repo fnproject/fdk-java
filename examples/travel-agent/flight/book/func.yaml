@@ -1,4 +1,5 @@
 name: tteggel/book-flight
-version: 0.0.22
+version: 0.0.25
 runtime: java
 cmd: com.example.fn.FlightBooker::book
+path: /flight/book

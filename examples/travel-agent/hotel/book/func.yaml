@@ -1,0 +1,5 @@
+name: tteggel/book-hotel
+version: 0.0.11
+runtime: ruby
+entrypoint: ruby func.rb
+path: /hotel/book
