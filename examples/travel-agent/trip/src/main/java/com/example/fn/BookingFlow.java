@@ -20,13 +20,13 @@ public class BookingFlow implements Serializable {
     public void handleRequest(ApiSchemas.BookingRequest request) {
         Flow f = Flows.currentFlow();
 
-        f.invokeFunction("travel/flight/book", HttpMethod.POST, Headers.emptyHeaders(), getBytes(request.flight))
+        f.invokeFunction("./flight/book", HttpMethod.POST, Headers.emptyHeaders(), getBytes(request.flight))
         .thenAccept((r0) -> {
             this.flightConfirmation = getConfirmationCode(r0.getBodyAsBytes());
-            f.invokeFunction("travel/hotel/book", HttpMethod.POST, Headers.emptyHeaders(), getBytes(request.hotel))
+            f.invokeFunction("./hotel/book", HttpMethod.POST, Headers.emptyHeaders(), getBytes(request.hotel))
                 .thenAccept((r1) -> {
                     this.hotelConfirmation = getConfirmationCode(r1.getBodyAsBytes());
-                    f.invokeFunction("travel/car/book", HttpMethod.POST, Headers.emptyHeaders(), getBytes(request.car))
+                    f.invokeFunction("./car/book", HttpMethod.POST, Headers.emptyHeaders(), getBytes(request.car))
                         .thenAccept((r2) -> {
                             this.carConfirmation = getConfirmationCode(r2.getBodyAsBytes());
                         });
