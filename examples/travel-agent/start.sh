@@ -33,5 +33,18 @@ fn apps create travel
 
 fn apps config set travel COMPLETER_BASE_URL "http://$DOCKER_LOCALHOST:8081"
 
-(cd flight/book && fn deploy --local --app travel)
-(cd hotel/book  && fn deploy --local --app travel)
+(cd flight/book \
+  && fn deploy --local --app travel \
+  && fn routes config set travel /flight/book AIRLINE_API_URL "http://$DOCKER_LOCALHOST:3001/flight" \
+  && fn routes config set travel /flight/book AIRLINE_API_SECRET "shhhh"
+)
+
+(cd hotel/book \
+  && fn deploy --local --app travel \
+  && fn routes config set travel /hotel/book HOTEL_API_URL "http://$DOCKER_LOCALHOST:3001/hotel"
+)
+
+(cd car/book \
+  && fn deploy --local --app travel \
+  && fn routes config set travel /car/book CAR_API_URL "http://$DOCKER_LOCALHOST:3001/car"
+)
