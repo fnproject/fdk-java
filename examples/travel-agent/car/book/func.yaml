@@ -1,0 +1,5 @@
+name: tteggel/book-car
+version: 0.0.7
+runtime: node
+entrypoint: node func.js
+path: /car/book

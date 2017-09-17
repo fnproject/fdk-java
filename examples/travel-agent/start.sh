@@ -33,4 +33,5 @@ fn apps create travel
 
 fn apps config set travel COMPLETER_BASE_URL "http://$DOCKER_LOCALHOST:8081"
 
-fn deploy --app travel --local
+(cd flight/book && fn deploy --local --app travel)
+(cd hotel/book  && fn deploy --local --app travel)
