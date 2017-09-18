@@ -4,6 +4,8 @@ import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.flow.*;
 import com.fnproject.fn.runtime.exception.PlatformCommunicationException;
 import org.apache.commons.io.IOUtils;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -30,6 +32,7 @@ public class RemoteCompleterApiClientTest {
     private final Flows.SerCallable<Integer> serializableLambda = () -> 42;
     private final byte[] lambdaBytes;
     private final FlowId flowId = new FlowId("flow-id");
+    private final CompletionId callerId = new CompletionId("caller-id");
     private final CompletionId parentId = new CompletionId("parent-id");
     private final CompletionId otherId = new CompletionId("other-id");
     private final CompletionId otherId2 = new CompletionId("other-id2");
@@ -80,6 +83,15 @@ public class RemoteCompleterApiClientTest {
                 return new ByteArrayInputStream(baos.toByteArray());
             }
         }
+    }
+
+    @Before
+    public void setup(){
+        FlowRuntimeGlobals.setCurrentCompletionId(callerId);
+    }
+    @After
+    public void tearDown(){
+        FlowRuntimeGlobals.setCurrentCompletionId(null);
     }
 
     @Test
@@ -502,7 +514,8 @@ public class RemoteCompleterApiClientTest {
                 entry(USER_HEADER_PREFIX + "Header-1", "h1"),
                 entry(USER_HEADER_PREFIX + "Header-2", "h2"),
                 entry(CONTENT_TYPE_HEADER, DEFAULT_CONTENT_TYPE),
-                entry(FN_CODE_LOCATION, codeLocation.getLocation()));
+                entry(FN_CODE_LOCATION, codeLocation.getLocation()),
+                entry(CALLER_ID_HEADER,callerId.getId()));
 
 
     }
@@ -562,7 +575,8 @@ public class RemoteCompleterApiClientTest {
         assertThat(req.method).isEqualTo("POST");
         assertThat(req.url).isEqualTo("/graph/flow-id/anyOf");
         assertThat(req.headers).contains(
-                entry(FN_CODE_LOCATION, codeLocation.getLocation()));
+                entry(FN_CODE_LOCATION, codeLocation.getLocation()),
+                entry(CALLER_ID_HEADER,callerId.getId()));
 
     }
 
@@ -581,7 +595,8 @@ public class RemoteCompleterApiClientTest {
         assertThat(req.method).isEqualTo("POST");
         assertThat(req.url).isEqualTo("/graph/flow-id/delay");
         assertThat(req.headers).contains(
-                entry(FN_CODE_LOCATION, codeLocation.getLocation()));
+                entry(FN_CODE_LOCATION, codeLocation.getLocation()),
+                entry(CALLER_ID_HEADER,callerId.getId()));
     }
 
     @Test
@@ -614,7 +629,8 @@ public class RemoteCompleterApiClientTest {
         assertThat(req.headers).contains(
                 entry(FN_CODE_LOCATION, codeLocation.getLocation()),
                 entry(DATUM_TYPE_HEADER, DATUM_TYPE_BLOB),
-                entry(CONTENT_TYPE_HEADER, CONTENT_TYPE_JAVA_OBJECT));
+                entry(CONTENT_TYPE_HEADER, CONTENT_TYPE_JAVA_OBJECT),
+                entry(CALLER_ID_HEADER,callerId.getId()));
         assertThat(req.bodyBytes).isEqualTo(lambdaBytes);
     }
 
@@ -630,7 +646,8 @@ public class RemoteCompleterApiClientTest {
         assertThat(req.headers).contains(
                 entry(FN_CODE_LOCATION, codeLocation.getLocation()),
                 entry(DATUM_TYPE_HEADER, DATUM_TYPE_BLOB),
-                entry(CONTENT_TYPE_HEADER, CONTENT_TYPE_JAVA_OBJECT));
+                entry(CONTENT_TYPE_HEADER, CONTENT_TYPE_JAVA_OBJECT),
+                entry(CALLER_ID_HEADER,callerId.getId()));
         assertThat(req.bodyBytes).isEqualTo(lambdaBytes);
         return req;
     }
