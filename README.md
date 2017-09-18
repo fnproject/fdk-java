@@ -38,13 +38,23 @@ deploy functions.
 docker login
 ```
 
+### Set your FN_REGISTRY
+
+Fn needs to know your docker registry and user. Normally this can be set with:
+
+```shell
+export FN_REGISTRY=<your dockerhub account>
+```
+
+if you are logged into Docker Hub.
+
 ## Your first Function
 
 ### 1. Create your first Java Function:
 
 ```bash
 $ mkdir hello-java-function && cd hello-java-function
-$ fn init --runtime=java your_dockerhub_account/hello
+$ fn init --runtime=java --name=hello
 Runtime: java
 function boilerplate generated.
 func.yaml created
@@ -54,11 +64,8 @@ This creates the boilerplate for a new Java Function based on Maven and Oracle
 Java 8. The `pom.xml` includes a dependency on the latest version of the Fn
 Java FDK that is useful for developing your Java functions.
 
-Note that the `your_dockerhub_account/hello` name follows the format of
-a Docker image name. The Fn platform relies on docker images implementing
-functions and these will be deployed to a Docker registry. By default Docker
-Hub is used, hence the requirement for a Docker Hub account. You should replace
-`your_dockerhub_account` with your account name.
+The `hello` name is the name of the Docker image that will be pushed to your
+Docker registry under your user account (as set in `FN_REGISTRY` above).
 
 You can now import this project into your favourite IDE as normal.
 
@@ -68,15 +75,14 @@ a look at the `func.yaml`:
 
 ```bash
 $ cat func.yaml
-name: your_dockerhub_account/hello
+name: hello
 version: 0.0.1
 runtime: java
 cmd: com.example.fn.HelloFunction::handleRequest
-path: /hello
 ```
 
-The `cmd` field determines which method is called when your funciton is
-invoked. In the generated Function, the `func.yaml` references
+The `cmd` field determines which method the runtime will call when your function
+is invoked. In the generated Function, the `func.yaml` references
 `com.example.fn.HelloFunction::handleRequest`. Your functions will likely live
 in different classes, and this field should always point to the method to
 execute, with the following syntax:
@@ -89,7 +95,7 @@ For more information about the fields in `func.yaml`, refer to the [Fn platform
 documentation](https://github.com/fnproject/fn/blob/master/docs/function-file.md)
 about it.
 
-Let's also have a brief look at the source:
+Let's also have a brief look at the source in
 `src/main/java/com/example/fn/HelloFunction.java`:
 
 ```java
@@ -113,34 +119,38 @@ You are now ready to run your Function locally using the Fn CLI tool.
 
 ```bash
 $ fn run
-Building image your_dockerhub_account/hello:0.0.1
-Sending build context to Docker daemon  14.34kB
-Step 1/11 : FROM maven:3.5-jdk-8-alpine as build-stage
- ---> 5435658a63ac
+Building image hello:0.0.1
+Sending build context to Docker daemon  13.82kB
+Step 1/11 : FROM fnproject/fn-java-fdk-build:latest as build-stage
+ ---> b00068418387
 Step 2/11 : WORKDIR /function
- ---> 37340c5aa451
 
 ...
 
-Step 5/11 : RUN mvn package dependency:copy-dependencies -DincludeScope=runtime -DskipTests=true -Dmdep.prependGroupId=true -DoutputDirectory=target --fail-never
----> Running in 58b3b1397ba2
+Step 7/11 : RUN mvn package
+ ---> Running in fb9427a98935
 [INFO] Scanning for projects...
-Downloading: https://repo.maven.apache.org/maven2/org/apache/maven/plugins/maven-compiler-plugin/3.3/maven-compiler-plugin-3.3.pom
-Downloaded: https://repo.maven.apache.org/maven2/org/apache/maven/plugins/maven-compiler-plugin/3.3/maven-compiler-plugin-3.3.pom (11 kB at 21 kB/s)
+[INFO]
+[INFO] ------------------------------------------------------------------------
+[INFO] Building hello 1.0.0
+[INFO] ------------------------------------------------------------------------
+[INFO]
 
 ...
 
+[INFO] --- maven-jar-plugin:2.4:jar (default-jar) @ hello ---
+[INFO] Building jar: /function/target/hello-1.0.0.jar
 [INFO] ------------------------------------------------------------------------
 [INFO] BUILD SUCCESS
 [INFO] ------------------------------------------------------------------------
-[INFO] Total time: 2.228 s
-[INFO] Finished at: 2017-06-27T12:06:59Z
-[INFO] Final Memory: 18M/143M
+[INFO] Total time: 3.205 s
+[INFO] Finished at: 2017-09-18T16:08:10Z
+[INFO] Final Memory: 19M/145M
 [INFO] ------------------------------------------------------------------------
-
 ...
 
-Function your_dockerhub_account/hello:0.0.1 built successfully.
+Successfully built b6100f34acab
+Successfully tagged <your dockerhub account>/hello:0.0.1
 Hello, world!
 ```
 
@@ -149,7 +159,9 @@ are cached. Try passing in some input this time:
 
 ```bash
 $ echo -n "Universe" | fn run
+
 ...
+
 Hello, Universe!
 ```
 
@@ -217,43 +229,46 @@ ready to be used in the function deployment. Finally it will create a route on
 the local Fn server, corresponding to your function.
 
 ```bash
-$ fn deploy java-app
+$ fn deploy --app java-app
 ...
 Bumped to version 0.0.2
-Building image your_dockerhub_account/hello:0.0.2
-Sending build context to Docker daemon  14.34kB
 
 ...
 
 Successfully built bf2b7fa55520
-Successfully tagged your_dockerhub_account/hello:0.0.2
+Successfully tagged <your dockerhub account>/hello:0.0.2
 Pushing to docker registry...
-The push refers to a repository [docker.io/your_dockerhub_account/hello]
-d641fa720e99: Pushed
-9f961bc46650: Pushed
-24972d67929a: Pushed
-e18e511b41d6: Pushed
-a8cf2f688ac8: Pushed
-0.0.2: digest: sha256:9a585899aa5c705172f8a798169a86534048b55ec2f47851938103ffbe9cfba5 size: 1368
-Updating route /hello using image your_dockerhub_account/hello:0.0.2...
+
+...
+
+0.0.2: digest: sha256:9a585899aa5c705172f8a798169a86534048b55ec2f47851938103ffbe9cfba5 size: 2207
+Updating route /hello-java-function using image <your dockerhub account>/hello:0.0.2...
+```
+
+Note that the function has been created under a route whose name is taken from
+the current directory name. If you want to customize this name, you can do so
+by adding a `path` key in the `func.yaml`:
+
+```yaml
+path: /hello-java-function
 ```
 
 Call the Function via the Fn CLI:
 
 ```bash
-$ fn call java-app /hello
+$ fn call java-app /hello-java-function
 Hello, world!
 ```
 
 You can also call the Function via curl:
 
 ```bash
-$ curl http://localhost:8080/r/java-app/hello
+$ curl http://localhost:8080/r/java-app/hello-java-function
 Hello, world!
 ```
 
 ### 6. Something more interesting
-The Fn Java FDK supports [flexible data binding](docs/DataBinding.md)  to make
+The Fn Java FDK supports [flexible data binding](docs/DataBinding.md) to make
 it easier for you to map function input and output data to Java objects.
 
 Below is an example to of a Function that returns a POJO which will be
