@@ -74,8 +74,9 @@ public final class FnTestingRule implements TestRule {
         // Internal shared classes required to bridge completer into tests
         addSharedClassPrefix("java.");
         addSharedClassPrefix("javax.");
-
         addSharedClassPrefix("sun.");
+        addSharedClassPrefix("jdk.");
+
         addSharedClass(CompleterClient.class);
         addSharedClass(CompleterClientFactory.class);
         addSharedClass(CompletionId.class);

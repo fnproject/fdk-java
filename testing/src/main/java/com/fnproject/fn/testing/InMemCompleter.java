@@ -2,6 +2,7 @@ package com.fnproject.fn.testing;
 
 import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.flow.*;
+import com.fnproject.fn.api.flow.Flow;
 import com.fnproject.fn.runtime.flow.*;
 import com.sun.net.httpserver.HttpServer;
 import org.apache.commons.io.IOUtils;
