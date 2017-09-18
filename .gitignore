@@ -8,3 +8,5 @@ target/
 .\#*
 logs/
 /headrevtag.txt
+*.bak
+*.versionsBackup

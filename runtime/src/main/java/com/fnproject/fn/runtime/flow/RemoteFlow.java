@@ -72,6 +72,11 @@ public final class RemoteFlow implements Flow, Serializable {
         }
 
         @Override
+        public  FlowFuture<T> exceptionallyCompose(Flows.SerFunction<Throwable, FlowFuture<T>> fn) {
+            return new RemoteFlowFuture<>(getClient().exceptionallyCompose(flowId,completionId,fn,CodeLocation.fromCallerLocation(1)));
+        }
+
+        @Override
         public FlowFuture<T> whenComplete(Flows.SerBiConsumer<T, Throwable> fn) {
             return new RemoteFlowFuture<>(getClient().whenComplete(flowId, completionId, fn, CodeLocation.fromCallerLocation(1)));
         }
@@ -169,8 +174,13 @@ public final class RemoteFlow implements Flow, Serializable {
     }
 
     @Override
-    public <T extends Serializable> FlowFuture<T> completedValue(T value) {
-        return new RemoteFlowFuture<>(getClient().completedValue(flowId, value, CodeLocation.fromCallerLocation(1)));
+    public <T> FlowFuture<T> completedValue(T value) {
+        return new RemoteFlowFuture<>(getClient().completedValue(flowId, true,value, CodeLocation.fromCallerLocation(1)));
+    }
+
+    @Override
+    public <T> FlowFuture<T> failedFuture(Throwable ex) {
+        return new RemoteFlowFuture<>(getClient().completedValue(flowId, false,ex, CodeLocation.fromCallerLocation(1)));
     }
 
     @Override

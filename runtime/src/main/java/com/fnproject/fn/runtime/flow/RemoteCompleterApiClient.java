@@ -7,12 +7,13 @@ import com.fnproject.fn.runtime.exception.PlatformCommunicationException;
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.URI;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
 
 
 /**
@@ -71,12 +72,12 @@ public class RemoteCompleterApiClient implements CompleterClient {
 
     @Override
     public FlowId createFlow(String functionId) {
-        HttpClient.HttpRequest request = HttpClient.preparePost(apiUrlBase + "/graph?functionId=" + functionId);
+        HttpClient.HttpRequest request = HttpClient.preparePost(apiUrlBase + "/graph").withQueryParam("functionId", functionId);
         try (HttpClient.HttpResponse resp = httpClient.execute(request)) {
             validateSuccessful(resp);
             return new FlowId(resp.getHeader(FLOW_ID_HEADER));
         } catch (Exception e) {
-            throw new PlatformCommunicationException("Failed to create flow",e);
+            throw new PlatformCommunicationException("Failed to create flow ", e);
         }
     }
 
@@ -167,8 +168,9 @@ public class RemoteCompleterApiClient implements CompleterClient {
     }
 
     @Override
-    public CompletionId completedValue(FlowId flowId, Serializable value, CodeLocation codeLocation) {
-        return requestCompletionWithBody("/graph/" + flowId.getId() + "/completedValue", Function.identity(), value, codeLocation);
+    public CompletionId completedValue(FlowId flowId, boolean success, Object value, CodeLocation codeLocation) {
+        return requestCompletionWithBody("/graph/" + flowId.getId() + "/completedValue", (req) -> req.withHeader(RESULT_STATUS_HEADER, success ? RESULT_STATUS_SUCCESS : RESULT_STATUS_FAILURE)
+                , value, codeLocation);
     }
 
     @Override
@@ -189,6 +191,11 @@ public class RemoteCompleterApiClient implements CompleterClient {
     }
 
     @Override
+    public CompletionId exceptionallyCompose(FlowId flowId, CompletionId completionId, Serializable fn, CodeLocation codeLocation) {
+        return chainThis(flowId, completionId, "exceptionallyCompose", fn, codeLocation);
+    }
+
+    @Override
     public CompletionId thenCombine(FlowId flowId, CompletionId completionId, Serializable fn, CompletionId alternate, CodeLocation codeLocation) {
         return chainThisWithThat(flowId, completionId, alternate, "thenCombine", fn, codeLocation);
     }
@@ -197,14 +204,14 @@ public class RemoteCompleterApiClient implements CompleterClient {
     public CompletionId anyOf(FlowId flowId, List<CompletionId> cids, CodeLocation codeLocation) {
         return requestCompletion("/graph/" + flowId.getId() + "/anyOf",
                 req -> req.withQueryParam("cids", getCids(cids))
-                          .withHeader(FN_CODE_LOCATION, codeLocation.getLocation()));
+                        .withHeader(FN_CODE_LOCATION, codeLocation.getLocation()));
     }
 
     @Override
     public CompletionId delay(FlowId flowId, long l, CodeLocation codeLocation) {
         return requestCompletion("/graph/" + flowId.getId() + "/delay",
                 req -> req.withQueryParam("delayMs", Long.toString(l))
-                          .withHeader(FN_CODE_LOCATION, codeLocation.getLocation()));
+                        .withHeader(FN_CODE_LOCATION, codeLocation.getLocation()));
     }
 
     // wait for completion  -> result
@@ -243,12 +250,12 @@ public class RemoteCompleterApiClient implements CompleterClient {
         } catch (ClassNotFoundException | IOException | SerUtils.Deserializer.DeserializeException e) {
             throw new ResultSerializationException("Unable to deserialize result received from the completer service", e);
         } catch (Exception e) {
-            throw new PlatformException("Request to completer service failed");
+            throw new PlatformException("Request to completer service failed", e);
         }
     }
 
     @Override
-    public Object waitForCompletion(FlowId flowId, CompletionId id, ClassLoader ignored){
+    public Object waitForCompletion(FlowId flowId, CompletionId id, ClassLoader ignored) {
         try {
             return waitForCompletion(flowId, id, ignored, 0, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
@@ -308,7 +315,7 @@ public class RemoteCompleterApiClient implements CompleterClient {
                         "completer: %s", response.getStatusCode(), response.entityAsString()));
             } catch (IOException e) {
                 throw new PlatformException(String.format("Received unexpected response (%d) from " +
-                        "completer. Could not read body.", response.getStatusCode()));
+                        "completer. Could not read body.", response.getStatusCode()), e);
             }
         }
     }
@@ -323,18 +330,18 @@ public class RemoteCompleterApiClient implements CompleterClient {
         try (com.fnproject.fn.runtime.flow.HttpClient.HttpResponse resp = httpClient.execute(req)) {
             validateSuccessful(resp);
             String completionId = resp.getHeader(STAGE_ID_HEADER);
-            if(completionId == null){
+            if (completionId == null) {
                 throw new PlatformException("Got successful response from completer but no " + STAGE_ID_HEADER + " was present");
             }
             return new CompletionId(completionId);
         } catch (PlatformException e) {
             throw e;
         } catch (Exception e) {
-            throw new PlatformException("Failed to get response from completer: " ,e);
+            throw new PlatformException("Failed to get response from completer: ", e);
         }
     }
 
-    private CompletionId requestCompletionWithBody(String url, Function<HttpClient.HttpRequest, HttpClient.HttpRequest> fn, Serializable ser,
+    private CompletionId requestCompletionWithBody(String url, Function<HttpClient.HttpRequest, HttpClient.HttpRequest> fn, Object ser,
                                                    CodeLocation codeLocation) {
         try {
             byte[] serBytes = SerUtils.serialize(ser);
@@ -363,16 +370,15 @@ public class RemoteCompleterApiClient implements CompleterClient {
             } catch (PlatformException e) {
                 throw e;
             } catch (Exception e) {
-                throw new PlatformException("Failed to get response from completer: " , e);
+                throw new PlatformException("Failed to get response from completer: ", e);
             }
         } catch (IOException e) {
-            throw new LambdaSerializationException("Failed to serialize the lambda: " ,e);
+            throw new LambdaSerializationException("Failed to serialize the lambda: ", e);
         }
     }
 
     private static String getCids(List<CompletionId> cids) {
-        Set<String> completionIds = cids.stream().map(CompletionId::getId).collect(Collectors.toSet());
-        return String.join(",", completionIds);
+        return cids.stream().map(CompletionId::getId).collect(Collectors.joining(","));
     }
 
 

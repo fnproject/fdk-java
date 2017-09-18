@@ -15,6 +15,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.stream.Collectors;
+
 @SuppressWarnings("unused")
 public class ExerciseEverything {
 
@@ -368,8 +369,8 @@ public class ExerciseEverything {
     }
 
 
-    // @Test(34)
-    // @Test.Expect("foobar")
+    @Test(34)
+    @Test.Expect("foobar")
     public FlowFuture<String> externallyCompletableFailure(Flow fl) throws IOException {
         ExternalFlowFuture<HttpRequest> cf = fl.createExternalFuture();
         System.err.println("Running against external future:" + cf.completionUrl() + " : " + cf.failUrl());
@@ -393,9 +394,36 @@ public class ExerciseEverything {
                 );
     }
 
+
+    @Test(35)
+    @Test.Expect("foobar")
+    public FlowFuture<String> exceptionallyComposeHandle(Flow fl) throws IOException {
+
+        return fl.<String>failedFuture(new RuntimeException("foobar"))
+                .exceptionallyCompose((e) -> fl.completedValue(e.getMessage()));
+    }
+
+    @Test(36)
+    @Test.Expect("foobar")
+    public FlowFuture<String> exceptionallyComposePassThru(Flow fl) throws IOException {
+
+        return fl.completedValue("foobar")
+                .exceptionallyCompose((e) -> fl.completedValue(e.getMessage()));
+    }
+
+
+    @Test(37)
+    @Test.Expect("foobar")
+    public FlowFuture<String> exceptionallyComposePropagateError(Flow fl) throws IOException {
+        return fl.<String>failedFuture(new RuntimeException("foo"))
+                .exceptionallyCompose((e) -> {
+                    throw new RuntimeException("foobar");
+                }).exceptionally(Throwable::getMessage);
+    }
+
     private int id;
 
-    void fail() {
+    private void fail() {
         if (!failures.contains(id)) {
             failures.add(id);
         }
@@ -421,37 +449,34 @@ public class ExerciseEverything {
         Flow fl = Flows.currentFlow();
 
         out.println("In main function");
-        Map<Integer, FlowFuture<Object>> awaiting = new TreeMap<>();
+        Map<Integer, FlowFuture<?>> awaiting = new TreeMap<>();
 
         for (Map.Entry<Integer, Method> e : findTests(this).entrySet()) {
             id = e.getKey();
             Method m = e.getValue();
 
-            out.println("Running test " + id);
-
             Test.Catch exWanted = m.getAnnotation(Test.Catch.class);
             String[] values = expectedValues(m);
 
             try {
-                awaiting.put(id, (FlowFuture<Object>) m.invoke(this, fl));
+                awaiting.put(id, (FlowFuture<?>) m.invoke(this, fl));
             } catch (InvocationTargetException ex) {
                 out.println("Failure setting up test " + id + ": " + ex.getCause());
                 ex.printStackTrace(out);
                 fail();
-            } catch (IllegalAccessException e1) {
-            }
+            } catch (IllegalAccessException ignored) { }
         }
 
         for (Map.Entry<Integer, Method> e : findTests(this).entrySet()) {
             id = e.getKey();
             Method m = e.getValue();
 
-            out.println("Running test " + id);
+            out.println("Test " + id + ": Start");
 
             Test.Catch exWanted = m.getAnnotation(Test.Catch.class);
             String[] values = expectedValues(m);
             try {
-                FlowFuture<Object> cf = awaiting.get(id);
+                FlowFuture<?> cf = awaiting.get(id);
                 if (cf == null) {
                     continue;
                 }
@@ -465,10 +490,9 @@ public class ExerciseEverything {
                 }
 
                 if (exWanted != null) {
-                    out.println("  expecting throw of " + Arrays.toString(exWanted.value()));
+                    out.println("Test " + id + ": Failed: expecting throw of " + Arrays.toString(exWanted.value()));
                     fail();
                 }
-
             } catch (Throwable t) {
                 if (exWanted != null) {
                     // We have a series of wrapped exceptions that should follow this containment pattern
@@ -476,17 +500,15 @@ public class ExerciseEverything {
 
                     for (Class<?> c : exWanted.value()) {
                         if (t == null) {
-                            out.println("  end of exception chain, wanted " + c);
+                            out.println("Test" + id + ": Failed: end of exception chain, wanted " + c);
                             fail();
                             break;
                         }
                         if (c.isAssignableFrom(t.getClass())) {
-                            out.println("  exception type as wanted: " + t);
                             String message = coerceToString(t);
-
                             found = found || huntForValues(message, values);
                         } else {
-                            out.println("  exception type mismatch: " + t + ", wanted " + c);
+                            out.println("Test" + id + ": Failed: exception type mismatch: " + t + ", wanted " + c);
                             t.printStackTrace(out);
                             fail();
                             break;
@@ -494,14 +516,17 @@ public class ExerciseEverything {
                         t = t.getCause();
                     }
                     if (!found && values.length > 0) {
-                        out.println("  failed comparison, wanted exception with one of " + Arrays.toString(values));
+                        out.println("Test" + id + ": Failed: failed comparison, wanted exception with one of " + Arrays.toString(values));
                         fail();
                     }
                 } else {
-                    out.println("  got an unexpected exception: " + t);
+                    out.println("Test" + id + ": Failed: got an unexpected exception: " + t);
                     t.printStackTrace(out);
                     fail();
                 }
+            }
+            if(!failures.contains(id)){
+                out.println("Test " + id + ": Passed");
             }
         }
 
@@ -510,7 +535,7 @@ public class ExerciseEverything {
         return bos.toString();
     }
 
-    String coerceToString(Object r) {
+    private String coerceToString(Object r) {
         if (r == null) {
             return null;
         } else if (r instanceof String) {
@@ -527,7 +552,7 @@ public class ExerciseEverything {
         }
     }
 
-    String[] expectedValues(Method m) {
+    private String[] expectedValues(Method m) {
         Test.Expected ex = m.getAnnotation(Test.Expected.class);
         if (ex != null) {
             return Arrays.stream(ex.value()).map(Test.Expect::value).toArray(String[]::new);
@@ -541,21 +566,19 @@ public class ExerciseEverything {
         }
     }
 
-    boolean huntForValues(String match, String... values) {
+   private boolean huntForValues(String match, String... values) {
         for (String v : values) {
             if ((v == null && match == null) || (v != null && v.equals(match))) {
-                out.println("  successfully = " + match);
                 return true;
             }
         }
         if (values.length > 0) {
-            out.println("  failed comparison, wanted one of " + Arrays.toString(values) + " but got " + match);
             return false;
         }
         return true;
     }
 
-    Map<Integer, Method> findTests(Object target) {
+    private Map<Integer, Method> findTests(Object target) {
         Map<Integer, Method> tests = new TreeMap<>();
         for (Method m : target.getClass().getMethods()) {
             Test ann = m.getAnnotation(Test.class);

@@ -1,13 +1,16 @@
 package com.fnproject.fn.runtime.flow;
 
+import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.flow.*;
 import com.fnproject.fn.runtime.exception.PlatformCommunicationException;
 import org.apache.commons.io.IOUtils;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.mockito.ArgumentCaptor;
 
 import java.io.*;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -15,18 +18,42 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import static com.fnproject.fn.runtime.flow.RemoteCompleterApiClient.*;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-
+// Tests against outbound http contract for completer
 public class RemoteCompleterApiClientTest {
+
+    private final ClassLoader classLoader = getClass().getClassLoader();
+    private final CodeLocation codeLocation = locationFn();
+    private final Flows.SerCallable<Integer> serializableLambda = () -> 42;
+    private final byte[] lambdaBytes;
+    private final FlowId flowId = new FlowId("flow-id");
+    private final CompletionId parentId = new CompletionId("parent-id");
+    private final CompletionId otherId = new CompletionId("other-id");
+    private final CompletionId otherId2 = new CompletionId("other-id2");
+
+    {
+        try {
+            lambdaBytes = SerUtils.serialize(serializableLambda);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static CodeLocation locationFn() {
+        return CodeLocation.fromCallerLocation(0);
+    }
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
 
     private HttpClient mockHttpClient = mock(HttpClient.class, RETURNS_DEEP_STUBS);
+
+    private ArgumentCaptor<HttpClient.HttpRequest> reqCaptor = ArgumentCaptor.forClass(HttpClient.HttpRequest.class);
+
+    private RemoteCompleterApiClient completerClient = new RemoteCompleterApiClient("", mockHttpClient);
 
     private static final Throwable[] throwableStageResults = new Throwable[]{
             new RuntimeException("Woops"),
@@ -34,6 +61,7 @@ public class RemoteCompleterApiClientTest {
     };
 
     private static final Map<String, Throwable> platformErrorResults = new HashMap<>();
+
     static {
         platformErrorResults.put(ERROR_TYPE_STAGE_TIMEOUT, new StageTimeoutException("foo"));
         platformErrorResults.put(ERROR_TYPE_STAGE_INVOKE_FAILED, new StageInvokeFailedException("bar"));
@@ -67,8 +95,7 @@ public class RemoteCompleterApiClientTest {
         when((Object) mockHttpClient.execute(any())).thenReturn(response);
 
         // When
-        RemoteCompleterApiClient completerClient = new RemoteCompleterApiClient("", mockHttpClient);
-        Object result = completerClient.waitForCompletion(new FlowId("1"), new CompletionId("2"), getClass().getClassLoader());
+        Object result = completerClient.waitForCompletion(new FlowId("1"), new CompletionId("2"), classLoader);
 
         // Then
         assertThat(result).isInstanceOf(HttpResponse.class);
@@ -87,14 +114,14 @@ public class RemoteCompleterApiClientTest {
         when((Object) mockHttpClient.execute(any())).thenAnswer(inv -> {
             try {
                 Thread.sleep(1000);
-            } catch(Exception e) { }
+            } catch (Exception e) {
+            }
             return response;
         });
 
         // When
-        RemoteCompleterApiClient completerClient = new RemoteCompleterApiClient("", mockHttpClient);
         Object result = completerClient
-                .waitForCompletion(new FlowId("1"), new CompletionId("2"), getClass().getClassLoader(), 0 , TimeUnit.SECONDS);
+                .waitForCompletion(new FlowId("1"), new CompletionId("2"), classLoader, 0, TimeUnit.SECONDS);
 
         // Then
         assertThat(result).isInstanceOf(HttpResponse.class);
@@ -115,8 +142,7 @@ public class RemoteCompleterApiClientTest {
         });
 
         // When
-        RemoteCompleterApiClient completerClient = new RemoteCompleterApiClient("", mockHttpClient);
-        completerClient.waitForCompletion(new FlowId("1"), new CompletionId("2"), getClass().getClassLoader(), 100 , TimeUnit.MILLISECONDS);
+        completerClient.waitForCompletion(new FlowId("1"), new CompletionId("2"), classLoader, 100, TimeUnit.MILLISECONDS);
     }
 
     @Test
@@ -134,10 +160,9 @@ public class RemoteCompleterApiClientTest {
         });
 
         // When
-        RemoteCompleterApiClient completerClient = new RemoteCompleterApiClient("", mockHttpClient);
         try {
-            completerClient.waitForCompletion(new FlowId("1"), new CompletionId("2"), getClass().getClassLoader());
-        }  catch (PlatformException e) {
+            completerClient.waitForCompletion(new FlowId("1"), new CompletionId("2"), classLoader);
+        } catch (PlatformException e) {
             assertThat(e.getCause()).isInstanceOf(TimeoutException.class);
         }
     }
@@ -155,12 +180,12 @@ public class RemoteCompleterApiClientTest {
         when((Object) mockHttpClient.execute(any())).thenReturn(response);
 
         // When
-        RemoteCompleterApiClient completerClient = new RemoteCompleterApiClient("", mockHttpClient);
         try {
-            Object result = completerClient.waitForCompletion(new FlowId("1"), new CompletionId("2"), getClass().getClassLoader());
+            completerClient.waitForCompletion(new FlowId("1"), new CompletionId("2"), classLoader);
+            fail("should have thrown an exception");
         } catch (FlowCompletionException e) {
             assertThat(e.getCause()).isInstanceOfAny(FunctionInvocationException.class);
-            assertThat(((FunctionInvocationException)e.getCause()).getFunctionResponse().getStatusCode()).isEqualTo(500);
+            assertThat(((FunctionInvocationException) e.getCause()).getFunctionResponse().getStatusCode()).isEqualTo(500);
         }
     }
 
@@ -177,8 +202,7 @@ public class RemoteCompleterApiClientTest {
         when((Object) mockHttpClient.execute(any())).thenReturn(response);
 
         // When
-        RemoteCompleterApiClient completerClient = new RemoteCompleterApiClient("", mockHttpClient);
-        Object result = completerClient.waitForCompletion(new FlowId("1"), new CompletionId("2"), getClass().getClassLoader());
+        Object result = completerClient.waitForCompletion(new FlowId("1"), new CompletionId("2"), classLoader);
 
         // Then
         assertThat(result).isInstanceOf(HttpRequest.class);
@@ -198,14 +222,13 @@ public class RemoteCompleterApiClientTest {
         when((Object) mockHttpClient.execute(any())).thenReturn(response);
 
         // When
-        RemoteCompleterApiClient completerClient = new RemoteCompleterApiClient("", mockHttpClient);
         try {
-            completerClient.waitForCompletion(new FlowId("1"), new CompletionId("2"), getClass().getClassLoader());
+            completerClient.waitForCompletion(new FlowId("1"), new CompletionId("2"), classLoader);
             fail("Should have thrown an exception");
         } catch (FlowCompletionException e) {
             // Just as with thrown exceptions, the ECEx is wrapped in a CCEx on .get
             assertThat(e.getCause()).isInstanceOfAny(ExternalCompletionException.class);
-            assertThat(((ExternalCompletionException)e.getCause()).getExternalRequest().getMethod()).isEqualTo(HttpMethod.POST);
+            assertThat(((ExternalCompletionException) e.getCause()).getExternalRequest().getMethod()).isEqualTo(HttpMethod.POST);
         }
     }
 
@@ -223,13 +246,12 @@ public class RemoteCompleterApiClientTest {
         when(invalidResponse.entityAsString()).thenReturn(errorResponse);
         when((Object) mockHttpClient.execute(any())).thenReturn(invalidResponse);
 
-        RemoteCompleterApiClient completerClient = new RemoteCompleterApiClient("", mockHttpClient);
-        completerClient.waitForCompletion(new FlowId("1"), new CompletionId("2"), getClass().getClassLoader());
+        completerClient.waitForCompletion(new FlowId("1"), new CompletionId("2"), classLoader);
     }
 
     @Test
     public void waitForCompletionThrowsPlatformExceptionIfErrorInHeader() throws Exception {
-        for (Map.Entry<String, Throwable> item: platformErrorResults.entrySet()) {
+        for (Map.Entry<String, Throwable> item : platformErrorResults.entrySet()) {
             String errorHeader = item.getKey();
             Throwable exception = item.getValue();
 
@@ -245,14 +267,13 @@ public class RemoteCompleterApiClientTest {
 
             when((Object) mockHttpClient.execute(any())).thenReturn(response);
 
-            RemoteCompleterApiClient completerClient = new RemoteCompleterApiClient("", mockHttpClient);
-            completerClient.waitForCompletion(new FlowId("1"), new CompletionId("2"), getClass().getClassLoader());
+            completerClient.waitForCompletion(new FlowId("1"), new CompletionId("2"), classLoader);
         }
     }
 
     @Test
     public void waitForCompletionThrowsCompletionExceptionIfFailedInHeader() throws Exception {
-        for(Throwable stageResult : throwableStageResults) {
+        for (Throwable stageResult : throwableStageResults) {
             thrown.expect(FlowCompletionException.class);
             thrown.expectMessage(stageResult.getMessage());
 
@@ -263,8 +284,7 @@ public class RemoteCompleterApiClientTest {
             response.setEntity(serializeToStream(stageResult));
             when((Object) mockHttpClient.execute(any())).thenReturn(response);
 
-            RemoteCompleterApiClient completerClient = new RemoteCompleterApiClient("", mockHttpClient);
-            completerClient.waitForCompletion(new FlowId("1"), new CompletionId("2"), getClass().getClassLoader());
+            completerClient.waitForCompletion(new FlowId("1"), new CompletionId("2"), classLoader);
         }
     }
 
@@ -282,8 +302,7 @@ public class RemoteCompleterApiClientTest {
 
         when((Object) mockHttpClient.execute(any())).thenReturn(response);
 
-        RemoteCompleterApiClient completerClient = new RemoteCompleterApiClient("", mockHttpClient);
-        completerClient.waitForCompletion(new FlowId("1"), new CompletionId("2"), getClass().getClassLoader());
+        completerClient.waitForCompletion(new FlowId("1"), new CompletionId("2"), classLoader);
     }
 
     @Test
@@ -295,7 +314,7 @@ public class RemoteCompleterApiClientTest {
         RemoteCompleterApiClient completerClient = new RemoteCompleterApiClient("", mockHttpClient);
         Flows.SerCallable<Optional<String>> unserializableLambda = () -> unserializableValue;
 
-        completerClient.supply(new FlowId("flow-id"), unserializableLambda, CodeLocation.unknownLocation());
+        completerClient.supply(new FlowId("flow-id"), unserializableLambda, codeLocation);
     }
 
     @Test
@@ -318,6 +337,308 @@ public class RemoteCompleterApiClientTest {
         Flows.SerCallable<Integer> serializableLambda = () -> 42;
         when((Object) mockHttpClient.execute(any())).thenThrow(new RuntimeException("Connection refused"));
 
-        completerClient.supply(new FlowId("flow-id"), serializableLambda, CodeLocation.unknownLocation());
+        completerClient.supply(new FlowId("flow-id"), serializableLambda, codeLocation);
     }
+
+    @Test
+    public void callsCreateFlowOK() throws Exception {
+        HttpClient.HttpResponse stageResponse = new HttpClient.HttpResponse(200);
+        stageResponse.addHeader(FLOW_ID_HEADER, "flow-id");
+        when(mockHttpClient.execute(any())).thenReturn(stageResponse);
+        FlowId flowId = completerClient.createFlow("funcy");
+
+        assertThat(flowId.getId()).isEqualTo("flow-id");
+
+        verify(mockHttpClient, times(1)).execute(reqCaptor.capture());
+        verifyNoMoreInteractions(mockHttpClient);
+        HttpClient.HttpRequest req = reqCaptor.getValue();
+        assertThat(req.method).isEqualTo("POST");
+        assertThat(req.url).isEqualTo("/graph");
+        assertThat(req.query).contains(entry("functionId","funcy"));
+    }
+    @Test
+    public void callsSupplyOK() throws Exception {
+        givenValidStageResponse();
+
+        verifyStageCreatedOnGraph(completerClient.supply(flowId, serializableLambda, codeLocation), "supply");
+    }
+
+    @Test
+    public void callsThenApplyOk() throws Exception {
+        givenValidStageResponse();
+
+        verifyStageCreatedOnGraph(completerClient.thenApply(flowId, parentId, serializableLambda, codeLocation), "stage/parent-id/thenApply");
+    }
+
+    @Test
+    public void callsThenAcceptOk() throws Exception {
+        givenValidStageResponse();
+
+        verifyStageCreatedOnGraph(completerClient.thenAccept(flowId, parentId, serializableLambda, codeLocation), "stage/parent-id/thenAccept");
+    }
+
+    @Test
+    public void callsThenCombine() throws Exception {
+        givenValidStageResponse();
+
+        HttpClient.HttpRequest req = verifyStageCreatedOnGraph(completerClient.thenCombine(flowId, parentId, serializableLambda, otherId, codeLocation), "stage/parent-id/thenCombine");
+
+        assertThat(req.query).contains(entry("other", "other-id"));
+    }
+
+
+    @Test
+    public void callsThenCompose() throws Exception {
+        givenValidStageResponse();
+
+        verifyStageCreatedOnGraph(completerClient.thenCompose(flowId, parentId, serializableLambda, codeLocation), "stage/parent-id/thenCompose");
+    }
+
+    @Test
+    public void callsWhenComplete() throws Exception {
+        givenValidStageResponse();
+
+        verifyStageCreatedOnGraph(completerClient.whenComplete(flowId, parentId, serializableLambda, codeLocation), "stage/parent-id/whenComplete");
+    }
+
+    @Test
+    public void callsThenAccept() throws Exception {
+        givenValidStageResponse();
+
+        verifyStageCreatedOnGraph(completerClient.thenAccept(flowId, parentId, serializableLambda, codeLocation), "stage/parent-id/thenAccept");
+    }
+
+    @Test
+    public void callsThenRun() throws Exception {
+        givenValidStageResponse();
+
+        verifyStageCreatedOnGraph(completerClient.thenRun(flowId, parentId, serializableLambda, codeLocation), "stage/parent-id/thenRun");
+    }
+
+    @Test
+    public void callsAcceptEither() throws Exception {
+        givenValidStageResponse();
+
+        HttpClient.HttpRequest req = verifyStageCreatedOnGraph(completerClient.acceptEither(flowId, parentId, otherId, serializableLambda, codeLocation), "stage/parent-id/acceptEither");
+
+        assertThat(req.query).contains(entry("other", "other-id"));
+    }
+
+    @Test
+    public void callsApplyToEither() throws Exception {
+        givenValidStageResponse();
+
+        HttpClient.HttpRequest req = verifyStageCreatedOnGraph(completerClient.applyToEither(flowId, parentId, otherId, serializableLambda, codeLocation), "stage/parent-id/applyToEither");
+
+        assertThat(req.query).contains(entry("other", "other-id"));
+    }
+
+    @Test
+    public void callsThenAcceptBoth() throws Exception {
+        givenValidStageResponse();
+
+        HttpClient.HttpRequest req = verifyStageCreatedOnGraph(completerClient.thenAcceptBoth(flowId, parentId, otherId, serializableLambda, codeLocation), "stage/parent-id/thenAcceptBoth");
+
+        assertThat(req.query).contains(entry("other", "other-id"));
+    }
+
+
+    @Test
+    public void callsHandle() throws Exception {
+        givenValidStageResponse();
+        verifyStageCreatedOnGraph(completerClient.handle(flowId, parentId,serializableLambda, codeLocation), "stage/parent-id/handle");
+    }
+
+    @Test
+    public void callsExceptionally() throws Exception {
+        givenValidStageResponse();
+        verifyStageCreatedOnGraph(completerClient.exceptionally(flowId, parentId,serializableLambda, codeLocation), "stage/parent-id/exceptionally");
+    }
+
+    @Test
+    public void createsExternalFuture() throws Exception {
+        givenValidStageResponse();
+
+        ExternalCompletion completion = completerClient.createExternalCompletion(flowId, codeLocation);
+
+        String url = String.format("/graph/%s/externalCompletion", flowId.getId());
+        verify(mockHttpClient, times(1)).execute(reqCaptor.capture());
+        verifyNoMoreInteractions(mockHttpClient);
+
+        assertThat(completion.completionId().getId()).isEqualTo("stage");
+        HttpClient.HttpRequest req = reqCaptor.getValue();
+        assertThat(req.method).isEqualTo("POST");
+        assertThat(req.url).isEqualTo(url);
+        assertThat(req.headers).contains(
+                entry(FN_CODE_LOCATION, codeLocation.getLocation()));
+        assertThat(completion.completeURI()).hasPath("/graph/flow-id/stage/stage/complete");
+        assertThat(completion.failureURI()).hasPath("/graph/flow-id/stage/stage/fail");
+
+    }
+
+
+    @Test
+    public void createsInvokeFunction() throws Exception {
+        givenValidStageResponse();
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Header-1", "h1");
+        headers.put("Header-2", "h2");
+
+
+        CompletionId completion = completerClient.invokeFunction(flowId, "funcy", "data".getBytes(), HttpMethod.GET, Headers.fromMap(headers), codeLocation);
+
+        String url = String.format("/graph/%s/invokeFunction", flowId.getId());
+
+        verify(mockHttpClient, times(1)).execute(reqCaptor.capture());
+        verifyNoMoreInteractions(mockHttpClient);
+
+        assertThat(completion.getId()).isEqualTo("stage");
+        HttpClient.HttpRequest req = reqCaptor.getValue();
+        assertThat(req.query).contains(entry("functionId", "funcy"));
+        assertThat(req.method).isEqualTo("POST");
+        assertThat(req.url).isEqualTo(url);
+        assertThat(req.headers).contains(
+                entry(DATUM_TYPE_HEADER, DATUM_TYPE_HTTP_REQ),
+                entry(USER_HEADER_PREFIX + "Header-1", "h1"),
+                entry(USER_HEADER_PREFIX + "Header-2", "h2"),
+                entry(CONTENT_TYPE_HEADER, DEFAULT_CONTENT_TYPE),
+                entry(FN_CODE_LOCATION, codeLocation.getLocation()));
+
+
+    }
+
+
+    @Test
+    public void callsCompletedValueSuccess() throws Exception {
+        givenValidStageResponse();
+
+        HttpClient.HttpRequest req = verifyStageCreatedOnGraph(completerClient.completedValue(flowId, true, serializableLambda, codeLocation), "completedValue");
+
+        assertThat(req.headers).contains(entry(RESULT_STATUS_HEADER, RESULT_STATUS_SUCCESS));
+
+    }
+
+    @Test
+    public void callsCompletedValueFailure() throws Exception {
+        givenValidStageResponse();
+
+        HttpClient.HttpRequest req = verifyStageCreatedOnGraph(completerClient.completedValue(flowId, false, serializableLambda, codeLocation), "completedValue");
+
+        assertThat(req.headers).contains(entry(RESULT_STATUS_HEADER, RESULT_STATUS_FAILURE));
+
+    }
+
+
+    @Test
+    public void callsAllOf() throws Exception {
+        givenValidStageResponse();
+
+        CompletionId completion = completerClient.allOf(flowId, Arrays.asList(otherId,otherId2), codeLocation);
+
+        verify(mockHttpClient, times(1)).execute(reqCaptor.capture());
+        verifyNoMoreInteractions(mockHttpClient);
+
+        assertThat(completion.getId()).isEqualTo("stage");
+        HttpClient.HttpRequest req = reqCaptor.getValue();
+        assertThat(req.query).contains(entry("cids", "other-id,other-id2"));
+        assertThat(req.method).isEqualTo("POST");
+        assertThat(req.url).isEqualTo("/graph/flow-id/allOf");
+        assertThat(req.headers).contains(
+                entry(FN_CODE_LOCATION, codeLocation.getLocation()));
+    }
+
+    @Test
+    public void callsAnyOf() throws Exception {
+        givenValidStageResponse();
+
+        CompletionId completion = completerClient.anyOf(flowId, Arrays.asList(otherId,otherId2), codeLocation);
+
+        verify(mockHttpClient, times(1)).execute(reqCaptor.capture());
+        verifyNoMoreInteractions(mockHttpClient);
+
+        assertThat(completion.getId()).isEqualTo("stage");
+        HttpClient.HttpRequest req = reqCaptor.getValue();
+        assertThat(req.query).contains(entry("cids", "other-id,other-id2"));
+        assertThat(req.method).isEqualTo("POST");
+        assertThat(req.url).isEqualTo("/graph/flow-id/anyOf");
+        assertThat(req.headers).contains(
+                entry(FN_CODE_LOCATION, codeLocation.getLocation()));
+
+    }
+
+    @Test
+    public void callsDelay() throws Exception {
+        givenValidStageResponse();
+
+        CompletionId completion = completerClient.delay(flowId, 3141, codeLocation);
+
+        verify(mockHttpClient, times(1)).execute(reqCaptor.capture());
+        verifyNoMoreInteractions(mockHttpClient);
+
+        assertThat(completion.getId()).isEqualTo("stage");
+        HttpClient.HttpRequest req = reqCaptor.getValue();
+        assertThat(req.query).contains(entry("delayMs", "3141"));
+        assertThat(req.method).isEqualTo("POST");
+        assertThat(req.url).isEqualTo("/graph/flow-id/delay");
+        assertThat(req.headers).contains(
+                entry(FN_CODE_LOCATION, codeLocation.getLocation()));
+    }
+
+    @Test
+    public void callsCommit() throws Exception{
+        HttpClient.HttpResponse stageResponse = new HttpClient.HttpResponse(200);
+        when(mockHttpClient.execute(any())).thenReturn(stageResponse);
+
+        completerClient.commit(flowId);
+        verify(mockHttpClient, times(1)).execute(reqCaptor.capture());
+        verifyNoMoreInteractions(mockHttpClient);
+
+        HttpClient.HttpRequest req = reqCaptor.getValue();
+        assertThat(req.method).isEqualTo("POST");
+        assertThat(req.url).isEqualTo("/graph/flow-id/commit");
+    }
+
+
+    @Test
+    public void callsAddTerminationHook() throws Exception{
+        HttpClient.HttpResponse stageResponse = new HttpClient.HttpResponse(200);
+        when(mockHttpClient.execute(any())).thenReturn(stageResponse);
+
+        completerClient.addTerminationHook(flowId,serializableLambda,codeLocation);
+        verify(mockHttpClient, times(1)).execute(reqCaptor.capture());
+        verifyNoMoreInteractions(mockHttpClient);
+
+        HttpClient.HttpRequest req = reqCaptor.getValue();
+        assertThat(req.method).isEqualTo("POST");
+        assertThat(req.url).isEqualTo("/graph/flow-id/terminationHook");
+        assertThat(req.headers).contains(
+                entry(FN_CODE_LOCATION, codeLocation.getLocation()),
+                entry(DATUM_TYPE_HEADER, DATUM_TYPE_BLOB),
+                entry(CONTENT_TYPE_HEADER, CONTENT_TYPE_JAVA_OBJECT));
+        assertThat(req.bodyBytes).isEqualTo(lambdaBytes);
+    }
+
+    private HttpClient.HttpRequest verifyStageCreatedOnGraph(CompletionId id, String op) throws IOException {
+        String url = String.format("/graph/%s/%s", flowId.getId(), op);
+        verify(mockHttpClient, times(1)).execute(reqCaptor.capture());
+        verifyNoMoreInteractions(mockHttpClient);
+
+        assertThat(id.getId()).isEqualTo("stage");
+        HttpClient.HttpRequest req = reqCaptor.getValue();
+        assertThat(req.method).isEqualTo("POST");
+        assertThat(req.url).isEqualTo(url);
+        assertThat(req.headers).contains(
+                entry(FN_CODE_LOCATION, codeLocation.getLocation()),
+                entry(DATUM_TYPE_HEADER, DATUM_TYPE_BLOB),
+                entry(CONTENT_TYPE_HEADER, CONTENT_TYPE_JAVA_OBJECT));
+        assertThat(req.bodyBytes).isEqualTo(lambdaBytes);
+        return req;
+    }
+
+    private void givenValidStageResponse() throws IOException {
+        HttpClient.HttpResponse stageResponse = new HttpClient.HttpResponse(200);
+        stageResponse.addHeader(STAGE_ID_HEADER, "stage");
+        when(mockHttpClient.execute(any())).thenReturn(stageResponse);
+    }
+
 }

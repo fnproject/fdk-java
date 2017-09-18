@@ -93,6 +93,36 @@ public interface FlowFuture<T> extends Serializable {
      */
     <X> FlowFuture<X> thenCompose(Flows.SerFunction<T, FlowFuture<X>> fn);
 
+
+    /**
+     * Compose a new computation on to the completion of this future to handle errors,
+     *
+     * <p>
+     * {@code exceptionallyCompose} works like a combination of {@link #thenCompose(Flows.SerFunction)} and {@link #exceptionally(Flows.SerFunction)}. This allows an error handler to compose a new computation into the graph in order to recover from errors.
+     * <p>
+     * For instance you may use this to re-try a call :
+     * <blockquote><pre>{@code
+     *    private static FlowFuture<String> retryOnError(String input, int attemptsLeft) {
+     *         Flow fl = Flows.currentFlow();
+     *         fl.invokeFunction("./unreliableFunction")
+     *           .exceptionallyCompose((t)->{
+     *              if(isRecoverable(t) && attemptsLeft  > 0){
+     *                  return retryOnError(input,attemptsLeft -1);
+     *              }else{
+     *                  return fl.failedFuture(t);
+     *              }
+     *           });
+     *    }
+     * }</pre></blockquote>
+     *
+     * If the lambda returns null then the compose stage will fail with a {@link InvalidStageResponseException}.
+     *
+     * @param fn  a serializable function that returns a new computation to chain after the completion of this future
+     * @return a new future which will complete in the same way as the future returned by {@code fn}
+     * @see java.util.concurrent.CompletionStage#thenCompose(java.util.function.Function)
+     */
+    FlowFuture<T> exceptionallyCompose(Flows.SerFunction<Throwable, FlowFuture<T>> fn);
+
     /**
      * Combine the result of this future and another future into a single value when both have completed normally:
      * <blockquote><pre>{@code

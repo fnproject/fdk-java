@@ -17,6 +17,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.regex.Matcher;
@@ -191,11 +192,11 @@ class InMemCompleter implements CompleterClient {
     }
 
     @Override
-    public CompletionId supply(FlowId flowID, Serializable code,  CodeLocation codeLocation) {
-        return withActiveGraph(flowID, graph -> graph.addSupplyStage(serializeClosure(code))).getId();
+    public CompletionId supply(FlowId flowID, Serializable code, CodeLocation codeLocation) {
+        return withActiveGraph(flowID, graph -> graph.addSupplyStage(serializeJava(code))).getId();
     }
 
-    private Datum.Blob serializeClosure(Serializable code) {
+    private Datum.Blob serializeJava(Object code) {
         try {
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             ObjectOutputStream oos = new ObjectOutputStream(bos);
@@ -223,14 +224,14 @@ class InMemCompleter implements CompleterClient {
     public CompletionId thenApply(FlowId flowID, CompletionId completionId, Serializable code, CodeLocation codeLocation) {
         return withActiveGraph(flowID,
                 (graph) -> graph.withStage(completionId,
-                        (parent) -> parent.addThenApplyStage(serializeClosure(code)))).getId();
+                        (parent) -> parent.addThenApplyStage(serializeJava(code)))).getId();
     }
 
     @Override
     public CompletionId whenComplete(FlowId flowID, CompletionId completionId, Serializable code, CodeLocation codeLocation) {
         return withActiveGraph(flowID,
                 (graph) -> graph.withStage(completionId,
-                        (parent) -> parent.addWhenCompleteStage(serializeClosure(code)))).getId();
+                        (parent) -> parent.addWhenCompleteStage(serializeJava(code)))).getId();
 
     }
 
@@ -238,7 +239,7 @@ class InMemCompleter implements CompleterClient {
     public CompletionId thenCompose(FlowId flowId, CompletionId completionId, Serializable code, CodeLocation codeLocation) {
         return withActiveGraph(flowId,
                 (graph) -> graph.withStage(completionId,
-                        (parent) -> parent.addThenComposeStage(serializeClosure(code)))).getId();
+                        (parent) -> parent.addThenComposeStage(serializeJava(code)))).getId();
     }
 
     @Override
@@ -297,9 +298,8 @@ class InMemCompleter implements CompleterClient {
             }));
         } catch (PlatformException e) {
             if (e.getCause() instanceof TimeoutException) {
-                throw (TimeoutException)e.getCause();
-            }
-            else throw e;
+                throw (TimeoutException) e.getCause();
+            } else throw e;
         }
     }
 
@@ -307,14 +307,14 @@ class InMemCompleter implements CompleterClient {
     public CompletionId thenAccept(FlowId flowId, CompletionId completionId, Serializable code, CodeLocation codeLocation) {
         return withActiveGraph(flowId,
                 (graph) -> graph.withStage(completionId,
-                        (parent) -> parent.addThenAcceptStage(serializeClosure(code)))).getId();
+                        (parent) -> parent.addThenAcceptStage(serializeJava(code)))).getId();
     }
 
     @Override
     public CompletionId thenRun(FlowId flowId, CompletionId completionId, Serializable code, CodeLocation codeLocation) {
         return withActiveGraph(flowId,
                 (graph) -> graph.withStage(completionId,
-                        (parent) -> parent.addThenRunStage(serializeClosure(code)))).getId();
+                        (parent) -> parent.addThenRunStage(serializeJava(code)))).getId();
 
     }
 
@@ -325,7 +325,7 @@ class InMemCompleter implements CompleterClient {
                         graph.withStage(alternate,
                                 (other) ->
                                         graph.appendChildStage(completionId,
-                                                (parent) -> parent.addAcceptEitherStage(other, serializeClosure(code))).getId()));
+                                                (parent) -> parent.addAcceptEitherStage(other, serializeJava(code))).getId()));
 
     }
 
@@ -336,7 +336,7 @@ class InMemCompleter implements CompleterClient {
                         graph.withStage(alternate,
                                 (other) ->
                                         graph.withStage(completionId,
-                                                (parent) -> parent.addApplyToEitherStage(other, serializeClosure(code))).getId()));
+                                                (parent) -> parent.addApplyToEitherStage(other, serializeJava(code))).getId()));
     }
 
     @Override
@@ -362,7 +362,7 @@ class InMemCompleter implements CompleterClient {
                         graph.withStage(alternate,
                                 (other) ->
                                         graph.withStage(completionId,
-                                                (parent) -> parent.addThenAcceptBothStage(other, serializeClosure(code))).getId()));
+                                                (parent) -> parent.addThenAcceptBothStage(other, serializeJava(code))).getId()));
 
     }
 
@@ -382,9 +382,9 @@ class InMemCompleter implements CompleterClient {
     }
 
     @Override
-    public CompletionId completedValue(FlowId flowId, Serializable value, CodeLocation codeLocation) {
+    public CompletionId completedValue(FlowId flowId, boolean success, Object value, CodeLocation codeLocation) {
         return withActiveGraph(flowId, (graph) ->
-                graph.addCompletedValue(new Datum.BlobDatum(serializeClosure(value)))).getId();
+                graph.addCompletedValue(success, new Datum.BlobDatum(serializeJava(value)))).getId();
     }
 
     @Override
@@ -399,7 +399,7 @@ class InMemCompleter implements CompleterClient {
         return withActiveGraph(flowId,
                 (graph) ->
                         graph.withStage(completionId,
-                                (stage) -> stage.addHandleStage(serializeClosure(code))).getId());
+                                (stage) -> stage.addHandleStage(serializeJava(code))).getId());
     }
 
     @Override
@@ -407,7 +407,15 @@ class InMemCompleter implements CompleterClient {
         return withActiveGraph(flowId,
                 (graph) ->
                         graph.withStage(completionId,
-                                (stage) -> stage.addExceptionallyStage(serializeClosure(code))).getId());
+                                (stage) -> stage.addExceptionallyStage(serializeJava(code))).getId());
+    }
+
+    @Override
+    public CompletionId exceptionallyCompose(FlowId flowId, CompletionId completionId, Serializable code, CodeLocation codeLocation) {
+        return withActiveGraph(flowId,
+                (graph) ->
+                        graph.withStage(completionId,
+                                (stage) -> stage.addExceptionallyComposeStage(serializeJava(code))).getId());
     }
 
     @Override
@@ -417,7 +425,7 @@ class InMemCompleter implements CompleterClient {
                         graph.withStage(alternate,
                                 (other) ->
                                         graph.appendChildStage(completionId,
-                                                (parent) -> parent.addThenCombineStage(other, serializeClosure(code))).getId()));
+                                                (parent) -> parent.addThenCombineStage(other, serializeJava(code))).getId()));
 
     }
 
@@ -429,7 +437,7 @@ class InMemCompleter implements CompleterClient {
     @Override
     public void addTerminationHook(FlowId flowId, Serializable code, CodeLocation codeLocation) {
         withActiveGraph(flowId, (g) -> {
-            g.addTerminationHook(serializeClosure(code));
+            g.addTerminationHook(serializeJava(code));
 
             return null;
         });
@@ -537,8 +545,15 @@ class InMemCompleter implements CompleterClient {
             return function.apply(stages);
         }
 
-        private Stage addCompletedValue(Datum value) {
-            CompletableFuture<Result> future = CompletableFuture.completedFuture(Result.success(value));
+        private Stage addCompletedValue(boolean success, Datum value) {
+            CompletableFuture<Result> future;
+
+            if (success) {
+                future = CompletableFuture.completedFuture(Result.success(value));
+            } else {
+                future = new CompletableFuture<>();
+                future.completeExceptionally(new ResultException(value));
+            }
             return addStage(new Stage(CompletableFuture.completedFuture(Collections.emptyList()),
                     (x, f) -> future));
         }
@@ -600,7 +615,7 @@ class InMemCompleter implements CompleterClient {
         }
 
         private void addTerminationHook(Datum.Blob closure) {
-            this.terminationHooks.add(0,new TerminationHook(newStageId(), closure));
+            this.terminationHooks.add(0, new TerminationHook(newStageId(), closure));
 
         }
 
@@ -654,17 +669,7 @@ class InMemCompleter implements CompleterClient {
             private Stage addThenComposeStage(Datum.Blob closure) {
                 BiFunction<Stage, CompletionStage<List<Result>>, CompletionStage<Result>> invokefn =
                         chainInvocation(closure)
-                                .andThen((resultStage) -> resultStage.thenCompose(result -> {
-                                    if (result.getDatum() instanceof Datum.StageRefDatum) {
-                                        String ref = ((Datum.StageRefDatum) result.getDatum()).getStageId();
-
-                                        Stage stage = findStage(new CompletionId(ref)).orElseThrow(() ->
-                                                new ResultException(new Datum.ErrorDatum(Datum.ErrorType.invalid_stage_response, "returned stage not found")));
-                                        return stage.outputFuture;
-                                    } else {
-                                        throw new ResultException(new Datum.ErrorDatum(Datum.ErrorType.invalid_stage_response, "Result was not a stageref datum"));
-                                    }
-                                }));
+                                .andThen((resultStage) -> resultStage.thenCompose(this::composeResultStage));
 
                 return addStage(new Stage(outputFuture().thenApply(Collections::singletonList), invokefn
                 ));
@@ -777,6 +782,58 @@ class InMemCompleter implements CompleterClient {
                                 (input1, input2) -> Arrays.asList(input1, input2)),
                         chainInvocation(closure)
                 ));
+            }
+
+            private BiConsumer<Result, Throwable> mapToResult(CompletableFuture<Result> result) {
+                return (innerResult, innerErr) -> {
+                    if (innerErr != null) {
+                        if (innerErr instanceof CompletionException && innerErr.getCause() instanceof ResultException) {
+                            result.completeExceptionally(((ResultException) innerErr.getCause()));
+
+                        } else {
+                            result.completeExceptionally(new ResultException(new Datum.ErrorDatum(Datum.ErrorType.unknown_error, "Unexpected error" + innerErr.getMessage())));
+                        }
+                    } else {
+                        result.complete(innerResult);
+                    }
+                };
+            }
+
+            public Stage addExceptionallyComposeStage(Datum.Blob blob) {
+                CompletableFuture<Result> result = new CompletableFuture<>();
+
+                BiFunction<Stage, CompletionStage<List<Result>>, CompletionStage<Result>> invoke =
+                        (stage, inputs) -> {
+                            inputs.whenComplete((v, err) -> {
+                                if (err != null) {
+                                    if (err instanceof CompletionException && err.getCause() instanceof ResultException) {
+                                        chainInvocation(blob)
+                                                .apply(stage, CompletableFuture.completedFuture(Arrays.asList(((ResultException) err.getCause()).toResult())))
+                                                .thenCompose(this::composeResultStage).whenComplete(mapToResult(result));
+
+                                    } else {
+                                        result.completeExceptionally(new ResultException(new Datum.ErrorDatum(Datum.ErrorType.unknown_error, "Unexpected error" + err.getMessage())));
+                                    }
+                                } else {
+                                    result.complete(v.get(0));
+                                }
+                            });
+
+                            return result;
+                        };
+                return addStage(new Stage(outputFuture().thenApply(Collections::singletonList), invoke));
+            }
+
+            private CompletionStage<Result> composeResultStage(Result r) {
+                if (r.getDatum() instanceof Datum.StageRefDatum) {
+                    String ref = ((Datum.StageRefDatum) r.getDatum()).getStageId();
+
+                    Stage otherStage = findStage(new CompletionId(ref)).orElseThrow(() ->
+                            new ResultException(new Datum.ErrorDatum(Datum.ErrorType.invalid_stage_response, "returned stage not found")));
+                    return otherStage.outputFuture;
+                } else {
+                    throw new ResultException(new Datum.ErrorDatum(Datum.ErrorType.invalid_stage_response, "Result was not a stageref datum"));
+                }
             }
         }
     }
