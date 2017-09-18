@@ -3,23 +3,32 @@ package com.example.fn;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fnproject.fn.api.Headers;
-import com.fnproject.fn.api.flow.Flow;
 import com.fnproject.fn.api.flow.FlowFuture;
 import com.fnproject.fn.api.flow.Flows;
 
 import com.fnproject.fn.api.flow.HttpMethod;
+import com.fnproject.fn.api.flow.HttpResponse;
 
 import java.io.IOException;
-import java.io.Serializable;
 
 public class BookingFlow {
 
     public void handleRequest(ApiSchemas.BookingRequest request) {
         invokeFunction("./flight/book", request.flight)
-        .thenCompose((flightConfirmation) -> invokeFunction("./hotel/book", request.hotel)
-            .thenCompose((hotelConfirmation) -> invokeFunction("./car/book", request.car)
-                .thenCompose((carConfirmation) -> invokeFunction("./email", getSuccessEmailBody(flightConfirmation, hotelConfirmation, carConfirmation))))
+            .thenCompose((flightConfirmation) -> invokeFunction("./hotel/book", request.hotel)
+                .thenCompose((hotelConfirmation) -> invokeFunction("./car/book", request.car)
+                    .exceptionallyCompose((e) -> retryInvokeFunction(e, "./car/cancel", request.car))
+                    .thenCompose((carConfirmation) -> invokeFunction("./email", getSuccessEmailBody(flightConfirmation, hotelConfirmation, carConfirmation))))
+                .exceptionallyCompose((e) -> retryInvokeFunction(e, "./hotel/cancel", request.hotel))
+            .exceptionallyCompose((e) -> retryInvokeFunction(e, "./flight/cancel", request.flight))
+            .whenComplete((r1, e1) -> invokeFunction("./email", FAIL_EMAIL_BODY))
         );
+    }
+
+    private FlowFuture<String> retryInvokeFunction(Throwable e, String functionName, Object requestBody) {
+
+    return Retry.exponentialWithJitter(() -> invokeFunction(functionName, requestBody))
+            .thenCompose((r) -> Flows.currentFlow().failedFuture(e));
     }
 
     private FlowFuture<String> invokeFunction(String functionName, Object requestBody) {

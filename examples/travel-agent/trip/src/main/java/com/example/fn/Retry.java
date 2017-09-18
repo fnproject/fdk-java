@@ -39,4 +39,8 @@ public class Retry {
     public static <T extends Serializable> FlowFuture<T>  exponentialWithJitter(Flows.SerCallable<T> op) {
         return _exponentialWithJitter(op, new RetrySettings(), 0);
     }
+/*
+    public static <T extends Serializable, V extends Serializable> FlowFuture<T> exponentialWithJitter(Flows.SerFunction<T, V> op, V inp) {
+        return _exponentialWithJitter(op, new RetrySettings(), 0);
+    }*/
 }
