@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.flow.Flow;
+import com.fnproject.fn.api.flow.FlowFuture;
 import com.fnproject.fn.api.flow.Flows;
 
 import com.fnproject.fn.api.flow.HttpMethod;
@@ -11,34 +12,24 @@ import com.fnproject.fn.api.flow.HttpMethod;
 import java.io.IOException;
 import java.io.Serializable;
 
-public class BookingFlow implements Serializable {
-
-    private String flightConfirmation;
-    private String hotelConfirmation;
-    private String carConfirmation;
+public class BookingFlow {
 
     public void handleRequest(ApiSchemas.BookingRequest request) {
-        Flow f = Flows.currentFlow();
-
-        f.invokeFunction("./flight/book", HttpMethod.POST, Headers.emptyHeaders(), getBytes(request.flight))
-        .thenAccept((r0) -> {
-            this.flightConfirmation = getConfirmationCode(r0.getBodyAsBytes());
-            f.invokeFunction("./hotel/book", HttpMethod.POST, Headers.emptyHeaders(), getBytes(request.hotel))
-                .thenAccept((r1) -> {
-                    this.hotelConfirmation = getConfirmationCode(r1.getBodyAsBytes());
-                    f.invokeFunction("./car/book", HttpMethod.POST, Headers.emptyHeaders(), getBytes(request.car))
-                        .thenAccept((r2) -> {
-                            this.carConfirmation = getConfirmationCode(r2.getBodyAsBytes());
-                        });
-                });
-            }
+        invokeFunction("./flight/book", request.flight)
+        .thenCompose((flightConfirmation) -> invokeFunction("./hotel/book", request.hotel)
+            .thenCompose((hotelConfirmation) -> invokeFunction("./car/book", request.car)
+                .thenCompose((carConfirmation) -> invokeFunction("./email", getSuccessEmailBody(flightConfirmation, hotelConfirmation, carConfirmation))))
         );
+    }
 
+    private FlowFuture<String> invokeFunction(String functionName, Object requestBody) {
+        return Flows.currentFlow().invokeFunction(functionName, HttpMethod.POST, Headers.emptyHeaders(), getBytes(requestBody))
+                .thenApply((r) -> getConfirmationCode(r.getBodyAsBytes()));
     }
 
     private String getConfirmationCode(byte[] bytes) {
         ObjectMapper mapper = new ObjectMapper();
-        ApiSchemas.Confirmation r = null;
+        ApiSchemas.Confirmation r;
         try {
             r = mapper.readValue(bytes, ApiSchemas.Confirmation.class);
         } catch (IOException e) {
@@ -63,6 +54,4 @@ public class BookingFlow implements Serializable {
         return String.format(SUCCESS_EMAIL_BODY,
                 flightConfirmation, hotelConfirmation, carRentalConfirmation);
     }
-
-    private static final String API_BASE_URL = "http://172.17.0.4:3001";
 }
