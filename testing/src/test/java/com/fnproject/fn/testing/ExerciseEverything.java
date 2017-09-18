@@ -402,6 +402,34 @@ public class ExerciseEverything {
                 );
     }
 
+
+    @Test(35)
+    @Test.Expect("foobar")
+    public FlowFuture<String> exceptionallyComposeHandle(Flow fl) throws IOException {
+
+        return fl.<String>failedFuture(new RuntimeException("foobar"))
+                .exceptionallyCompose((e) -> fl.completedValue(e.getMessage()));
+    }
+
+    @Test(36)
+    @Test.Expect("foobar")
+    public FlowFuture<String> exceptionallyComposePassThru(Flow fl) throws IOException {
+
+        return fl.completedValue("foobar")
+                .exceptionallyCompose((e) -> fl.completedValue(e.getMessage()));
+    }
+
+
+    @Test(37)
+    @Test.Expect("foobar")
+    public FlowFuture<String> exceptionallyComposePropagateError(Flow fl) throws IOException {
+        return fl.<String>failedFuture(new RuntimeException("foo"))
+                .exceptionallyCompose((e) -> {
+                    throw new RuntimeException("foobar");
+                }).exceptionally(Throwable::getMessage);
+    }
+
+
     private int id;
 
     void fail() {
