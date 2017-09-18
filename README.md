@@ -186,7 +186,7 @@ public class HelloFunctionTest {
 This test is very simple: it just enqueues an event with empty input and then
 runs the function, checking its output. Under the hood, the `FnTestingRule` is
 actually instantiating the same runtime wrapping function invocations, so that
-during the test your function will be invoked in exactly the same way that it
+during the test your function will be invoked in exactly the same way as it
 would when deployed.
 
 There is much more functionality to construct tests in the testing library.
