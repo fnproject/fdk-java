@@ -1,5 +1,5 @@
-name: fn-example/hotel-cancel
-version: 0.0.49
+name: fn-example/hotel-book
+version: 0.0.54
 runtime: ruby
 entrypoint: ruby func.rb
-path: /hotel/book
+route: /hotel/book

@@ -1,0 +1,7 @@
+name: fn-example/flight-book
+version: 0.0.12
+runtime: java
+cmd: com.example.fn.FlightFunction::book
+path: /flight/book
+config:
+  FLIGHT_API_URL: http://172.17.0.1:3001/flight

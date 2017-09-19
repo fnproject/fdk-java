@@ -11,6 +11,7 @@
    1. `./scripts/stop.sh`
    1. `sudo rm -rf ./data`
   (it seems that `./data` is written to by a privileged container hence `sudo`)
+   1. Remove the bits we are going to live code: `rm -rf ./flight/book ./trip`
 
 1. Initialise local environment
    1. `./scripts/start.sh`
@@ -24,7 +25,6 @@
       1. Add `path:` field set to `/flight/book`
    1. `fn run`
    1. `fn apps create travel`
-   1. `fn run`
    1. `fn deploy --local --app travel`
    1. `fn call travel /flight/book`
 
@@ -57,19 +57,20 @@
       public FlightBookingResponse book(FlightBookingRequest input) {
           FlightBookingResponse response = new FlightBookingResponse();
           response.confirmation = "DANFGJ";
-           return response;
-          }
+          return response;
+      }
       ```
    1. Change `FlightFunctionTest` to test invalid input is not deserialised:
       ```java
-      @Test()
+      @Test
       public void shouldRejectNullInput() {
+          setupGoodConfig();
           testing.givenEvent().enqueue();
           testing.thenRun(FlightFunction.class, "book");
           String stderr = testing.getStdErrAsString();
-   
+    
           String expected = "An exception was thrown during Input Coercion:";
-          Assert.assertTrue(stderr.startsWith(expected));
+          assertEquals(expected, stderr.substring(0, expected.length()));
       }
       ```
    1. Run tests in intellij. See the green. 
@@ -89,10 +90,23 @@
       @Test
       public void shouldAcceptValidInput() throws JsonProcessingException {
           setupGoodData();
-          testing.thenRun(FlightFunction.class, "book");            String stderr = testing.getStdErrAsString();
-          Assert.assertEquals("", stderr);
+          testing.thenRun(FlightFunction.class, "book");            
+          String stderr = testing.getStdErrAsString();
+          assertEquals("", stderr);
       }
       ```
+   1. Before we can run in `fn` we need some test data. Create `sample-payload.json` with some test data:
+      ```json
+      {
+        "departureTime": "2017-10-01",
+        "flightCode": "BA286"
+      }
+      ```
+   1. Then `cat sample-payload.json | fn call travel /flight/book` gives us a nice easy way to test the function in a 
+      production-like context.
+   1. Data binding is customizble:
+      1. Tweak the JSON mapping configuration (using Jackson under the hood)
+      1. Write your own data bindings to support e.g. protobuf, gRPC, your own custom format
    
 1. We can easily access configuration
    1. In `FlightFunction`:
@@ -121,15 +135,37 @@
     
           String expected = "Error invoking configuration method: configure\n" +
                   "Caused by: java.lang.RuntimeException: No URL endpoint was provided.";
-          Assert.assertTrue(stderr.startsWith(expected));
+          assertEquals(expected, stderr.substring(0, expected.length()));
       }
       ```
    1. Correct the regressions in the previous tests by adding call to `setupGoodConfig()`
+   1. We can provide config at the appropriate level of granularity: app, route and by API, CLI or in `func.yaml`:
+      ```yaml
+      config:
+        FLIGHT_API_URL: http://172.17.0.1:3001/flight
+      ```
+      ```sh
+      fn routes config set travel /flight/book FLIGHT_API_SECRET "shhhh"
+      fn deploy --app travel --local
+      ```
    
 1. Calling our partner API
-   1. They have provided a nice Java API. TODO: publish and include via pom?   
+   1. Our airline partners have provided a nice Java API. TODO: publish and include via pom?   
       ```sh
-      $ cp -r ../../demo/goplacesairlines src/main/java/com/
+      cp -r ../../demo/goplacesairlines src/main/java/com/
+      ```
+      Add these in `pom.xml`:
+      ```xml
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>RELEASE</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>fluent-hc</artifactId>
+            <version>RELEASE</version>
+        </dependency>
       ```
    1. Let's instantiate it in the `configure` method:
       ```java
@@ -145,24 +181,9 @@
       }
       ```
    1. Need to remove the shouldAcceptValidInput test at this point. TODO: maybe don't do that test in the first place?  
+
 1. Running in context
-   1. We need to do a bit more work to run now as the function expects some config and won't deal with incorrect input. 
-      So first let's create `sample-payload.json` with some test data:
-      ```json
-      {
-        "departureTime": "2017-10-01",
-        "flightCode": "BA286"
-      }
-      ```
-   1. Then set some config. We are setting on the route here but can also set on the app.
-      ```sh
-      export DOCKER_LOCALHOST=$(docker inspect --type container -f '{{.NetworkSettings.Gateway}}' functions)
-      
-      fn routes config set travel /flight/book FLIGHT_API_URL "http://$DOCKER_LOCALHOST:3001/flight"
-      fn routes config set travel /flight/book FLIGHT_API_SECRET "shhhh"
-      ```
-   1. Then we need to `fn deploy --app travel --local`.
-   1. And `cat sample-payload.json | fn call travel /flight/book` gives us a nice easy way to test the function in context.
+
 1. Introducing the fake API server
    1. All being well the last `fn call` will have returned a result:
       ```json
@@ -179,11 +200,12 @@
       change the canned response (more on this later).
    1. Do some more `cat sample-payload.json | fn call travel /flight/book` - maybe change the payload. See the requests
       appear on the UI.
+
 1. Use the best language for the job:
    1. `cd ../..`
    1. Not everyone provides a good Java API :(
    1. Our hotel provider, for example, has an excellent ruby API.
-   1. We have created some `hotel/` and `car/` and `/email/` functions.
+   1. We have created some `/hotel/` and `/car/` and `/email/` functions.
    1. The hotel functions use Ruby and the car ones use nodejs.
    1. They simply forward the requests to the fake APIs and are bare-minimum StackOverflow copy-pasta to do so. Show at 
       your own risk!
@@ -204,6 +226,7 @@
       cat car/book/sample-payload.json | fn call travel /car/book
       ```
    1. Check the fake API dashboard to see that our functions have forwarded the requests properly.
+
 1. Go with the fn flow:
    1. We want to deploy a new function to handle booking *trips*. A trip will allow reliable booking of a flight, hotel 
    and car rental with one API call.
