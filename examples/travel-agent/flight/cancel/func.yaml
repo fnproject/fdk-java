@@ -1,0 +1,5 @@
+name: fn-example/flight-cancel
+version: 0.0.71
+runtime: java
+cmd: com.example.fn.Flight::cancel
+path: /flight/cancel

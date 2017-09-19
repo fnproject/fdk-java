@@ -1,0 +1,5 @@
+name: fn-example/car-cancel
+version: 0.0.44
+runtime: node
+entrypoint: node func.js
+path: /car/cancel

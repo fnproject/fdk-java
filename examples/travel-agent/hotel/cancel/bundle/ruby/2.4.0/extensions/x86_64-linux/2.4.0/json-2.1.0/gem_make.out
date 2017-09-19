@@ -1,0 +1,13 @@
+current directory: /worker/bundle/ruby/2.4.0/gems/json-2.1.0/ext/json
+/usr/bin/ruby -r ./siteconf20170917-1-1yniqos.rb extconf.rb
+creating Makefile
+
+current directory: /worker/bundle/ruby/2.4.0/gems/json-2.1.0/ext/json
+make "DESTDIR=" clean
+
+current directory: /worker/bundle/ruby/2.4.0/gems/json-2.1.0/ext/json
+make "DESTDIR="
+make: Nothing to be done for 'all'.
+
+current directory: /worker/bundle/ruby/2.4.0/gems/json-2.1.0/ext/json
+make "DESTDIR=" install

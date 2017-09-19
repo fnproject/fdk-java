@@ -1,5 +1,5 @@
-name: tteggel/book-car
-version: 0.0.15
+name: fn-example/car-book
+version: 0.0.43
 runtime: node
 entrypoint: node func.js
 path: /car/book
