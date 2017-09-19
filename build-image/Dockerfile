@@ -1,7 +1,7 @@
 FROM maven:3-jdk-8-alpine
 
-ADD pom.xml /function/pom.xml
+ADD pom.xml /tmp/cache-deps/pom.xml
+ADD cache-deps.sh /tmp/cache-deps/cache-deps.sh
 
-WORKDIR /function
-RUN ["mvn", "package", "dependency:copy-dependencies", "-Dmaven.repo.local=/usr/share/maven/ref/repository", "-DincludeScope=runtime", "-DskipTests=true", "-Dmdep.prependGroupId=true", "-DoutputDirectory=target", "--fail-never"]
-RUN ["rm", "/function/pom.xml"]
+RUN /tmp/cache-deps/cache-deps.sh
+WORKDIR /
