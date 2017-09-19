@@ -214,7 +214,7 @@ public final class FnTestingRule implements TestRule {
 
         try {
             PrintStream functionOut = new PrintStream(stdOut);
-            PrintStream functionErr = new PrintStream(new TeeOutputStream(stdErr, oldSystemErr));
+            PrintStream functionErr = new PrintStream(new TeeOutputStream(stdErr, oldSystemOut));
             System.setOut(functionErr);
             System.setErr(functionErr);
 
