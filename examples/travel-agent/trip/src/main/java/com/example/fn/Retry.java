@@ -10,7 +10,11 @@ import java.util.concurrent.TimeUnit;
 
 public class Retry {
 
-    private static <T extends Serializable> FlowFuture<T> _exponentialWithJitter(Flows.SerCallable<FlowFuture<T>> op, RetrySettings settings, int attempt) {
+    public static <T> FlowFuture<T> exponentialWithJitter(Flows.SerCallable<FlowFuture<T>> op) {
+        return _exponentialWithJitter(op, new RetrySettings(), 1);
+    }
+
+    private static <T> FlowFuture<T> _exponentialWithJitter(Flows.SerCallable<FlowFuture<T>> op, RetrySettings settings, int attempt) {
         Flow f = Flows.currentFlow();
         try {
             FlowFuture<T> future = op.call();
@@ -33,14 +37,15 @@ public class Retry {
         }
     }
 
+    static <T> FlowFuture<T> retryThenFail(Flows.SerCallable<FlowFuture<T>> future) {
+        return exponentialWithJitter(future)
+                .thenCompose((j) -> Flows.currentFlow().failedFuture(new RuntimeException()));
+    }
+
     public static class RetrySettings implements Serializable {
         public long delayBaseDuration = 1;
         public long delayMaxDuration = 10;
         public TimeUnit timeUnit = TimeUnit.SECONDS;
         public int maxAttempts = 5;
-    }
-
-    public static <T extends Serializable> FlowFuture<T>  exponentialWithJitter(Flows.SerCallable<FlowFuture<T>> op) {
-        return _exponentialWithJitter(op, new RetrySettings(), 1);
     }
 }

@@ -1,48 +1,37 @@
 package com.example.fn;
 
-import com.fnproject.fn.api.Headers;
-import com.fnproject.fn.api.flow.*;
+import com.example.fn.messages.BookingResponse;
+import com.example.fn.messages.EmailRequest;
+import com.example.fn.messages.TripRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
 
 public class TripFunction implements Serializable {
 
-    public void book(JsonObjects.TripRequest input) {
-         invoke("./flight/book", input.flightRequest)
-            .thenCompose((flight) -> invoke("./hotel/book", input.hotelRequest)
-                .thenCompose((hotel) -> invoke("./car/book", input.carRentalRequest)
-                    .exceptionallyCompose((r) -> retryThenFail("./car/cancel", input.carRentalRequest))
-                    .thenAccept((car) -> invokeEmailFunction(composeEmail(flight, hotel, car))))
-                .exceptionallyCompose((r) -> retryThenFail("./hotel/cancel", input.hotelRequest)))
-             .exceptionallyCompose((r) -> retryThenFail("./flight/cancel", input.flightRequest))
-         .exceptionally((e) -> {invokeEmailFunction("{\"message\": \"fail\"}");return null;});
+    static {
+        System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", "debug");
     }
 
-    private <T> FlowFuture<T> retryThenFail(String functionName, Object requestBody) {
-        return Retry.exponentialWithJitter(() -> invoke(functionName, requestBody))
-                .thenCompose((j) -> Flows.currentFlow().failedFuture(new RuntimeException()));
+    private static final Logger log = LoggerFactory.getLogger(TripFunction.class);
+
+    public void book(TripRequest input) {
+         Functions.bookFlight(input.flightRequest)
+            .thenCompose((flight) -> Functions.bookHotel(input.hotelRequest)
+                .thenCompose((hotel) -> Functions.bookCar(input.carRentalRequest)
+                    .whenComplete((car, e) -> Functions.sendEmail(composeEmail(flight, hotel, car))))
+                    .exceptionallyCompose((r) -> Retry.retryThenFail(()->Functions.cancelCar(input.carRentalRequest)))
+                .exceptionallyCompose((r) -> Retry.retryThenFail(()->Functions.cancelHotel(input.hotelRequest)))
+             .exceptionallyCompose((r) -> Retry.retryThenFail(()->Functions.cancelFlight(input.flightRequest))))
+         .exceptionally((e) -> {Functions.sendEmail(new EmailRequest());return null;});
     }
 
-    private FlowFuture<JsonObjects.BookingResponse> invoke(String functionName, Object requestBody) {
-        Flow f = Flows.currentFlow();
-        return f.invokeFunction(functionName, HttpMethod.POST, Headers.emptyHeaders(), JsonObjects.toBytes(requestBody))
-                .thenApply((r) -> {
-                    if (r.getStatusCode() == 200) {
-                        return JsonObjects.fromBytes(r.getBodyAsBytes());
-                    } else {
-                        throw new RuntimeException();
-                    }
-                });
-    }
-
-    private FlowFuture<Void> invokeEmailFunction(String requestBody){
-        return Flows.currentFlow().invokeFunction("./email", HttpMethod.POST, Headers.emptyHeaders(), requestBody.getBytes())
-                .thenAccept((a)->{});
-    }
-
-    private String composeEmail(JsonObjects.BookingResponse flightResponse,
-                         JsonObjects.BookingResponse hotelResponse,
-                         JsonObjects.BookingResponse carResponse) {
-        return "{\"message\": \"" + flightResponse.confirmation + hotelResponse.confirmation + carResponse.confirmation + "\"}";
+    private EmailRequest composeEmail(BookingResponse flightResponse,
+                                      BookingResponse hotelResponse,
+                                      BookingResponse carResponse) {
+        EmailRequest result = new EmailRequest();
+        result.message = flightResponse.confirmation + hotelResponse.confirmation + carResponse.confirmation;  ;
+        return result;
     }
 }
