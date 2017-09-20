@@ -28,6 +28,7 @@ public class RemoteCompleterApiClient implements CompleterClient {
     private static final String HEADER_PREFIX = "FnProject-";
     public static final String FLOW_ID_HEADER = HEADER_PREFIX + "FlowID";
     public static final String STAGE_ID_HEADER = HEADER_PREFIX + "StageID";
+    public static final String CALLER_ID_HEADER = HEADER_PREFIX + "CallerID";
     public static final String METHOD_HEADER = HEADER_PREFIX + "Method";
     public static final String USER_HEADER_PREFIX = HEADER_PREFIX + "Header-";
     public static final String STATE_TYPE_HEADER = HEADER_PREFIX + "Statetype";
@@ -325,7 +326,8 @@ public class RemoteCompleterApiClient implements CompleterClient {
     }
 
     private CompletionId requestCompletion(String url, Function<HttpClient.HttpRequest, HttpClient.HttpRequest> fn) {
-        HttpClient.HttpRequest req = fn.apply(HttpClient.preparePost(apiUrlBase + url));
+        HttpClient.HttpRequest req = fn.andThen(RemoteCompleterApiClient::addParentIdIfPresent)
+                .apply(HttpClient.preparePost(apiUrlBase + url));
 
         try (com.fnproject.fn.runtime.flow.HttpClient.HttpResponse resp = httpClient.execute(req)) {
             validateSuccessful(resp);
@@ -345,11 +347,12 @@ public class RemoteCompleterApiClient implements CompleterClient {
                                                    CodeLocation codeLocation) {
         try {
             byte[] serBytes = SerUtils.serialize(ser);
-            return requestCompletion(url, req -> fn.apply(req
-                    .withHeader(CONTENT_TYPE_HEADER, CONTENT_TYPE_JAVA_OBJECT)
-                    .withHeader(DATUM_TYPE_HEADER, DATUM_TYPE_BLOB)
-                    .withHeader(FN_CODE_LOCATION, codeLocation.getLocation())
-                    .withBody(serBytes)));
+            return requestCompletion(url, req -> fn
+                    .apply(req
+                            .withHeader(CONTENT_TYPE_HEADER, CONTENT_TYPE_JAVA_OBJECT)
+                            .withHeader(DATUM_TYPE_HEADER, DATUM_TYPE_BLOB)
+                            .withHeader(FN_CODE_LOCATION, codeLocation.getLocation())
+                            .withBody(serBytes)));
         } catch (IOException e) {
             throw new LambdaSerializationException("Failed to serialize the lambda: " + e.getMessage());
         }
@@ -359,12 +362,14 @@ public class RemoteCompleterApiClient implements CompleterClient {
                                         CodeLocation codeLocation) {
         try {
             byte[] serBytes = SerUtils.serialize(ser);
-            HttpClient.HttpRequest req = fn.apply(
-                    HttpClient.preparePost(apiUrlBase + url)
-                            .withHeader(CONTENT_TYPE_HEADER, CONTENT_TYPE_JAVA_OBJECT)
-                            .withHeader(DATUM_TYPE_HEADER, DATUM_TYPE_BLOB)
-                            .withHeader(FN_CODE_LOCATION, codeLocation.getLocation())
-                            .withBody(serBytes));
+            HttpClient.HttpRequest req = fn
+                    .andThen(RemoteCompleterApiClient::addParentIdIfPresent)
+                    .apply(
+                            HttpClient.preparePost(apiUrlBase + url)
+                                    .withHeader(CONTENT_TYPE_HEADER, CONTENT_TYPE_JAVA_OBJECT)
+                                    .withHeader(DATUM_TYPE_HEADER, DATUM_TYPE_BLOB)
+                                    .withHeader(FN_CODE_LOCATION, codeLocation.getLocation())
+                                    .withBody(serBytes));
             try (com.fnproject.fn.runtime.flow.HttpClient.HttpResponse resp = httpClient.execute(req)) {
                 validateSuccessful(resp);
             } catch (PlatformException e) {
@@ -382,4 +387,7 @@ public class RemoteCompleterApiClient implements CompleterClient {
     }
 
 
+    private static  HttpClient.HttpRequest addParentIdIfPresent(HttpClient.HttpRequest req) {
+        return FlowRuntimeGlobals.getCurrentCompletionId().map((id) -> req.withHeader(CALLER_ID_HEADER, id.getId())).orElse(req);
+    }
 }

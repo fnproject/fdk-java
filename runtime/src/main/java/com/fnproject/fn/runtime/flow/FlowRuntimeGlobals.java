@@ -1,12 +1,31 @@
 package com.fnproject.fn.runtime.flow;
 
 import java.util.Objects;
+import java.util.Optional;
 
 /**
- * Globals for injecting testing state into flow
+ * Globals for injecting testing and global state into flow
  */
 public class FlowRuntimeGlobals {
     private static CompleterClientFactory completerClientFactory = null;
+    private static CompletionId currentCompletionId;
+
+    /**
+     * Get the current completion ID  - returns an empty optional if the current invocation is not a completion
+     *
+     * @return a completion ID option (empty of if not in a completion
+     */
+    public static Optional<CompletionId> getCurrentCompletionId() {
+        return Optional.ofNullable(currentCompletionId);
+    }
+
+    /**
+     * Set the current Completion ID
+     * @param completionId a completion ID - set to null to clear the current completion ID
+     */
+    public static void setCurrentCompletionId(CompletionId completionId) {
+        currentCompletionId = completionId;
+    }
 
     /**
      * Resets the state of the completer client factory to defaults; this is primarily for testing

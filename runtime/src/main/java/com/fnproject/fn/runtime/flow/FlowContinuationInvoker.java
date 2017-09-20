@@ -87,12 +87,17 @@ public final class FlowContinuationInvoker implements FunctionInvoker {
                 }
             };
 
+
             Flows.setCurrentFlowSource(attachedSource);
+
+            FlowRuntimeGlobals.setCurrentCompletionId(evt.getHeaders().get(STAGE_ID_HEADER)
+                    .map(CompletionId::new)
+                    .orElse(null));
 
 
             try {
                 return evt.consumeBody((is) -> {
-                    SerUtils.ContentStream cs = null;
+                    SerUtils.ContentStream cs ;
                     try {
                         cs = new SerUtils.ContentStream(
                                 evt.getHeaders().get(CONTENT_TYPE_HEADER)
@@ -135,6 +140,7 @@ public final class FlowContinuationInvoker implements FunctionInvoker {
 
             } finally {
                 Flows.setCurrentFlowSource(null);
+                FlowRuntimeGlobals.setCurrentCompletionId(null);
             }
 
         } else {
