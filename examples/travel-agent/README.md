@@ -236,47 +236,156 @@
       1. Class names
       1. `handleRequest` method name
       1. `func.yaml`
-   1. We first need to define the input that our function will take. Create a new class `JsonObjects`:
+   1. Define the JSON message formats that the trip function will be talking:
+      1. Create a new package `messages`.
+      1. Create a new class package `TripRequest` in `messages`:
+         ```java
+         public class TripRequest implements Serializable {
+             public FlightRequest flight;
+             public HotelRequest hotel;
+             public CarRentalRequest carRental;
+         
+             public static class FlightRequest implements Serializable {
+                 public Date departureTime;
+                 public String flightCode;
+             }
+         
+             public static class HotelRequest implements Serializable {
+                 public String city;
+                 public String hotel;
+             }
+         
+             public static class CarRentalRequest implements Serializable {
+                 public String model;
+             }
+         }
+         ```
+      1. Create a new class `BookingResponse` in `messages` package:
+         ```java
+         public class BookingResponse implements Serializable {
+             public String confirmation;
+         }
+         ```
+   1. Change the signature of our `book` method to use these new classes:
       ```java
-      package com.example.fn;
-      public class JsonObjects implements Serializable {}
+      public void book(TripRequest input) {
       ```
-      We need all of these JSON objects to be serializable as we'll be passing them between function invocations.
-   1. Add the request type as a static inner class of `JsonObjects`. It will be composed of a flight, hotel and car request:
+   1. Create some wrappers to make calling our functions easy:
+      1. Copy in the `JsonHelper` class. This provides some utility methods for using functions that consume and produce JSON.
+         ```sh
+         cp ../demo/JsonHelper.java src/main/java/com/example/fn
+         ```
+      1. Create a new class `Functions`.
+      1. Add wrappers for our flight, hotel and car functions that we created earlier:
+         ```java
+         public static FlowFuture<BookingResponse> bookFlight(TripRequest.FlightRequest req) {
+             return JsonHelper.wrapJsonFunction("./flight/book", req, BookingResponse.class);
+         }
+     
+         public static FlowFuture<BookingResponse> bookHotel(TripRequest.HotelRequest req) {
+             return JsonHelper.wrapJsonFunction("./hotel/book", req, BookingResponse.class);
+         }
+     
+         public static FlowFuture<BookingResponse> bookCar(TripRequest.CarRentalRequest req) {
+             return JsonHelper.wrapJsonFunction("./car/book", req, BookingResponse.class);
+         }
+         ```
+         These describe the path to the functions and provide type-safe access to the json that they consume and produce.
+   1. The current flow is retrieved using `Flow f = Flows.currentFlow();`. Add this to the top of the `book` method.
+   1. Now we can call these functions and compose the results in a number of different ways. For example in parallel:
       ```java
-      public static class TripRequest implements Serializable {
-          public FlightRequest flightRequest;
-          public HotelRequest hotelRequest;
-          public CarRentalRequest carRentalRequest;
-      }
+      f. allOf(Functions.bookFlight(input.flight),
+               Functions.bookHotel(input.hotel),
+               Functions.bookCar(input.carRental));
       ```
-   1. Add the types for the sub-requests:
+   1. Introduce and show Flow UI.
+   1. Or we can call one after the other. Replace the above statement with:
       ```java
-      private static class FlightRequest implements Serializable {
-          public Date departureTime;
-          public String flightCode;
+      Functions.bookFlight(input.flight)
+          .thenAccept((flightResponse) -> Functions.bookHotel(input.hotel)
+              .thenAccept((hotelResponse) -> Functions.bookCar(input.carRental)
+                  .whenComplete((carResponse, error) -> System.out.println(carResponse.confirmation))));
+      ```
+      The other stages that we're seeing are glue code (see `JsonHelper` class). Fn Flow provides a way to run glue code inline with the rest of 
+      your flow while maintaining 'serverless' properties. This keeps your functions clean and composable.
+1. Coping with failure
+   1. Let's say that our hotel booking partner fills up a hotel in between us showing it as available to our customer 
+      and the customer asking to book it. We might have already booked our flight - oh no! We need a rebust way to handle failure 
+      cases. We are going to need some compensating actions.
+   1. Firstly let's create some functions that allow us simulate those. We will create endpoints that enable us to cancel a
+      flight, hotel or car rental booking. In fact when we did that `deploy --all` earlier on we already created them!
+      We just need some wrappers. So in `Functions`:
+      ```java
+      public static FlowFuture<BookingResponse> cancelFlight(TripRequest.FlightRequest req) {
+          return JsonHelper.wrapJsonFunction("./flight/cancel", req, BookingResponse.class);
       }
     
-      private static class HotelRequest implements Serializable {
-          public String city;
-          public String hotel;
+      public static FlowFuture<BookingResponse> cancelHotel(TripRequest.HotelRequest req) {
+          return JsonHelper.wrapJsonFunction("./hotel/cancel", req, BookingResponse.class);
       }
     
-      private static class CarRentalRequest implements Serializable {
-          public String model;
+      public static FlowFuture<BookingResponse> cancelCar(TripRequest.CarRentalRequest req) {
+          return JsonHelper.wrapJsonFunction("./car/cancel", req, BookingResponse.class);
+      }
+
+      public static FlowFuture<Void> sendEmail(EmailRequest req) {
+          return JsonHelper.wrapJsonFunction("./email", req);
       }
       ```
-   1. Change the signature of the book method to use this new object:
+   1. We are also going to have a way to email our users to keep them informed hence the email fn above.
+   1. Also define that `EmailRequest` class in the `messages` package so that we know how to talk to our email provider:
       ```java
-      public void book(JsonObjects.TripRequest input) {
+      public class EmailRequest implements Serializable {
+          public String message;
+      }
+      ```
+   1. We can use the `exceptionallyCompose` method to add on to our chain of functions some more work to handle errors:
+      ```java
+      Functions.bookFlight(input.flight)
+          .thenCompose((flightResponse) -> Functions.bookHotel(input.hotel)
+              .thenCompose((hotelResponse) -> Functions.bookCar(input.carRental)
+                  .whenComplete((carResponse, error) -> System.out.println(carResponse.confirmation))
+                  .exceptionallyCompose((e) -> {Functions.cancelCar(input.carRental); return f.failedFuture(e);}))
+              .exceptionallyCompose((e) -> {Functions.cancelHotel(input.hotel); return f.failedFuture(e);}))
+          .exceptionallyCompose((e) -> {Functions.cancelFlight(input.flight); return f.failedFuture(e);});
 
       ```
-      As the trip booking process will take a while we won't return a result back to the user. Hence `void` return type.
-   1. We will be creating a 'fn flow' which will handle the composition of many functions. Access the current flow using:
+   1. Send an email with confirmation numbers when we succeed:
       ```java
-      Flow f = Flows.currentFlow();
+               .whenComplete((carResponse,r)->Functions.sendEmail(composeEmail(flightResponse, hotelResponse, carResponse)))
       ```
-   1. We can now use this object to chain together other functions. But first we need some helper functions:
+      With this helper:
       ```java
-      
+      private EmailRequest composeEmail(BookingResponse flightResponse,
+                                        BookingResponse hotelResponse,
+                                        BookingResponse carResponse) {
+          EmailRequest result = new EmailRequest();
+          result.message = "Flight confirmation: " + flightResponse.confirmation + "\n" +
+                           "Hotel confirmation: " +  hotelResponse.confirmation + "\n" +
+                           "Car rental confirmation: " + carResponse.confirmation;
+          return result;
+     1 }
+      ```
+   1. Send an email on failure:
+      ```java
+       .exceptionally((e) -> {Functions.sendEmail(new EmailRequest());return null;});
+      ```
+1. Composable programming FTW
+   1. Small self-contained functions.
+   1. No knowledge of overall flow and no special handling of input and output for previous / next stages.
+   1. Overall flow programmed in one place.
+   1. Glue code alongside flow code.
+   1. No 'programming' in JSON / BEPL. A real programming language.
+      1. Testable.
+      1. Great local dev experience.
+   1. Higher-order abstractions. e.g. Retry:
+      ```java
+       Functions.bookFlight(input.flight)
+           .thenCompose((flightResponse) -> Functions.bookHotel(input.hotel)
+               .thenCompose((hotelResponse) -> Functions.bookCar(input.carRental)
+                   .whenComplete((carResponse,r)->Functions.sendEmail(composeEmail(flightResponse, hotelResponse, carResponse)))
+                   .exceptionallyCompose((e) -> {Retry.exponentialWithJitter(() -> Functions.cancelCar(input.carRental));return f.failedFuture(e);}))
+               .exceptionallyCompose((e) -> {Retry.exponentialWithJitter(() -> Functions.cancelHotel(input.hotel));return f.failedFuture(e);}))
+           .exceptionallyCompose((e) -> {Retry.exponentialWithJitter(() -> Functions.cancelFlight(input.flight));return f.failedFuture(e);})
+       .exceptionally((e) -> {Functions.sendEmail(new EmailRequest());return null;});
       ```

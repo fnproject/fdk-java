@@ -3,10 +3,13 @@ package com.example.fn;
 import com.example.fn.messages.BookingResponse;
 import com.example.fn.messages.EmailRequest;
 import com.example.fn.messages.TripRequest;
+import com.fnproject.fn.api.flow.Flow;
+import com.fnproject.fn.api.flow.Flows;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
+import java.util.function.Function;
 
 public class TripFunction implements Serializable {
 
@@ -17,21 +20,24 @@ public class TripFunction implements Serializable {
     private static final Logger log = LoggerFactory.getLogger(TripFunction.class);
 
     public void book(TripRequest input) {
-         Functions.bookFlight(input.flightRequest)
-            .thenCompose((flight) -> Functions.bookHotel(input.hotelRequest)
-                .thenCompose((hotel) -> Functions.bookCar(input.carRentalRequest)
-                    .whenComplete((car, e) -> Functions.sendEmail(composeEmail(flight, hotel, car))))
-                    .exceptionallyCompose((r) -> Retry.retryThenFail(()->Functions.cancelCar(input.carRentalRequest)))
-                .exceptionallyCompose((r) -> Retry.retryThenFail(()->Functions.cancelHotel(input.hotelRequest)))
-             .exceptionallyCompose((r) -> Retry.retryThenFail(()->Functions.cancelFlight(input.flightRequest))))
-         .exceptionally((e) -> {Functions.sendEmail(new EmailRequest());return null;});
+        Flow f = Flows.currentFlow();
+        Functions.bookFlight(input.flight)
+            .thenCompose((flightResponse) -> Functions.bookHotel(input.hotel)
+                .thenCompose((hotelResponse) -> Functions.bookCar(input.carRental)
+                    .whenComplete((carResponse,r)->Functions.sendEmail(composeEmail(flightResponse, hotelResponse, carResponse)))
+                    .exceptionallyCompose((e) -> {Retry.exponentialWithJitter(() -> Functions.cancelCar(input.carRental));return f.failedFuture(e);}))
+                .exceptionallyCompose((e) -> {Retry.exponentialWithJitter(() -> Functions.cancelHotel(input.hotel));return f.failedFuture(e);}))
+            .exceptionallyCompose((e) -> {Retry.exponentialWithJitter(() -> Functions.cancelFlight(input.flight));return f.failedFuture(e);})
+        .exceptionally((e) -> {Functions.sendEmail(new EmailRequest());return null;});
     }
 
     private EmailRequest composeEmail(BookingResponse flightResponse,
                                       BookingResponse hotelResponse,
                                       BookingResponse carResponse) {
         EmailRequest result = new EmailRequest();
-        result.message = flightResponse.confirmation + hotelResponse.confirmation + carResponse.confirmation;  ;
+        result.message = "Flight confirmation: " + flightResponse.confirmation + "\n" +
+                         "Hotel confirmation: " +  hotelResponse.confirmation + "\n" +
+                         "Car rental confirmation: " + carResponse.confirmation;
         return result;
     }
 }
