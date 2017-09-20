@@ -7,11 +7,11 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.Date;
 
-public class JsonObjects implements Serializable {
+public class JsonObjects {
     public static class TripRequest implements Serializable {
-        public FlightRequest flightRequest;
-        public HotelRequest hotelRequest;
-        public CarRentalRequest carRentalRequest;
+        public JsonObjects.FlightRequest flightRequest;
+        public JsonObjects.HotelRequest hotelRequest;
+        public JsonObjects.CarRentalRequest carRentalRequest;
     }
 
     public static class FlightRequest implements Serializable {
@@ -41,10 +41,10 @@ public class JsonObjects implements Serializable {
         }
     }
 
-    public static BookingResponse fromBytes(byte[] bytes) {
+    public static JsonObjects.BookingResponse fromBytes(byte[] bytes) {
         ObjectMapper mapper = new ObjectMapper();
         try {
-            return mapper.readValue(bytes, BookingResponse.class);
+            return mapper.readValue(bytes, JsonObjects.BookingResponse.class);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

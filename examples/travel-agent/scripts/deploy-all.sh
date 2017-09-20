@@ -7,7 +7,7 @@ fn apps create travel
 for func in "flight/book" "flight/cancel" "hotel/book" "hotel/cancel" "car/book" "car/cancel" "email" "trip"
 do
 (
-  cd $func;
+  cd $func &&
   fn deploy --app travel --local
 )
 done

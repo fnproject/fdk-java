@@ -1,5 +1,6 @@
 package com.example.fn;
 
+import com.fnproject.fn.api.flow.Flow;
 import com.fnproject.fn.api.flow.FlowFuture;
 import com.fnproject.fn.api.flow.Flows;
 
@@ -8,36 +9,38 @@ import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 public class Retry {
-    public static class RetrySettings implements Serializable {
-        public long delayBaseDuration = 1;
-        public long delayMaxDuration = 30;
-        public TimeUnit timeUnit = TimeUnit.SECONDS;
-        public int maxAttempts = 10;
-    }
 
-    private static <T extends Serializable> FlowFuture<T> _exponentialWithJitter(Flows.SerCallable<T> op, RetrySettings settings, int attempt) {
+    private static <T extends Serializable> FlowFuture<T> _exponentialWithJitter(Flows.SerCallable<FlowFuture<T>> op, RetrySettings settings, int attempt) {
+        Flow f = Flows.currentFlow();
         try {
-            T result = op.call();
-            return Flows.currentFlow().completedValue(result);
-        } catch (Exception e) {
-            if (attempt < settings.maxAttempts) {
-                long delay_max = (long) Math.min(
+            FlowFuture<T> future = op.call();
+            return future.exceptionallyCompose((e) -> {
+                if (attempt < settings.maxAttempts) {
+
+                    long delay_max = (long) Math.min(
                         settings.timeUnit.toMillis(settings.delayMaxDuration),
                         settings.timeUnit.toMillis(settings.delayBaseDuration) * Math.pow(2, attempt));
-                long delay = new Random().longs(1, 0, delay_max).findFirst().getAsLong();
-                return Flows.currentFlow().delay(delay, TimeUnit.MILLISECONDS)
-                        .thenCompose((ignored) -> _exponentialWithJitter(op, settings, attempt + 1));
-            } else {
-                throw new RuntimeException("gave up");
-            }
+                    long delay = new Random().longs(1, 0, delay_max).findFirst().getAsLong();
+
+                    return f.delay(delay, TimeUnit.MILLISECONDS)
+                            .thenCompose((a) -> _exponentialWithJitter(op, settings, attempt + 1));
+                } else {
+                    return f.failedFuture(new RuntimeException());
+                }
+            });
+        } catch (Exception ex) {
+            return f.failedFuture(new RuntimeException());
         }
     }
 
-    public static <T extends Serializable> FlowFuture<T>  exponentialWithJitter(Flows.SerCallable<T> op) {
-        return _exponentialWithJitter(op, new RetrySettings(), 0);
+    public static class RetrySettings implements Serializable {
+        public long delayBaseDuration = 1;
+        public long delayMaxDuration = 10;
+        public TimeUnit timeUnit = TimeUnit.SECONDS;
+        public int maxAttempts = 5;
     }
-/*
-    public static <T extends Serializable, V extends Serializable> FlowFuture<T> exponentialWithJitter(Flows.SerFunction<T, V> op, V inp) {
-        return _exponentialWithJitter(op, new RetrySettings(), 0);
-    }*/
+
+    public static <T extends Serializable> FlowFuture<T>  exponentialWithJitter(Flows.SerCallable<FlowFuture<T>> op) {
+        return _exponentialWithJitter(op, new RetrySettings(), 1);
+    }
 }
