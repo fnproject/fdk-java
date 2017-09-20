@@ -1,0 +1,5 @@
+name: fn-example/trip
+version: 0.0.75
+runtime: java
+cmd: com.example.fn.TripFunction::book
+format: http

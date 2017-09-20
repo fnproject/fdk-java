@@ -8,8 +8,10 @@ request.post(
     api_url,
     { json: stdin },
     function (error, response, body) {
-        if (!error && response.statusCode == 200) {
+        if (!error && response.statusCode === 200) {
             console.log(JSON.stringify(response.body));
+        } else {
+            throw new Error();
         }
     }
 );

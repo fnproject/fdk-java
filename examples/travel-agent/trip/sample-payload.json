@@ -1,0 +1,13 @@
+{
+  "flightRequest": {
+    "departureTime": "2017-10-01",
+    "flightCode": "BA286"
+  },
+  "hotelRequest": {
+    "city": "San Francisco",
+    "hotel": "Four Seasons"
+  },
+  "carRentalRequest": {
+    "model": "Tesla Model S P100D"
+  }
+}

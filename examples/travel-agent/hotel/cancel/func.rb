@@ -17,4 +17,8 @@ http = Net::HTTP.new(uri.host, uri.port)
 request = Net::HTTP::Delete.new(uri.request_uri, header)
 response = http.request(request)
 
-puts response.body
+if response.kind_of? Net::HTTPSuccess
+  puts response.body
+else
+  raise
+end

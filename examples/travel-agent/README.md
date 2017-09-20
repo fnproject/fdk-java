@@ -182,8 +182,6 @@
       ```
    1. Need to remove the shouldAcceptValidInput test at this point. TODO: maybe don't do that test in the first place?  
 
-1. Running in context
-
 1. Introducing the fake API server
    1. All being well the last `fn call` will have returned a result:
       ```json
@@ -203,8 +201,8 @@
 
 1. Use the best language for the job:
    1. `cd ../..`
-   1. Not everyone provides a good Java API :(
-   1. Our hotel provider, for example, has an excellent ruby API.
+   1. Not everyone provides a good Java SDK :(
+   1. Our hotel provider, for example, has an excellent ruby SDK.
    1. We have created some `/hotel/` and `/car/` and `/email/` functions.
    1. The hotel functions use Ruby and the car ones use nodejs.
    1. They simply forward the requests to the fake APIs and are bare-minimum StackOverflow copy-pasta to do so. Show at 
@@ -230,3 +228,55 @@
 1. Go with the fn flow:
    1. We want to deploy a new function to handle booking *trips*. A trip will allow reliable booking of a flight, hotel 
    and car rental with one API call.
+   1. `mkdir trip && cd trip`
+   1. `fn init --runtime=java`
+   1. Re-import maven projects in intellij
+   1. Refactor/rename as before:
+      1. `pom.xml`
+      1. Class names
+      1. `handleRequest` method name
+      1. `func.yaml`
+   1. We first need to define the input that our function will take. Create a new class `JsonObjects`:
+      ```java
+      package com.example.fn;
+      public class JsonObjects implements Serializable {}
+      ```
+      We need all of these JSON objects to be serializable as we'll be passing them between function invocations.
+   1. Add the request type as a static inner class of `JsonObjects`. It will be composed of a flight, hotel and car request:
+      ```java
+      public static class TripRequest implements Serializable {
+          public FlightRequest flightRequest;
+          public HotelRequest hotelRequest;
+          public CarRentalRequest carRentalRequest;
+      }
+      ```
+   1. Add the types for the sub-requests:
+      ```java
+      private static class FlightRequest implements Serializable {
+          public Date departureTime;
+          public String flightCode;
+      }
+    
+      private static class HotelRequest implements Serializable {
+          public String city;
+          public String hotel;
+      }
+    
+      private static class CarRentalRequest implements Serializable {
+          public String model;
+      }
+      ```
+   1. Change the signature of the book method to use this new object:
+      ```java
+      public void book(JsonObjects.TripRequest input) {
+
+      ```
+      As the trip booking process will take a while we won't return a result back to the user. Hence `void` return type.
+   1. We will be creating a 'fn flow' which will handle the composition of many functions. Access the current flow using:
+      ```java
+      Flow f = Flows.currentFlow();
+      ```
+   1. We can now use this object to chain together other functions. But first we need some helper functions:
+      ```java
+      
+      ```

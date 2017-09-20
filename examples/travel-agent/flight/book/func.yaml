@@ -1,5 +1,5 @@
 name: fn-example/flight-book
-version: 0.0.12
+version: 0.0.18
 runtime: java
 cmd: com.example.fn.FlightFunction::book
 path: /flight/book

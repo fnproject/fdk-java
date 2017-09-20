@@ -18,4 +18,8 @@ request = Net::HTTP::Post.new(uri.request_uri, header)
 request.body = hotel_request.to_json
 response = http.request(request)
 
-puts response.body
+if response.kind_of? Net::HTTPSuccess
+  puts response.body
+else
+  raise
+end
