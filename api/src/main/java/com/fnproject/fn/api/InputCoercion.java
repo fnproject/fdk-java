@@ -21,5 +21,5 @@ public interface InputCoercion<T> {
      * @param input          the input event
      * @return               the result of the coercion, if it succeeded
      */
-    Optional<T> tryCoerceParam(InvocationContext currentContext, int arg, InputEvent input);
+    Optional<T> tryCoerceParam(InvocationContext currentContext, int arg, InputEvent input, MethodWrapper methodWrapper);
 }

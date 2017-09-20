@@ -14,7 +14,6 @@ import org.junit.rules.ExpectedException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
-import java.lang.reflect.Method;
 import java.util.*;
 import java.util.function.DoubleSupplier;
 
@@ -628,12 +627,7 @@ public class FlowsContinuationInvokerTest {
         }
 
         @Override
-        public Class<?> getTargetClass() {
-            return null;
-        }
-
-        @Override
-        public Method getTargetMethod() {
+        public MethodWrapper getMethodWrapper() {
             return null;
         }
 
@@ -664,6 +658,11 @@ public class FlowsContinuationInvokerTest {
 
         @Override
         public void addOutputCoercion(OutputCoercion oc) {
+            throw new RuntimeException("You can't modify the empty runtime context in the tests, sorry.");
+        }
+
+        @Override
+        public void setInvoker(FunctionInvoker invoker) {
             throw new RuntimeException("You can't modify the empty runtime context in the tests, sorry.");
         }
 
