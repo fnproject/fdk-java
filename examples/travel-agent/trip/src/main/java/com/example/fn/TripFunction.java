@@ -1,6 +1,5 @@
 package com.example.fn;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.flow.*;
 
@@ -24,7 +23,7 @@ public class TripFunction implements Serializable {
         return f.invokeFunction(functionName, HttpMethod.POST, Headers.emptyHeaders(), JsonObjects.toBytes(requestBody))
                 .thenCompose((r) -> {
                     if (r.getStatusCode() == 200) {
-                        return f.completedValue(JsonObjects.fromBytes(r.getBodyAsBytes(), new TypeReference<JsonObjects.BookingResponse>(){}));
+                        return f.completedValue(JsonObjects.fromBytes(r.getBodyAsBytes()));
                     } else {
                         return f.failedFuture(new RuntimeException());
                     }

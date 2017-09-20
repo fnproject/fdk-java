@@ -1,10 +1,8 @@
 package com.example.fn;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import java.awt.print.Book;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Date;
@@ -43,10 +41,10 @@ public class JsonObjects implements Serializable {
         }
     }
 
-    public static <T> T fromBytes(byte[] bytes, TypeReference<T> typeReference) {
+    public static BookingResponse fromBytes(byte[] bytes) {
         ObjectMapper mapper = new ObjectMapper();
         try {
-            return mapper.readValue(bytes, typeReference);
+            return mapper.readValue(bytes, BookingResponse.class);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
