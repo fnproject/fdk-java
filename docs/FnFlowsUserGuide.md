@@ -474,7 +474,7 @@ exception will be converted into
 a [WrappedException](../api/src/main/java/com/fnproject/fn/api/flow/WrappedFunctionException.java)
 - this is a a `RuntimeException` that will preserve the original message and
 stacktrace of the source exception, but not any fields on the original
-exception.
+exception. 
 
 E.g.:
 
