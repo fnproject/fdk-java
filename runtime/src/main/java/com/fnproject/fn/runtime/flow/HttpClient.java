@@ -67,7 +67,7 @@ public class HttpClient {
         final int status;
         final Map<String, String> headers = new HashMap<>();
         String statusLine;
-        InputStream body = new ByteArrayInputStream(new byte[]{});
+        InputStream body = new ByteArrayInputStream(new byte[0]);
 
         public HttpResponse(int status) {
             this.status = status;
@@ -118,8 +118,7 @@ public class HttpClient {
         }
 
         public String entityAsString() throws IOException {
-            return IOUtils.toString(body, StandardCharsets.UTF_8);
-
+            return body == null ? null : IOUtils.toString(body, StandardCharsets.UTF_8);
         }
 
         public InputStream getEntity() {
@@ -127,8 +126,7 @@ public class HttpClient {
         }
 
         public byte[] entityAsBytes() throws IOException {
-            return IOUtils.toByteArray(body);
-
+            return body == null ? null : IOUtils.toByteArray(body);
         }
 
         @Override
@@ -143,7 +141,9 @@ public class HttpClient {
 
         @Override
         public void close() throws IOException {
-            body.close();
+            if (body != null) {
+                body.close();
+            }
         }
     }
 
