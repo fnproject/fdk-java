@@ -150,7 +150,7 @@ Create your app and deploy your function:
 $ fn apps create flows-example
 Successfully created app: flows-example
 
-$ fn deploy flows-example
+$ fn deploy -app flows-example
 Updating route /primes using image your_dockerhub_account/flow-primes::0.0.2...
 ```
 
