@@ -461,8 +461,6 @@ public class MyFunction{
    }
 }
 ```
-
-
 ### Exceptions should be serializable
 Finally, exceptions thrown by `Flow` lambda stages will be be propagated
 as error values to other stages - this means that those exceptions should be
@@ -474,7 +472,7 @@ exception will be converted into
 a [WrappedException](../api/src/main/java/com/fnproject/fn/api/flow/WrappedFunctionException.java)
 - this is a a `RuntimeException` that will preserve the original message and
 stacktrace of the source exception, but not any fields on the original
-exception. 
+exception.
 
 E.g.:
 
