@@ -294,9 +294,9 @@
    1. The current flow is retrieved using `Flow f = Flows.currentFlow();`. Add this to the top of the `book` method.
    1. Now we can call these functions and compose the results in a number of different ways. For example in parallel:
       ```java
-      f. allOf(Functions.bookFlight(input.flight),
-               Functions.bookHotel(input.hotel),
-               Functions.bookCar(input.carRental));
+      f.allOf(Functions.bookFlight(input.flight),
+              Functions.bookHotel(input.hotel),
+              Functions.bookCar(input.carRental));
       ```
    1. Introduce and show Flow UI.
    1. Or we can call one after the other. Replace the above statement with:
@@ -352,7 +352,7 @@
       ```
    1. Send an email with confirmation numbers when we succeed:
       ```java
-               .whenComplete((carResponse,r)->Functions.sendEmail(composeEmail(flightResponse, hotelResponse, carResponse)))
+      .whenComplete((carResponse,r)->Functions.sendEmail(composeEmail(flightResponse, hotelResponse, carResponse)))
       ```
       With this helper:
       ```java
@@ -364,7 +364,6 @@
                            "Hotel confirmation: " +  hotelResponse.confirmation + "\n" +
                            "Car rental confirmation: " + carResponse.confirmation;
           return result;
-     1 }
       ```
    1. Send an email on failure:
       ```java
@@ -380,12 +379,12 @@
       1. Great local dev experience.
    1. Higher-order abstractions. e.g. Retry:
       ```java
-       Functions.bookFlight(input.flight)
-           .thenCompose((flightResponse) -> Functions.bookHotel(input.hotel)
-               .thenCompose((hotelResponse) -> Functions.bookCar(input.carRental)
-                   .whenComplete((carResponse,r)->Functions.sendEmail(composeEmail(flightResponse, hotelResponse, carResponse)))
-                   .exceptionallyCompose((e) -> {Retry.exponentialWithJitter(() -> Functions.cancelCar(input.carRental));return f.failedFuture(e);}))
-               .exceptionallyCompose((e) -> {Retry.exponentialWithJitter(() -> Functions.cancelHotel(input.hotel));return f.failedFuture(e);}))
-           .exceptionallyCompose((e) -> {Retry.exponentialWithJitter(() -> Functions.cancelFlight(input.flight));return f.failedFuture(e);})
-       .exceptionally((e) -> {Functions.sendEmail(new EmailRequest());return null;});
+      Functions.bookFlight(input.flight)
+          .thenCompose((flightResponse) -> Functions.bookHotel(input.hotel)
+              .thenCompose((hotelResponse) -> Functions.bookCar(input.carRental)
+                  .whenComplete((carResponse,r)->Functions.sendEmail(composeEmail(flightResponse, hotelResponse, carResponse)))
+                  .exceptionallyCompose((e) -> {Retry.exponentialWithJitter(() -> Functions.cancelCar(input.carRental));return f.failedFuture(e);}))
+              .exceptionallyCompose((e) -> {Retry.exponentialWithJitter(() -> Functions.cancelHotel(input.hotel));return f.failedFuture(e);}))
+          .exceptionallyCompose((e) -> {Retry.exponentialWithJitter(() -> Functions.cancelFlight(input.flight));return f.failedFuture(e);})       
+      .exceptionally((e) -> {Functions.sendEmail(new EmailRequest());return null;});
       ```
