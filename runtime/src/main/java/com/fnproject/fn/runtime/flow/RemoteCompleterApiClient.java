@@ -312,8 +312,9 @@ public class RemoteCompleterApiClient implements CompleterClient {
     private static void validateSuccessful(HttpClient.HttpResponse response) {
         if (!isSuccessful(response)) {
             try {
+                String body = response.entityAsString();
                 throw new PlatformException(String.format("Received unexpected response (%d) from " +
-                        "completer: %s", response.getStatusCode(), response.entityAsString()));
+                        "completer: %s", response.getStatusCode(), body == null ? "Empty body" : body));
             } catch (IOException e) {
                 throw new PlatformException(String.format("Received unexpected response (%d) from " +
                         "completer. Could not read body.", response.getStatusCode()), e);

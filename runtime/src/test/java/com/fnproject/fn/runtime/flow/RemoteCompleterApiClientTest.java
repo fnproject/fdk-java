@@ -634,6 +634,18 @@ public class RemoteCompleterApiClientTest {
         assertThat(req.bodyBytes).isEqualTo(lambdaBytes);
     }
 
+    @Test
+    public void emptyFailedResponseDoesNotThrowNPE() throws Exception {
+        givenFailedResponseWithoutBody();
+
+        try {
+            verifyStageCreatedOnGraph(completerClient.supply(flowId, serializableLambda, codeLocation), "supply");
+        } catch (PlatformException e) {
+            assertThat(e.getCause()).isNull();
+            assertThat(e.getMessage().toLowerCase()).contains("empty body");
+        }
+    }
+
     private HttpClient.HttpRequest verifyStageCreatedOnGraph(CompletionId id, String op) throws IOException {
         String url = String.format("/graph/%s/%s", flowId.getId(), op);
         verify(mockHttpClient, times(1)).execute(reqCaptor.capture());
@@ -656,6 +668,11 @@ public class RemoteCompleterApiClientTest {
         HttpClient.HttpResponse stageResponse = new HttpClient.HttpResponse(200);
         stageResponse.addHeader(STAGE_ID_HEADER, "stage");
         when(mockHttpClient.execute(any())).thenReturn(stageResponse);
+    }
+
+    private void givenFailedResponseWithoutBody() throws IOException {
+        HttpClient.HttpResponse empty = new HttpClient.HttpResponse(500).setEntity(null);
+        when(mockHttpClient.execute(any())).thenReturn(empty);
     }
 
 }
