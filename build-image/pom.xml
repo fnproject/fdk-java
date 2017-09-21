@@ -7,6 +7,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <fnproject.version>1.0.0-SNAPSHOT</fnproject.version>
     </properties>
 
     <!-- The artifact is irrelevant, this pom is only used to download dependencies. -->
@@ -16,6 +17,17 @@
     <version>1.0.0</version>
 
     <dependencies>
+        <dependency>
+            <groupId>com.fnproject.fn</groupId>
+            <artifactId>api</artifactId>
+            <version>${fnproject.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fnproject.fn</groupId>
+            <artifactId>testing</artifactId>
+            <version>${fnproject.version}</version>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
@@ -44,4 +56,15 @@
             </plugin>
         </plugins>
     </build>
+
+    <!-- We need to get the deps we've just built and they must be served in
+         the docker container with the build. This works in CircleCI. If you
+         are building it locally, change it to your host and good luck with
+         proxies. -->
+    <repositories>
+        <repository>
+            <id>fn-maven-releases</id>
+            <url>http://172.17.0.1:18080</url>
+        </repository>
+    </repositories>
 </project>

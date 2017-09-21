@@ -49,14 +49,13 @@ jobs:
           name: Build fn-java-fdk Docker build image
           command: |
             cd build-image
-            docker build -t fnproject/fn-java-fdk-build .
+            ./docker-build.sh -t fnproject/fn-java-fdk-build .
 
       - run:
           name: Build fn-java-fdk-jdk9 Docker build image
           command: |
             cd build-image
-            docker build -f Dockerfile-jdk9 -t fnproject/fn-java-fdk-build:jdk9-latest .
-
+            ./docker-build.sh -f Dockerfile-jdk9 -t fnproject/fn-java-fdk-build:jdk9-latest .
       - run:
           name: Build fn-java-fdk Docker runtime image
           command: |
