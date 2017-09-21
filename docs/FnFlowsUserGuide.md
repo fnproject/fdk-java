@@ -275,11 +275,11 @@ You can also chain a FlowFuture by providing a Java function that takes the prev
   });
 ```
 
-The FlowFutures returned by _thenApply_ and _thenCompose_ are analogous to the _map_ and _flatMap_ operations provided by the [Stream](https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html) and [Optional](https://docs.oracle.com/javase/8/docs/api/java/util/Optional.html) classes. 
+The FlowFutures returned by _thenApply_ and _thenCompose_ are analogous to the _map_ and _flatMap_ operations provided by Java's [Stream](https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html) and [Optional](https://docs.oracle.com/javase/8/docs/api/java/util/Optional.html) classes. 
 
 ### Running Multiple Computations in Parallel
 
-You can also execute two or more independent FlowFutures in parallel and combine their results in some manner.
+You can also execute two or more independent FlowFutures in parallel and combine their results once available.
 
 To combine the results of two FlowFuture computations:
 
@@ -331,7 +331,7 @@ There are two main idioms for handling errors with FlowFutures. The first allows
 		if (System.currentTimeMillis() % 2L == 0L) {
 			throw new RuntimeException("Error in stage");
 		}
-     	return 100;
+		return 100;
     }).exceptionally(err -> -1);
 ```
 
