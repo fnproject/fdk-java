@@ -160,6 +160,12 @@ public final class RemoteFlow implements Flow, Serializable {
     }
 
     @Override
+    public <U> FlowFuture<HttpResponse> invokeFunction(String functionId, HttpMethod method, Headers headers, U input) {
+        return JsonInvoke.invokeFunction(this,functionId,method,headers,input);
+    }
+
+
+    @Override
     public <T> FlowFuture<T> supply(Flows.SerCallable<T> c) {
         CompletionId cid = getClient().supply(flowId, c, CodeLocation.fromCallerLocation(1));
         return new RemoteFlowFuture<>(cid);
