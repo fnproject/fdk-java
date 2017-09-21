@@ -89,6 +89,44 @@ public interface Flow extends Serializable {
      */
     <T extends Serializable, U> FlowFuture<T> invokeFunction(String functionId, HttpMethod method, Headers headers, U input, Class<T> responseType);
 
+
+    /**
+     * Invoke a function by  ID  using input and output coercion and a specified method and headers with no response type
+     * <p>
+     * Returns a future that completes with the HttpResponse of the function on success
+     * if the function returns a successful http response, and completes with an {@link FunctionInvocationException} if the function invocation fails with a non-succesful http status
+     * <p>
+     * <p>
+     * This currently only maps to JSON via the default JSON mapper in the FDK
+     *
+     * @param functionId Function ID of function to invoke - this should have the form APPNAME/FUNCTION_PATH  (e.g. "myapp/path/to/function"  or "./path/to/function").
+     * @param input      The input object to send to the function input
+     * @param <U>        The Input type of the function
+     * @return a flow future that completes with the result of the function, or an error if the function invocation failed
+     * @throws IllegalArgumentException if the input cannot be coerced to the call
+     */
+    default <U> FlowFuture<HttpResponse> invokeFunction(String functionId, U input) {
+        return invokeFunction(functionId, HttpMethod.POST, Headers.emptyHeaders(), input);
+    }
+
+    /**
+     * Invoke a function by  ID  using input and output coercion and a specified method and headers
+     * <p>
+     * Returns a future that completes with the HttpResponse of the function on success
+     * if the function returns a successful http response, and completes with an {@link FunctionInvocationException} if the function invocation fails with a non-succesful http status
+     * <p>
+     * This currently only maps to JSON via the default JSON mapper in the FDK
+     *
+     * @param functionId Function ID of function to invoke - this should have the form APPNAME/FUNCTION_PATH  (e.g. "myapp/path/to/function"  or "./path/to/function").
+     * @param method     the HTTP method to use for this call
+     * @param headers    additional HTTP headers to pass to this function -
+     * @param input      The input object to send to the function input
+     * @param <U>        The Input type of the function
+     * @return a flow future that completes with the result of the function, or an error if the function invocation failed
+     * @throws IllegalArgumentException if the input cannot be coerced to the call
+     */
+    <U> FlowFuture<HttpResponse> invokeFunction(String functionId, HttpMethod method, Headers headers, U input);
+
     /**
      * Invoke a function by ID with no headers
      * <p>
@@ -265,7 +303,7 @@ public interface Flow extends Serializable {
         SUCCEEDED,
         FAILED,
         CANCELLED,
-        KILLED;
+        KILLED
     }
 
     /**
