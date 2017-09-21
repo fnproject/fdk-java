@@ -36,9 +36,10 @@ public class JacksonCoercion implements InputCoercion<Object>, OutputCoercion {
     }
 
     @Override
-    public Optional<Object> tryCoerceParam(InvocationContext currentContext, int param, InputEvent input) {
+    public Optional<Object> tryCoerceParam(InvocationContext currentContext, int param, InputEvent input, MethodWrapper method) {
 
-        Type type = currentContext.getRuntimeContext().getTargetMethod().getGenericParameterTypes()[param];
+        Type type = method.getTargetMethod().getGenericParameterTypes()[param];
+
         JavaType javaType = objectMapper(currentContext).constructType(type);
 
         return Optional.ofNullable(input.consumeBody(inputStream -> {
@@ -48,7 +49,6 @@ public class JacksonCoercion implements InputCoercion<Object>, OutputCoercion {
                 throw coercionFailed(type, e);
             }
         }));
-
     }
 
 
@@ -63,8 +63,7 @@ public class JacksonCoercion implements InputCoercion<Object>, OutputCoercion {
 
 
     @Override
-    public Optional<OutputEvent> wrapFunctionResult(InvocationContext ctx, Object value) {
-
+    public Optional<OutputEvent> wrapFunctionResult(InvocationContext ctx, MethodWrapper method, Object value) {
         try {
             return Optional.of(OutputEvent.fromBytes(objectMapper(ctx).writeValueAsBytes(value), true,
                     "application/json"));
@@ -72,7 +71,5 @@ public class JacksonCoercion implements InputCoercion<Object>, OutputCoercion {
         } catch (JsonProcessingException e) {
             throw new RuntimeException("Failed to render response to JSON", e);
         }
-
     }
-
 }
