@@ -74,6 +74,9 @@ public interface OutputEvent {
      * @return a new output event
      */
     static OutputEvent fromBytes(byte[] bytes, int statusCode, String contentType, Headers headers) {
+        if (statusCode < 100 || 600 <= statusCode) {
+            throw new IllegalArgumentException("Valid status codes must lie in the range [100, 599]");
+        }
         return new OutputEvent() {
 
             @Override
@@ -97,6 +100,9 @@ public interface OutputEvent {
     }
 
     static OutputEvent emptyResult(int statusCode) {
+        if (statusCode < 100 || 600 <= statusCode) {
+            throw new IllegalArgumentException("Valid status codes must lie in the range [100, 599]");
+        }
         return new OutputEvent() {
             @Override
             public int getStatusCode() {
