@@ -93,7 +93,7 @@ public class DefaultEventCodecTest {
     @Test
     public void shouldWriteOutputDirectlyToOutputStream() throws IOException{
 
-        OutputEvent evt = OutputEvent.fromBytes("hello".getBytes(),true,"text/plain");
+        OutputEvent evt = OutputEvent.fromBytes("hello".getBytes(),OutputEvent.SUCCESS,"text/plain");
         ByteArrayOutputStream bos  = new ByteArrayOutputStream();
 
         DefaultEventCodec codec = new DefaultEventCodec(new HashMap<>(), new NullInputStream(0),bos);

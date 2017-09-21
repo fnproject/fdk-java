@@ -14,7 +14,7 @@ public class ByteArrayCoercion implements InputCoercion<byte[]>, OutputCoercion 
     @Override
     public Optional<OutputEvent> wrapFunctionResult(InvocationContext ctx, Object value) {
         if (ctx.getRuntimeContext().getTargetMethod().getReturnType().equals(byte[].class)) {
-            return Optional.of(OutputEvent.fromBytes(((byte[]) value), true, "application/octet-stream"));
+            return Optional.of(OutputEvent.fromBytes(((byte[]) value), OutputEvent.SUCCESS, "application/octet-stream"));
         } else {
             return Optional.empty();
         }

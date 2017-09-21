@@ -10,11 +10,25 @@ import java.util.Optional;
  */
 public interface OutputEvent {
     /**
-     * Is this invocation successful
+     * Report the HTTP status code of this event.
+     * For default-format functions, this value is mapped into a success/failure value as follows:
+     * status codes in the range [100, 400) are considered successful; anything else is a failure.
      *
-     * @return true if the invocation was successful or not
+     * @return the status code associated with this event
      */
-    boolean isSuccess();
+    int getStatusCode();
+
+    int SUCCESS = 200;
+    int FAILURE = 500;
+
+    /**
+     * Report the boolean success of this event.
+     * For default-format functions, this is used to map the HTTP status code into a straight success/failure.
+     * @return true if the output event results from a successful invocation.
+     */
+    default boolean isSuccess() {
+        return 100 <= getStatusCode() && getStatusCode() < 400;
+    }
 
     /**
      * The indicative content type of the response.
@@ -24,6 +38,15 @@ public interface OutputEvent {
      * @return The name of the content type.
      */
     Optional<String> getContentType();
+
+    /**
+     * Any additional {@link Headers} that should be supplied along with the content
+     *
+     * These are only used when the function format is HTTP
+     *
+     * @return the headers to add
+     */
+    Headers getHeaders();
 
     /**
      * Write the body of the output to a stream
@@ -38,16 +61,32 @@ public interface OutputEvent {
      * Create an output event from a byte array
      *
      * @param bytes       the byte array to write to the output
-     * @param success     if the output is successful
+     * @param statusCode  the status code to report
      * @param contentType the content type to present on HTTP responses
      * @return a new output event
      */
-     static OutputEvent fromBytes(byte[] bytes, boolean success, String contentType) {
+     static OutputEvent fromBytes(byte[] bytes, int statusCode, String contentType) {
+         return fromBytes(bytes, statusCode, contentType, Headers.emptyHeaders());
+     }
+
+    /**
+     * Create an output event from a byte array
+     *
+     * @param bytes       the byte array to write to the output
+     * @param statusCode  the HTTP status code of this event
+     * @param contentType the content type to present on HTTP responses
+     * @param headers     any additional headers to supply with HTTP responses
+     * @return a new output event
+     */
+    static OutputEvent fromBytes(byte[] bytes, int statusCode, String contentType, Headers headers) {
+        if (statusCode < 100 || 600 <= statusCode) {
+            throw new IllegalArgumentException("Valid status codes must lie in the range [100, 599]");
+        }
         return new OutputEvent() {
 
             @Override
-            public boolean isSuccess() {
-                return success;
+            public int getStatusCode() {
+                return statusCode;
             }
 
             @Override
@@ -56,23 +95,32 @@ public interface OutputEvent {
             }
 
             @Override
+            public Headers getHeaders() { return headers; }
+
+            @Override
             public void writeToOutput(OutputStream out) throws IOException {
                 out.write(bytes);
             }
         };
     }
 
-    static OutputEvent emptyResult(boolean success) {
+    static OutputEvent emptyResult(int statusCode) {
+        if (statusCode < 100 || 600 <= statusCode) {
+            throw new IllegalArgumentException("Valid status codes must lie in the range [100, 599]");
+        }
         return new OutputEvent() {
             @Override
-            public boolean isSuccess() {
-                return success;
+            public int getStatusCode() {
+                return statusCode;
             }
 
             @Override
             public Optional<String> getContentType() {
                 return Optional.empty();
             }
+
+            @Override
+            public Headers getHeaders() { return Headers.emptyHeaders(); }
 
             @Override
             public void writeToOutput(OutputStream out) throws IOException {

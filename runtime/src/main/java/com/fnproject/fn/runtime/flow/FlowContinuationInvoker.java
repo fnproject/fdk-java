@@ -233,13 +233,13 @@ public final class FlowContinuationInvoker implements FunctionInvoker {
         }
 
         /**
-         * The completer expects a 200 on the outptu event.
+         * The completer expects a 200 on the output event.
          *
          * @return
          */
         @Override
-        public boolean isSuccess() {
-            return true;
+        public int getStatusCode() {
+            return OutputEvent.SUCCESS;
         }
 
         /**

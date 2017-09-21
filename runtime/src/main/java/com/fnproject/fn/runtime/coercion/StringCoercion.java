@@ -11,7 +11,7 @@ public class StringCoercion implements InputCoercion<String>, OutputCoercion {
     @Override
     public Optional<OutputEvent> wrapFunctionResult(InvocationContext ctx, Object value) {
         if (ctx.getRuntimeContext().getTargetMethod().getReturnType().equals(String.class)) {
-            return Optional.of(OutputEvent.fromBytes(((String) value).getBytes(), true, "text/plain"));
+            return Optional.of(OutputEvent.fromBytes(((String) value).getBytes(), OutputEvent.SUCCESS, "text/plain"));
         } else {
             return Optional.empty();
         }

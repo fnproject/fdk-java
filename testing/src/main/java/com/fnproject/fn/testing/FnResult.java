@@ -35,4 +35,13 @@ public interface FnResult {
      * @return the HTTP status code returned by the function
      */
     int getStatus();
+
+    /**
+     * Determine if the status code corresponds to a successful invocation
+     *
+     * @return true if the status code indicates success
+     */
+    default boolean isSuccess() {
+        return 100 <= getStatus() && getStatus() < 400;
+    }
 }
