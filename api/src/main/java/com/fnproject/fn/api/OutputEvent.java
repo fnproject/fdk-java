@@ -26,6 +26,15 @@ public interface OutputEvent {
     Optional<String> getContentType();
 
     /**
+     * Any additional {@link Headers} that should be supplied along with the content
+     *
+     * These are only used when the function format is HTTP
+     *
+     * @return the headers to add
+     */
+    Headers getHeaders();
+
+    /**
      * Write the body of the output to a stream
      *
      * @param out           an outputstream to emit the body of the event
@@ -43,6 +52,19 @@ public interface OutputEvent {
      * @return a new output event
      */
      static OutputEvent fromBytes(byte[] bytes, boolean success, String contentType) {
+         return fromBytes(bytes, success, contentType, Headers.emptyHeaders());
+     }
+
+    /**
+     * Create an output event from a byte array
+     *
+     * @param bytes       the byte array to write to the output
+     * @param success     if the output is successful
+     * @param contentType the content type to present on HTTP responses
+     * @param headers     any additional headers to supply with HTTP responses
+     * @return a new output event
+     */
+    static OutputEvent fromBytes(byte[] bytes, boolean success, String contentType, Headers headers) {
         return new OutputEvent() {
 
             @Override
@@ -54,6 +76,9 @@ public interface OutputEvent {
             public Optional<String> getContentType() {
                 return Optional.ofNullable(contentType);
             }
+
+            @Override
+            public Headers getHeaders() { return headers; }
 
             @Override
             public void writeToOutput(OutputStream out) throws IOException {
@@ -73,6 +98,9 @@ public interface OutputEvent {
             public Optional<String> getContentType() {
                 return Optional.empty();
             }
+
+            @Override
+            public Headers getHeaders() { return Headers.emptyHeaders(); }
 
             @Override
             public void writeToOutput(OutputStream out) throws IOException {

@@ -1,5 +1,6 @@
 package com.fnproject.fn.runtime;
 
+import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.InputEvent;
 import com.fnproject.fn.api.OutputEvent;
 import com.fnproject.fn.runtime.exception.FunctionInputHandlingException;
@@ -11,12 +12,14 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.fnproject.fn.runtime.HeaderBuilder.headerEntry;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.entry;
 import static org.junit.Assert.fail;
 
 public class HttpEventCodecTest {
@@ -137,13 +140,54 @@ public class HttpEventCodecTest {
         httpEventCodec.writeEvent(outEvent);
         String httpResponse = new String(bos.toByteArray());
 
-        // TODO: this test is brittle.
-        assertThat(httpResponse).isEqualTo("HTTP/1.1 200 INVOKED\r\n" +
-                "Content-Type: text/plain\r\n" +
-                "Content-length: 5\r\n" +
-                "\r\n" +
-                "Hello");
+        assertThat(statusLine(httpResponse)).isEqualTo("HTTP/1.1 200 INVOKED");
+        assertThat(headers(httpResponse)).containsOnly(entry("content-type", "text/plain"), entry("content-length", "5"));
+        assertThat(body(httpResponse)).isEqualTo("Hello");
 
+    }
+
+    private static String statusLine(String httpResponse) {
+        return httpResponse.split("\\\r\\\n", 2)[0];
+    }
+
+    private static Map<String, String> headers(String httpResponse) {
+        Map<String, String> hs = new HashMap<>();
+        boolean firstLine = true;
+        for (String line: httpResponse.split("\\\r\\\n")) {
+            if (line.equals("")) { break; }
+            if (firstLine) {
+                firstLine = false;
+                continue;
+            }
+            String[] parts = line.split(": *", 2);
+            hs.put(parts[0].toLowerCase(), parts[1]);
+        }
+        return hs;
+    }
+
+    private static String body(String httpResponse) {
+        return httpResponse.split("\\\r\\\n\\\r\\\n", 2)[1];
+    }
+
+    @Test
+    public void shouldSerializeSuccessfulEventWithHeaders() throws Exception{
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+
+        HttpEventCodec httpEventCodec = new HttpEventCodec(nullIn,bos);
+        Map<String, String> hs = new HashMap<>();
+        hs.put("foo", "bar");
+        hs.put("Content-Type", "application/octet-stream"); // ignored
+        hs.put("Content-length", "99");  // ignored
+        OutputEvent outEvent = OutputEvent.fromBytes("Hello".getBytes(),true,"text/plain", Headers.fromMap(hs));
+
+        httpEventCodec.writeEvent(outEvent);
+        String httpResponse = new String(bos.toByteArray());
+
+        assertThat(statusLine(httpResponse)).isEqualTo("HTTP/1.1 200 INVOKED");
+        assertThat(headers(httpResponse)).containsOnly(entry("foo", "bar"),
+                                                       entry("content-type", "text/plain"),
+                                                       entry("content-length", "5"));
+        assertThat(body(httpResponse)).isEqualTo("Hello");
     }
 
 
@@ -157,13 +201,32 @@ public class HttpEventCodecTest {
         httpEventCodec.writeEvent(outEvent);
         String httpResponse = new String(bos.toByteArray());
 
-        // TODO: this test is brittle.
-        assertThat(httpResponse).isEqualTo("HTTP/1.1 500 INVOKE FAILED\r\n" +
-                "Content-Type: text/plain\r\n" +
-                "Content-length: 5\r\n" +
-                "\r\n" +
-                "Hello");
+        assertThat(statusLine(httpResponse)).isEqualTo("HTTP/1.1 500 INVOKE FAILED");
+        assertThat(headers(httpResponse)).containsOnly(entry("content-type", "text/plain"),
+                                                       entry("content-length", "5"));
+        assertThat(body(httpResponse)).isEqualTo("Hello");
+    }
 
+
+    @Test
+    public void shouldSerializeFailedEventWithHeaders() throws Exception{
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+
+        HttpEventCodec httpEventCodec = new HttpEventCodec(nullIn,bos);
+        Map<String, String> hs = new HashMap<>();
+        hs.put("foo", "bar");
+        hs.put("Content-Type", "application/octet-stream"); // ignored
+        hs.put("Content-length", "99");  // ignored
+        OutputEvent outEvent = OutputEvent.fromBytes("Hello".getBytes(),false,"text/plain", Headers.fromMap(hs));
+
+        httpEventCodec.writeEvent(outEvent);
+        String httpResponse = new String(bos.toByteArray());
+
+        assertThat(statusLine(httpResponse)).isEqualTo("HTTP/1.1 500 INVOKE FAILED");
+        assertThat(headers(httpResponse)).containsOnly(entry("foo", "bar"),
+                                                       entry("content-type", "text/plain"),
+                                                       entry("content-length", "5"));
+        assertThat(body(httpResponse)).isEqualTo("Hello");
     }
 
 
