@@ -56,6 +56,40 @@ public interface Flow extends Serializable {
     }
 
     /**
+     * Invoke a function by ID  using input and output coercion
+     * <p>
+     * This currently only maps to JSON via the default JSON mapper in the FDK
+     *
+     * @param functionId   Function ID of function to tryInvoke - this should have the form APPNAME/FUNCTION_PATH  (e.g. "myapp/path/to/function"  or "./path/to/function").
+     * @param input        The input object to send to the function input
+     * @param responseType The expected response type of the target function
+     * @param <T>          The Response type
+     * @param <U>          The Input type of the function
+     * @return a flow future that completes with the result of the function, or an error if the function invocation failed
+     * @throws IllegalArgumentException if the input cannot be coerced to the callA
+     */
+    default <T extends Serializable, U> FlowFuture<T> invokeFunction(String functionId, U input, Class<T> responseType) {
+        return invokeFunction(functionId, HttpMethod.POST, Headers.emptyHeaders(), input, responseType);
+    }
+
+    /**
+     * Invoke a function by  ID  using input and output coercion and a specified method and headers
+     * <p>
+     * This currently only maps to JSON via the default JSON mapper in the FDK
+     *
+     * @param functionId   Function ID of function to tryInvoke - this should have the form APPNAME/FUNCTION_PATH  (e.g. "myapp/path/to/function"  or "./path/to/function").
+     * @param method       the HTTP method to use for this call
+     * @param headers      additional HTTP headers to pass to this function -
+     * @param input        The input object to send to the function input
+     * @param responseType The expected response type of the target function
+     * @param <T>          The Response type
+     * @param <U>          The Input type of the function
+     * @return a flow future that completes with the result of the function, or an error if the function invocation failed
+     * @throws IllegalArgumentException if the input cannot be coerced to the call
+     */
+    <T extends Serializable, U> FlowFuture<T> invokeFunction(String functionId, HttpMethod method, Headers headers, U input, Class<T> responseType);
+
+    /**
      * Invoke a function by ID with no headers
      * <p>
      *
@@ -144,7 +178,6 @@ public interface Flow extends Serializable {
 
     /**
      * Create a completed future that propagates a failed value
-     * <p>
      * <blockquote><pre>{@code
      *         Flow fl = Flows.currentFlow();
      *         fl.delay(5,TimeUnit.Seconds)
@@ -166,7 +199,7 @@ public interface Flow extends Serializable {
      * }</pre></blockquote>
      *
      * @param ex an exception to publish to the future
-     * @return
+     * @return a future that always completes with the specified exception
      */
     <T> FlowFuture<T> failedFuture(Throwable ex);
 

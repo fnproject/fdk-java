@@ -33,6 +33,22 @@ public final class Headers {
         return new Headers(Collections.emptyMap());
     }
 
+
+    /**
+     * Creates a new headers object with
+     *
+     * This will overwrite an existing header with an exact name match
+     * @param key new header key
+     * @param value new header value
+     * @return a new headers object with the specified header added
+     */
+    public Headers withHeader(String key, String value){
+        Map<String,String> newHeaders = new HashMap<>();
+        newHeaders.putAll(getAll());
+        newHeaders.put(key,value);
+        return new Headers(newHeaders);
+    }
+
     /**
      * Returns the header matching the specified key. This matches headers in a case-insensitive way and substitutes
      * underscore and hyphen characters such that : "CONTENT_TYPE" and "Content-type" are equivalent. If no matching

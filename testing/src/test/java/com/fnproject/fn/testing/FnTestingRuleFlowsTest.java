@@ -141,6 +141,24 @@ public class FnTestingRuleFlowsTest {
 
 
     @Test
+    public void invokeJsonFunction() {
+        fn.givenEvent().enqueue();
+        fn.givenFn("user/json")
+                .withAction((ign) -> {
+                    if (new String(ign).equals("{\"foo\":\"bar\"}")) {
+                        return "{\"foo\":\"baz\"}".getBytes();
+                    } else {
+                        return new byte[0];
+                    }
+                });
+
+        fn.thenRun(TestFn.class, "invokeJsonFunction");
+
+        assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
+        assertThat(count).isEqualTo(1);
+    }
+
+    @Test
     public void invokeFunctionWithFunctionError() {
         fn.givenEvent().enqueue();
         fn.givenFn("user/error")
@@ -403,14 +421,14 @@ public class FnTestingRuleFlowsTest {
             Flow fl = Flows.currentFlow();
             fl.failedFuture(new RuntimeException("error"))
                     .exceptionallyCompose((e) -> {
-                        if(e.getMessage().equals("error")){
+                        if (e.getMessage().equals("error")) {
                             throw new RuntimeException("foo");
                         }
                         count--;
                         return fl.completedValue(-1);
                     })
-                    .whenComplete((i,e) -> {
-                        if(e !=null && e.getMessage().equals("foo")){
+                    .whenComplete((i, e) -> {
+                        if (e != null && e.getMessage().equals("foo")) {
                             count++;
                         }
                     });
@@ -421,6 +439,20 @@ public class FnTestingRuleFlowsTest {
             Flow fl = Flows.currentFlow();
             fl.invokeFunction("user/echo", HttpMethod.GET, Headers.emptyHeaders(), Result.InvokeFunctionEcho.name().getBytes())
                     .thenAccept((r) -> result = Result.valueOf(new String(r.getBodyAsBytes())));
+        }
+
+        public static class JSONObject implements  Serializable{
+            public String foo = "bar";
+        }
+
+        public void invokeJsonFunction() {
+            Flows.currentFlow()
+                    .invokeFunction("user/json", new JSONObject(), JSONObject.class)
+                    .thenAccept((json) -> {
+                        if (json.foo.equals("baz")) {
+                            count = 1;
+                        }
+                    });
         }
 
         public void invokeFunctionError() {
