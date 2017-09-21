@@ -7,9 +7,6 @@ SERVICE=fn-java-fdk
 RUNTIME_IMAGE=${SERVICE}
 BUILD_IMAGE=${SERVICE}-build
 
-RUNTIME_IMAGE_J9=${SERVICE}-jdk9
-BUILD_IMAGE_J9=${SERVICE}-build-jdk9
-
 release_version=$(cat release.version)
 if [[ $release_version =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] ; then
    echo "Deploying version $release_version"
@@ -61,18 +58,18 @@ mvn -s ./settings-deploy.xml \
   docker push $USER/$BUILD_IMAGE:${moving_version}
 
   ## jdk9 runtime
-  docker tag $USER/$RUNTIME_IMAGE_J9:latest $USER/$RUNTIME_IMAGE_J9:${release_version}
-  docker tag $USER/$RUNTIME_IMAGE_J9:latest $USER/$RUNTIME_IMAGE_J9:${moving_version}
-  docker push $USER/$RUNTIME_IMAGE_J9:latest
-  docker push $USER/$RUNTIME_IMAGE_J9:${release_version}
-  docker push $USER/$RUNTIME_IMAGE_J9:${moving_version}
+  docker tag $USER/$RUNTIME_IMAGE:jdk9-latest $USER/$RUNTIME_IMAGE:jdk9-${release_version}
+  docker tag $USER/$RUNTIME_IMAGE:jdk9-latest $USER/$RUNTIME_IMAGE:jdk9-${moving_version}
+  docker push $USER/$RUNTIME_IMAGE:jdk9-latest
+  docker push $USER/$RUNTIME_IMAGE:jdk9-${release_version}
+  docker push $USER/$RUNTIME_IMAGE:jdk9-${moving_version}
 
   ## jdk9 build
-  docker tag $USER/$BUILD_IMAGE_J9:latest $USER/$BUILD_IMAGE_J9:${release_version}
-  docker tag $USER/$BUILD_IMAGE_J9:latest $USER/$BUILD_IMAGE_J9:${moving_version}
-  docker push $USER/$BUILD_IMAGE_J9:latest
-  docker push $USER/$BUILD_IMAGE_J9:${release_version}
-  docker push $USER/$BUILD_IMAGE_J9:${moving_version}
+  docker tag $USER/$BUILD_IMAGE:jdk9-latest $USER/$BUILD_IMAGE:jdk9-${release_version}
+  docker tag $USER/$BUILD_IMAGE:jdk9-latest $USER/$BUILD_IMAGE:jdk9-${moving_version}
+  docker push $USER/$BUILD_IMAGE:jdk9-latest
+  docker push $USER/$BUILD_IMAGE:jdk9-${release_version}
+  docker push $USER/$BUILD_IMAGE:jdk9-${moving_version}
 )
 
 
