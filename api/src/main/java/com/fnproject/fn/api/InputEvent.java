@@ -35,7 +35,7 @@ public interface InputEvent extends Closeable {
     String getRequestUrl();
 
     /**
-     * The HTTP method used to tryInvoke this function
+     * The HTTP method used to invoke this function
      *
      * @return an UpperCase HTTP method
      */
