@@ -18,6 +18,8 @@ and
 [CompletableFuture](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletableFuture.html)
 APIs, a lot of the concepts will already be familiar to you.
 
+[Advanced Topics](FnFlowsAdvancedTopics.md) provides more detail on how data serialization and error handling works with Fn Flow under the covers.
+
 ## Pre-requisites
 Before you get started, you will need to be familiar with the [Fn Java
 FDK](../README.md) and have the following things:
@@ -56,13 +58,31 @@ In a terminal, start the functions server:
 $ fn start
 ```
 
-Similarly, start the Flows completer server by running its docker image
-locally and linking it to the functions container:
+Similarly, start the Flows completer server and point it at the functions server API URL:
 
 ```
-$ docker run -p 8081:8081 -d --name completer --link=functions -e API_URL=http://functions:8080/r -e NO_PROXY=functions fnproject/completer:latest
+$ DOCKER_LOCALHOST=$(docker inspect --type container -f '{{.NetworkSettings.Gateway}}' functions)
+
+$ docker run --rm  \
+       -p 8081:8081 \
+       -d \
+       -e API_URL="http://$DOCKER_LOCALHOST:8080/r" \
+       -e no_proxy=$DOCKER_LOCALHOST \
+       --name completer \
+       fnproject/completer:latest
 ```
 
+Optionally, start a completer UI container to visualize your Flow applications:
+
+```
+$ docker run --rm \
+       -p 3002:3000 \
+       -d \
+       --name flowui \
+       -e API_URL=http://$DOCKER_LOCALHOST:8080 \
+       -e COMPLETER_BASE_URL=http://$DOCKER_LOCALHOST:8081 \
+       fnproject/completer:ui
+```
 
 ## Your first Fn Flow
 
@@ -157,8 +177,9 @@ Updating route /primes using image your_dockerhub_account/flow-primes::0.0.2...
 Configure your function to talk to the local completer endpoint:
 
 ```
-$ COMPLETER_SERVER_IP=`docker inspect --type container -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' completer`
-$ fn apps config set flows-example COMPLETER_BASE_URL http://${COMPLETER_SERVER_IP}:8081
+$ DOCKER_LOCALHOST=$(docker inspect --type container -f '{{.NetworkSettings.Gateway}}' functions)
+
+$ fn apps config set flows-example COMPLETER_BASE_URL "http://$DOCKER_LOCALHOST:8081"
 ```
 
 ### 4. Run your Flow function
@@ -175,330 +196,167 @@ $ curl -XPOST -d "10" http://localhost:8080/r/flows-example/primes
 The 10th prime number is 29
 ```
 
+## Asynchronous Programming Patterns
+
+The following examples introduce the various ways in which Fn Flows enables asynchronous computation for your applications.
+
+### Creating FlowFutures
+
+If you already know the result of the computation:
+
+```
+  Flow fl = Flows.currentFlow();
+  FlowFuture<String> stage = fl.completedValue("Hello World!);
+```
+
+or you want to create a failed stage:
+
+```
+  Flow fl = Flows.currentFlow();
+  fl.failedFuture(new RuntimeException("Immediate Failure"));
+```
+
+If you want to produce a result asynchronously:
+
+```
+  Flow fl = Flows.currentFlow();
+  FlowFuture<Long> stage = fl.supply(() -> {
+  	 long oneHour = 60 * 60 * 1000;
+  	 return System.currentTimeMillis() + oneHour;
+  })
+```
+
+You can also invoke a function asynchronously and have its result complete the future once available:
+
+```
+  Flow fl = Flows.currentFlow();
+  FlowFuture<HttpResponse> stage = fl.invokeFunction("myapp/myfn", HttpMethod.GET);
+```
+
+### Chaining Asynchronous Computations
+
+By chaining FlowFutures together, you can trigger computations asynchronously once a result of a previous computation is available.
+
+To consume the result and do some processing on it:
+
+```
+  Flow fl = Flows.currentFlow();
+  FlowFuture<Long> f1 = fl.supply(() -> {
+  	 long oneHour = 60 * 60 * 1000;
+  	 return System.currentTimeMillis() + oneHour;
+  });
+  f1.thenAccept( millis -> {
+  	String msg = "Time value received was " + millis;
+  	System.out.println(msg);
+  });
+```
+
+Similary, you can transform the result and return the new value from the chained stage:
+
+```
+  Flow fl = Flows.currentFlow();
+  FlowFuture<Long> f1 = fl.supply(() -> {
+  	 long oneHour = 60 * 60 * 1000;
+  	 return System.currentTimeMillis() + oneHour;
+  });
+  FlowFuture<Long> f2 = f1.thenApply( millis -> {
+  	long seconds = millis / 1000;
+  	return seconds;
+  });
+```
+
+You can also chain a FlowFuture by providing a Java function that takes the previous result and itself returns a FlowFuture instance. This function is given the result of the previous computation step as its argument.
+
+```
+  Flow fl = Flows.currentFlow();
+  FlowFuture<String> f1 = fl.supply(() -> "Hello");
+  FlowFuture<String> f2 = f1.thenCompose( msg -> {
+	return fl.supply(() -> msg + " World");
+  });
+```
+
+The FlowFutures returned by _thenApply_ and _thenCompose_ are analogous to the _map_ and _flatMap_ operations provided by the [Stream](https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html) and [Optional](https://docs.oracle.com/javase/8/docs/api/java/util/Optional.html) classes. 
+
+### Running Multiple Computations in Parallel
+
+You can also execute two or more independent FlowFutures in parallel and combine their results in some manner.
+
+To combine the results of two FlowFuture computations:
+
+```
+  Flow fl = Flows.currentFlow();
+  FlowFuture<String> f1 = fl.supply(() -> "Hello");
+  FlowFuture<String> f2 = fl.supply(() -> "World");
+  FlowFuture<Integer> f3 = f1.thenCombine(f2, (result1, result2) -> {
+  	String msg = result1 + " " + result2;
+  	return msg.length();
+  });
+
+```
+
+To wait for at least one computation to complete before invoking the next stage:
+
+```
+  Flow fl = Flows.currentFlow();
+  FlowFuture<String> f1 = fl.supply(() -> {
+  	try {
+  		Thread.sleep((long)(Math.random() * 5000));
+  	} catch(Exception e) {}
+  	return "Hello";
+  });
+  FlowFuture<String> f2 = fl.supply(() -> {
+  	try {
+  		Thread.sleep((long)(Math.random() * 5000));
+  	} catch(Exception e) {}
+  	return "World";
+  });
+  fl.anyOf(f1, f2).thenApply(result -> ((String)result).toUpperCase());
+```
+
+You can also wait for all computations to complete before continuing. Simply replace the last line above with:
+
+```
+  fl.allOf(f1, f2).thenApply(ignored -> f1.get() + " " + f2.get());
+```
+
+Since the _allOf_ stage above returns a void value, you must explicitly retrieve the results of the stages you are interested in within the lambda expression.
+
+### Handling Errors
+
+There are two main idioms for handling errors with FlowFutures. The first allows you to recover from the exceptional completion of a FlowFuture by transforming exceptions to the original type of the future:
+
+```
+	Flow fl = Flows.currentFlow();
+	FlowFuture<Integer> f1 = fl.supply(() -> {
+		if (System.currentTimeMillis() % 2L == 0L) {
+			throw new RuntimeException("Error in stage");
+		}
+     	return 100;
+    }).exceptionally(err -> -1);
+```
+
+The second mechanims mirrors the familiar _throw/catch_ idiom by chaining a new FlowFuture stage with a Java function that takes two parameters, a result of the parent stage (if completed normally) and the exception thrown (if some computation step failed to complete in one of this stage's dependents):
+
+```
+	Flow fl = Flows.currentFlow();
+	FlowFuture<String> f1 = fl.supply(() -> {
+		if (System.currentTimeMillis() % 2L == 0L) {
+			throw new RuntimeException("Error in stage");
+		}
+		return 100;
+	}).handle((val, err) -> {
+		if (err != null){
+			return "An error occurred in this function";
+		} else {
+			return "The result was good: " + val;
+		}
+	});
+```
+
 ### 5. Where Do I Go from Here?
 
 For a more realistic application that leverages the non-blocking functionality
 of Fn Flow, please take a look at the asynchronous [thumbnail generation
 example](../examples/async-thumbnails/README.md).
 
-
-# Passing data between completion stages
-
-Fn Flow executes your code asynchronously and where possible in parallel
-in a distributed environment on the Fn platform - you should assume that each
-Flow *stage* (a lambda attached to a step of the computation) may
-execute on a different machine within the network.
-
-In order to facilitate this, the Fn Java FDK will serialize each of the stage
-lambdas (and any captured variables) using [Java
-Serialization](https://docs.oracle.com/javase/8/docs/api/java/io/Serializable.html)
-and store them remotely on the completer before executing them on the functions
-platform. In order to write Flows applications, you should be aware of
-the impact of this within your code, and how this might differ from your
-experience of programming within a single JVM.
-
-The following lists the key areas that you should be aware of:
-
-### Serializable data and captured variables
-In order for the Flows completer to execute each computation stage
-remotely, it must transmit captured data and values attached to `FlowFuture`s
-over the network. Fn Flow uses standard Java Serialization to convert
-objects and lambda expressions in memory into a collection of bytes for
-transmission over the network. Hence, all values returned by stages, passed in
-as arguments to stages, or captured by lambdas as variables, must be
-serializable.
-
-For instance the following is valid because all passed variables and return
-values are serializable:
-
-```java
-Flow fl = Flows.currentFlow();
- int x = 10;
-
- FlowFuture<String> f1 = fl.supply(()->{
-       String result = String.valueOf(x * 10); // x is serialized into the remote computation
-        return result; // result is serialized as a result into the captured flow future
- });
-```
-
-However, the following example is invalid, as the variable referenced inside
-the lambda, and the return type wrapped by `FlowFuture` are not serializable:
-
-```java
-Flow fl = Flows.currentFlow();
-Optional<String> result = Optional.of("hello");
-
-FlowFuture<NotSerializableClass> f1 = fl.supply(()->{
-       String result = optional.orElse("foo"); // this will fail  as Optionals are not serializable
-
-       return new NonSerializableClass(result);;
- });  // the execution of this stage will fail as the result is not serializable.
-```
-
-#### Capturing the function instance in a lambda
-An important consideration is that, if your lambda captures fields from your
-function class, then that class must also be Serializable:
-
-```java
-public class MyFunction{
-   private String config  = "foo";
-
-   public void run(){
-      Flows.currentFlow().supply(()->{
-         // this will fail as MyFunction is not serializable
-         System.err.println(config);
-
-        });
-   }
-}
-```
-
-If your function fields are all immutable and serializable data (e.g.
-configuration parameters), then we recommend making the function class itself
-serializable to pass this state around.
-
-E.g. making `MyFunction` serializable will work as the function instance object
-will be captured alongside the lambda:
-
-```java
-public class MyFunction implements Serializable{
-   private String config  = "foo";
-
-   public void run(){
-      Flows.currentFlow().supply(()->{
-         // this will work as MyFunction is captured and serialized into the lambda
-         System.err.println(config);
-        });
-   }
-}
-```
-
-Using this approach is suitable for simple cases where only immutable data is
-stored in your function object. However, you may find that you have
-non-serializable objects (such as database connections) that make this approach
-unusable.
-
-In this case, you can capture any lambda arguments explicitly as variables
-prior to passing them, removing the need to make the function class
-serializable. For example:
-
-```java
-public class MyFunction{
-   private final Database db; // non-serializable object
-   private final String config  = "foo";
-
-   public MyFunction(RuntimeContext ctx){
-       this.config = ctx.getConfigurationByKey("ConfigKey");
-       db = new Database();
-   }
-
-   public void run(){
-      final String config = this.config;
-      String dbVal = db.getValue();
-
-      Flows.currentFlow().supply(()->{
-         System.err.println(config );
-        });
-   }
-}
-```
-
-Alternatively, you can make non-serializable fields `transient` and construct
-them on the fly:
-
-```java
-public class MyFunction implements Serialiable{
-   private final transient Database db; // non-serializable object
-   private final String config  = "foo";
-
-   public MyFunction(RuntimeContext ctx){
-       this.config = ctx.getConfigurationByKey("ConfigKey");
-   }
-
-   public Database getDb(){
-       if(db == null){
-           db = new Database();
-       }
-       return db;
-   }
-
-   public void run(){
-      final String config = this.config;
-      String dbVal = getDb().getValue();
-
-      Flows.currentFlow().supply(()->{
-         System.err.println(config  + getDb().getValue());
-        });
-   }
-}
-```
-Using this approach allows you to use non-serializable fields within the scope
-of serializable lambdas.
-
-### Capturing lambdas as variables
-
-Java lambdas are not serializable by default, and as such cannot be used in
-captured variables to Flow stages, e.g.
-
-```java
-public class MyFunction{
-   public void run(){
-      Function<int,int> myfn =(x)->x+1;
-      Flows.currentFlow()
-        .supply(()->{ // this will fail as myfn is not serializable
-         int result = myfn.apply(10);
-         System.err.println(result);
-        });
-   }
-}
-```
-
-To make lambdas serializable, you must cast them to Serializable at the point
-of construction. In this case, all captured variables (and any transitively
-captured clases) must be serializable:
-
-```java
-public class MyFunction{
-   public void run(){
-      Function<Integer,Integer > myfn = (Serializable & Function<Integer,Integer>) (x)->x+1;
-      Flows.currentFlow()
-        .supply(()->{
-           int result = myfn.apply(10);
-           System.err.println(result);
-        });
-   }
-}
-```
-
-
-
-### Flow stage lambda types:
-
-The Fn Flow API does not take standard Java `java.util.function` types as
-arguments (e.g. `java.util.function.Function`) - instead, it subclasses these
-types to include `Serializable` (e.g.
-[Flows.SerFunction](../api/src/main/java/com/fnproject/fn/api/flow/Flows.java)).
-
-This is necessary, as by default the Java compiler does not generate the
-necessary code to serialize and deserialze generated lambda objects.
-
-
-Generally, we recommend that you call methods on `Flow` and
-`FlowFuture` directly (i.e. including the lambda inline with the argument) :
-
-```java
-      Flows.currentFlow()
-        .supply(()->{
-           int result = myfn.apply(10);
-           System.err.println(result);
-        });
-```
-and
-```java
-      FlowFuture<String> f1 = ...;
-      f1.thenApply(String::toUpperCase);
-```
-
-In the case where you want to capture these lambdas as variables, you will need
-to use the `Flows.Ser*` types at the point of declaration:
-
-```java
-      Flows.SerFunction<String,String> fn = String::toUpperCase;
-
-      FlowFuture<String> f1 = ...;
-      f1.thenApply(fn);
-```
-
-
-### Data is passed between Flow stages by value
-
-A side effect of data being serialized and deserialized as it is passed between
-stages is that instances are always passed by value when they are handled by
-`FlowFuture` or captured in lambdas. As a result, changes to objects within
-one stage will not impact other objects in other stages, unless they are
-explicitly passed between stages as a FlowFuture value.
-
-For primitive types the *effectively final* constraint of the compiler prevents
-modification of captured variables. However, for reference types this is not
-the case:
-
-```java
-public class MyFunction{
-   public void run(){
-      java.util.concurrent.atomic.AtomicInteger myInt = new AtomicInteger(0);
-
-      Flows.currentFlow()
-        .supply(()->{
-           // will print "0"
-           System.err.println(myInt);
-           myInt.incrementAndGet();
-        }).thenRun(()->{
-           // will always print "0"
-           System.err.println(myInt);
-        });
-   }
-}
-```
-
-Instead modified values should be passed between stages via `FlowFuture`
-methods:
-
-```java
-public class MyFunction{
-   public void run(){
-      java.util.concurrent.atomic.AtomicInteger myInt = new AtomicInteger(0);
-
-      Flows.currentFlow()
-        .supply(()->{
-           // will print "0"
-           System.err.println(myInt.get());
-           myInt.incrementAndGet();
-           return myInt;
-        }).thenAccept((val)->{
-           // will always print "1"
-           System.err.println(val.get());
-        });
-   }
-}
-```
-### Exceptions should be serializable
-Finally, exceptions thrown by `Flow` lambda stages will be be propagated
-as error values to other stages - this means that those exceptions should be
-serializable. Exceptions are serializable by default, so generally you do not
-have to do anything.
-
-If your code does throw exceptions that contain non-serializable fields, the
-exception will be converted into
-a [WrappedException](../api/src/main/java/com/fnproject/fn/api/flow/WrappedFunctionException.java)
-- this is a a `RuntimeException` that will preserve the original message and
-stacktrace of the source exception, but not any fields on the original
-exception.
-
-E.g.:
-
-```java
-public class MyFunction{
-   public static class MyException extends RuntimeException{
-      public MyException(String message){
-          super(message);
-      }
-
-      public static class NonSerializable{};
-      NonSerializable nonsSerializableField = new NonSerializable();
-   }
-
-   public void run(){
-      java.util.concurrent.atomic.AtomicInteger myInt = new AtomicInteger(0);
-
-      Flows.currentFlow()
-        .supply(()->{
-           throw new MyException("bad times");
-        }).exceptionally((e)->{
-            // e will be an instance of com.fnproject.fn.api.flow.WrappedFunctionException here.
-            System.err.println(e.getMessage()); // prints "bad times"
-            e.printStackTrace(); // prints the original stack trace of the throw exception
-        });
-   }
-}
-
-```
+[Advanced Topics](FnFlowsAdvancedTopics.md) provides a more in-depth treatment of data serialization and error handling with Fn Flow.
