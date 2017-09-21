@@ -21,6 +21,11 @@ public interface OutputEvent {
     int SUCCESS = 200;
     int FAILURE = 500;
 
+    /**
+     * Report the boolean success of this event.
+     * For default-format functions, this is used to map the HTTP status code into a straight success/failure.
+     * @return true if the output event results from a successful invocation.
+     */
     default boolean isSuccess() {
         return 100 <= getStatusCode() && getStatusCode() < 400;
     }

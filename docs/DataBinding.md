@@ -114,7 +114,7 @@ Using this approach allows you to:
 
 - access the headers of the incoming request;
 - read the request body as an `InputStream`;
-- control content type and response status of the response.
+- control content type (and other headers) and status of the response.
 
 The Fn Java FDK can automatically convert the input HTTP request into an `InputEvent` and provide it as the parameter of the function. Similarly, it can take the `OutputEvent` returned by the function and construct an appropriate HTTP response.
 
@@ -141,11 +141,15 @@ public class Events {
         String text = rawInput.consumeBody(this::readData);
 
         String responseBody = "Received '" + text + "' with my header '" + header + "'.\n";
+        
+        Map<String, String> customHeaders = new HashMap<>();
+        customheaders.put("X-My-Response-Header", "any value here");
 
         OutputEvent out = OutputEvent.fromBytes(
             responseBody.getBytes(), // Data
-            true,                    // Success?
-            "text/plain"             // Content type
+            OutputEvent.SUCCESS,     // Any numeric HTTP status code can be used here 
+            "text/plain",            // Content type
+            Headers.fromMap(customHeaders)  // and additional custom headers on output
         );
         return out;
     }
@@ -177,7 +181,7 @@ public class Events {
 
         OutputEvent out = OutputEvent.fromBytes(
             responseBody.getBytes(), // Data
-            true,                    // Success?
+            OutputEvent.SUCCESS,     // Status code of 200
             "text/plain"             // Content type
         );
         return out;
