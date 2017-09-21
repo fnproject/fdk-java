@@ -1,4 +1,4 @@
-FROM maven:3-jdk-9
+FROM maven:3-jdk-9-slim
 
 ADD pom.xml /tmp/cache-deps/pom.xml
 ADD cache-deps.sh /tmp/cache-deps/cache-deps.sh
