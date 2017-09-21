@@ -24,7 +24,7 @@ public interface Flow extends Serializable {
      * the fn and provide a future that can chain on the response of the function.
      * <blockquote><pre>{@code
      *         Flow fl = Flows.currentFlow();
-     *         fl.invokeFunction("myapp/myfn","input".getBytes())
+     *         fl.invokeFunction("myapp/myfn", HttpMethod.GET, Headers.emptyHeaders(), "input".getBytes())
      *           .thenAccept((result)->{
      *               System.err.println("Result was " + new String(result));
      *           });
@@ -152,7 +152,7 @@ public interface Flow extends Serializable {
      *                if(shouldRunFn){
      *                    return rt.invokeAsync("testapp/testfn","input".getBytes()).thenApply(String::new);
      *                }else{
-     *                    return rt.<HttpResp>failedFuture(new RuntimeException("Immediate Failure"));
+     *                    return rt.failedFuture(new RuntimeException("Immediate Failure"));
      *                }
      *            })
      *            .whenComplete((x,t)->{
