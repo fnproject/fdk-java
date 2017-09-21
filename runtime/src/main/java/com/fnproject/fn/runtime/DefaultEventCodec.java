@@ -43,7 +43,7 @@ class DefaultEventCodec implements EventCodec {
     public Optional<InputEvent> readEvent() {
         String method = getRequiredEnv("FN_METHOD");
         String appName = getRequiredEnv("FN_APP_NAME");
-        String route = getRequiredEnv("FN_ROUTE");
+        String route = getRequiredEnv("FN_PATH");
         String requestUrl = getRequiredEnv("FN_REQUEST_URL");
 
         Map<String, String> headers = new HashMap<>();

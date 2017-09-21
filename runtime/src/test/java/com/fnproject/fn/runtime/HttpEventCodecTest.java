@@ -28,7 +28,7 @@ public class HttpEventCodecTest {
             "User-Agent: useragent\n" +
             "Accept: text/html, text/plain;q=0.9\n" +
             "Fn_Request_url: http//localhost:8080/r/testapp/test\n" +
-            "Fn_Route: /test\n" +
+            "Fn_Path: /test\n" +
             "Fn_Method: POST\n" +
             "Content-Length: 11\n" +
             "Fn_App_name: testapp\n" +
@@ -42,7 +42,7 @@ public class HttpEventCodecTest {
             "Accept-Encoding: gzip\n" +
             "User-Agent: useragent\n" +
             "Fn_Request_url: http//localhost:8080/r/testapp/test\n" +
-            "Fn_Route: /test2\n" +
+            "Fn_Path: /test2\n" +
             "Fn_Method: GET\n" +
             "Content-Length: 0\n" +
             "Fn_App_name: testapp\n" +
@@ -107,7 +107,7 @@ public class HttpEventCodecTest {
         Map<String, String> requiredHeaders = new HashMap<>();
 
         requiredHeaders.put("fn_request_url", "request_url");
-        requiredHeaders.put("fn_route", "/route");
+        requiredHeaders.put("fn_path", "/route");
         requiredHeaders.put("fn_method", "GET");
         requiredHeaders.put("fn_app_name", "app_name");
 
