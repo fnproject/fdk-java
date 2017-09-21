@@ -16,7 +16,7 @@ export FN_TOKEN=${FN_TOKEN:-$(cat ~/.fn-token)}
 
 
 # ----------------------------------------------------------------------
-# The following variables should be set in the integration environment (Jenkins)
+# The following variables should be set in the integration environment
 # ----------------------------------------------------------------------
 
 export API_URL=$(cat ~/.fn-api-url)
