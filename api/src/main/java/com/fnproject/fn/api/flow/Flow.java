@@ -91,7 +91,7 @@ public interface Flow extends Serializable {
 
 
     /**
-     * Invoke a function by  ID  using input and output coercion and a specified method and headers with no response type
+     * Invoke a function by  ID  using input and output coercion, default method (POST) and  no response type
      * <p>
      * Returns a future that completes with the HttpResponse of the function on success
      * if the function returns a successful http response, and completes with an {@link FunctionInvocationException} if the function invocation fails with a non-succesful http status
