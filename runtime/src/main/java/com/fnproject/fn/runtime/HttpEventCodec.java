@@ -116,12 +116,12 @@ public class HttpEventCodec implements EventCodec {
             BasicHttpResponse response;
 
             if (evt.isSuccess()) {
-                response = new BasicHttpResponse(new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 200, "INVOKED"));
+                response = new BasicHttpResponse(new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), evt.getStatusCode(), "INVOKED"));
             } else {
-                response = new BasicHttpResponse(new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 500, "INVOKE FAILED"));
+                response = new BasicHttpResponse(new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), evt.getStatusCode(), "INVOKE FAILED"));
             }
 
-            evt.getHeaders().getAll().forEach((k, v) -> response.setHeader(k, v));
+            evt.getHeaders().getAll().forEach(response::setHeader);
             evt.getContentType().ifPresent((ct) -> response.setHeader(CONTENT_TYPE_HEADER, ct));
             response.setHeader("Content-length", String.valueOf(data.length));
 

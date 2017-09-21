@@ -24,7 +24,7 @@ public class QRGen {
         ByteArrayOutputStream stream = QRCode.from(contents).to(type).stream();
         System.err.println("Generated QR Code for contents: " + contents);
 
-        return OutputEvent.fromBytes(stream.toByteArray(), true, getMimeType(type));
+        return OutputEvent.fromBytes(stream.toByteArray(), OutputEvent.SUCCESS, getMimeType(type));
     }
 
     private ImageType getFormat(String extension) {

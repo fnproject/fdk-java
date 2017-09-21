@@ -135,7 +135,7 @@ public class HttpEventCodecTest {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
 
         HttpEventCodec httpEventCodec = new HttpEventCodec(nullIn,bos);
-        OutputEvent outEvent = OutputEvent.fromBytes("Hello".getBytes(),true,"text/plain");
+        OutputEvent outEvent = OutputEvent.fromBytes("Hello".getBytes(),OutputEvent.SUCCESS,"text/plain");
 
         httpEventCodec.writeEvent(outEvent);
         String httpResponse = new String(bos.toByteArray());
@@ -178,7 +178,7 @@ public class HttpEventCodecTest {
         hs.put("foo", "bar");
         hs.put("Content-Type", "application/octet-stream"); // ignored
         hs.put("Content-length", "99");  // ignored
-        OutputEvent outEvent = OutputEvent.fromBytes("Hello".getBytes(),true,"text/plain", Headers.fromMap(hs));
+        OutputEvent outEvent = OutputEvent.fromBytes("Hello".getBytes(),OutputEvent.SUCCESS,"text/plain", Headers.fromMap(hs));
 
         httpEventCodec.writeEvent(outEvent);
         String httpResponse = new String(bos.toByteArray());
@@ -196,7 +196,7 @@ public class HttpEventCodecTest {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
 
         HttpEventCodec httpEventCodec = new HttpEventCodec(nullIn,bos);
-        OutputEvent outEvent = OutputEvent.fromBytes("Hello".getBytes(),false,"text/plain");
+        OutputEvent outEvent = OutputEvent.fromBytes("Hello".getBytes(), OutputEvent.FAILURE,"text/plain");
 
         httpEventCodec.writeEvent(outEvent);
         String httpResponse = new String(bos.toByteArray());
@@ -217,7 +217,7 @@ public class HttpEventCodecTest {
         hs.put("foo", "bar");
         hs.put("Content-Type", "application/octet-stream"); // ignored
         hs.put("Content-length", "99");  // ignored
-        OutputEvent outEvent = OutputEvent.fromBytes("Hello".getBytes(),false,"text/plain", Headers.fromMap(hs));
+        OutputEvent outEvent = OutputEvent.fromBytes("Hello".getBytes(), OutputEvent.FAILURE,"text/plain", Headers.fromMap(hs));
 
         httpEventCodec.writeEvent(outEvent);
         String httpResponse = new String(bos.toByteArray());

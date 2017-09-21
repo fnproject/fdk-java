@@ -77,7 +77,7 @@ public class FnTestingRuleTest {
 
         public OutputEvent echoInput(InputEvent in) {
             byte[] result = in.consumeBody(TestFn::consumeToBytes);
-            return OutputEvent.fromBytes(result, true, "application/octet-stream");
+            return OutputEvent.fromBytes(result, OutputEvent.SUCCESS, "application/octet-stream");
         }
 
     }

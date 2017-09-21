@@ -27,7 +27,7 @@ public class StringUpperCaseCoercion implements InputCoercion<String>, OutputCoe
         if (ctx.getRuntimeContext().getTargetMethod().getReturnType().equals(String.class)) {
             try {
                 String capitilisedOutput = new StringBuffer((String) value).toString().toUpperCase();
-                return Optional.of(OutputEvent.fromBytes(capitilisedOutput.getBytes(), true, "text/plain"));
+                return Optional.of(OutputEvent.fromBytes(capitilisedOutput.getBytes(), OutputEvent.SUCCESS, "text/plain"));
             } catch (ClassCastException e) {
                 return Optional.empty();
             }

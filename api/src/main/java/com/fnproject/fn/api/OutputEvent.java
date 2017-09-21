@@ -10,11 +10,20 @@ import java.util.Optional;
  */
 public interface OutputEvent {
     /**
-     * Is this invocation successful
+     * Report the HTTP status code of this event.
+     * For default-format functions, this value is mapped into a success/failure value as follows:
+     * status codes in the range [100, 400) are considered successful; anything else is a failure.
      *
-     * @return true if the invocation was successful or not
+     * @return the status code associated with this event
      */
-    boolean isSuccess();
+    int getStatusCode();
+
+    int SUCCESS = 200;
+    int FAILURE = 500;
+
+    default boolean isSuccess() {
+        return 100 <= getStatusCode() && getStatusCode() < 400;
+    }
 
     /**
      * The indicative content type of the response.
@@ -47,29 +56,29 @@ public interface OutputEvent {
      * Create an output event from a byte array
      *
      * @param bytes       the byte array to write to the output
-     * @param success     if the output is successful
+     * @param statusCode  the status code to report
      * @param contentType the content type to present on HTTP responses
      * @return a new output event
      */
-     static OutputEvent fromBytes(byte[] bytes, boolean success, String contentType) {
-         return fromBytes(bytes, success, contentType, Headers.emptyHeaders());
+     static OutputEvent fromBytes(byte[] bytes, int statusCode, String contentType) {
+         return fromBytes(bytes, statusCode, contentType, Headers.emptyHeaders());
      }
 
     /**
      * Create an output event from a byte array
      *
      * @param bytes       the byte array to write to the output
-     * @param success     if the output is successful
+     * @param statusCode  the HTTP status code of this event
      * @param contentType the content type to present on HTTP responses
      * @param headers     any additional headers to supply with HTTP responses
      * @return a new output event
      */
-    static OutputEvent fromBytes(byte[] bytes, boolean success, String contentType, Headers headers) {
+    static OutputEvent fromBytes(byte[] bytes, int statusCode, String contentType, Headers headers) {
         return new OutputEvent() {
 
             @Override
-            public boolean isSuccess() {
-                return success;
+            public int getStatusCode() {
+                return statusCode;
             }
 
             @Override
@@ -87,11 +96,11 @@ public interface OutputEvent {
         };
     }
 
-    static OutputEvent emptyResult(boolean success) {
+    static OutputEvent emptyResult(int statusCode) {
         return new OutputEvent() {
             @Override
-            public boolean isSuccess() {
-                return success;
+            public int getStatusCode() {
+                return statusCode;
             }
 
             @Override
