@@ -33,7 +33,7 @@ public interface Flow extends Serializable {
      * <p>
      * Function IDs should be of the form "APPID/path/in/app" (without leading slash) where APPID may either be a named application or ".", indicating the appID of the current (calling) function.
      *
-     * @param functionId Function ID of function to tryInvoke - this should have the form APPNAME/FUNCTION_PATH  (e.g. "myapp/path/to/function"  or "./path/to/function").
+     * @param functionId Function ID of function to invoke - this should have the form APPNAME/FUNCTION_PATH  (e.g. "myapp/path/to/function"  or "./path/to/function").
      * @param method     HTTP method to invoke function
      * @param headers    Headers to add to the HTTP request representing the function invocation
      * @param data       input data to function as a byte array -
@@ -45,7 +45,7 @@ public interface Flow extends Serializable {
      * Invoke a function by ID with headers and  an empty body
      * <p>
      *
-     * @param functionId Function ID of function to tryInvoke - this should have the form APPNAME/FUNCTION_PATH  (e.g. "myapp/path/to/function"  or "./path/to/function").
+     * @param functionId Function ID of function to invoke - this should have the form APPNAME/FUNCTION_PATH  (e.g. "myapp/path/to/function"  or "./path/to/function").
      * @param method     HTTP method to invoke function
      * @param headers    Headers to add to the HTTP request representing the function invocation
      * @return a future which completes normally if the function succeeded and fails if it fails
@@ -60,7 +60,7 @@ public interface Flow extends Serializable {
      * <p>
      * This currently only maps to JSON via the default JSON mapper in the FDK
      *
-     * @param functionId   Function ID of function to tryInvoke - this should have the form APPNAME/FUNCTION_PATH  (e.g. "myapp/path/to/function"  or "./path/to/function").
+     * @param functionId   Function ID of function to invoke - this should have the form APPNAME/FUNCTION_PATH  (e.g. "myapp/path/to/function"  or "./path/to/function").
      * @param input        The input object to send to the function input
      * @param responseType The expected response type of the target function
      * @param <T>          The Response type
@@ -77,7 +77,7 @@ public interface Flow extends Serializable {
      * <p>
      * This currently only maps to JSON via the default JSON mapper in the FDK
      *
-     * @param functionId   Function ID of function to tryInvoke - this should have the form APPNAME/FUNCTION_PATH  (e.g. "myapp/path/to/function"  or "./path/to/function").
+     * @param functionId   Function ID of function to invoke - this should have the form APPNAME/FUNCTION_PATH  (e.g. "myapp/path/to/function"  or "./path/to/function").
      * @param method       the HTTP method to use for this call
      * @param headers      additional HTTP headers to pass to this function -
      * @param input        The input object to send to the function input
@@ -93,7 +93,7 @@ public interface Flow extends Serializable {
      * Invoke a function by ID with no headers
      * <p>
      *
-     * @param functionId Function ID of function to tryInvoke - this should have the form APPNAME/FUNCTION_PATH  (e.g. "myapp/path/to/function"  or "./path/to/function").
+     * @param functionId Function ID of function to invoke - this should have the form APPNAME/FUNCTION_PATH  (e.g. "myapp/path/to/function"  or "./path/to/function").
      * @param method     HTTP method to invoke function
      * @return a future which completes normally if the function succeeded and fails if it fails
      * @see #invokeFunction(String, HttpMethod, Headers, byte[])
@@ -116,7 +116,7 @@ public interface Flow extends Serializable {
      *         });
      * }</pre></blockquote>
      *
-     * @param c   a callable value to tryInvoke via a flow
+     * @param c   a callable value to invoke via a flow
      * @param <T> the type of the future
      * @return a com.fnproject.fn.api.flow.FlowFuture  on
      */
