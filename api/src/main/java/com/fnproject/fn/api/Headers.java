@@ -35,7 +35,7 @@ public final class Headers {
 
 
     /**
-     * Creates a new headers object with
+     * Creates a new headers object with the specified header added
      *
      * This will overwrite an existing header with an exact name match
      * @param key new header key
