@@ -55,8 +55,7 @@ jobs:
           name: Build fn-java-fdk-jdk9 Docker build image
           command: |
             cd build-image
-            ./docker-build.sh -f Dockerfile-jdk9 -t fnproject/fn-java-fdk-build-jdk9 .
-
+            ./docker-build.sh -f Dockerfile-jdk9 -t fnproject/fn-java-fdk-build:jdk9-latest .
       - run:
           name: Build fn-java-fdk Docker runtime image
           command: |
@@ -67,7 +66,7 @@ jobs:
           name: Build fn-java-fdk-jdk9 Docker runtime image
           command: |
             cd runtime
-            docker build -f Dockerfile-jdk9 -t fnproject/fn-java-fdk-jdk9 .
+            docker build -f Dockerfile-jdk9 -t fnproject/fn-java-fdk:jdk9-latest .
 
       - run:
           name: Install fn binary (as it is needed for the integration tests)
