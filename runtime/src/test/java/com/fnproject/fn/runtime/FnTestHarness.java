@@ -204,7 +204,7 @@ public class FnTestHarness implements TestRule {
             });
             env.put("FN_METHOD", method);
             env.put("FN_APP_NAME", appName);
-            env.put("FN_ROUTE", route);
+            env.put("FN_PATH", route);
             env.put("FN_REQUEST_URL", requestUrl);
             return env;
         }
@@ -223,7 +223,7 @@ public class FnTestHarness implements TestRule {
             inputString.append(" / HTTP/1.1\r\n");
             inputString.append("Fn_App_name: ").append(appName).append("\r\n");
             inputString.append("Fn_Method: ").append(method).append("\r\n");
-            inputString.append("Fn_Route: ").append(route).append("\r\n");
+            inputString.append("Fn_Path: ").append(route).append("\r\n");
             inputString.append("Fn_Request_url: ").append(requestUrl).append("\r\n");
             if (contentType != null) {
                 inputString.append("Content-Type: ").append(contentType).append("\r\n");

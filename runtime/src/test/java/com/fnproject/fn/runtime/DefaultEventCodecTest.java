@@ -31,7 +31,7 @@ public class DefaultEventCodecTest {
         env.put("FN_FORMAT", "default");
         env.put("FN_METHOD", "GET");
         env.put("FN_APP_NAME", "testapp");
-        env.put("FN_ROUTE", "/route");
+        env.put("FN_PATH", "/route");
         env.put("FN_REQUEST_URL", "http://test.com/fn/tryInvoke");
 
         env.put("FN_HEADER_CONTENT_TYPE", "text/plain");
@@ -69,7 +69,7 @@ public class DefaultEventCodecTest {
     public void shouldRejectMissingEnv() {
         Map<String, String> requiredEnv = new HashMap<>();
 
-        requiredEnv.put("FN_ROUTE", "/route");
+        requiredEnv.put("FN_PATH", "/route");
         requiredEnv.put("FN_METHOD", "GET");
         requiredEnv.put("FN_APP_NAME", "app_name");
         requiredEnv.put("FN_REQUEST_URL", "http://test.com/fn/tryInvoke");
