@@ -1,5 +1,5 @@
 name: fn-example/email
-version: 0.0.63
+version: 0.0.64
 runtime: node
 entrypoint: node func.js
 path: /email

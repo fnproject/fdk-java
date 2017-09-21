@@ -5,7 +5,9 @@
    1. `docker pull fnproject/functions:latest`
    1. `docker pull fnproject/completer:latest`
    1. `docker pull fnproject/completer:ui`
-   1. `docker pull fnproject/tteggel:bristol`
+   1. `docker pull fnproject/fn-java-fdk-build:latest`
+   1. `docker pull fnproject/fn-java-fdk:latest`
+   1. `docker pull tteggel/bristol:latest`
   
 1. Clean local environment
    1. `./scripts/stop.sh`

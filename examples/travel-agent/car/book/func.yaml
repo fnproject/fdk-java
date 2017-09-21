@@ -1,5 +1,5 @@
 name: fn-example/car-book
-version: 0.0.67
+version: 0.0.68
 runtime: node
 entrypoint: node func.js
 path: /car/book
