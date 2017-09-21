@@ -5,7 +5,9 @@ import com.fnproject.fn.api.flow.*;
 
 import java.io.Serializable;
 import java.net.URI;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
@@ -72,8 +74,8 @@ public final class RemoteFlow implements Flow, Serializable {
         }
 
         @Override
-        public  FlowFuture<T> exceptionallyCompose(Flows.SerFunction<Throwable, FlowFuture<T>> fn) {
-            return new RemoteFlowFuture<>(getClient().exceptionallyCompose(flowId,completionId,fn,CodeLocation.fromCallerLocation(1)));
+        public FlowFuture<T> exceptionallyCompose(Flows.SerFunction<Throwable, FlowFuture<T>> fn) {
+            return new RemoteFlowFuture<>(getClient().exceptionallyCompose(flowId, completionId, fn, CodeLocation.fromCallerLocation(1)));
         }
 
         @Override
@@ -128,7 +130,7 @@ public final class RemoteFlow implements Flow, Serializable {
 
         @Override
         public T get(long timeout, TimeUnit unit) throws TimeoutException {
-           return (T) getClient().waitForCompletion(flowId, completionId, getClass().getClassLoader(), timeout, unit);
+            return (T) getClient().waitForCompletion(flowId, completionId, getClass().getClassLoader(), timeout, unit);
         }
 
         @Override
@@ -150,6 +152,11 @@ public final class RemoteFlow implements Flow, Serializable {
     public FlowFuture<HttpResponse> invokeFunction(String functionId, HttpMethod method, Headers headers, byte[] data) {
         CompletionId cid = getClient().invokeFunction(flowId, functionId, data, method, headers, CodeLocation.fromCallerLocation(1));
         return new RemoteFlowFuture<>(cid);
+    }
+
+    @Override
+    public <T extends Serializable, U> FlowFuture<T> invokeFunction(String functionId, HttpMethod method, Headers headers, U input, Class<T> responseType) {
+        return JsonInvoke.invokeFunction(this,functionId,method,headers,input,responseType);
     }
 
     @Override
@@ -175,12 +182,12 @@ public final class RemoteFlow implements Flow, Serializable {
 
     @Override
     public <T> FlowFuture<T> completedValue(T value) {
-        return new RemoteFlowFuture<>(getClient().completedValue(flowId, true,value, CodeLocation.fromCallerLocation(1)));
+        return new RemoteFlowFuture<>(getClient().completedValue(flowId, true, value, CodeLocation.fromCallerLocation(1)));
     }
 
     @Override
     public <T> FlowFuture<T> failedFuture(Throwable ex) {
-        return new RemoteFlowFuture<>(getClient().completedValue(flowId, false,ex, CodeLocation.fromCallerLocation(1)));
+        return new RemoteFlowFuture<>(getClient().completedValue(flowId, false, ex, CodeLocation.fromCallerLocation(1)));
     }
 
     @Override
