@@ -13,7 +13,7 @@ public class Retry {
         return retry(operation, new RetryOpts(), 1);
     }
 
-    private static <T> FlowFuture<T> retry(Flows.SerCallable<FlowFuture<T>> operation, RetryOpts opts, int attempt) {
+    public static <T> FlowFuture<T> retry(Flows.SerCallable<FlowFuture<T>> operation, RetryOpts opts, int attempt) {
         Flow f = Flows.currentFlow();
         try {
             FlowFuture<T> future = operation.call();
