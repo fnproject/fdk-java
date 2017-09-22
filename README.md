@@ -337,7 +337,11 @@ someone else to do their work.
 If this sounds like you, then have a look at the [Fn Flow
 quickstart](docs/FnFlowsUserGuide.md).
 
+# Get help
+
+   * Come over and chat to us on the [fnproject Slack](https://join.slack.com/t/fnproject/shared_invite/enQtMjIwNzc5MTE4ODg3LTdlYjE2YzU1MjAxODNhNGUzOGNhMmU2OTNhZmEwOTcxZDQxNGJiZmFiMzNiMTk0NjU2NTIxZGEyNjI0YmY4NTA).
+   * Raise an issue in [our github](https://github.com/fnproject/fn-java-fdk/).
 
 # Contributing
 
-*TBD*
+Please see [CONTRIBUTING.md](CONTRIBUTING.md).
