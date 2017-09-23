@@ -1,4 +1,4 @@
-# Fn Flow Java FDK - User Guide
+# Fn Flow  User Guide
 
 By following this step-by-step guide you will learn to create, run and deploy
 a simple Java app in Fn that leverages the Fn Flow asynchronous execution
@@ -11,11 +11,11 @@ Fn Flow consists of a set of cient-side APIs for you to use within your
 Fn apps, as well as a long-running server component (the _completer_) that
 orchestrates computation beyond the life-cycle of your functions. Together,
 these components enable non-blocking asynchronous execution flows, where your
-function only runs when it has useful work to perform. If you have been exposed
+function only runs when it has useful work to perform. If you have used
 to the Java
-8 [CompletionStage](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletionStage.html)
+8 [CompletionStage](https://docs.oracle.com/javase/9/docs/api/java/util/concurrent/CompletionStage.html)
 and
-[CompletableFuture](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletableFuture.html)
+[CompletableFuture](https://docs.oracle.com/javase/9/docs/api/java/util/concurrent/CompletableFuture.html)
 APIs, a lot of the concepts will already be familiar to you.
 
 [Advanced Topics](FnFlowsAdvancedTopics.md) provides more detail on how data serialization and error handling works with Fn Flow under the covers.
@@ -86,7 +86,7 @@ $ docker run --rm \
 
 ## Your first Fn Flow
 
-### 1. Create your first Flow application
+### Create your first Flow application
 
 Create a Maven-based Java Function using the instructions from the Fn Java FDK
 [Quickstart](../README.md). For example:
@@ -100,10 +100,10 @@ func.yaml created
 
 ```
 
-### 2. Create a Flow within your Function
+### Create a Flow within your Function
 
 You will create a function that produces the nth prime number and then returns
-an informational message once the prime number has been computed. In this
+an informational message once the prime number has been computed.  In this 
 example, we have chosen to block our to wait for completion of the computation
 graph by calling `get()`. This allows you to see the return value when invoking
 your function over HTTP. *In a production application, you should avoid
@@ -162,7 +162,7 @@ cmd: com.example.fn.PrimeFunction::handleRequest
 path: /primes
 ```
 
-### 3. Build and Configure your application
+### Build and Configure your application
 
 Create your app and deploy your function:
 
@@ -182,7 +182,7 @@ $ DOCKER_LOCALHOST=$(docker inspect --type container -f '{{.NetworkSettings.Gate
 $ fn apps config set flows-example COMPLETER_BASE_URL "http://$DOCKER_LOCALHOST:8081"
 ```
 
-### 4. Run your Flow function
+### Run your Flow function
 
 You can now run your function using `fn call` or HTTP and curl:
 
@@ -200,7 +200,7 @@ The 10th prime number is 29
 
 The following examples introduce the various ways in which Fn Flows enables asynchronous computation for your applications.
 
-### Creating FlowFutures
+### Creating FlowFutures from existing values
 
 If you already know the result of the computation:
 
@@ -275,7 +275,7 @@ You can also chain a FlowFuture by providing a Java function that takes the prev
   });
 ```
 
-The FlowFutures returned by _thenApply_ and _thenCompose_ are analogous to the _map_ and _flatMap_ operations provided by Java's [Stream](https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html) and [Optional](https://docs.oracle.com/javase/8/docs/api/java/util/Optional.html) classes. 
+The FlowFutures returned by _thenApply_ and _thenCompose_ are analogous to the _map_ and _flatMap_ operations provided by Java's [Stream](https://docs.oracle.com/javase/9/docs/api/java/util/stream/Stream.html) and [Optional](https://docs.oracle.com/javase/9/docs/api/java/util/Optional.html) classes. 
 
 ### Running Multiple Computations in Parallel
 
@@ -323,7 +323,9 @@ Since the _allOf_ stage above returns a void value, you must explicitly retrieve
 
 ### Handling Errors
 
-There are two main idioms for handling errors with FlowFutures. The first allows you to recover from the exceptional completion of a FlowFuture by transforming exceptions to the original type of the future:
+There are several methods for handling errors with FlowFutures: 
+
+`exceptionally` allows you to recover from the exceptional completion of a FlowFuture by transforming exceptions to the original type of the future:
 
 ```
 	Flow fl = Flows.currentFlow();
@@ -335,7 +337,19 @@ There are two main idioms for handling errors with FlowFutures. The first allows
     }).exceptionally(err -> -1);
 ```
 
-The second mechanims mirrors the familiar _throw/catch_ idiom by chaining a new FlowFuture stage with a Java function that takes two parameters, a result of the parent stage (if completed normally) and the exception thrown (if some computation step failed to complete in one of this stage's dependents):
+`exceptionallyCompose` is similar but allows you to handle an exception by executing one or more other nodes and attaching the subsequent FlowFuture to the result.
+```
+	Flow fl = Flows.currentFlow();
+	FlowFuture<Integer> f1 = fl.supply(() -> {
+		if (System.currentTimeMillis() % 2L == 0L) {
+			throw new RuntimeException("Error in stage");
+		}
+		return 100;
+    }).exceptionallyCompose(err -> fl.invokeFunction("./recover",new RecoveryAction());
+```
+
+
+`handle` is simliar  to `exceptionlly` but lets you deal with either the exception or the value in a single  stage with a Java function that takes two parameter. In the case of success the exception value will be null and in the case of an exception the value will be null.
 
 ```
 	Flow fl = Flows.currentFlow();
@@ -353,7 +367,9 @@ The second mechanims mirrors the familiar _throw/catch_ idiom by chaining a new 
 	});
 ```
 
-### 5. Where Do I Go from Here?
+
+
+### Where Do I Go from Here?
 
 For a more realistic application that leverages the non-blocking functionality
 of Fn Flow, please take a look at the asynchronous [thumbnail generation
