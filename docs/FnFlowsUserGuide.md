@@ -7,7 +7,7 @@ APIs.
 
 ## What are Flows?
 
-Fn Flow consists of a set of cient-side APIs for you to use within your
+Fn Flow consists of a set of client-side APIs for you to use within your
 Fn apps, as well as a long-running server component (the _completer_) that
 orchestrates computation beyond the life-cycle of your functions. Together,
 these components enable non-blocking asynchronous execution flows, where your
@@ -251,7 +251,7 @@ To consume the result and do some processing on it:
   });
 ```
 
-Similary, you can transform the result and return the new value from the chained stage:
+Similarly, you can transform the result and return the new value from the chained stage:
 
 ```
   Flow fl = Flows.currentFlow();
@@ -349,7 +349,7 @@ There are several methods for handling errors with FlowFutures:
 ```
 
 
-`handle` is simliar  to `exceptionlly` but lets you deal with either the exception or the value in a single  stage with a Java function that takes two parameter. In the case of success the exception value will be null and in the case of an exception the value will be null.
+`handle` is similar  to `exceptionally` but lets you deal with either the exception or the value in a single stage with a Java function that takes two parameters. In the case of success the exception value will be null and in the case of an exception the value will be null.
 
 ```
 	Flow fl = Flows.currentFlow();
