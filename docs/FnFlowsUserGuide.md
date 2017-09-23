@@ -1,4 +1,4 @@
-# Flows for Fn Java FDK - User Guide
+# Fn Flow Java FDK - User Guide
 
 By following this step-by-step guide you will learn to create, run and deploy
 a simple Java app in Fn that leverages the Fn Flow asynchronous execution
