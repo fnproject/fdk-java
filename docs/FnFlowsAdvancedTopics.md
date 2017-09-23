@@ -1,4 +1,4 @@
-# Flows for Fn Java FDK - Advanced Topics
+# Fn Flow - Advanced Topics
 
 
 In spite of many similarities with Java's [CompletableFuture](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletableFuture.html) and [CompletionStage](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletionStage.html), Flow runs on the Fn platform and is inherently distributed. As a result, special distributed system considerations apply, including data serialization, failure and retry semantics of remote systems, and application-level error handling.
