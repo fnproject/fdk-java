@@ -3,7 +3,7 @@
 
 In spite of many similarities with Java's [CompletableFuture](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletableFuture.html) and [CompletionStage](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletionStage.html), Flow runs on the Fn platform and is inherently distributed. As a result, special distributed system considerations apply, including data serialization, failure and retry semantics of remote systems, and application-level error handling.
 
-# Passing data between completion stages
+## Passing data between completion stages
 
 Fn Flow executes your code asynchronously and where possible in parallel
 in a distributed environment on the Fn platform - you should assume that each
@@ -56,7 +56,7 @@ FlowFuture<NotSerializableClass> f1 = fl.supply(()->{
  });  // the execution of this stage will fail as the result is not serializable.
 ```
 
-#### Capturing the function instance in a lambda
+### Capturing the function instance in a lambda
 An important consideration is that, if your lambda captures fields from your
 function class, then that class must also be Serializable:
 
