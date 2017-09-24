@@ -11,8 +11,7 @@ Fn Flow consists of a set of client-side APIs for you to use within your
 Fn apps, as well as a long-running server component (the _completer_) that
 orchestrates computation beyond the life-cycle of your functions. Together,
 these components enable non-blocking asynchronous execution flows, where your
-function only runs when it has useful work to perform. If you have used
-to the Java
+function only runs when it has useful work to perform. If you have used the Java
 8 [CompletionStage](https://docs.oracle.com/javase/9/docs/api/java/util/concurrent/CompletionStage.html)
 and
 [CompletableFuture](https://docs.oracle.com/javase/9/docs/api/java/util/concurrent/CompletableFuture.html)
