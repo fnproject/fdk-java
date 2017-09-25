@@ -15,4 +15,28 @@ public class ExponentialDelayStrategy implements DelayStrategy, Serializable {
                 timeUnit.toMillis(baseWait) * Math.pow(2, attempt)
                 );
     }
+
+    public long getBaseWait() {
+        return baseWait;
+    }
+
+    public void setBaseWait(long baseWait) {
+        this.baseWait = baseWait;
+    }
+
+    public TimeUnit getTimeUnit() {
+        return timeUnit;
+    }
+
+    public void setTimeUnit(TimeUnit timeUnit) {
+        this.timeUnit = timeUnit;
+    }
+
+    public long getDelayMaxDuration() {
+        return delayMaxDuration;
+    }
+
+    public void setDelayMaxDuration(long delayMaxDuration) {
+        this.delayMaxDuration = delayMaxDuration;
+    }
 }

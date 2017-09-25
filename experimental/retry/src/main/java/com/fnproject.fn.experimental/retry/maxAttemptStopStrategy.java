@@ -10,4 +10,12 @@ public class maxAttemptStopStrategy implements StopStrategy, Serializable {
     public boolean shouldRetry(Throwable e, int attempt, int time, TimeUnit tu) {
         return maxAttempts > attempt;
     }
+
+    public int getMaxAttempts() {
+        return maxAttempts;
+    }
+
+    public void setMaxAttempts(int maxAttempts) {
+        this.maxAttempts = maxAttempts;
+    }
 }

@@ -33,4 +33,28 @@ public class FibonacciDelayStrategy implements DelayStrategy, Serializable {
         }
         return fib2;
     }
+
+    public long getBaseWait() {
+        return baseWait;
+    }
+
+    public void setBaseWait(long baseWait) {
+        this.baseWait = baseWait;
+    }
+
+    public TimeUnit getTimeUnit() {
+        return timeUnit;
+    }
+
+    public void setTimeUnit(TimeUnit timeUnit) {
+        this.timeUnit = timeUnit;
+    }
+
+    public long getDelayMaxDuration() {
+        return delayMaxDuration;
+    }
+
+    public void setDelayMaxDuration(long delayMaxDuration) {
+        this.delayMaxDuration = delayMaxDuration;
+    }
 }
