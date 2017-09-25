@@ -25,19 +25,6 @@ public class RetryOpts implements Serializable {
         this.delaystrat = delaystrat;
     }
 
-    public StopStrategy getStopstrat() {
-        return stopstrat;
-    }
-
-    public void setStopstrat(StopStrategy stopstrat) {
-        this.stopstrat = stopstrat;
-    }
-
-    public DelayStrategy getDelaystrat() {
-        return delaystrat;
-    }
-
-    public void setDelaystrat(DelayStrategy delaystrat) {
-        this.delaystrat = delaystrat;
+    public RetryOpts() {
     }
 }

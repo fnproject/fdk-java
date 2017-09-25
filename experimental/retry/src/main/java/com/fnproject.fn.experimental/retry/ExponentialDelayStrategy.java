@@ -16,27 +16,11 @@ public class ExponentialDelayStrategy implements DelayStrategy, Serializable {
                 );
     }
 
-    public long getBaseWait() {
-        return baseWait;
-    }
-
-    public void setBaseWait(long baseWait) {
+    public ExponentialDelayStrategy(long baseWait, TimeUnit timeUnit, long delayMaxDuration) {
         this.baseWait = baseWait;
-    }
-
-    public TimeUnit getTimeUnit() {
-        return timeUnit;
-    }
-
-    public void setTimeUnit(TimeUnit timeUnit) {
         this.timeUnit = timeUnit;
-    }
-
-    public long getDelayMaxDuration() {
-        return delayMaxDuration;
-    }
-
-    public void setDelayMaxDuration(long delayMaxDuration) {
         this.delayMaxDuration = delayMaxDuration;
     }
+
+    public ExponentialDelayStrategy() {}
 }
