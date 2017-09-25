@@ -230,6 +230,16 @@ public class FlowsTest {
         assertThat(getResultObjectFromSingleResponse(fnTestHarness)).isEqualTo("FooBAR");
     }
 
+    @Test
+    public void catastrophicFailureStillResultsInGraphCommitted() throws Exception {
+        when(mockCompleterClient.createFlow(FUNCTION_ID)).thenReturn(FLOW_ID);
+
+        httpEventToTestFN().enqueue();
+        fnTestHarness.thenRun(FnFlowsFunction.class, "createFlowAndThenFail");
+
+        verify(mockCompleterClient, times(1)).commit(FLOW_ID);
+    }
+
     private Object getResultObjectFromSingleResponse(FnTestHarness fnTestHarness) throws IOException, ClassNotFoundException {
         FnTestHarness.ParsedHttpResponse innerResponse = getInnerResponse(fnTestHarness);
         assertThat(normalisedHeaders(innerResponse))

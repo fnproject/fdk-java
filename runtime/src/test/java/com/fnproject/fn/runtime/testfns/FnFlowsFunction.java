@@ -30,5 +30,10 @@ public class FnFlowsFunction implements Serializable {
 
         return res;
     }
+
+    public static void createFlowAndThenFail() {
+        Flow fl = Flows.currentFlow();
+        throw new NullPointerException(fl.toString());
+    }
 }
 

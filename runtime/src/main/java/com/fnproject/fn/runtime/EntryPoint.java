@@ -80,8 +80,8 @@ public class EntryPoint {
                     if (!evtOpt.isPresent()) {
                         break;
                     }
+                    FunctionInvocationContext fic = new FunctionInvocationContext(runtimeContext);
                     try (InputEvent evt = evtOpt.get()) {
-                        FunctionInvocationContext fic = new FunctionInvocationContext(runtimeContext);
                         OutputEvent output = null;
                         for (FunctionInvoker invoker : configuredInvokers) {
                             Optional<OutputEvent> result = invoker.tryInvoke(fic, evt);
@@ -102,7 +102,12 @@ public class EntryPoint {
                             fic.fireOnFailedInvocation();
                         }
                     } catch (IOException e) {
+                        fic.fireOnFailedInvocation();
                         throw new FunctionInputHandlingException("Error closing function input", e);
+                    } catch (Exception e) {
+                        // Make sure we commit any pending Flows, then rethrow
+                        fic.fireOnFailedInvocation();
+                        throw e;
                     }
 
                 } catch (InternalFunctionInvocationException fie) {
