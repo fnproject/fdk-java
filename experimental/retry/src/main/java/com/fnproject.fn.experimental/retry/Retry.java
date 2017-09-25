@@ -9,11 +9,19 @@ import java.util.concurrent.TimeUnit;
 
 public class Retry {
 
-    public static <T> FlowFuture<T> retryExponentialWithFullJitter(Flows.SerCallable<FlowFuture<T>> operation) {
-        return retry(operation, new RetryOpts(), 1);
+    public static <T> FlowFuture<T> retryFibonacciWithJitter(Flows.SerCallable<FlowFuture<T>> operation) {
+        return retry(operation, new RetryOpts(new FibonacciDelayStrategy()), 1);
     }
 
-    public static <T> FlowFuture<T> retry(Flows.SerCallable<FlowFuture<T>> operation, RetryOpts opts, int attempt) {
+    public static <T> FlowFuture<T> retryExponentialWithJitter(Flows.SerCallable<FlowFuture<T>> operation) {
+        return retry(operation, new RetryOpts(new ExponentialDelayStrategy()), 1);
+    }
+
+    public static <T> FlowFuture<T> retryWithOpts(Flows.SerCallable<FlowFuture<T>> operation, RetryOpts opts) {
+        return retry(operation, opts, 1);
+    }
+
+    private static <T> FlowFuture<T> retry(Flows.SerCallable<FlowFuture<T>> operation, RetryOpts opts, int attempt) {
         Flow f = Flows.currentFlow();
         try {
             FlowFuture<T> future = operation.call();
