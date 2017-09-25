@@ -14,7 +14,7 @@ public class Retry {
     }
 
     public static <T> FlowFuture<T> retryExponentialWithJitter(Flows.SerCallable<FlowFuture<T>> operation) {
-        return retry(operation, new RetryOpts(new ExponentialDelayStrategy()), 1);
+        return retry(operation, new RetryOpts(), 1);
     }
 
     public static <T> FlowFuture<T> retryWithOpts(Flows.SerCallable<FlowFuture<T>> operation, RetryOpts opts) {

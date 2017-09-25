@@ -11,11 +11,9 @@ public class maxAttemptStopStrategy implements StopStrategy, Serializable {
         return maxAttempts > attempt;
     }
 
-    public int getMaxAttempts() {
-        return maxAttempts;
-    }
-
-    public void setMaxAttempts(int maxAttempts) {
+    public maxAttemptStopStrategy(int maxAttempts) {
         this.maxAttempts = maxAttempts;
     }
+
+    public maxAttemptStopStrategy() {}
 }
