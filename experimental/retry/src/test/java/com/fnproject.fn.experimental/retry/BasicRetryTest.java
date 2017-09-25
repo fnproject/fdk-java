@@ -8,8 +8,10 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 public class BasicRetryTest {
     @Rule
@@ -25,11 +27,14 @@ public class BasicRetryTest {
         }
 
         public void handleFailure() throws Exception {
+            //FIXME: this is really hacky
+            AtomicReference<String> failstr = new AtomicReference<>("Hello");
             Flow f = Flows.currentFlow();
-            Exception e = (Exception) f.completedValue(1)
+            f.completedValue(1)
                     .thenCompose((a) -> Retry.retryExponentialWithJitter(() -> {throw new Exception("aaah");}))
-                    .exceptionally((ex) -> ex).get();
-            throw e;
+                    .exceptionally((e) -> {failstr.set(e.getMessage()); return 0;});
+
+            throw new Exception(failstr.get());
         }
     }
 
