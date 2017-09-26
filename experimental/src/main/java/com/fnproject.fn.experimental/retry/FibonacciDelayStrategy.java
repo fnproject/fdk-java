@@ -3,6 +3,9 @@ package com.fnproject.fn.experimental.retry;
 import java.io.Serializable;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * provides Fibonacci backoff delay.
+ */
 public class FibonacciDelayStrategy implements DelayStrategy, Serializable {
 
     public long baseWait = 1;
@@ -19,7 +22,7 @@ public class FibonacciDelayStrategy implements DelayStrategy, Serializable {
     }
 
     private int fibonacci(int n) {
-        //TODO: this is semi-naive and can be improved
+        //TODO: this is semi-naive and can be improved to O(log(n))
         if (n < 2) {
             return Math.max(0, n);
         }

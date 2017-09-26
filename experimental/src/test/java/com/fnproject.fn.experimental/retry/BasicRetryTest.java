@@ -22,14 +22,14 @@ public class BasicRetryTest {
     public static class testMethods {
         public void handleSuccess() {
             Flow f = Flows.currentFlow();
-            RetryOpts opts = new RetryOpts(new maxAttemptStopStrategy(5), new ExponentialDelayStrategy(200, TimeUnit.MILLISECONDS, 2000));
+            RetryOpts opts = new RetryOpts(new MaxAttemptStopStrategy(5), new ExponentialDelayStrategy(200, TimeUnit.MILLISECONDS, 2000));
             f.completedValue(1)
                     .thenCompose((a) -> Retry.retryWithOpts(() -> f.completedValue(1).thenRun(() -> BasicRetryTest.cas.compareAndSet(0, 2)), opts));
         }
 
         public void handleFailure() {
             Flow f = Flows.currentFlow();
-            RetryOpts opts = new RetryOpts(new maxAttemptStopStrategy(10), new FibonacciDelayStrategy(10, TimeUnit.MILLISECONDS, 100));
+            RetryOpts opts = new RetryOpts(new MaxAttemptStopStrategy(10), new FibonacciDelayStrategy(10, TimeUnit.MILLISECONDS, 100));
             f.completedValue(1)
                     .thenCompose((a) -> Retry.retryWithOpts(() -> f.failedFuture(new Exception("aaah")), opts))
                     .exceptionally((e) -> {
