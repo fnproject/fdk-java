@@ -2,7 +2,8 @@
 [![CircleCI](https://circleci.com/gh/fnproject/fn-java-fdk.svg?style=svg&circle-token=348bec5610c34421f6c436ab8f6a18e153cb1c01)](https://circleci.com/gh/fnproject/fn-java-fdk)
 
 This project adds support for writing functions in Java on the [Fn
-platform](https://github.com/fnproject/fn).
+platform](https://github.com/fnproject/fn), with full support for Java 9
+as the default out of the box.
 
 
 # Quick Start Tutorial
@@ -51,7 +52,7 @@ func.yaml created
 ```
 
 This creates the boilerplate for a new Java Function based on Maven and Oracle
-Java 8. The `pom.xml` includes a dependency on the latest version of the Fn
+Java 9. The `pom.xml` includes a dependency on the latest version of the Fn
 Java FDK that is useful for developing your Java functions.
 
 Note that the `your_dockerhub_account/hello` name follows the format of
@@ -112,10 +113,10 @@ The function takes some optional input and returns a greeting dependent on it.
 You are now ready to run your Function locally using the Fn CLI tool.
 
 ```bash
-$ fn run
+$ fn build
 Building image your_dockerhub_account/hello:0.0.1
 Sending build context to Docker daemon  14.34kB
-Step 1/11 : FROM maven:3.5-jdk-8-alpine as build-stage
+Step 1/11 : FROM fnproject/fn-java-fdk-build:jdk9-latest as build-stage
  ---> 5435658a63ac
 Step 2/11 : WORKDIR /function
  ---> 37340c5aa451
@@ -141,6 +142,8 @@ Downloaded: https://repo.maven.apache.org/maven2/org/apache/maven/plugins/maven-
 ...
 
 Function your_dockerhub_account/hello:0.0.1 built successfully.
+
+$ fn run
 Hello, world!
 ```
 
