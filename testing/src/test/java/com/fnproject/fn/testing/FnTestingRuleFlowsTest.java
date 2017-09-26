@@ -438,7 +438,7 @@ public class FnTestingRuleFlowsTest {
         public void invokeFunctionEcho() {
             Flow fl = Flows.currentFlow();
             fl.invokeFunction("user/echo", HttpMethod.GET, Headers.emptyHeaders(), Result.InvokeFunctionEcho.name().getBytes())
-                    .thenAccept((r) -> result = Result.valueOf(new String(r.getBodyAsBytes())));
+                    .thenAccept((r) -> result = Result.valueOf(r.getBodyAsString()));
         }
 
         public static class JSONObject implements  Serializable{

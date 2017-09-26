@@ -10,7 +10,7 @@ public class FunctionInvocationException extends RuntimeException {
     private final HttpResponse functionResponse;
 
     public FunctionInvocationException(HttpResponse functionResponse) {
-        super(new String(functionResponse.getBodyAsBytes()));
+        super(functionResponse.getBodyAsString());
         this.functionResponse = functionResponse;
     }
 

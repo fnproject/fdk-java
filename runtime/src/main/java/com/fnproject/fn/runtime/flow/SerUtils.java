@@ -87,6 +87,11 @@ final class SerUtils {
         }
 
         @Override
+        public String getBodyAsString() {
+            return new String(getBodyAsBytes());
+        }
+
+        @Override
         public String toString() {
             return "SerializedHttpRequest[method=" + method.toString() +
                     ", headers.getAll().size()=" + headers.getAll().size() +
@@ -118,6 +123,11 @@ final class SerUtils {
         @Override
         public byte[] getBodyAsBytes() {
             return body;
+        }
+
+        @Override
+        public String getBodyAsString() {
+            return new String(getBodyAsBytes());
         }
 
         @Override

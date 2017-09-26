@@ -139,7 +139,7 @@ public class ExerciseEverything {
     public FlowFuture<String> checkPassingExternalInvocation(Flow fl) {
         return fl.invokeFunction(inputEvent.getAppName() + inputEvent.getRoute(), HttpMethod.POST, Headers.emptyHeaders(), "PASS".getBytes())
                 .thenApply((resp) -> {
-                    return resp.getStatusCode() != 200 ? "failure" : new String(resp.getBodyAsBytes());
+                    return resp.getStatusCode() != 200 ? "failure" : resp.getBodyAsString();
                 });
     }
 
@@ -347,7 +347,7 @@ public class ExerciseEverything {
                 .withHeader("FnProject-Method", "post")
                 .withBody("bar".getBytes()));
         return cf.thenApply((req) ->
-                req.getHeaders().get("my-header").get() + new String(req.getBodyAsBytes())
+                req.getHeaders().get("my-header").get() + req.getBodyAsString()
         );
     }
 
@@ -397,7 +397,7 @@ public class ExerciseEverything {
                 .exceptionally(e -> {
                             System.err.println("Got into exception with e=" + e);
                             return ((ExternalCompletionException) e).getExternalRequest().getHeaders().get("my-header").get() +
-                                    new String(((ExternalCompletionException) e).getExternalRequest().getBodyAsBytes());
+                                    ((ExternalCompletionException) e).getExternalRequest().getBodyAsString();
                         }
                 );
     }
@@ -557,9 +557,9 @@ public class ExerciseEverything {
         } else if (r instanceof Throwable) {
             return ((Throwable) r).getMessage();
         } else if (r instanceof HttpRequest) {
-            return new String(((HttpRequest) r).getBodyAsBytes());
+            return ((HttpRequest) r).getBodyAsString();
         } else if (r instanceof HttpResponse) {
-            return new String(((HttpResponse) r).getBodyAsBytes());
+            return ((HttpResponse) r).getBodyAsString();
         } else {
             return r.toString();
         }
