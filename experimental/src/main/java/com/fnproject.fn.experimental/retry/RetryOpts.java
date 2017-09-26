@@ -3,14 +3,15 @@ package com.fnproject.fn.experimental.retry;
 
 import java.io.Serializable;
 
+/**
+ * RetryOpts contains the StopStrategy and DelayStrategy for a given retry.
+ * It is opinionated about defaults, to reduce cognitive load for end users.
+ */
 public class RetryOpts implements Serializable {
 
-    public StopStrategy stopstrat = new maxAttemptStopStrategy();
+    public StopStrategy stopstrat = new MaxAttemptStopStrategy();
 
     public DelayStrategy delaystrat = new ExponentialDelayStrategy();
-
-    //TODO: public JitterStrategy jitterstrat = new FullJitterStrategy();
-
 
     public RetryOpts(StopStrategy stopstrat, DelayStrategy delaystrat) {
         this.stopstrat = stopstrat;

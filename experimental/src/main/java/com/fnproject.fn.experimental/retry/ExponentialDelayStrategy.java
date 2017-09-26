@@ -3,6 +3,9 @@ package com.fnproject.fn.experimental.retry;
 import java.io.Serializable;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * provides exponential backoff delay.
+ */
 public class ExponentialDelayStrategy implements DelayStrategy, Serializable {
     public long baseWait = 1;
     public TimeUnit timeUnit = TimeUnit.SECONDS;
