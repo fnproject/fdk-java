@@ -13,13 +13,13 @@ The FDK is comprised of:
 
 ### Is the FDK required in order to run Java on Fn?
 No. You can still write Java functions on Fn without using the FDK. However using the FDK will make several things easier for you:
-   1. A curated base image for Java 8 and Java 9 means that you don't have to build and maintain your own image.
+   1. A curated base image for Java 8 and Java 9 means that you don't have to build and maintain your own image. These images contain optimizations for quick JVM startup times.
    1. Accessing configuration from Fn is easy through FDK APIs.
    1. Input and output type coercion reduces the amount of serialization and formatting boilerplate that you have to write.
    1. A JUnit rule provides a realistic test harness for you to test your function in isolation.
 
 ### What is Fn Flow?
-Fn Flow is a [Java API](https://github.com/fnproject/fn-java-fdk/blob/master/docs/FnFlowsUserGuide.md) and [corresponding server](https://github.com/fnproject/completer) that helps you create complex, long-running, fault-tolerant functions using a promises-style asynchronous API. Check out the [Fn Flow docs](https://github.com/fnproject/fn-java-fdk/blob/master/docs/FnFlowsUserGuide.md) for more information.
+Fn Flow is a [Java API](https://github.com/fnproject/fn-java-fdk/blob/master/docs/FnFlowsUserGuide.md) and [corresponding service](https://github.com/fnproject/completer) that helps you create complex, long-running, fault-tolerant functions using a promises-style asynchronous API. Check out the [Fn Flow docs](https://github.com/fnproject/fn-java-fdk/blob/master/docs/FnFlowsUserGuide.md) for more information.
 
 ### How do I get the FDK?
 The FDK is automatically added to your project if you built your function using `fn init --runtime=java`. The `api` and `testing` JARs are published on [our bintray](https://bintray.com/fnproject/fnproject) and the `runtime` is published in our [Docker hub repository](https://hub.docker.com/r/fnproject/fn-java-fdk/).
@@ -101,13 +101,13 @@ Please see our [Fn Flow User Guide](https://github.com/fnproject/fn-java-fdk/blo
 Use Fn Flow when:
    - You want to compose the work of several other Fn functions in a reliable and scalable way.
    - You find yourself wanting to write code that blocks on the result of another Fn call.
-   - Instead of reaching for another workflow system or library.
+   - You feel tempted to reach for another workflow system or library.
 
 ### Is Fn Flow related to `java.util.concurrent.Flow`?
 No. `java.util.concurrent.Flow` is a stream-processing API for running code in a single JVM. Fn Flow is a distributed promise API for writing long-running, fault-tolerant asynchronous functions.
 
 ### Is Fn Flow related to <any other Java library called Flow>?
-No. Fn Flow is was released in 2017 and is not related to any other Java library.
+No. Fn Flow was released in 2017 and is not related to any other Java library.
 
 ### What is the relationship between Fn Flow and Java's `CompletionStage` and `CompletableFuture` API?
 Fn Flow was 'inspired by' the `CompletionStage` API and shares a number of similar methods. However, as the semantics of Fn Flow are subtly different, and because we require our operations to implement `Serializable` we have implemented a new API.
