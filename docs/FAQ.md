@@ -62,7 +62,7 @@ Have a look on our [releases page](https://github.com/fnproject/fn-java-fdk/rele
 
 ### How do I upgrade to the latest version of the FDK?
    1. Find the latest version from our [releases page](https://github.com/fnproject/fn-java-fdk/releases).
-   1. Update the Java `api` version: change your dependency management system to reference the latest artifact. For example to upgrade a maven build to use `10.0.32`:
+   1. Update the Java `api` version: change your dependency management system to reference the latest artifact. For example to upgrade a maven build to use `1.0.32`:
    ```xml
         <dependency>
             <groupId>com.fnproject.fn</groupId>
