@@ -15,7 +15,7 @@ jobs:
       - checkout
       - run:
            name: get latest master version
-           command:
+           command: |
                git checkout origin/master release.version
                echo next release version is $(cat release.version)
       - run:
