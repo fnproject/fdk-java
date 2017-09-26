@@ -61,5 +61,6 @@ public class BasicRetryTest {
         fn.thenRun(testMethods.class, "handleFailure");
 
         assertEquals("aaah", failStr.get());
-    }
+}
+
 }

@@ -9,7 +9,7 @@ recommended for these features. Breaking, non-backwards compatible, changes to t
 ##Retry
 The **_Retry_** package, used with **Fn _Flows_**, allows for _FlowFutures_ to be retried upon exception, using configurable retry 
 options - consisting of a _delay strategy_ and a _retry strategy_. For users who do not wish to configure their own retry behaviours,
-some default implementations of the interfaces have been provided. See below and the [Javadocs]() for more detail.
+some default implementations of the interfaces have been provided. See below and the Javadocs for more detail.
 
 ####The _retry_ method
 The default method in the package is _retry_ (which is just a synonym for _retryExponentialWithJitter_). It takes a _Flows.SerCallable<T>_
@@ -38,3 +38,16 @@ So far we provide the following methods as a part of the API:
 * _retryFibonacciWithJitter_ - uses fibonacci backoff and a max-attempt-based-strategy.
 * _retryWithOpts_ - uses the provided retryOpts object to decide strategy.
 
+Here is an example use case of the retry package:
+```    
+public void book(FlightBooking flight) {
+    Flow f = Flows.currentFlow();
+    Functions.bookFlight(flight)
+        .exceptionallyCompose((e) -> {Retry.retryExponentialWithJitter(() -> cancelFlight(flight));return null;}))
+}
+```
+Here we see the function booking a flight, and cancelling if something goes wrong. The cancellation
+is retried upon failure using the Retry package.
+
+As you can see, it is enormously easy to use this package, and it provides a great deal of flexibility if the default options
+are not a good fit for your specific requirements.
