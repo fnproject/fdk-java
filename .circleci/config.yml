@@ -16,7 +16,7 @@ jobs:
       - run:
            name: Set release to latest branch version
            command: |
-               git checkout origin/$(CIRCLE_BRANCH) release.version
+               git checkout origin/${CIRCLE_BRANCH} release.version
                echo next release version is $(cat release.version)
       - run:
            name: Determine the release version
