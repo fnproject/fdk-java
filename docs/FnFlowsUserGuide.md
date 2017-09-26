@@ -366,6 +366,8 @@ There are several methods for handling errors with FlowFutures:
 	});
 ```
 
+###Retries
+Our experimental Retry package allows functions to be retried on failure. See the [experimental docs](../experimental/README.md) for information.
 
 
 ### Where Do I Go from Here?

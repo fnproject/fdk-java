@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit;
 public class Retry {
 
     /**
-     * retry is a synonym for retryExponentialWithJitter.
+     * retry is a synonym for {@link #retryExponentialWithJitter(Flows.SerCallable)}.
      *
      * @param operation the operation to be retried.
      * @param <T> the type that the FlowFuture produced by operation completes to.
@@ -48,10 +48,10 @@ public class Retry {
     }
 
     /**
-     * retryWithOpts retries the operation with the delay and stop strategies defined in the RetryOpts object provided.
+     * retryWithOpts retries the operation with the delay and stop strategies defined in the {@link RetryOpts} object provided.
      *
      * @param operation the operation to be retried.
-     * @param opts the RetryOpts object that defines the retry strategy to be used.
+     * @param opts the {@link RetryOpts} object that defines the retry strategy to be used.
      * @param <T> the type that the FlowFuture produced by operation completes to.
      * @return the FlowFuture that operation returns, or a FailedFuture
      * generated with the exception produced by operation.
@@ -64,7 +64,7 @@ public class Retry {
      * retry is a private and recursive method used by all other retry methods. It actually carries out the retry operations.
      *
      * @param operation the operation to be retried.
-     * @param opts the RetryOpts object that defines the retry strategy to be used.
+     * @param opts the {@link RetryOpts} object that defines the retry strategy to be used.
      * @param attempt the number of this attempt.
      * @param timePassed the time in milliseconds that has passed since the first attempt.
      * @param <T> the type that the FlowFuture produced by operation completes to.
@@ -93,7 +93,7 @@ public class Retry {
     }
 
     /**
-     * getDelay generates the delay amount based on the DelayStrategy in opts.
+     * getDelay generates the delay amount based on the {@link DelayStrategy} in opts.
      *
      * @param opts the RetryOpts object containing the DelayStrategy.
      * @param attempt the attempt number.
