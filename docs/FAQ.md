@@ -76,16 +76,25 @@ Have a look on our [releases page](https://github.com/fnproject/fn-java-fdk/rele
             <scope>test</scope>
         </dependency>
    ```
-   You should keep versions of `com.fnproject.fn.api` and `com.fnproject.fn.testing` in sync with each other.
    1. Update your runtime image:
-   ```sh
-   docker pull fnproject/fn-java-fdk
-   ```
+      1. To latest: 
+      ```sh
+      docker pull fnproject/fn-java-fdk
+      ```
+      
+      1. To a specific version: 
+      ```
+      docker pull fnproject/fn-java-fdk:1.0.32
+      docker tag fnproject/fn-java-fdk:1.0.32 fnproject/fn-java-fdk:latest
+      ```
+   
+   You should keep versions of `com.fnproject.fn.api`, `com.fnproject.fn.testing` and your runtime Docker image in sync with each other.
+
    1. Update your build image:
    ```sh
    docker pull fnproject/fn-java-fdk-build
    ```
-
+   
 ### I think I found a bug - how do I report it?
 Please create an [issue on our GitHub repo](https://github.com/fnproject/fn-java-fdk/issues).
 
