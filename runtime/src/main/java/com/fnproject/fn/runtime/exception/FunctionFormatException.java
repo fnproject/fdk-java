@@ -5,7 +5,6 @@ package com.fnproject.fn.runtime.exception;
  * code cannot be invoked.
  */
 public class FunctionFormatException extends FunctionLoadException {
-    
     public FunctionFormatException(String message, Throwable cause) {
         super(message, cause);
     }
