@@ -71,7 +71,7 @@ public class EntryPoint {
             } else if (format == null || format.equalsIgnoreCase("default")) {
                 codec = new DefaultEventCodec(env, functionInput, functionOutput);
             } else {
-                throw new FunctionInputHandlingException("Unsupported function format:" + format);
+                throw new FunctionFormatException("Unsupported function format: " + format);
             }
 
             do {
