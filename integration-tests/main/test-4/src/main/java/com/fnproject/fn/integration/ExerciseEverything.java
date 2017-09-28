@@ -422,14 +422,15 @@ public class ExerciseEverything {
     }
 
     @Test(38)
+    @Test.Catch({FlowCompletionException.class, MyException.class})
     @Test.Expect("foobar")
     public FlowFuture<String> allOfWithFailedValue(Flow fl) {
-        return fl.<String>allOf(
+        return fl.allOf(
                 fl.supply(() -> 1),
                 fl.supply(() -> 2),
                 fl.supply(() -> {
                     throw new MyException("foobar");
-                }).exceptionally(Throwable::getMessage);
+                });
         );
     }
 
