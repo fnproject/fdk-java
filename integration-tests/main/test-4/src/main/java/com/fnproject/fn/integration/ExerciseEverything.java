@@ -421,6 +421,18 @@ public class ExerciseEverything {
                 }).exceptionally(Throwable::getMessage);
     }
 
+    @Test(38)
+    @Test.Expect("foobar")
+    public FlowFuture<Void> allOfWithFailedValue(Flow fl) {
+        return fl.allOf(
+                fl.supply(() -> 1),
+                fl.supply(() -> 2),
+                fl.supply(() -> {
+                    throw new MyException("foobar");
+                }).exceptionally(Throwable::getMessage);
+        );
+    }
+
     private int id;
 
     private void fail() {
