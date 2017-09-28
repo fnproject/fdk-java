@@ -6,5 +6,5 @@ build:
 - mvn package dependency:copy-dependencies -DincludeScope=runtime -DskipTests=true
   -Dmdep.prependGroupId=true -DoutputDirectory=target -U
 format: http
-timeout: 450
+timeout: 120
 path: /test
