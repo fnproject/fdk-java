@@ -423,8 +423,8 @@ public class ExerciseEverything {
 
     @Test(38)
     @Test.Expect("foobar")
-    public FlowFuture<Void> allOfWithFailedValue(Flow fl) {
-        return fl.allOf(
+    public FlowFuture<String> allOfWithFailedValue(Flow fl) {
+        return fl.<String>allOf(
                 fl.supply(() -> 1),
                 fl.supply(() -> 2),
                 fl.supply(() -> {
