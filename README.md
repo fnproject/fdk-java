@@ -5,6 +5,8 @@ This project adds support for writing functions in Java on the [Fn
 platform](https://github.com/fnproject/fn), with full support for Java 9
 as the default out of the box.
 
+# FAQ
+Some common questions are answered in [our FAQ](docs/FAQ.md).
 
 # Quick Start Tutorial
 
