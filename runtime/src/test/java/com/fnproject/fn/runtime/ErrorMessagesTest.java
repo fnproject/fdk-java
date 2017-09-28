@@ -33,10 +33,10 @@ public class ErrorMessagesTest {
         assertThat(fn.getStdErrAsString()).doesNotContain("at com.fnproject.fn.runtime");
     }
 
-    private void assertIsFunctionErrorWith400Response(String errorMessage) {
+    private void assertIsFunctionErrorWithFailedResponse(String errorMessage) {
         assertThat(fn.exitStatus()).isEqualTo(1);
         assertThat(fn.getParsedHttpResponses().size()).isEqualTo(1);
-        assertThat(fn.getParsedHttpResponses().get(0).getStatus()).isEqualTo(400);
+        assertThat(fn.getParsedHttpResponses().get(0).getStatus()).isGreaterThanOrEqualTo(400);
         assertThat(fn.getParsedHttpResponses().get(0).getBodyAsString()).isEqualTo(errorMessage);
     }
 
@@ -64,14 +64,14 @@ public class ErrorMessagesTest {
     public void inputIsGenuinelyInvalidOnHotFunction(){
         fn.givenHttpEvent().withBody("This is not a...").enqueue();
         fn.thenRun(ErrorMessages.OtherMethodsClass.class, "takesAnInteger");
-        assertIsFunctionErrorWith400Response("Failed to coerce function input to user function parameter type class java.lang.Integer");
+        assertIsFunctionErrorWithFailedResponse("Failed to coerce function input to user function parameter type class java.lang.Integer");
     }
 
     @Test
     public void inputIsGenuinelyInvalidOnDefaultFunction(){
-        fn.givenDefaultEvent().withBody("This is not a...").enqueue();
+        fn.givenHttpEvent().withBody("This is not a...").enqueue();
         fn.thenRun(ErrorMessages.OtherMethodsClass.class, "takesAnInteger");
-        assertIsEntrypointErrorWithStacktrace("Failed to coerce function input to user function parameter type class java.lang.Integer");
+        assertIsFunctionErrorWithFailedResponse("Failed to coerce function input to user function parameter type class java.lang.Integer");
     }
 
     @Test

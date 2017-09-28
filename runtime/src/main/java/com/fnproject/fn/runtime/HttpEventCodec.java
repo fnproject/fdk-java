@@ -142,9 +142,4 @@ public class HttpEventCodec implements EventCodec {
             throw new FunctionOutputHandlingException("Failed to write output to stream", e);
         }
     }
-
-    @Override
-    public boolean canReportHttpErrors() {
-        return true;
-    }
 }

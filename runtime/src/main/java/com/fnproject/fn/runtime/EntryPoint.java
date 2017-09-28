@@ -104,14 +104,8 @@ public class EntryPoint {
                         }
                     } catch (InputCoercion.InvalidFunctionInputException e) {
                         fic.fireOnFailedInvocation();
-                        // Return a bad request error if we can, otherwise rethrow
-                        if (codec.canReportHttpErrors()) {
-                            lastStatus = 1;
-                            codec.writeEvent(OutputEvent.fromBytes(e.getMessage().getBytes(), 400, "text/plain"));
-                        }
-                        else {
-                            throw new FunctionInputHandlingException("Error processing function input", e);
-                        }
+                        lastStatus = 1;
+                        codec.writeEvent(OutputEvent.fromBytes(e.getMessage().getBytes(), 400, "text/plain"));
                     } catch (IOException e) {
                         fic.fireOnFailedInvocation();
                         throw new FunctionInputHandlingException("Error closing function input", e);
