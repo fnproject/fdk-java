@@ -1,13 +1,10 @@
 package com.fnproject.fn.runtime;
 
 
-import com.fnproject.fn.api.FunctionInvoker;
-import com.fnproject.fn.api.InputEvent;
-import com.fnproject.fn.api.InvocationContext;
-import com.fnproject.fn.api.OutputEvent;
+import com.fnproject.fn.api.*;
 import com.fnproject.fn.runtime.exception.FunctionInputHandlingException;
-import com.fnproject.fn.runtime.exception.InternalFunctionInvocationException;
 import com.fnproject.fn.runtime.exception.FunctionOutputHandlingException;
+import com.fnproject.fn.runtime.exception.InternalFunctionInvocationException;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -29,7 +26,7 @@ public class MethodFunctionInvoker implements FunctionInvoker {
      * @throws InternalFunctionInvocationException if the invocation fails
      */
     @Override
-    public Optional<OutputEvent> tryInvoke(InvocationContext ctx, InputEvent evt) throws InternalFunctionInvocationException {
+    public Optional<OutputEvent> tryInvoke(InvocationContext ctx, InputEvent evt) {
 
         Object[] userFunctionParams = doInputCoercions(ctx, evt);
 
@@ -59,18 +56,25 @@ public class MethodFunctionInvoker implements FunctionInvoker {
 
             for (int i = 0; i < userFunctionParams.length; i++) {
                 int param = i;
-                Optional<Object> arg = runtimeContext.getInputCoercions(targetMethod, param)
-                        .stream()
-                        .map((c) -> c.tryCoerceParam(ctx, param, evt))
-                        .filter(Optional::isPresent)
-                        .map(Optional::get).findFirst();
+                Optional<?> arg = Optional.empty();
+                for (InputCoercion<?> ic : runtimeContext.getInputCoercions(targetMethod, param)) {
+                    arg = ic.tryCoerceParam(ctx, param, evt);
+                    if (arg.isPresent()) {
+                        break;
+                    }
+                }
 
-                userFunctionParams[i] = arg.orElseThrow(() -> new FunctionInputHandlingException("No type coercion for argument " + param + " of " + targetMethod + " of found"));
+                userFunctionParams[i] = arg.orElseThrow(() -> new InputCoercion.InvalidFunctionInputException(
+                        "No type coercion was able to convert the input provided to the function into a usable form. (param=" +
+                                param + ", method=" + targetMethod + ")"));
             }
 
             return userFunctionParams;
-
+        } catch (InputCoercion.InvalidFunctionInputException e) {
+            // just rethrow
+            throw e;
         } catch (RuntimeException e) {
+            // Any other exception, we wrap into our own
             throw new FunctionInputHandlingException("An exception was thrown during Input Coercion: " + e.getMessage(), e);
         }
 

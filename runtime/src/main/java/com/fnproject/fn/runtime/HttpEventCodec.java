@@ -143,4 +143,8 @@ public class HttpEventCodec implements EventCodec {
         }
     }
 
+    @Override
+    public boolean canReportHttpErrors() {
+        return true;
+    }
 }

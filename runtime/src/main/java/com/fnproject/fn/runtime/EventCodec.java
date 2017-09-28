@@ -32,4 +32,8 @@ public interface EventCodec {
      */
     void writeEvent(OutputEvent evt);
 
+    /**
+     * Does the codec support reporting arbitrary http status codes / errors in the response?
+     */
+    boolean canReportHttpErrors();
 }

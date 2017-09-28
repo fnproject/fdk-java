@@ -70,4 +70,9 @@ class DefaultEventCodec implements EventCodec {
             throw new FunctionOutputHandlingException("error writing event",e);
         }
     }
+
+    @Override
+    public boolean canReportHttpErrors() {
+        return false;
+    }
 }

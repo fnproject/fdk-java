@@ -2,6 +2,7 @@ package com.fnproject.fn.runtime;
 
 
 import com.fnproject.fn.api.FunctionInvoker;
+import com.fnproject.fn.api.InputCoercion;
 import com.fnproject.fn.api.InputEvent;
 import com.fnproject.fn.api.OutputEvent;
 import com.fnproject.fn.runtime.flow.FlowContinuationInvoker;
@@ -100,6 +101,16 @@ public class EntryPoint {
                         } else {
                             lastStatus = 1;
                             fic.fireOnFailedInvocation();
+                        }
+                    } catch (InputCoercion.InvalidFunctionInputException e) {
+                        fic.fireOnFailedInvocation();
+                        // Return a bad request error if we can, otherwise rethrow
+                        if (codec.canReportHttpErrors()) {
+                            lastStatus = 1;
+                            codec.writeEvent(OutputEvent.fromBytes(e.getMessage().getBytes(), 400, "text/plain"));
+                        }
+                        else {
+                            throw new FunctionInputHandlingException("Error processing function input", e);
                         }
                     } catch (IOException e) {
                         fic.fireOnFailedInvocation();
