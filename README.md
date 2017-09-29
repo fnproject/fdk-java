@@ -5,6 +5,8 @@ This project adds support for writing functions in Java on the [Fn
 platform](https://github.com/fnproject/fn), with full support for Java 9
 as the default out of the box.
 
+# FAQ
+Some common questions are answered in [our FAQ](docs/FAQ.md).
 
 # Quick Start Tutorial
 
@@ -17,7 +19,6 @@ Before you get started you will need the following things:
 
 * The [Fn CLI](https://github.com/fnproject/cli) tool
 * [Docker-ce 17.06+ installed locally](https://docs.docker.com/engine/installation/)
-* A [Docker Hub](http://hub.docker.com) account
 
 ### Install the Fn CLI tool
 
@@ -29,15 +30,6 @@ curl -LSs https://raw.githubusercontent.com/fnproject/cli/master/install | sh
 
 This will download a shell script and execute it. If the script asks for
 a password, that is because it invokes sudo.
-
-### Log in to DockerHub
-
-You will also need to be logged in to your Docker Hub account in order to
-deploy functions.
-
-```shell
-docker login
-```
 
 ## Your first Function
 
@@ -55,12 +47,6 @@ This creates the boilerplate for a new Java Function based on Maven and Oracle
 Java 9. The `pom.xml` includes a dependency on the latest version of the Fn
 Java FDK that is useful for developing your Java functions.
 
-Note that the `your_dockerhub_account/hello` name follows the format of
-a Docker image name. The Fn platform relies on docker images implementing
-functions and these will be deployed to a Docker registry. By default Docker
-Hub is used, hence the requirement for a Docker Hub account. You should replace
-`your_dockerhub_account` with your account name.
-
 You can now import this project into your favourite IDE as normal.
 
 ### 2. Deep dive into your first Java Function:
@@ -69,11 +55,10 @@ a look at the `func.yaml`:
 
 ```bash
 $ cat func.yaml
-name: your_dockerhub_account/hello
+name: hello
 version: 0.0.1
 runtime: java
 cmd: com.example.fn.HelloFunction::handleRequest
-path: /hello
 ```
 
 The `cmd` field determines which method is called when your funciton is
@@ -219,25 +204,21 @@ function's version up, rebuild it, and push the image to the Docker registry,
 ready to be used in the function deployment. Finally it will create a route on
 the local Fn server, corresponding to your function.
 
+We are using the `--local` flag to tell fn to skip pushing the image anywhere
+as we are just going to run this on our local fn server that we started with
+`fn start` above.
+
 ```bash
-$ fn deploy java-app
+$ fn deploy --app java-app --local
 ...
 Bumped to version 0.0.2
-Building image your_dockerhub_account/hello:0.0.2
+Building image hello:0.0.2
 Sending build context to Docker daemon  14.34kB
 
 ...
 
 Successfully built bf2b7fa55520
-Successfully tagged your_dockerhub_account/hello:0.0.2
-Pushing to docker registry...
-The push refers to a repository [docker.io/your_dockerhub_account/hello]
-d641fa720e99: Pushed
-9f961bc46650: Pushed
-24972d67929a: Pushed
-e18e511b41d6: Pushed
-a8cf2f688ac8: Pushed
-0.0.2: digest: sha256:9a585899aa5c705172f8a798169a86534048b55ec2f47851938103ffbe9cfba5 size: 1368
+Successfully tagged hello:0.0.2
 Updating route /hello using image your_dockerhub_account/hello:0.0.2...
 ```
 
