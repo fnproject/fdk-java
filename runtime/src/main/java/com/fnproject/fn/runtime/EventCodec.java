@@ -31,4 +31,5 @@ public interface EventCodec {
      * @throws IOException if an error occurs while writing
      */
     void writeEvent(OutputEvent evt);
+
 }
