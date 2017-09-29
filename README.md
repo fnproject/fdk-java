@@ -37,7 +37,7 @@ a password, that is because it invokes sudo.
 
 ```bash
 $ mkdir hello-java-function && cd hello-java-function
-$ fn init --runtime=java your_dockerhub_account/hello
+$ fn init --runtime=java --name your_dockerhub_account/hello
 Runtime: java
 function boilerplate generated.
 func.yaml created
@@ -55,7 +55,7 @@ a look at the `func.yaml`:
 
 ```bash
 $ cat func.yaml
-name: hello
+name: your_dockerhub_account/hello
 version: 0.0.1
 runtime: java
 cmd: com.example.fn.HelloFunction::handleRequest
@@ -218,21 +218,21 @@ Sending build context to Docker daemon  14.34kB
 ...
 
 Successfully built bf2b7fa55520
-Successfully tagged hello:0.0.2
-Updating route /hello using image your_dockerhub_account/hello:0.0.2...
+Successfully tagged your_dockerhub_account/hello:0.0.2
+Updating route /hello-java-function using image your_dockerhub_account/hello:0.0.2...
 ```
 
 Call the Function via the Fn CLI:
 
 ```bash
-$ fn call java-app /hello
+$ fn call java-app /hello-java-function
 Hello, world!
 ```
 
 You can also call the Function via curl:
 
 ```bash
-$ curl http://localhost:8080/r/java-app/hello
+$ curl http://localhost:8080/r/java-app/hello-java-function
 Hello, world!
 ```
 
