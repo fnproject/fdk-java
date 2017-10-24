@@ -6,10 +6,7 @@ import com.fnproject.fn.api.InputEvent;
 import com.fnproject.fn.api.OutputEvent;
 import com.fnproject.fn.runtime.exception.FunctionInputHandlingException;
 import com.fnproject.fn.runtime.exception.FunctionOutputHandlingException;
-import org.apache.http.Header;
-import org.apache.http.HttpException;
-import org.apache.http.HttpRequest;
-import org.apache.http.ProtocolVersion;
+import org.apache.http.*;
 import org.apache.http.config.MessageConstraints;
 import org.apache.http.impl.io.*;
 import org.apache.http.io.HttpMessageParser;
@@ -25,7 +22,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 
-import static com.fnproject.fn.runtime.flow.RemoteCompleterApiClient.CONTENT_TYPE_HEADER;
 
 /**
  * Reads input via an InputStream as an HTTP request.
@@ -37,9 +33,12 @@ public class HttpEventCodec implements EventCodec {
     private final SessionInputBuffer sib;
     private final SessionOutputBuffer sob;
     private final HttpMessageParser<HttpRequest> parser;
+    private final Map<String, String> env;
 
 
-    HttpEventCodec(InputStream input, OutputStream output) {
+    HttpEventCodec(Map<String, String> env, InputStream input, OutputStream output) {
+
+        this.env = Objects.requireNonNull(env);
 
         SessionInputBufferImpl sib = new SessionInputBufferImpl(new HttpTransportMetricsImpl(), 65535);
         sib.bind(Objects.requireNonNull(input));
@@ -54,6 +53,14 @@ public class HttpEventCodec implements EventCodec {
 
     private static String requiredHeader(HttpRequest req, String id) {
         return Optional.ofNullable(req.getFirstHeader(id)).map(Header::getValue).orElseThrow(() -> new FunctionInputHandlingException("Incoming HTTP frame is missing required header: " + id));
+    }
+
+    private String getRequiredEnv(String name) {
+        String val = env.get(name);
+        if (val == null) {
+            throw new FunctionInputHandlingException("Required environment variable " + name + " is not set - are you running a function outside of fn run?");
+        }
+        return val;
     }
 
     @Override
@@ -74,24 +81,24 @@ public class HttpEventCodec implements EventCodec {
             long contentLength = Long.parseLong(requiredHeader(req, "content-length"));
             bodyStream = new ContentLengthInputStream(sib, contentLength);
         } else if (req.getHeaders("transfer-encoding").length > 0 &&
-                req.getFirstHeader("transfer-encoding").getValue().equalsIgnoreCase("chunked")) {
+          req.getFirstHeader("transfer-encoding").getValue().equalsIgnoreCase("chunked")) {
             bodyStream = new ChunkedInputStream(sib);
         } else {
             bodyStream = new ByteArrayInputStream(new byte[]{});
         }
-        String appName = requiredHeader(req, "fn_app_name");
-        String route = requiredHeader(req, "fn_path");
-        String method = requiredHeader(req, "fn_method");
-        String requestUrl = requiredHeader(req, "fn_request_url");
-
+        String appName = getRequiredEnv(Codecs.FN_APP_NAME);
+        String route = getRequiredEnv(Codecs.FN_PATH);
+        String method = requiredHeader(req, Codecs.FN_METHOD);
+        String requestUrl = requiredHeader(req, Codecs.FN_REQUEST_URL);
+        String callId = requiredHeader(req, Codecs.FN_CALL_ID);
         Map<String, String> headers = new HashMap<>();
         for (Header h : req.getAllHeaders()) {
             headers.put(h.getName(), h.getValue());
         }
 
-        return Optional.of(new ReadOnceInputEvent(appName, route, requestUrl, method,
-                bodyStream, Headers.fromMap(headers),
-                QueryParametersParser.getParams(requestUrl)));
+        return Optional.of(new ReadOnceInputEvent(appName, route, requestUrl, method, callId,
+          bodyStream, Headers.fromMap(headers),
+          QueryParametersParser.getParams(requestUrl)));
 
     }
 
@@ -122,7 +129,7 @@ public class HttpEventCodec implements EventCodec {
             }
 
             evt.getHeaders().getAll().forEach(response::setHeader);
-            evt.getContentType().ifPresent((ct) -> response.setHeader(CONTENT_TYPE_HEADER, ct));
+            evt.getContentType().ifPresent((ct) -> response.setHeader(HttpHeaders.CONTENT_TYPE, ct));
             response.setHeader("Content-length", String.valueOf(data.length));
 
 

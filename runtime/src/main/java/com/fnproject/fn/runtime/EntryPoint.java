@@ -63,11 +63,11 @@ public class EntryPoint {
             FunctionLoader functionLoader = new FunctionLoader();
             FunctionRuntimeContext runtimeContext = functionLoader.loadFunction(cls, mth, configFromEnvVars);
 
-            String format = env.get("FN_FORMAT");
+            String format = env.get(Codecs.FN_FORMAT);
             EventCodec codec;
 
             if (format != null && format.equalsIgnoreCase("http")) {
-                codec = new HttpEventCodec(functionInput, functionOutput);
+                codec = new HttpEventCodec(env,functionInput, functionOutput);
             } else if (format == null || format.equalsIgnoreCase("default")) {
                 codec = new DefaultEventCodec(env, functionInput, functionOutput);
             } else {

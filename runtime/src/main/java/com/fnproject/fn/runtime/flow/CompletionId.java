@@ -26,6 +26,9 @@ public final class CompletionId implements Serializable {
         return Objects.hash(id);
     }
 
+    /**
+     * @return The string representation of the completion ID
+     */
     public String getId() {
         return id;
     }

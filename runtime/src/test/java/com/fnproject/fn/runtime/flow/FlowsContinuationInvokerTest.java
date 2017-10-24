@@ -614,7 +614,7 @@ public class FlowsContinuationInvokerTest {
 
         public InputEvent build() {
             return new ReadOnceInputEvent(
-                    "", "", "", "",
+                    "", "", "", "","",
                     body,
                     headers, new QueryParametersImpl());
         }
