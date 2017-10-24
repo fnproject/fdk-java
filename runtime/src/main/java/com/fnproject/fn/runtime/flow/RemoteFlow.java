@@ -54,6 +54,10 @@ public final class RemoteFlow implements Flow, Serializable {
         }
     }
 
+    RemoteFlowFuture createRemoteFlowFuture(CompletionId completionId) {
+        return new RemoteFlowFuture(completionId);
+    }
+
     class RemoteFlowFuture<T> implements FlowFuture<T>, Serializable {
         private final CompletionId completionId;
 
