@@ -1,7 +1,5 @@
-name: fn-test/test-1
 version: 0.0.1
 runtime: java8
 cmd: com.fnproject.fn.integration.test_1.CompleterFunction::handleRequest
-path: /test
 format: http
-timeout: 90
+timeout: 120

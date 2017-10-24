@@ -48,9 +48,9 @@ else
 fi
 
 
-fnpath=${PWD##*/}
+PATH=${PWD##*/}
 
-fn routes create --timeout 120 "$TESTNAME" /test
+fn deploy "$TESTNAME"
 
 [[ -n "$POST_CONFIGURE_HOOK" ]] && $POST_CONFIGURE_HOOK
 
