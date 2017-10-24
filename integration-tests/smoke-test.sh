@@ -63,7 +63,7 @@ if [[ -x run-test.sh ]]
 then
     ./run-test.sh
 else
-    curl -v "$API_URL/r/$TESTNAME/test" -d @input > actual
+    curl -v "$API_URL/r/$TESTNAME/$TESTNAME" -d @input > actual
 fi
 
 if [[ -x expected.sh ]]
@@ -91,7 +91,5 @@ set -x
 if [[ -x delete.sh ]]
 then
     ./delete.sh
-else
-    fn routes delete "$TESTNAME" "$TESTNAME"
 fi
 fn apps delete "$TESTNAME"
