@@ -50,7 +50,7 @@ fi
 
 
 echo "Deploying $TESTNAME"
-fn deploy "$TESTNAME"
+fn deploy --app "$TESTNAME" --local
 
 [[ -n "$POST_CONFIGURE_HOOK" ]] && $POST_CONFIGURE_HOOK
 fn apps inspect "$TESTNAME"
