@@ -48,17 +48,15 @@ else
 fi
 
 
-PATH=${PWD##*/}
 
+echo "Deploying $TESTNAME"
 fn deploy "$TESTNAME"
 
 [[ -n "$POST_CONFIGURE_HOOK" ]] && $POST_CONFIGURE_HOOK
-
 fn apps inspect "$TESTNAME"
+fn routes inspect "$TESTNAME" "$TESTNAME"
 
-fn routes inspect "$TESTNAME" /test
-
-curl -v "$API_URL/r/$TESTNAME/test" -d @input > actual
+curl -v "$API_URL/r/$TESTNAME/$TESTNAME" -d @input > actual
 if [[ -x expected.sh ]]
 then
     ./expected.sh && touch success || touch failure
@@ -80,5 +78,4 @@ do
 done
 
 set -x
-fn routes delete "$TESTNAME" /test
 fn apps delete "$TESTNAME"
