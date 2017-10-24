@@ -47,14 +47,16 @@ else
     fn apps create "$TESTNAME"
 fi
 
-fn routes create --timeout 120 "$TESTNAME" /test
+
+
+echo "Deploying $TESTNAME"
+fn deploy --app "$TESTNAME" --local
 
 [[ -n "$POST_CONFIGURE_HOOK" ]] && $POST_CONFIGURE_HOOK
-
 fn apps inspect "$TESTNAME"
-fn routes inspect "$TESTNAME" /test
+fn routes inspect "$TESTNAME" "$TESTNAME"
 
-curl -v "$API_URL/r/$TESTNAME/test" -d @input > actual
+curl -v "$API_URL/r/$TESTNAME/$TESTNAME" -d @input > actual
 if [[ -x expected.sh ]]
 then
     ./expected.sh && touch success || touch failure
@@ -76,5 +78,4 @@ do
 done
 
 set -x
-fn routes delete "$TESTNAME" /test
 fn apps delete "$TESTNAME"

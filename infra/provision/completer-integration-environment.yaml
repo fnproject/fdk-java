@@ -1,5 +1,5 @@
 # This is run once, at cluster creation time. It creates and sets up the
-# components of the completer service, and assumes that the functions service
+# components of the flow service, and assumes that the functions service
 # is already provisioned from:
 #
 #     https://gitlab-odx.oracle.com/odx/functions-service/tree/master/scripts/fn-service.yml

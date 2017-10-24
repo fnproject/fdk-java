@@ -20,7 +20,7 @@ public interface Flow extends Serializable {
     /**
      * Invoke a fn function and yield the result
      * <p>
-     * When this function is called, the completer will send a request with the body to the given function ID within
+     * When this function is called, the flow server will send a request with the body to the given function ID within
      * the fn and provide a future that can chain on the response of the function.
      * <blockquote><pre>{@code
      *         Flow fl = Flows.currentFlow();

@@ -1,4 +1,3 @@
-name: fn-test/test-4
 version: 0.0.12
 runtime: java
 cmd: com.fnproject.fn.integration.ExerciseEverything::handleRequest
@@ -7,4 +6,3 @@ build:
   -Dmdep.prependGroupId=true -DoutputDirectory=target -U
 format: http
 timeout: 120
-path: /test

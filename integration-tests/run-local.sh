@@ -13,7 +13,7 @@ set -ex
 
 : ${FUNCTIONS_DOCKER_IMAGE:=fnproject/functions}
 : ${SUFFIX:=$(git rev-parse HEAD)}
-: ${COMPLETER_DOCKER_IMAGE:=fnproject/completer}
+: ${COMPLETER_DOCKER_IMAGE:=fnproject/flow}
 
 # ----------------------------------------------------------------------
 # Stand up a local staging maven directory, if needed
@@ -83,7 +83,7 @@ COMPLETER_CONTAINER_ID=$(
         -p 8081 \
         --env API_URL=http://${FUNCTIONS_INTERNAL_IP}:8080 \
         --env no_proxy=$no_proxy,${FUNCTIONS_INTERNAL_IP} \
-        --name completer-$SUFFIX \
+        --name flow-server-$SUFFIX \
         $COMPLETER_DOCKER_IMAGE
     )
 defer docker rm -f $COMPLETER_CONTAINER_ID

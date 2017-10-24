@@ -26,7 +26,7 @@ public interface CompleterClient {
     }
 
     /**
-     * create a new flow against the completer
+     * create a new flow against the flow service
      *
      * @param functionId
      * @return

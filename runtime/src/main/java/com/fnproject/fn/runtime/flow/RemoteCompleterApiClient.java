@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 
 
 /**
- * REST client for accessing completer API
+ * REST client for accessing the flow service API
  */
 public class RemoteCompleterApiClient implements CompleterClient {
     private transient final HttpClient httpClient;

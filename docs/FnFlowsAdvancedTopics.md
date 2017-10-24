@@ -13,7 +13,7 @@ execute on a different machine within the network.
 In order to facilitate this, the Fn Java FDK will serialize each of the stage
 lambdas (and any captured variables) using [Java
 Serialization](https://docs.oracle.com/javase/8/docs/api/java/io/Serializable.html)
-and store them remotely on the completer before executing them on the functions
+and store them remotely in the flow service before executing them on the functions
 platform. In order to write Flows applications, you should be aware of
 the impact of this within your code, and how this might differ from your
 experience of programming within a single JVM.
@@ -21,7 +21,7 @@ experience of programming within a single JVM.
 The following lists the key areas that you should be aware of:
 
 ### Serializable data and captured variables
-In order for the Flows completer to execute each computation stage
+In order for the flow service to execute each computation stage
 remotely, it must transmit captured data and values attached to `FlowFuture`s
 over the network. Fn Flow uses standard Java Serialization to convert
 objects and lambda expressions in memory into a collection of bytes for

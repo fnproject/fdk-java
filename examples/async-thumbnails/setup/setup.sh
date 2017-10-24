@@ -3,7 +3,7 @@ set -e
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 STORAGE_DIR="/tmp/example-storage-server-files"
 
-COMPLETER_IMAGE=fnproject/completer
+COMPLETER_IMAGE=fnproject/flow
 FUNCTIONS_IMAGE=fnproject/functions
 MINIO_IMAGE=minio/minio
 
@@ -65,9 +65,9 @@ fi
 # Get its IP
 FUNCTIONS_SERVER_IP=`docker inspect --type container -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' functions`
 
-# Start flow completer if not there
-if [[ -z `docker ps | grep "flow-completer"` ]]; then
-    docker run -d --name flow-completer \
+# Start flow service if not there
+if [[ -z `docker ps | grep "flow-service"` ]]; then
+    docker run -d --name flow-service \
         -e LOG_LEVEL=debug \
         -e NO_PROXY="$FUNCTIONS_SERVER_IP:$NO_PROXY" \
         -e API_URL=http://$FUNCTIONS_SERVER_IP:8080/r \
@@ -79,7 +79,7 @@ else
     echo "Flow Completer server is already up."
 fi
 # Get its IP
-COMPLETER_SERVER_IP=`docker inspect --type container -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' flow-completer`
+COMPLETER_SERVER_IP=`docker inspect --type container -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' flow-service`
 
 # Create app and routes
 if [[ `fn apps list` == *"myapp"* ]]; then
