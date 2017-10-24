@@ -47,11 +47,15 @@ else
     fn apps create "$TESTNAME"
 fi
 
+
+fnpath=${PWD##*/}
+
 fn routes create --timeout 120 "$TESTNAME" /test
 
 [[ -n "$POST_CONFIGURE_HOOK" ]] && $POST_CONFIGURE_HOOK
 
 fn apps inspect "$TESTNAME"
+
 fn routes inspect "$TESTNAME" /test
 
 curl -v "$API_URL/r/$TESTNAME/test" -d @input > actual

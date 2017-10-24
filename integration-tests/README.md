@@ -8,5 +8,5 @@ select a subset of tests; these are then run serially.
 For running against a remote integration environment, configure
     ~/.fn-token
     ~/.fn-api-url
-    ~/.fn-completer-base-url
+    ~/.fn-flow-base-url
 and run the `run-remote.sh` script.
