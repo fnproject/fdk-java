@@ -92,7 +92,7 @@ Create a Maven-based Java Function using the instructions from the Fn Java FDK
 
 ```
 $ mkdir example-flow-function && cd example-flow-function
-$ fn init --runtime=java your_dockerhub_account/flow-primes
+$ fn init --runtime=java --name your_dockerhub_account/flow-primes
 Runtime: java
 function boilerplate generated.
 func.yaml created
