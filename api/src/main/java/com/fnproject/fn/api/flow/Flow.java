@@ -96,7 +96,6 @@ public interface Flow extends Serializable {
      * Returns a future that completes with the HttpResponse of the function on success
      * if the function returns a successful http response, and completes with an {@link FunctionInvocationException} if the function invocation fails with a non-succesful http status
      * <p>
-     * <p>
      * This currently only maps to JSON via the default JSON mapper in the FDK
      *
      * @param functionId Function ID of function to invoke - this should have the form APPNAME/FUNCTION_PATH  (e.g. "myapp/path/to/function"  or "./path/to/function").
@@ -237,6 +236,7 @@ public interface Flow extends Serializable {
      * }</pre></blockquote>
      *
      * @param ex an exception to publish to the future
+     * @param <T> the type of the future
      * @return a future that always completes with the specified exception
      */
     <T> FlowFuture<T> failedFuture(Throwable ex);
