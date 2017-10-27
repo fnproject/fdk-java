@@ -150,7 +150,7 @@ public final class FlowContinuationInvoker implements FunctionInvoker {
                 @Override
                 public synchronized Flow currentFlow() {
                     if (runtime == null) {
-                        String functionId = evt.getAppName() + evt.getRoute();
+                        String functionId = evt.getAppName() + evt.getPath();
                         CompleterClientFactory factory = getOrCreateCompleterClientFactory(completerBaseUrl);
                         final FlowId flowId = factory.get().createFlow(functionId);
                         runtime = new RemoteFlow(flowId);

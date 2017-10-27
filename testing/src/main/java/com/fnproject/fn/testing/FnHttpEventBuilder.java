@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 class FnHttpEventBuilder {
     private Map<String, List<String>> queryParams = new TreeMap<>();
     private boolean streamRead = false;
+    private String callId;
     private String method;
     private String appName;
     private String route;
@@ -85,6 +86,12 @@ class FnHttpEventBuilder {
         return this;
     }
 
+    public FnHttpEventBuilder withCallId(String callId){
+        Objects.requireNonNull(callId, "callId");
+        this.callId = callId;
+        return this;
+    }
+
     private String buildQueryParams() {
         return queryParams.entrySet().stream()
                 .flatMap((e) -> e.getValue().stream()
@@ -137,11 +144,8 @@ class FnHttpEventBuilder {
     public Map<String, String> currentEventEnv() {
         verify();
         Map<String, String> env = new HashMap<>();
-        headers.forEach((k, v) -> env.put("FN_HEADER_" + k.toUpperCase().replaceAll("-", "_"), v));
-        env.put("FN_METHOD", method);
         env.put("FN_APP_NAME", appName);
         env.put("FN_PATH", route);
-        env.put("FN_REQUEST_URL", requestUrl);
         return env;
     }
 
@@ -153,10 +157,10 @@ class FnHttpEventBuilder {
 
         inputString.append(method);
         inputString.append(" / HTTP/1.1\r\n");
-        inputString.append("Fn_App_name: ").append(appName).append("\r\n");
         inputString.append("Fn_Method: ").append(method).append("\r\n");
-        inputString.append("Fn_Path: ").append(route).append("\r\n");
+        inputString.append("Fn_Call_Id: ").append(callId).append("\r\n");
         inputString.append("Fn_Request_url: ").append(requestUrl);
+
         if (!queryParamsFullString.isEmpty()) {
             inputString.append("?").append(queryParamsFullString);
         }
@@ -164,6 +168,7 @@ class FnHttpEventBuilder {
 
 
         inputString.append("Content-length: ").append(Integer.toString(contentLength)).append("\r\n");
+
         headers.forEach((k, v) -> inputString.append(k).append(": ").append(String.join(", ", v)).append("\r\n"));
 
 

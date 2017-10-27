@@ -32,6 +32,7 @@ public class DefaultEventCodecTest {
         env.put("FN_METHOD", "GET");
         env.put("FN_APP_NAME", "testapp");
         env.put("FN_PATH", "/route");
+        env.put("FN_CALL_ID", "call-id");
         env.put("FN_REQUEST_URL", "http://test.com/fn/tryInvoke");
 
         env.put("FN_HEADER_CONTENT_TYPE", "text/plain");
@@ -47,7 +48,8 @@ public class DefaultEventCodecTest {
         InputEvent evt = codec.readEvent().get();
         assertThat(evt.getMethod()).isEqualTo("GET");
         assertThat(evt.getAppName()).isEqualTo("testapp");
-        assertThat(evt.getRoute()).isEqualTo("/route");
+        assertThat(evt.getPath()).isEqualTo("/route");
+        assertThat(evt.getCallId()).isEqualTo("call-id");
         assertThat(evt.getRequestUrl()).isEqualTo("http://test.com/fn/tryInvoke");
 
 
@@ -73,6 +75,7 @@ public class DefaultEventCodecTest {
         requiredEnv.put("FN_METHOD", "GET");
         requiredEnv.put("FN_APP_NAME", "app_name");
         requiredEnv.put("FN_REQUEST_URL", "http://test.com/fn/tryInvoke");
+        requiredEnv.put("FN_CALL_ID", "call-id");
 
         for (String key : requiredEnv.keySet()) {
             Map<String, String> newEnv = new HashMap<>(requiredEnv);

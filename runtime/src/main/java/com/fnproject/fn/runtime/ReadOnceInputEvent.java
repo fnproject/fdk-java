@@ -25,12 +25,13 @@ public class ReadOnceInputEvent implements InputEvent {
     private final String method;
 
     private final BufferedInputStream body;
+    private final String callId;
     private AtomicBoolean consumed = new AtomicBoolean(false);
     private QueryParameters queryParameters;
     private final Headers headers;
 
 
-    public ReadOnceInputEvent(String appName, String route, String requestUrl, String method, InputStream body, Headers headers, QueryParameters parameters) {
+    public ReadOnceInputEvent(String appName, String route, String requestUrl, String method, String callId, InputStream body, Headers headers, QueryParameters parameters) {
         this.appName = Objects.requireNonNull(appName);
         this.route = Objects.requireNonNull(route);
         this.requestUrl = Objects.requireNonNull(requestUrl);
@@ -38,17 +39,12 @@ public class ReadOnceInputEvent implements InputEvent {
         this.body = new BufferedInputStream(Objects.requireNonNull(body));
         this.headers = Objects.requireNonNull(headers);
         this.queryParameters = Objects.requireNonNull(parameters);
+        this.callId = Objects.requireNonNull(callId);
         body.mark(Integer.MAX_VALUE);
     }
 
 
-    /**
-     * Consume the input stream of this event  -
-     * This may be done exactly once per event
-     *
-     * @param dest a consumer for the body
-     * @throws IllegalStateException if the input has been consumed
-     */
+
     @Override
     public <T> T consumeBody(Function<InputStream, T> dest) {
         if (consumed.compareAndSet(false, true)) {
@@ -63,53 +59,37 @@ public class ReadOnceInputEvent implements InputEvent {
 
     }
 
-    /**
-     * @return The fn application name associated with this call
-     */
     @Override
     public String getAppName() {
         return appName;
     }
 
-    /**
-     * @return The route associated with this call (starting with a slash)
-     */
     @Override
-    public String getRoute() {
+    public String getPath    () {
         return route;
     }
 
-    /**
-     * @return The full request URL into the app
-     */
     @Override
     public String getRequestUrl() {
         return requestUrl;
     }
 
-    /**
-     * @return The HTTP method (capitalised) of this request
-     */
     @Override
     public String getMethod() {
         return method;
     }
 
-    /**
-     * The HTTP headers on the request
-     *
-     * @return an immutable map of headers
-     */
+    @Override
+    public String getCallId() {
+        return callId;
+    }
+
     @Override
     public Headers getHeaders() {
         return headers;
     }
 
-    /**
-     * The query parameters of the function invocation
-     *
-     * @return an immutable map of query parameters parsed from the request URL
-     */
+
     @Override
     public QueryParameters getQueryParameters() {
         return queryParameters;

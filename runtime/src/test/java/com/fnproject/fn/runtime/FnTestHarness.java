@@ -21,7 +21,7 @@ import java.util.*;
  * Function testing harness - this provides the call-side of iron functions' process contract for both HTTP and default type functions
  */
 public class FnTestHarness implements TestRule {
-    private EnvironmentVariables vars = new EnvironmentVariables();
+    private Map<String,String> vars = new HashMap<>();
     private boolean hasEvents = false;
     private InputStream pendingInput = new ByteArrayInputStream(new byte[0]);
     private ByteArrayOutputStream stdOut = new ByteArrayOutputStream();
@@ -199,13 +199,10 @@ public class FnTestHarness implements TestRule {
         Map<String, String> commonEnv() {
             Map<String, String> env = new HashMap<>();
             env.putAll(config);
-            headers.forEach((k, v) -> {
-                env.put("FN_HEADER_" + k.toUpperCase().replaceAll("-", "_"), v);
-            });
+
             env.put("FN_METHOD", method);
             env.put("FN_APP_NAME", appName);
             env.put("FN_PATH", route);
-            env.put("FN_REQUEST_URL", requestUrl);
             return env;
         }
     }
@@ -216,15 +213,17 @@ public class FnTestHarness implements TestRule {
             StringBuilder inputString = new StringBuilder();
             // Only set env for first event.
             if (!hasEvents) {
-                commonEnv().forEach(vars::set);
-                vars.set("FN_FORMAT", "http");
+                vars.putAll(commonEnv());
+                vars.put("FN_FORMAT", "http");
             }
             inputString.append(method);
             inputString.append(" / HTTP/1.1\r\n");
             inputString.append("Fn_App_name: ").append(appName).append("\r\n");
             inputString.append("Fn_Method: ").append(method).append("\r\n");
             inputString.append("Fn_Path: ").append(route).append("\r\n");
-            inputString.append("Fn_Request_url: ").append(requestUrl).append("\r\n");
+            inputString.append("Fn_Request_Url: ").append(requestUrl).append("\r\n");
+            inputString.append("Fn_Call_Id: ").append("call-id").append("\r\n");
+
             if (contentType != null) {
                 inputString.append("Content-Type: ").append(contentType).append("\r\n");
             }
@@ -272,7 +271,7 @@ public class FnTestHarness implements TestRule {
             System.setOut(functionErr);
             System.setErr(functionErr);
             exitStatus = new EntryPoint().run(
-                    System.getenv(),
+                    vars,
                     pendingInput,
                     functionOut,
                     functionErr,
@@ -449,18 +448,12 @@ public class FnTestHarness implements TestRule {
 
     @Override
     public Statement apply(Statement base, Description description) {
-
-        return vars.apply(new Statement() {
+        return new Statement() {
             @Override
             public void evaluate() throws Throwable {
-                try {
-                    base.evaluate();
-                } finally {
-
-                }
+                base.evaluate();
             }
-        }, description);
-
+        };
     }
 
     private final class DefaultEventBuilder extends EventBuilder {
@@ -471,9 +464,17 @@ public class FnTestHarness implements TestRule {
             if (sent) {
                 throw new IllegalStateException("Cannot enqueue multiple default events ");
             }
+            vars.putAll(commonEnv());
+            vars.put("FN_REQUEST_URL", requestUrl);
+            vars.put("FN_CALL_ID", "call-id");
+            vars.put("FN_METHOD",method);
+            headers.forEach((k, v) -> {
+                vars.put("FN_HEADER_" + k.toUpperCase().replaceAll("-", "_"), v);
+            });
             pendingInput = body;
             sent = true;
-            commonEnv().forEach(vars::set);
+
+
         }
     }
 

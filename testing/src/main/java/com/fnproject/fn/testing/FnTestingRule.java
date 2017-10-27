@@ -229,11 +229,11 @@ public final class FnTestingRule implements TestRule {
             }
             forked.setCompleterClient(completer);
             forked.run(
-                    mutableEnv,
-                    pendingInput,
-                    functionOut,
-                    functionErr,
-                    cls + "::" + method);
+               mutableEnv,
+               pendingInput,
+               functionOut,
+               functionErr,
+               cls + "::" + method);
 
             stdOut.flush();
             stdErr.flush();
@@ -324,7 +324,7 @@ public final class FnTestingRule implements TestRule {
                     public Headers getHeaders() {
                         Map<String, String> headers = new HashMap<>();
                         Arrays.stream(response.getAllHeaders()).forEach((h) ->
-                                headers.put(h.getName(), h.getValue()));
+                           headers.put(h.getName(), h.getValue()));
                         return Headers.fromMap(headers);
                     }
 
@@ -390,10 +390,12 @@ public final class FnTestingRule implements TestRule {
      */
     private class DefaultFnEventBuilder implements FnEventBuilder {
 
-        FnHttpEventBuilder builder = new FnHttpEventBuilder().withMethod("GET")
-                .withAppName("appName")
-                .withRoute("/route")
-                .withRequestUrl("http://example.com/r/appName/route");
+        FnHttpEventBuilder builder = new FnHttpEventBuilder()
+           .withMethod("GET")
+           .withCallId("call-id")
+           .withAppName("appName")
+           .withRoute("/route")
+           .withRequestUrl("http://example.com/r/appName/route");
 
 
         @Override
@@ -528,12 +530,12 @@ public final class FnTestingRule implements TestRule {
             // oldSystemErr.println("Body\n" + new String(inputBody));
 
             InputStream is = new FnHttpEventBuilder()
-                    .withBody(inputBody)
-                    .withAppName("appName")
-                    .withRoute("/route").withRequestUrl("http://some/url")
-                    .withMethod("POST")
-                    .withHeader(RemoteCompleterApiClient.CONTENT_TYPE_HEADER, String.format("multipart/mixed; boundary=\"%s\"", boundary))
-                    .withHeader(RemoteCompleterApiClient.FLOW_ID_HEADER, flowId.getId()).withHeader(RemoteCompleterApiClient.STAGE_ID_HEADER, stageId.getId()).currentEventInputStream();
+               .withBody(inputBody)
+               .withAppName("appName")
+               .withRoute("/route").withRequestUrl("http://some/url")
+               .withMethod("POST")
+               .withHeader(RemoteCompleterApiClient.CONTENT_TYPE_HEADER, String.format("multipart/mixed; boundary=\"%s\"", boundary))
+               .withHeader(RemoteCompleterApiClient.FLOW_ID_HEADER, flowId.getId()).withHeader(RemoteCompleterApiClient.STAGE_ID_HEADER, stageId.getId()).currentEventInputStream();
 
             ByteArrayOutputStream output = new ByteArrayOutputStream();
             Map<String, String> mutableEnv = new HashMap<>();
@@ -550,11 +552,11 @@ public final class FnTestingRule implements TestRule {
 
 
             fcl.run(
-                    mutableEnv,
-                    is,
-                    functionOut,
-                    functionErr,
-                    cls + "::" + method);
+               mutableEnv,
+               is,
+               functionOut,
+               functionErr,
+               cls + "::" + method);
 
 
             SessionInputBufferImpl sib = new SessionInputBufferImpl(new HttpTransportMetricsImpl(), 65535);
@@ -602,10 +604,10 @@ public final class FnTestingRule implements TestRule {
         @Override
         public CompletableFuture<Result> invokeFunction(String fnId, HttpMethod method, Headers headers, byte[] data) {
             return CompletableFuture.completedFuture(functionStubs
-                    .computeIfAbsent(fnId, (k) -> {
-                        throw new IllegalStateException("Function was invoked that had no definition: " + k);
-                    })
-                    .stubFunction(method, headers, data));
+               .computeIfAbsent(fnId, (k) -> {
+                   throw new IllegalStateException("Function was invoked that had no definition: " + k);
+               })
+               .stubFunction(method, headers, data));
         }
     }
 }

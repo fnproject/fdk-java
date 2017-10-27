@@ -28,7 +28,7 @@ public class JacksonCoercionTest {
         headers.put("content-type", "application/json");
 
         ByteArrayInputStream body = new ByteArrayInputStream("[{\"name\":\"Spot\",\"age\":6},{\"name\":\"Jason\",\"age\":16}]".getBytes());
-        InputEvent inputEvent = new ReadOnceInputEvent("", "", "", "testMethod", body, Headers.fromMap(headers), new QueryParametersImpl());
+        InputEvent inputEvent = new ReadOnceInputEvent("", "", "", "testMethod","call-id", body, Headers.fromMap(headers), new QueryParametersImpl());
 
         Optional<Object> object = jc.tryCoerceParam(invocationContext, 0, inputEvent);
 
@@ -49,7 +49,7 @@ public class JacksonCoercionTest {
         headers.put("content-type", "application/json");
 
         ByteArrayInputStream body = new ByteArrayInputStream("INVALID JSON".getBytes());
-        InputEvent inputEvent = new ReadOnceInputEvent("", "", "", "testMethod", body, Headers.fromMap(headers), new QueryParametersImpl());
+        InputEvent inputEvent = new ReadOnceInputEvent("", "", "", "testMethod","call-id",body, Headers.fromMap(headers), new QueryParametersImpl());
 
         boolean causedExpectedError;
         try {

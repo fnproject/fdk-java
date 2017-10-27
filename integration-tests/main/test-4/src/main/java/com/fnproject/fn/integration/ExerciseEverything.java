@@ -135,7 +135,7 @@ public class ExerciseEverything {
     @Test(12)
     @Test.Expect("okay")
     public FlowFuture<String> checkPassingExternalInvocation(Flow fl) {
-        return fl.invokeFunction(inputEvent.getAppName() + inputEvent.getRoute(), HttpMethod.POST, Headers.emptyHeaders(), "PASS".getBytes())
+        return fl.invokeFunction(inputEvent.getAppName() + inputEvent.getPath(), HttpMethod.POST, Headers.emptyHeaders(), "PASS".getBytes())
                 .thenApply((resp) -> resp.getStatusCode() != 200 ? "failure" : new String(resp.getBodyAsBytes()));
     }
 
@@ -144,7 +144,7 @@ public class ExerciseEverything {
     @Test(13)
     @Test.Catch({FlowCompletionException.class, FunctionInvocationException.class})
     public FlowFuture<HttpResponse> checkFailingExternalInvocation(Flow fl) {
-        return fl.invokeFunction(inputEvent.getAppName() + inputEvent.getRoute(), HttpMethod.POST, Headers.emptyHeaders(), "FAIL".getBytes());
+        return fl.invokeFunction(inputEvent.getAppName() + inputEvent.getPath(), HttpMethod.POST, Headers.emptyHeaders(), "FAIL".getBytes());
     }
 
     @Test(14)

@@ -25,6 +25,7 @@ public class FnTestingRuleTest {
 
     @Rule
     public FnTestingRule fn = FnTestingRule.createDefault();
+
     private final String exampleBaseUrl = "http://www.example.com";
 
     @Before
@@ -152,7 +153,7 @@ public class FnTestingRuleTest {
         fn.thenRun(FnTestingRuleTest.TestFn.class, "copyInputEvent");
 
         assertThat(inEvent.getAppName()).isEqualTo("TEST_APP");
-        assertThat(inEvent.getRoute()).isEqualTo("/myroute");
+        assertThat(inEvent.getPath()).isEqualTo("/myroute");
         assertThat(inEvent.getMethod()).isEqualTo("PUT");
         assertThat(inEvent.getRequestUrl()).isEqualTo("http://example.com/mytest");
     }

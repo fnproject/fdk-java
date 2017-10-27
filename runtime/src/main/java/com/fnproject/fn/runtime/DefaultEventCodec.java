@@ -13,12 +13,15 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import static com.fnproject.fn.runtime.Codecs.*;
+
 /**
  * DefaultEventCodec handles plain docker invocations on functions
  * <p>
  * This parses inputs from environment variables and reads and writes raw body and responses to the specified input and output streams
  */
 class DefaultEventCodec implements EventCodec {
+
 
     private final Map<String, String> env;
     private final InputStream in;
@@ -41,10 +44,11 @@ class DefaultEventCodec implements EventCodec {
 
     @Override
     public Optional<InputEvent> readEvent() {
-        String method = getRequiredEnv("FN_METHOD");
-        String appName = getRequiredEnv("FN_APP_NAME");
-        String route = getRequiredEnv("FN_PATH");
-        String requestUrl = getRequiredEnv("FN_REQUEST_URL");
+        String method = getRequiredEnv(FN_METHOD);
+        String appName = getRequiredEnv(FN_APP_NAME);
+        String route = getRequiredEnv(FN_PATH);
+        String requestUrl = getRequiredEnv(FN_REQUEST_URL);
+        String callId = getRequiredEnv(FN_CALL_ID);
 
         Map<String, String> headers = new HashMap<>();
         for (Map.Entry<String, String> entry : env.entrySet()) {
@@ -54,7 +58,7 @@ class DefaultEventCodec implements EventCodec {
             }
         }
 
-        return Optional.of(new ReadOnceInputEvent(appName, route, requestUrl, method, in, Headers.fromMap(headers), QueryParametersParser.getParams(requestUrl)));
+        return Optional.of(new ReadOnceInputEvent(appName, route, requestUrl, method, callId, in,Headers.fromMap(headers), QueryParametersParser.getParams(requestUrl)));
     }
 
     @Override
