@@ -377,6 +377,12 @@ class InMemCompleter implements CompleterClient {
     }
 
     @Override
+    public ExternalCompletion createExternalCompletion(FlowId flowId, CompletionId completionId) {
+        ExternalCompletionServer server = this.externalCompletionServer.ensureStarted();
+        return ExternalCompletionServer.createCompletion(completionId, server.baseUrl, server.port, "");
+    }
+
+    @Override
     public CompletionId invokeFunction(FlowId flowId, String functionId, byte[] data, HttpMethod method, Headers headers, CodeLocation codeLocation) {
         return withActiveGraph(flowId, (graph) ->
                 graph.addInvokeFunction(functionId, method, headers, data)).getId();

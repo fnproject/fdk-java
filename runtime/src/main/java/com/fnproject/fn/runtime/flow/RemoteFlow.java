@@ -42,7 +42,6 @@ public final class RemoteFlow implements Flow, Serializable {
             this.failureUri = failureUri;
         }
 
-
         @Override
         public URI completionUrl() {
             return completionUri;
@@ -54,8 +53,9 @@ public final class RemoteFlow implements Flow, Serializable {
         }
     }
 
-    RemoteFlowFuture createRemoteFlowFuture(CompletionId completionId) {
-        return new RemoteFlowFuture(completionId);
+    RemoteExternalFlowFuture createRemoteFlowFuture(CompletionId completionId) {
+        CompleterClient.ExternalCompletion externalCompletion = getClient().createExternalCompletion(flowId, completionId);
+        return new RemoteExternalFlowFuture(externalCompletion.completionId(), externalCompletion.completeURI(), externalCompletion.failureURI());
     }
 
     class RemoteFlowFuture<T> implements FlowFuture<T>, Serializable {
