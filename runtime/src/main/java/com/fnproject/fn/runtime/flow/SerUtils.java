@@ -86,6 +86,13 @@ final class SerUtils {
             }
         });
 
+        registerDeserializer(DATUM_TYPE_STAGEREF, (dt, h, is) -> {
+            String stageId = h.getHeaderValue(STAGE_ID_HEADER)
+                    .orElseThrow(() -> new Deserializer.DeserializeException("Missing stage ID header in stageref datum"));
+            RemoteFlow.RemoteFlowFuture remote = ((RemoteFlow)Flows.currentFlow()).createRemoteFlowFuture(new CompletionId(stageId));
+            return new ContentPart(dt, null, remote);
+        });
+
         registerDeserializer(DATUM_TYPE_EMPTY, (dt, h, is) -> new ContentPart(dt, null, null));
 
         registerDeserializer(DATUM_TYPE_ERROR, (dt, h, is) -> {

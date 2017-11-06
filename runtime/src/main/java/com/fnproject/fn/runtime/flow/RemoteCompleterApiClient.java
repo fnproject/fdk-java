@@ -170,8 +170,17 @@ public class RemoteCompleterApiClient implements CompleterClient {
 
     @Override
     public CompletionId completedValue(FlowId flowId, boolean success, Object value, CodeLocation codeLocation) {
-        return requestCompletionWithBody("/graph/" + flowId.getId() + "/completedValue", (req) -> req.withHeader(RESULT_STATUS_HEADER, success ? RESULT_STATUS_SUCCESS : RESULT_STATUS_FAILURE)
-                , value, codeLocation);
+        if(value instanceof FlowFuture) {
+            return requestCompletionWithStageRef("/graph/" + flowId.getId() + "/completedValue",
+                    (req) -> req.withHeader(RESULT_STATUS_HEADER, success ? RESULT_STATUS_SUCCESS : RESULT_STATUS_FAILURE),
+                    ((RemoteFlow.RemoteFlowFuture)value).id(),
+                    codeLocation);
+        } else {
+            return requestCompletionWithBody("/graph/" + flowId.getId() + "/completedValue",
+                    (req) -> req.withHeader(RESULT_STATUS_HEADER, success ? RESULT_STATUS_SUCCESS : RESULT_STATUS_FAILURE),
+                    value,
+                    codeLocation);
+        }
     }
 
     @Override
@@ -342,6 +351,16 @@ public class RemoteCompleterApiClient implements CompleterClient {
         } catch (Exception e) {
             throw new PlatformException("Failed to get response from completer: ", e);
         }
+    }
+
+    private CompletionId requestCompletionWithStageRef(String url, Function<HttpClient.HttpRequest, HttpClient.HttpRequest> fn, String completionId,
+                                                       CodeLocation codeLocation) {
+            return requestCompletion(url, req -> fn
+                    .apply(req
+                            .withHeader(STAGE_ID_HEADER, completionId)
+                            .withHeader(DATUM_TYPE_HEADER, DATUM_TYPE_STAGEREF)
+                            .withHeader(FN_CODE_LOCATION, codeLocation.getLocation())));
+
     }
 
     private CompletionId requestCompletionWithBody(String url, Function<HttpClient.HttpRequest, HttpClient.HttpRequest> fn, Object ser,

@@ -83,6 +83,13 @@ public class TestSerUtils {
             return addEntity("application/void", new byte[]{}, Collections.singletonMap(DATUM_TYPE_HEADER, DATUM_TYPE_EMPTY));
         }
 
+        public HttpMultipartSerialization addFnStageRefEntity(String stageId) throws IOException {
+            Map<String, String> hs = new HashMap<>();
+            hs.put(DATUM_TYPE_HEADER, DATUM_TYPE_STAGEREF);
+            hs.put(STAGE_ID_HEADER, stageId);
+            return addEntity("text/plain", new byte[]{}, hs);
+        }
+
         public HttpMultipartSerialization addErrorEntity(String errorType) throws IOException {
             Map<String, String> hs = new HashMap<>();
             hs.put(DATUM_TYPE_HEADER, DATUM_TYPE_ERROR);

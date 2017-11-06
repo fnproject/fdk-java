@@ -2,7 +2,6 @@ package com.fnproject.fn.runtime.flow;
 
 import com.fnproject.fn.api.*;
 import com.fnproject.fn.api.flow.*;
-import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.runtime.QueryParametersImpl;
 import com.fnproject.fn.runtime.ReadOnceInputEvent;
 import com.fnproject.fn.runtime.exception.FunctionInputHandlingException;
@@ -24,7 +23,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
 
 public class FlowsContinuationInvokerTest {
 
@@ -209,6 +207,62 @@ public class FlowsContinuationInvokerTest {
         // Then
         assertTrue(result.isPresent());
         assertSucessfulEmptyResult(result.get());
+    }
+
+    @Test
+    public void flowFutureResultCreatesStageRefDatum() throws IOException, ClassNotFoundException {
+        // Given
+        HttpMultipartSerialization ser = new HttpMultipartSerialization()
+                .addJavaEntity((Flows.SerSupplier<FlowFuture>) () -> new RemoteFlow(new FlowId("testFlowId"))
+                        .createRemoteFlowFuture(new CompletionId("testStageId")));
+
+        InputEvent event = constructContinuationInputEvent(ser);
+
+        // When
+        FlowContinuationInvoker invoker = new FlowContinuationInvoker();
+        Optional<OutputEvent> result = invoker.tryInvoke(new EmptyInvocationContext(), event);
+
+        // Then
+        assertTrue(result.isPresent());
+        assertSuccessfulCompletionStageResult("testStageId", result.get());
+    }
+
+    @Test
+    public void stageRefDatumDeserializedToFlowFuture() throws IOException, ClassNotFoundException {
+        // Given
+        HttpMultipartSerialization ser = new HttpMultipartSerialization()
+                .addJavaEntity((Flows.SerConsumer<FlowFuture>) (FlowFuture f) -> {})
+                .addFnStageRefEntity("testStageId");
+
+        InputEvent event = constructContinuationInputEvent(ser);
+
+        // When
+        FlowContinuationInvoker invoker = new FlowContinuationInvoker();
+        Optional<OutputEvent> result = invoker.tryInvoke(new EmptyInvocationContext(), event);
+
+        // Then
+        assertTrue(result.isPresent());
+    }
+
+    @Test
+    public void stageRefDatumNotDeserializedToExternalFlowFuture() throws IOException, ClassNotFoundException {
+
+        System.err.println("This test is expected to throw an error.");
+
+        // Given
+        HttpMultipartSerialization ser = new HttpMultipartSerialization()
+                .addJavaEntity((Flows.SerConsumer<ExternalFlowFuture>) (ExternalFlowFuture f) -> {})
+                .addFnStageRefEntity("testStageId");
+
+        InputEvent event = constructContinuationInputEvent(ser);
+
+        // Then
+        thrown.expect(InternalFunctionInvocationException.class);
+        thrown.expectMessage("Error invoking flows lambda");
+
+        // When
+        FlowContinuationInvoker invoker = new FlowContinuationInvoker();
+        Optional<OutputEvent> result = invoker.tryInvoke(new EmptyInvocationContext(), event);
     }
 
     @Test
