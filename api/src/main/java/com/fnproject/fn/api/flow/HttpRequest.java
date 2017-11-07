@@ -26,4 +26,11 @@ public interface HttpRequest {
      * @return the function request body
      */
     byte[] getBodyAsBytes();
+
+    /**
+     * Returns the body of the request interpreting the body bytes as the bytes of a String
+     *
+     * @return the function response body
+     */
+    String getBodyAsString();
 }

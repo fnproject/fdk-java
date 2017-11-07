@@ -60,6 +60,84 @@ final class SerUtils {
         }
     }
 
+    static final class SerializedHttpRequest implements com.fnproject.fn.api.flow.HttpRequest{
+        private HttpMethod method;
+        private Headers headers;
+        private byte[] body;
+
+        SerializedHttpRequest(HttpMethod method, Headers headers, byte[] body) {
+            this.method = method;
+            this.headers = headers;
+            this.body = body;
+        }
+
+        @Override
+        public HttpMethod getMethod() {
+            return method;
+        }
+
+        @Override
+        public Headers getHeaders() {
+            return headers;
+        }
+
+        @Override
+        public byte[] getBodyAsBytes() {
+            return body;
+        }
+
+        @Override
+        public String getBodyAsString() {
+            return new String(getBodyAsBytes());
+        }
+
+        @Override
+        public String toString() {
+            return "SerializedHttpRequest[method=" + method.toString() +
+                    ", headers.getAll().size()=" + headers.getAll().size() +
+                    ", body.length=" + body.length + "]";
+        }
+    }
+
+    static final class SerializedHttpResponse implements com.fnproject.fn.api.flow.HttpResponse {
+        private int statusCode;
+        private Headers headers;
+        private byte[] body;
+
+        SerializedHttpResponse(int statusCode, Headers headers, byte[] body) {
+            this.statusCode = statusCode;
+            this.headers = headers;
+            this.body = body;
+        }
+
+        @Override
+        public int getStatusCode() {
+            return statusCode;
+        }
+
+        @Override
+        public Headers getHeaders() {
+            return headers;
+        }
+
+        @Override
+        public byte[] getBodyAsBytes() {
+            return body;
+        }
+
+        @Override
+        public String getBodyAsString() {
+            return new String(getBodyAsBytes());
+        }
+
+        @Override
+        public String toString() {
+            return "SerializedHttpResponse[statusCode=" + statusCode +
+                    ", headers.getAll().size()=" + headers.getAll().size() +
+                    ", body.length=" + body.length + "]";
+        }
+    }
+
     /*
     FnProject-DatumType: blob
     FnProject-DatumType: empty
@@ -161,22 +239,7 @@ final class SerUtils {
             byte[] body = IOUtils.toByteArray(is);
 
             String contentType = h.getHeaderValue(CONTENT_TYPE_HEADER).orElse(null);
-            HttpResponse functionResponse = new HttpResponse() {
-                @Override
-                public int getStatusCode() {
-                    return statusCode;
-                }
-
-                @Override
-                public Headers getHeaders() {
-                    return headers;
-                }
-
-                @Override
-                public byte[] getBodyAsBytes() {
-                    return body;
-                }
-            };
+            HttpResponse functionResponse = new SerializedHttpResponse(statusCode, headers, body);
 
             if (h.getHeaderValue(RESULT_STATUS_HEADER).orElse(RESULT_STATUS_SUCCESS).equalsIgnoreCase(RESULT_STATUS_FAILURE)) {
                 return new ContentPart(dt, contentType, new FunctionInvocationException(functionResponse));
@@ -204,22 +267,7 @@ final class SerUtils {
 
                 String contentType = h.getHeaderValue(CONTENT_TYPE_HEADER).orElse(null);
 
-                com.fnproject.fn.api.flow.HttpRequest req = new com.fnproject.fn.api.flow.HttpRequest() {
-                    @Override
-                    public HttpMethod getMethod() {
-                        return method;
-                    }
-
-                    @Override
-                    public Headers getHeaders() {
-                        return headers;
-                    }
-
-                    @Override
-                    public byte[] getBodyAsBytes() {
-                        return body;
-                    }
-                };
+                com.fnproject.fn.api.flow.HttpRequest req = new SerializedHttpRequest(method, headers, body);
 
                 if (h.getHeaderValue(RESULT_STATUS_HEADER).orElse(RESULT_STATUS_SUCCESS).equalsIgnoreCase(RESULT_STATUS_FAILURE)) {
                     return new ContentPart(dt, contentType, new ExternalCompletionException(req));

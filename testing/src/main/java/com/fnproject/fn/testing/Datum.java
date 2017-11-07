@@ -260,6 +260,11 @@ abstract class Datum {
                 public byte[] getBodyAsBytes() {
                     return body;
                 }
+
+                @Override
+                public String getBodyAsString() {
+                    return new String(body);
+                }
             };
 
         }
@@ -336,6 +341,11 @@ abstract class Datum {
                 @Override
                 public byte[] getBodyAsBytes() {
                     return body;
+                }
+
+                @Override
+                public String getBodyAsString() {
+                    return new String(body);
                 }
             };
         }

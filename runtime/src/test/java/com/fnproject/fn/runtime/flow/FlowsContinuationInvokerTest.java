@@ -276,7 +276,7 @@ public class FlowsContinuationInvokerTest {
                 .addJavaEntity((Flows.SerFunction<HttpResponse, Boolean>) (result) -> {
                     // Expect
                     assertThat(result.getStatusCode()).isEqualTo(200);
-                    assertThat(new String(result.getBodyAsBytes())).isEqualTo(functionResponse);
+                    assertThat(result.getBodyAsString()).isEqualTo(functionResponse);
                     assertThat(result.getHeaders().get("Custom-Header"))
                             .isPresent()
                             .contains("customValue");
@@ -302,7 +302,7 @@ public class FlowsContinuationInvokerTest {
                 .addJavaEntity((Flows.SerFunction<HttpResponse, Boolean>) (result) -> {
                     // Then
                     assertThat(result.getStatusCode()).isEqualTo(500);
-                    assertThat(new String(result.getBodyAsBytes())).isEqualTo(functionResponse);
+                    assertThat(result.getBodyAsString()).isEqualTo(functionResponse);
                     assertThat(result.getHeaders().get("Custom-Header"))
                             .isPresent()
                             .contains("customValue");
@@ -329,7 +329,7 @@ public class FlowsContinuationInvokerTest {
         String postedResult = "{ \"some\": \"json\" }";
         HttpMultipartSerialization ser = new HttpMultipartSerialization()
                 .addJavaEntity((Flows.SerFunction<Throwable, String>) (result) ->
-                        new String(((FunctionInvocationException) result).getFunctionResponse().getBodyAsBytes()))
+                        ((FunctionInvocationException) result).getFunctionResponse().getBodyAsString())
                 .addFnResultEntity(500, headers, "application/json", postedResult);
 
         InputEvent event = constructContinuationInputEvent(ser);
@@ -352,7 +352,7 @@ public class FlowsContinuationInvokerTest {
                 .addJavaEntity((Flows.SerFunction<HttpRequest, Boolean>) (result) -> {
                     // Expect
                     assertThat(result.getMethod()).isEqualTo(HttpMethod.POST);
-                    assertThat(new String(result.getBodyAsBytes())).isEqualTo(postedResult);
+                    assertThat(result.getBodyAsString()).isEqualTo(postedResult);
                     assertThat(result.getHeaders().get("Content-Type"))
                             .isPresent()
                             .contains("application/json");
@@ -380,7 +380,7 @@ public class FlowsContinuationInvokerTest {
         String postedResult = "{ \"some\": \"json\" }";
         HttpMultipartSerialization ser = new HttpMultipartSerialization()
                 .addJavaEntity((Flows.SerBiFunction<Object, Throwable, String>) (result, error) ->
-                                new String(((ExternalCompletionException) error).getExternalRequest().getBodyAsBytes()))
+                        ((ExternalCompletionException) error).getExternalRequest().getBodyAsString())
                 .addEmptyEntity()
                 .addExternalCompletionEntity("POST", headers, "application/json", postedResult);
 
