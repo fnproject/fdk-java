@@ -8,6 +8,7 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
@@ -95,6 +96,11 @@ public final class RemoteFlow implements Flow, Serializable {
         @Override
         public FlowFuture<T> completeExceptionally(Throwable v) {
             return new RemoteFlowFuture<>(getClient().completeExceptionally(flowId, completionId, v, CodeLocation.fromCallerLocation(1)));
+        }
+
+        @Override
+        public FlowFuture<T> cancel() {
+            return new RemoteFlowFuture<>(getClient().completeExceptionally(flowId, completionId, new CancellationException(), CodeLocation.fromCallerLocation(1)));
         }
 
         @Override

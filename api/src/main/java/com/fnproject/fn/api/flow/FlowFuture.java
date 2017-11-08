@@ -190,6 +190,8 @@ public interface FlowFuture<T> extends Serializable {
 
     FlowFuture<T> completeExceptionally(Throwable v);
 
+    FlowFuture<T> cancel();
+
     /**
      * Perform an action when this future completes successfully.
      * <p>
