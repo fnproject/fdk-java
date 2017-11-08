@@ -63,6 +63,10 @@ public interface CompleterClient {
 
     CompletionId applyToEither(FlowId flowId, CompletionId completionId, CompletionId alternate, Serializable fn, CodeLocation codeLocation);
 
+    CompletionId complete(FlowId flowId, CompletionId completionId, Object value, CodeLocation codeLocation);
+
+    CompletionId completeExceptionally(FlowId flowId, CompletionId completionId, Throwable value, CodeLocation codeLocation);
+
     CompletionId anyOf(FlowId flowId, List<CompletionId> cids, CodeLocation codeLocation);
 
     CompletionId delay(FlowId flowId, long l, CodeLocation codeLocation);

@@ -211,6 +211,22 @@ public class RemoteCompleterApiClient implements CompleterClient {
     }
 
     @Override
+    public CompletionId complete(FlowId flowId, CompletionId completionId, Object value, CodeLocation codeLocation) {
+        return requestCompletionWithBody("/graph/" + flowId.getId() + "/stage/" + completionId.getId() + "/completeNormally",
+                (req) -> req.withHeader(RESULT_STATUS_HEADER, RESULT_STATUS_FAILURE),
+                value,
+                codeLocation);
+    }
+
+    @Override
+    public CompletionId completeExceptionally(FlowId flowId, CompletionId completionId, Throwable value, CodeLocation codeLocation) {
+        return requestCompletionWithBody("/graph/" + flowId.getId() + "/stage/" + completionId.getId() + "/completeExceptionally",
+                    (req) -> req.withHeader(RESULT_STATUS_HEADER, RESULT_STATUS_FAILURE),
+                    value,
+                    codeLocation);
+    }
+
+    @Override
     public CompletionId anyOf(FlowId flowId, List<CompletionId> cids, CodeLocation codeLocation) {
         return requestCompletion("/graph/" + flowId.getId() + "/anyOf",
                 req -> req.withQueryParam("cids", getCids(cids))

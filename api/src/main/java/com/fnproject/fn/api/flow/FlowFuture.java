@@ -186,6 +186,10 @@ public interface FlowFuture<T> extends Serializable {
      */
     FlowFuture<T> whenComplete(Flows.SerBiConsumer<T, Throwable> fn);
 
+    FlowFuture<T> complete(T v);
+
+    FlowFuture<T> completeExceptionally(Throwable v);
+
     /**
      * Perform an action when this future completes successfully.
      * <p>

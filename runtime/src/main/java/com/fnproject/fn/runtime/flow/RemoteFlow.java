@@ -88,6 +88,16 @@ public final class RemoteFlow implements Flow, Serializable {
         }
 
         @Override
+        public FlowFuture<T> complete(T v) {
+            return new RemoteFlowFuture<>(getClient().complete(flowId, completionId, v, CodeLocation.fromCallerLocation(1)));
+        }
+
+        @Override
+        public FlowFuture<T> completeExceptionally(Throwable v) {
+            return new RemoteFlowFuture<>(getClient().completeExceptionally(flowId, completionId, v, CodeLocation.fromCallerLocation(1)));
+        }
+
+        @Override
         public FlowFuture<Void> thenAccept(Flows.SerConsumer<T> fn) {
             return new RemoteFlowFuture<>(getClient().thenAccept(flowId, completionId, fn, CodeLocation.fromCallerLocation(1)));
         }

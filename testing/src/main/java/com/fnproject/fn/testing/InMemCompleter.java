@@ -341,6 +341,16 @@ class InMemCompleter implements CompleterClient {
     }
 
     @Override
+    public CompletionId complete(FlowId flowId, CompletionId completionId, Object value, CodeLocation codeLocation) {
+        return null;
+    }
+
+    @Override
+    public CompletionId completeExceptionally(FlowId flowId, CompletionId completionId, Throwable value, CodeLocation codeLocation) {
+        return null;
+    }
+
+    @Override
     public CompletionId anyOf(FlowId flowId, List<CompletionId> cids, CodeLocation codeLocation) {
         return withActiveGraph(flowId,
                 (graph) ->
