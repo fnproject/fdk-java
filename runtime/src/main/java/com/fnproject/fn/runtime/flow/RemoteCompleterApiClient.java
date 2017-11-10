@@ -211,16 +211,16 @@ public class RemoteCompleterApiClient implements CompleterClient {
     }
 
     @Override
-    public CompletionId complete(FlowId flowId, CompletionId completionId, Object value, CodeLocation codeLocation) {
-        return requestCompletionWithBody("/graph/" + flowId.getId() + "/stage/" + completionId.getId() + "/completeNormally",
+    public boolean complete(FlowId flowId, CompletionId completionId, Object value, CodeLocation codeLocation) {
+        return requestCompleteStage("/graph/" + flowId.getId() + "/stage/" + completionId.getId() + "/completeNormally",
                 (req) -> req.withHeader(RESULT_STATUS_HEADER, RESULT_STATUS_FAILURE),
                 value,
                 codeLocation);
     }
 
     @Override
-    public CompletionId completeExceptionally(FlowId flowId, CompletionId completionId, Throwable value, CodeLocation codeLocation) {
-        return requestCompletionWithBody("/graph/" + flowId.getId() + "/stage/" + completionId.getId() + "/completeExceptionally",
+    public boolean completeExceptionally(FlowId flowId, CompletionId completionId, Throwable value, CodeLocation codeLocation) {
+        return requestCompleteStage("/graph/" + flowId.getId() + "/stage/" + completionId.getId() + "/completeExceptionally",
                     (req) -> req.withHeader(RESULT_STATUS_HEADER, RESULT_STATUS_FAILURE),
                     value,
                     codeLocation);
@@ -418,6 +418,30 @@ public class RemoteCompleterApiClient implements CompleterClient {
         }
     }
 
+    private boolean requestCompleteStage(String url, Function<HttpClient.HttpRequest, HttpClient.HttpRequest> fn, Object ser,
+                                         CodeLocation codeLocation) {
+        try {
+            byte[] serBytes = SerUtils.serialize(ser);
+
+            HttpClient.HttpRequest req = HttpClient.preparePost(apiUrlBase + url)
+                    .withHeader(CONTENT_TYPE_HEADER, CONTENT_TYPE_JAVA_OBJECT)
+                    .withHeader(DATUM_TYPE_HEADER, DATUM_TYPE_BLOB)
+                    .withHeader(FN_CODE_LOCATION, codeLocation.getLocation())
+                    .withBody(serBytes);
+
+            try (com.fnproject.fn.runtime.flow.HttpClient.HttpResponse resp = httpClient.execute(req)) {
+                validateSuccessful(resp);
+                return true;
+            } catch (PlatformException e) {
+                return false; // Need to distinguish between an actual failure and a failed to complete failure
+            } catch (Exception e) {
+                throw new PlatformException("Failed to get response from completer: ", e);
+            }
+        } catch (IOException e) {
+            // This should be a value serialization exception: not about lambdas!
+            throw new LambdaSerializationException("Failed to serialize the value: " + e.getMessage());
+        }
+    }
     private static String getCids(List<CompletionId> cids) {
         return cids.stream().map(CompletionId::getId).collect(Collectors.joining(","));
     }
