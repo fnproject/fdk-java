@@ -90,17 +90,17 @@ public final class RemoteFlow implements Flow, Serializable {
 
         @Override
         public boolean complete(T v) {
-            return getClient().complete(flowId, completionId, v, CodeLocation.fromCallerLocation(1));
+            return getClient().complete(flowId, completionId, v);
         }
 
         @Override
         public boolean completeExceptionally(Throwable v) {
-            return getClient().completeExceptionally(flowId, completionId, v, CodeLocation.fromCallerLocation(1));
+            return getClient().completeExceptionally(flowId, completionId, v);
         }
 
         @Override
         public boolean cancel() {
-            return getClient().completeExceptionally(flowId, completionId, new CancellationException(), CodeLocation.fromCallerLocation(1));
+            return getClient().completeExceptionally(flowId, completionId, new CancellationException());
         }
 
         @Override

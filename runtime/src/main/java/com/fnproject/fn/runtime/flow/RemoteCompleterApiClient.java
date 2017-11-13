@@ -211,19 +211,17 @@ public class RemoteCompleterApiClient implements CompleterClient {
     }
 
     @Override
-    public boolean complete(FlowId flowId, CompletionId completionId, Object value, CodeLocation codeLocation) {
+    public boolean complete(FlowId flowId, CompletionId completionId, Object value) {
         return requestCompleteStage("/graph/" + flowId.getId() + "/stage/" + completionId.getId() + "/completeNormally",
-                (req) -> req.withHeader(RESULT_STATUS_HEADER, RESULT_STATUS_FAILURE),
-                value,
-                codeLocation);
+                value
+        );
     }
 
     @Override
-    public boolean completeExceptionally(FlowId flowId, CompletionId completionId, Throwable value, CodeLocation codeLocation) {
+    public boolean completeExceptionally(FlowId flowId, CompletionId completionId, Throwable value) {
         return requestCompleteStage("/graph/" + flowId.getId() + "/stage/" + completionId.getId() + "/completeExceptionally",
-                    (req) -> req.withHeader(RESULT_STATUS_HEADER, RESULT_STATUS_FAILURE),
-                    value,
-                    codeLocation);
+                value
+        );
     }
 
     @Override
@@ -418,15 +416,13 @@ public class RemoteCompleterApiClient implements CompleterClient {
         }
     }
 
-    private boolean requestCompleteStage(String url, Function<HttpClient.HttpRequest, HttpClient.HttpRequest> fn, Object value,
-                                         CodeLocation codeLocation) {
+    private boolean requestCompleteStage(String url, Object value) {
         try {
             byte[] serBytes = SerUtils.serialize(value);
 
             HttpClient.HttpRequest req = HttpClient.preparePost(apiUrlBase + url)
                     .withHeader(CONTENT_TYPE_HEADER, CONTENT_TYPE_JAVA_OBJECT)
                     .withHeader(DATUM_TYPE_HEADER, DATUM_TYPE_BLOB)
-                    .withHeader(FN_CODE_LOCATION, codeLocation.getLocation())
                     .withBody(serBytes);
 
             try (com.fnproject.fn.runtime.flow.HttpClient.HttpResponse resp = httpClient.execute(req)) {

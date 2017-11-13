@@ -341,12 +341,12 @@ class InMemCompleter implements CompleterClient {
     }
 
     @Override
-    public boolean complete(FlowId flowId, CompletionId completionId, Object value, CodeLocation codeLocation) {
+    public boolean complete(FlowId flowId, CompletionId completionId, Object value) {
             return withActiveGraph(flowId, (graph) -> graph.withStage(completionId, (stage) -> stage.complete(new Datum.BlobDatum(serializeJava(value)))));
     }
 
     @Override
-    public boolean completeExceptionally(FlowId flowId, CompletionId completionId, Throwable value, CodeLocation codeLocation) {
+    public boolean completeExceptionally(FlowId flowId, CompletionId completionId, Throwable value) {
         return withActiveGraph(flowId, (graph) -> graph.withStage(completionId, (stage) -> stage.completeExceptionally(new Datum.BlobDatum(serializeJava(value)))));
     }
 
