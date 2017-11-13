@@ -418,10 +418,10 @@ public class RemoteCompleterApiClient implements CompleterClient {
         }
     }
 
-    private boolean requestCompleteStage(String url, Function<HttpClient.HttpRequest, HttpClient.HttpRequest> fn, Object ser,
+    private boolean requestCompleteStage(String url, Function<HttpClient.HttpRequest, HttpClient.HttpRequest> fn, Object value,
                                          CodeLocation codeLocation) {
         try {
-            byte[] serBytes = SerUtils.serialize(ser);
+            byte[] serBytes = SerUtils.serialize(value);
 
             HttpClient.HttpRequest req = HttpClient.preparePost(apiUrlBase + url)
                     .withHeader(CONTENT_TYPE_HEADER, CONTENT_TYPE_JAVA_OBJECT)
@@ -430,16 +430,12 @@ public class RemoteCompleterApiClient implements CompleterClient {
                     .withBody(serBytes);
 
             try (com.fnproject.fn.runtime.flow.HttpClient.HttpResponse resp = httpClient.execute(req)) {
-                validateSuccessful(resp);
-                return true;
-            } catch (PlatformException e) {
-                return false; // Need to distinguish between an actual failure and a failed to complete failure
+                return isSuccessful(resp);
             } catch (Exception e) {
                 throw new PlatformException("Failed to get response from completer: ", e);
             }
         } catch (IOException e) {
-            // This should be a value serialization exception: not about lambdas!
-            throw new LambdaSerializationException("Failed to serialize the value: " + e.getMessage());
+            throw new ResultSerializationException("Failed to serialize the result in a request to complete a stage: ", e);
         }
     }
     private static String getCids(List<CompletionId> cids) {
