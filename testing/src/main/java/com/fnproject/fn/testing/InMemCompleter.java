@@ -341,13 +341,13 @@ class InMemCompleter implements CompleterClient {
     }
 
     @Override
-    public CompletionId complete(FlowId flowId, CompletionId completionId, Object value, CodeLocation codeLocation) {
-        return null;
+    public boolean complete(FlowId flowId, CompletionId completionId, Object value, CodeLocation codeLocation) {
+            return withActiveGraph(flowId, (graph) -> graph.withStage(completionId, (stage) -> stage.complete(new Datum.BlobDatum(serializeJava(value)))));
     }
 
     @Override
-    public CompletionId completeExceptionally(FlowId flowId, CompletionId completionId, Throwable value, CodeLocation codeLocation) {
-        return null;
+    public boolean completeExceptionally(FlowId flowId, CompletionId completionId, Throwable value, CodeLocation codeLocation) {
+        return withActiveGraph(flowId, (graph) -> graph.withStage(completionId, (stage) -> stage.completeExceptionally(new Datum.BlobDatum(serializeJava(value)))));
     }
 
     @Override
@@ -654,6 +654,14 @@ class InMemCompleter implements CompleterClient {
 
             private CompletionId getId() {
                 return id;
+            }
+
+            private boolean complete(Datum.BlobDatum value) {
+                return outputFuture.toCompletableFuture().complete(Result.success(value));
+            }
+
+            private boolean completeExceptionally(Datum value) {
+                return outputFuture.toCompletableFuture().completeExceptionally(new ResultException(value));
             }
 
             private Stage addThenApplyStage(Datum.Blob closure) {
