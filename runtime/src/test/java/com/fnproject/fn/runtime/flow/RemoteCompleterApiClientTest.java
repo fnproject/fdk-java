@@ -467,27 +467,6 @@ public class RemoteCompleterApiClientTest {
         verifyStageCreatedOnGraph(completerClient.exceptionally(flowId, parentId,serializableLambda, codeLocation), "stage/parent-id/exceptionally");
     }
 
-    @Test
-    public void createsExternalFuture() throws Exception {
-        givenValidStageResponse();
-
-        ExternalCompletion completion = completerClient.createExternalCompletion(flowId, codeLocation);
-
-        String url = String.format("/graph/%s/externalCompletion", flowId.getId());
-        verify(mockHttpClient, times(1)).execute(reqCaptor.capture());
-        verifyNoMoreInteractions(mockHttpClient);
-
-        assertThat(completion.completionId().getId()).isEqualTo("stage");
-        HttpClient.HttpRequest req = reqCaptor.getValue();
-        assertThat(req.method).isEqualTo("POST");
-        assertThat(req.url).isEqualTo(url);
-        assertThat(req.headers).contains(
-                entry(FN_CODE_LOCATION, codeLocation.getLocation()));
-        assertThat(completion.completeURI()).hasPath("/graph/flow-id/stage/stage/complete");
-        assertThat(completion.failureURI()).hasPath("/graph/flow-id/stage/stage/fail");
-
-    }
-
 
     @Test
     public void createsInvokeFunction() throws Exception {

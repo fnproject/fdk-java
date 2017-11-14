@@ -9,7 +9,6 @@ import org.apache.http.impl.io.ContentLengthInputStream;
 import org.apache.http.impl.io.DefaultHttpResponseParser;
 import org.apache.http.impl.io.HttpTransportMetricsImpl;
 import org.apache.http.impl.io.SessionInputBufferImpl;
-import org.junit.contrib.java.lang.system.EnvironmentVariables;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
@@ -21,7 +20,7 @@ import java.util.*;
  * Function testing harness - this provides the call-side of iron functions' process contract for both HTTP and default type functions
  */
 public class FnTestHarness implements TestRule {
-    private EnvironmentVariables vars = new EnvironmentVariables();
+    private Map<String,String> vars = new HashMap<>();
     private boolean hasEvents = false;
     private InputStream pendingInput = new ByteArrayInputStream(new byte[0]);
     private ByteArrayOutputStream stdOut = new ByteArrayOutputStream();
@@ -216,8 +215,8 @@ public class FnTestHarness implements TestRule {
             StringBuilder inputString = new StringBuilder();
             // Only set env for first event.
             if (!hasEvents) {
-                commonEnv().forEach(vars::set);
-                vars.set("FN_FORMAT", "http");
+                commonEnv().forEach(vars::put);
+                vars.put("FN_FORMAT", "http");
             }
             inputString.append(method);
             inputString.append(" / HTTP/1.1\r\n");
@@ -272,7 +271,7 @@ public class FnTestHarness implements TestRule {
             System.setOut(functionErr);
             System.setErr(functionErr);
             exitStatus = new EntryPoint().run(
-                    System.getenv(),
+                    vars,
                     pendingInput,
                     functionOut,
                     functionErr,
@@ -449,17 +448,7 @@ public class FnTestHarness implements TestRule {
 
     @Override
     public Statement apply(Statement base, Description description) {
-
-        return vars.apply(new Statement() {
-            @Override
-            public void evaluate() throws Throwable {
-                try {
-                    base.evaluate();
-                } finally {
-
-                }
-            }
-        }, description);
+        return base;
 
     }
 
@@ -473,7 +462,7 @@ public class FnTestHarness implements TestRule {
             }
             pendingInput = body;
             sent = true;
-            commonEnv().forEach(vars::set);
+            commonEnv().forEach(vars::put);
         }
     }
 

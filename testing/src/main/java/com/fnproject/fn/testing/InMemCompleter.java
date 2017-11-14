@@ -50,8 +50,6 @@ class InMemCompleter implements CompleterClient {
         this.fnInvokeClient = fnInvokeClient;
     }
 
-    private ExternalCompletionServer externalCompletionServer = new ExternalCompletionServer();
-
     void awaitTermination() {
         while (true) {
             int aliveCount = 0;
@@ -70,119 +68,9 @@ class InMemCompleter implements CompleterClient {
                 break;
             }
         }
-        externalCompletionServer.ensureStopped();
     }
 
-    private static class ExternalCompletionServer {
-        private static final String baseUrl = "/completions/";
-        Pattern pathPattern = Pattern.compile("([^/]+)/(.*)");
-        HttpServer server;
-        int port = -1;
 
-        Map<String, CompletableFuture<Result>> knownCompletions = new ConcurrentHashMap<>();
-
-
-        private synchronized void ensureStopped() {
-            if (server != null) {
-                server.stop(0);
-                server = null;
-            }
-        }
-
-        private synchronized ExternalCompletionServer ensureStarted() {
-            if (server != null) {
-                return this;
-            }
-            try {
-                server = HttpServer.create(new InetSocketAddress(0), 0);
-                port = server.getAddress().getPort();
-            } catch (IOException e) {
-                throw new PlatformException("Failed to create external completer server on port " + port);
-            }
-            server.createContext(baseUrl, (t) -> {
-                URI uri = t.getRequestURI();
-                String path = uri.getPath().substring(baseUrl.length());
-                Matcher match = pathPattern.matcher(path);
-                if (match.matches()) {
-                    String action = match.group(2);
-                    String id = match.group(1);
-
-                    CompletableFuture<Result> completableFuture = knownCompletions.get(id);
-                    if (null == completableFuture) {
-                        t.sendResponseHeaders(404, 0);
-                        t.close();
-                        return;
-                    }
-
-                    boolean success;
-                    switch (action) {
-                        case "complete":
-                            success = true;
-                            break;
-                        case "fail":
-                            success = false;
-
-                            break;
-                        default:
-                            t.sendResponseHeaders(404, 0);
-                            t.close();
-                            return;
-                    }
-
-                    Map<String, String> headers = new HashMap<>();
-                    for (Map.Entry<String, List<String>> e : t.getRequestHeaders().entrySet()) {
-                        headers.put(e.getKey(), e.getValue().stream().collect(Collectors.joining(";")));
-                    }
-
-
-                    byte[] body = IOUtils.toByteArray(t.getRequestBody());
-                    HttpMethod method = HttpMethod.valueOf(t.getRequestMethod().toUpperCase());
-
-                    Datum.HttpReqDatum datum = new Datum.HttpReqDatum(method, Headers.fromMap(headers), body);
-                    if (success) {
-                        completableFuture.complete(Result.success(datum));
-                    } else {
-                        completableFuture.completeExceptionally(new ResultException(datum));
-                    }
-                    t.sendResponseHeaders(200, 0);
-                    t.close();
-                } else {
-                    t.sendResponseHeaders(404, 0);
-                    t.close();
-                }
-            });
-            server.start();
-            return this;
-        }
-
-        private ExternalCompletion createCompletion(FlowId tid, CompletionId cid, CompletableFuture<Result> resultFuture) {
-            ensureStarted();
-            String path = tid.getId() + "_" + cid.getId();
-
-            knownCompletions.put(path, resultFuture);
-
-            return createCompletion(cid, baseUrl, port, path);
-        }
-
-        private static ExternalCompletion createCompletion(CompletionId cid, String baseUrl, int port, String path) {
-            return new ExternalCompletion() {
-                @Override
-                public CompletionId completionId() {
-                    return cid;
-                }
-
-                @Override
-                public URI completeURI() {
-                    return URI.create("http://localhost:" + port + baseUrl + path + "/complete");
-                }
-
-                @Override
-                public URI failureURI() {
-                    return URI.create("http://localhost:" + port + baseUrl + path + "/fail");
-                }
-            };
-        }
-    }
 
     @Override
     public FlowId createFlow(String functionId) {
@@ -341,6 +229,16 @@ class InMemCompleter implements CompleterClient {
     }
 
     @Override
+    public boolean complete(FlowId flowId, CompletionId completionId, Object value) {
+            return withActiveGraph(flowId, (graph) -> graph.withStage(completionId, (stage) -> stage.complete(new Datum.BlobDatum(serializeJava(value)))));
+    }
+
+    @Override
+    public boolean completeExceptionally(FlowId flowId, CompletionId completionId, Throwable value) {
+        return withActiveGraph(flowId, (graph) -> graph.withStage(completionId, (stage) -> stage.completeExceptionally(new Datum.BlobDatum(serializeJava(value)))));
+    }
+
+    @Override
     public CompletionId anyOf(FlowId flowId, List<CompletionId> cids, CodeLocation codeLocation) {
         return withActiveGraph(flowId,
                 (graph) ->
@@ -368,12 +266,13 @@ class InMemCompleter implements CompleterClient {
     }
 
     @Override
-    public ExternalCompletion createExternalCompletion(FlowId flowId, CodeLocation codeLocation) {
+    public CompletionId createCompletion(FlowId flowId, CodeLocation codeLocation) {
         CompletableFuture<Result> resultFuture = new CompletableFuture<>();
 
         Graph.Stage stage = withActiveGraph(flowId,
                 graph -> graph.addExternalStage(resultFuture));
-        return externalCompletionServer.ensureStarted().createCompletion(flowId, stage.id, resultFuture);
+
+        return stage.getId();
     }
 
     @Override
@@ -644,6 +543,14 @@ class InMemCompleter implements CompleterClient {
 
             private CompletionId getId() {
                 return id;
+            }
+
+            private boolean complete(Datum.BlobDatum value) {
+                return outputFuture.toCompletableFuture().complete(Result.success(value));
+            }
+
+            private boolean completeExceptionally(Datum value) {
+                return outputFuture.toCompletableFuture().completeExceptionally(new ResultException(value));
             }
 
             private Stage addThenApplyStage(Datum.Blob closure) {

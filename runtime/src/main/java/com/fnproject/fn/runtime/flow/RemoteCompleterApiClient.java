@@ -127,26 +127,10 @@ public class RemoteCompleterApiClient implements CompleterClient {
         return chainThisWithThat(flowId, completionId, alternate, "thenAcceptBoth", fn, codeLocation);
     }
 
-    @Override
-    public ExternalCompletion createExternalCompletion(FlowId flowId, CodeLocation codeLocation) {
-        CompletionId completionId = requestCompletion("/graph/" + flowId.getId() + "/externalCompletion",
+
+    public CompletionId createCompletion(FlowId flowId, CodeLocation codeLocation) {
+        return requestCompletion("/graph/" + flowId.getId() + "/externalCompletion",
                 req -> req.withHeader(FN_CODE_LOCATION, codeLocation.getLocation()));
-        return new ExternalCompletion() {
-            @Override
-            public CompletionId completionId() {
-                return completionId;
-            }
-
-            @Override
-            public URI completeURI() {
-                return URI.create(apiUrlBase + "/graph/" + flowId.getId() + "/stage/" + completionId.getId() + "/complete");
-            }
-
-            @Override
-            public URI failureURI() {
-                return URI.create(apiUrlBase + "/graph/" + flowId.getId() + "/stage/" + completionId.getId() + "/fail");
-            }
-        };
     }
 
     @Override
@@ -208,6 +192,16 @@ public class RemoteCompleterApiClient implements CompleterClient {
     @Override
     public CompletionId thenCombine(FlowId flowId, CompletionId completionId, Serializable fn, CompletionId alternate, CodeLocation codeLocation) {
         return chainThisWithThat(flowId, completionId, alternate, "thenCombine", fn, codeLocation);
+    }
+
+    @Override
+    public boolean complete(FlowId flowId, CompletionId completionId, Object value) {
+        return requestCompleteStage("/graph/" + flowId.getId() + "/stage/" + completionId.getId() + "/complete", value, true);
+    }
+
+    @Override
+    public boolean completeExceptionally(FlowId flowId, CompletionId completionId, Throwable value) {
+        return requestCompleteStage("/graph/" + flowId.getId() + "/stage/" + completionId.getId() + "/complete", value,false);
     }
 
     @Override
@@ -402,6 +396,25 @@ public class RemoteCompleterApiClient implements CompleterClient {
         }
     }
 
+    private boolean requestCompleteStage(String url, Object value, boolean success) {
+        try {
+            byte[] serBytes = SerUtils.serialize(value);
+
+            HttpClient.HttpRequest req = HttpClient.preparePost(apiUrlBase + url)
+                    .withHeader(CONTENT_TYPE_HEADER, CONTENT_TYPE_JAVA_OBJECT)
+                    .withHeader(DATUM_TYPE_HEADER, DATUM_TYPE_BLOB)
+                    .withHeader(RESULT_STATUS_HEADER, success ? RESULT_STATUS_SUCCESS : RESULT_STATUS_FAILURE)
+                    .withBody(serBytes);
+
+            try (com.fnproject.fn.runtime.flow.HttpClient.HttpResponse resp = httpClient.execute(req)) {
+                return isSuccessful(resp);
+            } catch (Exception e) {
+                throw new PlatformException("Failed to get response from completer: ", e);
+            }
+        } catch (IOException e) {
+            throw new ResultSerializationException("Failed to serialize the result in a request to complete a stage: ", e);
+        }
+    }
     private static String getCids(List<CompletionId> cids) {
         return cids.stream().map(CompletionId::getId).collect(Collectors.joining(","));
     }

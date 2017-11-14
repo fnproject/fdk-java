@@ -8,6 +8,7 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
@@ -85,6 +86,21 @@ public final class RemoteFlow implements Flow, Serializable {
         @Override
         public FlowFuture<T> whenComplete(Flows.SerBiConsumer<T, Throwable> fn) {
             return new RemoteFlowFuture<>(getClient().whenComplete(flowId, completionId, fn, CodeLocation.fromCallerLocation(1)));
+        }
+
+        @Override
+        public boolean complete(T value) {
+            return getClient().complete(flowId, completionId, value);
+        }
+
+        @Override
+        public boolean completeExceptionally(Throwable throwable) {
+            return getClient().completeExceptionally(flowId, completionId, throwable);
+        }
+
+        @Override
+        public boolean cancel() {
+            return getClient().completeExceptionally(flowId, completionId, new CancellationException());
         }
 
         @Override
@@ -200,10 +216,10 @@ public final class RemoteFlow implements Flow, Serializable {
         return new RemoteFlowFuture<>(getClient().completedValue(flowId, false, ex, CodeLocation.fromCallerLocation(1)));
     }
 
+
     @Override
-    public ExternalFlowFuture<HttpRequest> createExternalFuture() {
-        CompleterClient.ExternalCompletion ext = getClient().createExternalCompletion(flowId, CodeLocation.fromCallerLocation(1));
-        return new RemoteExternalFlowFuture<>(ext.completionId(), ext.completeURI(), ext.failureURI());
+    public <T> FlowFuture<T> createFlowFuture() {
+        return new RemoteFlowFuture<>(getClient().createCompletion(flowId, CodeLocation.fromCallerLocation(1)));
     }
 
     @Override
