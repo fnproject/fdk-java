@@ -212,16 +212,12 @@ public class RemoteCompleterApiClient implements CompleterClient {
 
     @Override
     public boolean complete(FlowId flowId, CompletionId completionId, Object value) {
-        return requestCompleteStage("/graph/" + flowId.getId() + "/stage/" + completionId.getId() + "/completeNormally",
-                value
-        );
+        return requestCompleteStage("/graph/" + flowId.getId() + "/stage/" + completionId.getId() + "/complete", value, true);
     }
 
     @Override
     public boolean completeExceptionally(FlowId flowId, CompletionId completionId, Throwable value) {
-        return requestCompleteStage("/graph/" + flowId.getId() + "/stage/" + completionId.getId() + "/completeExceptionally",
-                value
-        );
+        return requestCompleteStage("/graph/" + flowId.getId() + "/stage/" + completionId.getId() + "/complete", value,false);
     }
 
     @Override
@@ -416,13 +412,14 @@ public class RemoteCompleterApiClient implements CompleterClient {
         }
     }
 
-    private boolean requestCompleteStage(String url, Object value) {
+    private boolean requestCompleteStage(String url, Object value, boolean success) {
         try {
             byte[] serBytes = SerUtils.serialize(value);
 
             HttpClient.HttpRequest req = HttpClient.preparePost(apiUrlBase + url)
                     .withHeader(CONTENT_TYPE_HEADER, CONTENT_TYPE_JAVA_OBJECT)
                     .withHeader(DATUM_TYPE_HEADER, DATUM_TYPE_BLOB)
+                    .withHeader(RESULT_STATUS_HEADER, success ? RESULT_STATUS_SUCCESS : RESULT_STATUS_FAILURE)
                     .withBody(serBytes);
 
             try (com.fnproject.fn.runtime.flow.HttpClient.HttpResponse resp = httpClient.execute(req)) {
