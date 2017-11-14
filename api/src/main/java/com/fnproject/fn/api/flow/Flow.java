@@ -242,20 +242,13 @@ public interface Flow extends Serializable {
     <T> FlowFuture<T> failedFuture(Throwable ex);
 
 
-    /**
-     * Create an externally completable future that can be completed successfully or exceptionally by POSTing data to a public URL.
-     *
-     * @return an external future
-     * @see ExternalFlowFuture for details of how to complete external futures.
-     */
-    ExternalFlowFuture<HttpRequest> createExternalFuture();
 
 
     /**
      * Create an uncompleted future
      *
      * @param <T> the type of the future
-     * @return
+     * @return a flow future that can only be completed via {@link FlowFuture#complete(Object)} or {@link FlowFuture#completeExceptionally(Throwable)}
      */
     <T> FlowFuture<T> createFlowFuture();
 

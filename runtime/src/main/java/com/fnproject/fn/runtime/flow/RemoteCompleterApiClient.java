@@ -127,27 +127,6 @@ public class RemoteCompleterApiClient implements CompleterClient {
         return chainThisWithThat(flowId, completionId, alternate, "thenAcceptBoth", fn, codeLocation);
     }
 
-    @Override
-    public ExternalCompletion createExternalCompletion(FlowId flowId, CodeLocation codeLocation) {
-        CompletionId completionId = requestCompletion("/graph/" + flowId.getId() + "/externalCompletion",
-                req -> req.withHeader(FN_CODE_LOCATION, codeLocation.getLocation()));
-        return new ExternalCompletion() {
-            @Override
-            public CompletionId completionId() {
-                return completionId;
-            }
-
-            @Override
-            public URI completeURI() {
-                return URI.create(apiUrlBase + "/graph/" + flowId.getId() + "/stage/" + completionId.getId() + "/complete");
-            }
-
-            @Override
-            public URI failureURI() {
-                return URI.create(apiUrlBase + "/graph/" + flowId.getId() + "/stage/" + completionId.getId() + "/fail");
-            }
-        };
-    }
 
     public CompletionId createCompletion(FlowId flowId, CodeLocation codeLocation) {
         return requestCompletion("/graph/" + flowId.getId() + "/externalCompletion",

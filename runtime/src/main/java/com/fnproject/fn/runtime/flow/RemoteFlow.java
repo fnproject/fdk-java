@@ -216,11 +216,6 @@ public final class RemoteFlow implements Flow, Serializable {
         return new RemoteFlowFuture<>(getClient().completedValue(flowId, false, ex, CodeLocation.fromCallerLocation(1)));
     }
 
-    @Override
-    public ExternalFlowFuture<HttpRequest> createExternalFuture() {
-        CompleterClient.ExternalCompletion ext = getClient().createExternalCompletion(flowId, CodeLocation.fromCallerLocation(1));
-        return new RemoteExternalFlowFuture<>(ext.completionId(), ext.completeURI(), ext.failureURI());
-    }
 
     @Override
     public <T> FlowFuture<T> createFlowFuture() {

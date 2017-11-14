@@ -73,8 +73,6 @@ public interface CompleterClient {
 
     CompletionId thenAcceptBoth(FlowId flowId, CompletionId completionId, CompletionId alternate, Serializable fn, CodeLocation codeLocation);
 
-    ExternalCompletion createExternalCompletion(FlowId flowId, CodeLocation codeLocation);
-
     CompletionId createCompletion(FlowId flowId, CodeLocation codeLocation);
 
     CompletionId invokeFunction(FlowId flowId, String functionId, byte[] data, HttpMethod method, Headers headers, CodeLocation codeLocation);
