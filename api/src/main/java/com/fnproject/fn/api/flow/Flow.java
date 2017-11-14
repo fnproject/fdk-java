@@ -250,6 +250,15 @@ public interface Flow extends Serializable {
      */
     ExternalFlowFuture<HttpRequest> createExternalFuture();
 
+
+    /**
+     * Create an uncompleted future
+     *
+     * @param <T> the type of the future
+     * @return
+     */
+    <T> FlowFuture<T> createFlowFuture();
+
     /**
      * Wait for all a list of tasks to complete
      * <blockquote><pre>{@code

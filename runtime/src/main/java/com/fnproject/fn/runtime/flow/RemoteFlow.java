@@ -89,13 +89,13 @@ public final class RemoteFlow implements Flow, Serializable {
         }
 
         @Override
-        public boolean complete(T v) {
-            return getClient().complete(flowId, completionId, v);
+        public boolean complete(T value) {
+            return getClient().complete(flowId, completionId, value);
         }
 
         @Override
-        public boolean completeExceptionally(Throwable v) {
-            return getClient().completeExceptionally(flowId, completionId, v);
+        public boolean completeExceptionally(Throwable throwable) {
+            return getClient().completeExceptionally(flowId, completionId, throwable);
         }
 
         @Override
@@ -220,6 +220,11 @@ public final class RemoteFlow implements Flow, Serializable {
     public ExternalFlowFuture<HttpRequest> createExternalFuture() {
         CompleterClient.ExternalCompletion ext = getClient().createExternalCompletion(flowId, CodeLocation.fromCallerLocation(1));
         return new RemoteExternalFlowFuture<>(ext.completionId(), ext.completeURI(), ext.failureURI());
+    }
+
+    @Override
+    public <T> FlowFuture<T> createFlowFuture() {
+        return new RemoteFlowFuture<>(getClient().createCompletion(flowId, CodeLocation.fromCallerLocation(1)));
     }
 
     @Override

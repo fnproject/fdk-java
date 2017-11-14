@@ -75,6 +75,8 @@ public interface CompleterClient {
 
     ExternalCompletion createExternalCompletion(FlowId flowId, CodeLocation codeLocation);
 
+    CompletionId createCompletion(FlowId flowId, CodeLocation codeLocation);
+
     CompletionId invokeFunction(FlowId flowId, String functionId, byte[] data, HttpMethod method, Headers headers, CodeLocation codeLocation);
 
     CompletionId completedValue(FlowId flowId, boolean success, Object value, CodeLocation codeLocation);

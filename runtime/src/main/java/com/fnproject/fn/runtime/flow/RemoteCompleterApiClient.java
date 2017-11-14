@@ -149,6 +149,11 @@ public class RemoteCompleterApiClient implements CompleterClient {
         };
     }
 
+    public CompletionId createCompletion(FlowId flowId, CodeLocation codeLocation) {
+        return requestCompletion("/graph/" + flowId.getId() + "/externalCompletion",
+                req -> req.withHeader(FN_CODE_LOCATION, codeLocation.getLocation()));
+    }
+
     @Override
     public CompletionId invokeFunction(FlowId flowId, String functionId, byte[] data, HttpMethod method, Headers headers, CodeLocation codeLocation) {
         return requestCompletion("/graph/" + flowId.getId() + "/invokeFunction",

@@ -264,6 +264,16 @@ public class FnTestingRuleFlowsTest {
     }
 
     @Test
+    public void uncompletedFutureCanBeCompleted() {
+        fn.givenEvent().enqueue();
+
+        fn.thenRun(TestFn.class, "createFlowFuture");
+
+        assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
+        assertThat(result).isEqualTo(Result.CompletedValue);
+    }
+
+    @Test
     public void shouldLogMessagesToStdErrToPlatformStdErr() {
         // Questionable: for testing, do we point all stderr stuff to the same log stream?
         fn.givenEvent().enqueue();
@@ -572,6 +582,15 @@ public class FnTestingRuleFlowsTest {
                 new CompletableFuture<>().get();
                 return Result.Supply;
             });
+
+            f.thenAccept((r) -> result = r);
+            f.complete(Result.CompletedValue);
+        }
+
+        public void createFlowFuture() {
+            Flow fl = Flows.currentFlow();
+
+            FlowFuture<Result> f = fl.createFlowFuture();
 
             f.thenAccept((r) -> result = r);
             f.complete(Result.CompletedValue);
