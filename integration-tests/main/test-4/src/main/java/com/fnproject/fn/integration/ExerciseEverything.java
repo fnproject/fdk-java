@@ -365,7 +365,6 @@ public class ExerciseEverything {
 
     @Test(39)
     @Test.Expect("foobar")
-    @Test.Catch({FlowCompletionException.class, MyException.class})
     public FlowFuture<String> completeFuture(Flow fl) {
         FlowFuture<String> a = fl.createFlowFuture();
         FlowFuture<String> b = fl.createFlowFuture();
