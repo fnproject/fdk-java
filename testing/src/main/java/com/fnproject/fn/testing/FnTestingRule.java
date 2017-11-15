@@ -91,7 +91,6 @@ public final class FnTestingRule implements TestRule {
         addSharedClass(OutputEvent.class);
         addSharedClass(FlowCompletionException.class);
         addSharedClass(FunctionInvocationException.class);
-        addSharedClass(ExternalCompletionException.class);
         addSharedClass(PlatformException.class);
 
     }

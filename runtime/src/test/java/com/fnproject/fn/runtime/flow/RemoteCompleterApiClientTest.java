@@ -202,50 +202,6 @@ public class RemoteCompleterApiClientTest {
     }
 
     @Test
-    public void waitForCompletionShouldReturnHttpRequestOnExternallyCompletable() throws Exception {
-        // Given
-        HttpClient.HttpResponse response = new HttpClient.HttpResponse(200);
-        response.addHeader(DATUM_TYPE_HEADER, DATUM_TYPE_HTTP_REQ);
-        response.addHeader(RESULT_STATUS_HEADER, RESULT_STATUS_SUCCESS);
-        response.addHeader(REQUEST_METHOD_HEADER, "POST");
-        response.addHeader(CONTENT_TYPE_HEADER, "application/json");
-        response.addHeader(USER_HEADER_PREFIX + "Custom-Header", "myValue");
-        response.setEntity(IOUtils.toInputStream("{ \"some\": \"json\" }", "utf-8"));
-        when((Object) mockHttpClient.execute(any())).thenReturn(response);
-
-        // When
-        Object result = completerClient.waitForCompletion(new FlowId("1"), new CompletionId("2"), classLoader);
-
-        // Then
-        assertThat(result).isInstanceOf(HttpRequest.class);
-    }
-
-
-    @Test
-    public void waitForCompletionShouldThrowExternalCompletionExceptionOnFailedExternalFuture() throws Exception {
-        // Given
-        HttpClient.HttpResponse response = new HttpClient.HttpResponse(200);
-        response.addHeader(DATUM_TYPE_HEADER, DATUM_TYPE_HTTP_REQ);
-        response.addHeader(RESULT_STATUS_HEADER, RESULT_STATUS_FAILURE);
-        response.addHeader(REQUEST_METHOD_HEADER, "POST");
-        response.addHeader(CONTENT_TYPE_HEADER, "application/json");
-        response.addHeader(USER_HEADER_PREFIX + "Custom-Header", "myValue");
-        response.setEntity(IOUtils.toInputStream("{ \"some\": \"json\" }", "utf-8"));
-        when((Object) mockHttpClient.execute(any())).thenReturn(response);
-
-        // When
-        try {
-            completerClient.waitForCompletion(new FlowId("1"), new CompletionId("2"), classLoader);
-            fail("Should have thrown an exception");
-        } catch (FlowCompletionException e) {
-            // Just as with thrown exceptions, the ECEx is wrapped in a CCEx on .get
-            assertThat(e.getCause()).isInstanceOfAny(ExternalCompletionException.class);
-            assertThat(((ExternalCompletionException) e.getCause()).getExternalRequest().getMethod()).isEqualTo(HttpMethod.POST);
-        }
-    }
-
-
-    @Test
     public void waitForCompletionShouldThrowExceptionIfValidationFails() throws Exception {
         int responseCode = 500;
         String errorResponse = "Internal server error";

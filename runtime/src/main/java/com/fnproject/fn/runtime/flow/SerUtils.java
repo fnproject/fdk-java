@@ -221,11 +221,7 @@ final class SerUtils {
                     }
                 };
 
-                if (h.getHeaderValue(RESULT_STATUS_HEADER).orElse(RESULT_STATUS_SUCCESS).equalsIgnoreCase(RESULT_STATUS_FAILURE)) {
-                    return new ContentPart(dt, contentType, new ExternalCompletionException(req));
-                } else {
-                    return new ContentPart(dt, contentType, req);
-                }
+                return new ContentPart(dt, contentType, req);
             } catch (IllegalArgumentException e) {
                 throw new Deserializer.DeserializeException(REQUEST_METHOD_HEADER + " had unrecognised value: " + methodName.orElse("(missing)"));
             }
