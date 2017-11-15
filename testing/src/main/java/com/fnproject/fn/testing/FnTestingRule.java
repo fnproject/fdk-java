@@ -81,7 +81,6 @@ public final class FnTestingRule implements TestRule {
         addSharedClass(CompleterClientFactory.class);
         addSharedClass(CompletionId.class);
         addSharedClass(FlowId.class);
-        addSharedClass(CompleterClient.ExternalCompletion.class);
         addSharedClass(CodeLocation.class);
         addSharedClass(Headers.class);
         addSharedClass(HttpMethod.class);
