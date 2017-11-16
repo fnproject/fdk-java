@@ -33,28 +33,6 @@ public final class RemoteFlow implements Flow, Serializable {
         return client;
     }
 
-    private class RemoteExternalFlowFuture<T> extends RemoteFlowFuture<T> implements ExternalFlowFuture<T> {
-        private final URI completionUri;
-        private final URI failureUri;
-
-        private RemoteExternalFlowFuture(CompletionId completionId, URI completionUri, URI failureUri) {
-            super(completionId);
-            this.completionUri = completionUri;
-            this.failureUri = failureUri;
-        }
-
-
-        @Override
-        public URI completionUrl() {
-            return completionUri;
-        }
-
-        @Override
-        public URI failUrl() {
-            return failureUri;
-        }
-    }
-
     RemoteFlowFuture createRemoteFlowFuture(CompletionId completionId) {
         return new RemoteFlowFuture(completionId);
     }

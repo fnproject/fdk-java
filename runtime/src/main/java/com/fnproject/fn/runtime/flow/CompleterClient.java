@@ -14,17 +14,6 @@ import java.util.concurrent.TimeoutException;
  */
 public interface CompleterClient {
 
-
-    interface ExternalCompletion {
-
-        CompletionId completionId();
-
-        URI completeURI();
-
-        URI failureURI();
-
-    }
-
     /**
      * create a new flow against the flow service
      *

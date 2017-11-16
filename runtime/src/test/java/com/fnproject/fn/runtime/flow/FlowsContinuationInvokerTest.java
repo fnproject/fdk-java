@@ -245,27 +245,6 @@ public class FlowsContinuationInvokerTest {
     }
 
     @Test
-    public void stageRefDatumNotDeserializedToExternalFlowFuture() throws IOException, ClassNotFoundException {
-
-        System.err.println("This test is expected to throw an error.");
-
-        // Given
-        HttpMultipartSerialization ser = new HttpMultipartSerialization()
-                .addJavaEntity((Flows.SerConsumer<ExternalFlowFuture>) (ExternalFlowFuture f) -> {})
-                .addFnStageRefEntity("testStageId");
-
-        InputEvent event = constructContinuationInputEvent(ser);
-
-        // Then
-        thrown.expect(InternalFunctionInvocationException.class);
-        thrown.expectMessage("Error invoking flows lambda");
-
-        // When
-        FlowContinuationInvoker invoker = new FlowContinuationInvoker();
-        Optional<OutputEvent> result = invoker.tryInvoke(new EmptyInvocationContext(), event);
-    }
-
-    @Test
     public void externalFunctionInvocationPopulatesFunctionResponse() throws Exception {
         // Given
         Map<String, String> headers = new HashMap<>();

@@ -145,8 +145,6 @@ class InMemCompleter implements CompleterClient {
                         throw new FlowCompletionException((Throwable) err);
                     } else if (err instanceof HttpResponse && !r.isSuccess()) {
                         throw new FlowCompletionException(new FunctionInvocationException((HttpResponse) err));
-                    } else if (err instanceof HttpRequest && !r.isSuccess()) {
-                        throw new FlowCompletionException(new ExternalCompletionException((HttpRequest) err));
                     }
                     throw new PlatformException(e);
                 } else {
@@ -174,8 +172,6 @@ class InMemCompleter implements CompleterClient {
                             throw new FlowCompletionException((Throwable) err);
                         } else if (err instanceof HttpResponse && !r.isSuccess()) {
                             throw new FlowCompletionException(new FunctionInvocationException((HttpResponse) err));
-                        } else if (err instanceof HttpRequest && !r.isSuccess()) {
-                            throw new FlowCompletionException(new ExternalCompletionException((HttpRequest) err));
                         }
                         throw new PlatformException(e);
                     } else {

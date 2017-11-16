@@ -81,7 +81,6 @@ public final class FnTestingRule implements TestRule {
         addSharedClass(CompleterClientFactory.class);
         addSharedClass(CompletionId.class);
         addSharedClass(FlowId.class);
-        addSharedClass(CompleterClient.ExternalCompletion.class);
         addSharedClass(CodeLocation.class);
         addSharedClass(Headers.class);
         addSharedClass(HttpMethod.class);
@@ -92,7 +91,6 @@ public final class FnTestingRule implements TestRule {
         addSharedClass(OutputEvent.class);
         addSharedClass(FlowCompletionException.class);
         addSharedClass(FunctionInvocationException.class);
-        addSharedClass(ExternalCompletionException.class);
         addSharedClass(PlatformException.class);
 
     }
