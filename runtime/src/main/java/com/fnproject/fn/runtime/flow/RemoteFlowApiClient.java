@@ -72,7 +72,7 @@ public class RemoteFlowApiClient implements CompleterClient {
             try (HttpClient.HttpResponse resp = httpClient.execute(request)) {
                 validateSuccessful(resp);
                 CreateGraphResponse createGraphResponse = objectMapper.readValue(resp.body, CreateGraphResponse.class);
-                return new FlowId(createGraphResponse.graphId);
+                return new FlowId(createGraphResponse.flowId);
             } catch (Exception e) {
                 throw new PlatformCommunicationException("Failed to create flow ", e);
             }
