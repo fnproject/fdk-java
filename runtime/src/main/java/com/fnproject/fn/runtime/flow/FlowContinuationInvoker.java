@@ -38,7 +38,7 @@ public final class FlowContinuationInvoker implements FunctionInvoker {
         @Override
         public synchronized CompleterClient get() {
             if (this.client == null) {
-                this.client = new RemoteCompleterApiClient(completerBaseUrl, new HttpClient());
+                this.client = new RemoteFlowApiClient(completerBaseUrl, new HttpClient());
             }
             return this.client;
         }
