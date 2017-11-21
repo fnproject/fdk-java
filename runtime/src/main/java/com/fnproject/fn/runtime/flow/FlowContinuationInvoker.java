@@ -4,6 +4,8 @@ import com.fnproject.fn.api.*;
 import com.fnproject.fn.api.flow.*;
 import com.fnproject.fn.runtime.exception.FunctionInputHandlingException;
 import com.fnproject.fn.runtime.exception.InternalFunctionInvocationException;
+import com.fnproject.fn.runtime.flow.blobs.BlobApiClient;
+import com.fnproject.fn.runtime.flow.blobs.RemoteBlobApiClient;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -38,7 +40,7 @@ public final class FlowContinuationInvoker implements FunctionInvoker {
         @Override
         public synchronized CompleterClient get() {
             if (this.client == null) {
-                this.client = new RemoteFlowApiClient(completerBaseUrl, new HttpClient());
+                this.client = new RemoteFlowApiClient(completerBaseUrl + "/v1", new RemoteBlobApiClient(completerBaseUrl + "/v1/blobs"), new HttpClient());
             }
             return this.client;
         }

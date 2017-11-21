@@ -1,13 +1,14 @@
 package com.fnproject.fn.runtime.flow;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.flow.HttpMethod;
-import com.fnproject.fn.api.flow.LambdaSerializationException;
 import com.fnproject.fn.api.flow.PlatformException;
-import com.fnproject.fn.api.flow.ResultSerializationException;
 import com.fnproject.fn.runtime.exception.PlatformCommunicationException;
+import com.fnproject.fn.runtime.flow.blobs.BlobApiClient;
+import com.fnproject.fn.runtime.flow.blobs.BlobDatum;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -16,8 +17,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * REST client for accessing the Flow service API
@@ -25,30 +24,18 @@ import java.util.stream.Collectors;
 public class RemoteFlowApiClient implements CompleterClient {
     private transient final HttpClient httpClient;
     private final String apiUrlBase;
+    private final BlobApiClient blobApiClient;
 
     private static final String HEADER_PREFIX = "FnProject-";
-    public static final String STAGE_ID_HEADER = HEADER_PREFIX + "StageID";
     public static final String CALLER_ID_HEADER = HEADER_PREFIX + "CallerID";
 
-    public static final String CONTENT_TYPE_HEADER = "Content-Type";
     public static final String CONTENT_TYPE_JAVA_OBJECT = "application/java-serialized-object";
 
-    public static final String FN_CODE_LOCATION = HEADER_PREFIX + "Codeloc";
-
     public static final String DATUM_TYPE_HEADER = HEADER_PREFIX + "DatumType";
-    public static final String DATUM_TYPE_BLOB = "blob";
-    public static final String DATUM_TYPE_ERROR = "error";
-    public static final String DATUM_TYPE_STAGEREF = "stageref";
-    public static final String DATUM_TYPE_HTTP_REQ = "httpreq";
-    public static final String DATUM_TYPE_HTTP_RESP = "httpresp";
 
-    public static final String RESULT_STATUS_HEADER = HEADER_PREFIX + "ResultStatus";
-    public static final String RESULT_STATUS_SUCCESS = "success";
-    public static final String RESULT_STATUS_FAILURE = "failure";
-
-
-    public RemoteFlowApiClient(String apiUrlBase, HttpClient httpClient) {
+    public RemoteFlowApiClient(String apiUrlBase, BlobApiClient blobClient, HttpClient httpClient) {
         this.apiUrlBase = Objects.requireNonNull(apiUrlBase);
+        this.blobApiClient = Objects.requireNonNull(blobClient);
         this.httpClient = Objects.requireNonNull(httpClient);
     }
 
@@ -61,6 +48,54 @@ public class RemoteFlowApiClient implements CompleterClient {
         String functionId;
     }
 
+    enum CompletionOperation {
+        UNKNOWN_OPERATION("unknown_operation"),
+        ACCEPT_EITHER("acceptEither"),
+        APPLY_TO_EITHER("applyToEither"),
+        THEN_ACCEPT_BOTH("thenAcceptBoth"),
+        THEN_APPLY("thenApply"),
+        THEN_RUN("thenRun"),
+        THEN_ACCEPT("thenAccept"),
+        THEN_COMPOSE("thenCompose"),
+        THEN_COMBINE("thenCombine"),
+        WHEN_COMPLETE("whenComplete"),
+        HANDLE("handle"),
+        SUPPLY("supply"),
+        INVOKE_FUNCTION("invokeFunction"),
+        COMPLETED_VALUE("completedValue"),
+        DELAY("delay"),
+        ALL_OF("allOf"),
+        ANY_OF("anyOf"),
+        EXTERNAL_COMPLETION("externalCompletion"),
+        EXCEPTIONALLY("exceptionally"),
+        TERMINATION_HOOK("terminationHook"),
+        EXCEPTIONALLY_COMPOSE("exceptionallyCompose");
+
+        private String operation;
+
+        CompletionOperation(String operation) {
+            this.operation = operation;
+        }
+
+        @JsonValue
+        String getName() {
+            return operation;
+        }
+    }
+
+    class AddStageRequest {
+        @JsonProperty("operation")
+        CompletionOperation operation;
+        @JsonProperty("closure")
+        BlobDatum closure;
+        @JsonProperty("deps")
+        List<String> deps;
+        @JsonProperty("code_location")
+        String codeLocation;
+        @JsonProperty("caller_id")
+        String callerId;
+    }
+
     @Override
     public FlowId createFlow(String functionId) {
         try {
@@ -68,7 +103,7 @@ public class RemoteFlowApiClient implements CompleterClient {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             ObjectMapper objectMapper = new ObjectMapper();
             objectMapper.writeValue(baos, createGraphRequest);
-            HttpClient.HttpRequest request = HttpClient.preparePost(apiUrlBase + "/v1/flow/create").withBody(baos.toByteArray());
+            HttpClient.HttpRequest request = HttpClient.preparePost(apiUrlBase + "/flow/create").withBody(baos.toByteArray());
             try (HttpClient.HttpResponse resp = httpClient.execute(request)) {
                 validateSuccessful(resp);
                 CreateGraphResponse createGraphResponse = objectMapper.readValue(resp.body, CreateGraphResponse.class);
@@ -83,7 +118,28 @@ public class RemoteFlowApiClient implements CompleterClient {
 
     @Override
     public CompletionId supply(FlowId flowId, Serializable supplier, CodeLocation codeLocation) {
-        return null;
+        try {
+            AddStageRequest addStageRequest = new AddStageRequest();
+            byte[] serialized = SerUtils.serialize(supplier);
+            addStageRequest.closure = blobApiClient.writeBlob(serialized, CONTENT_TYPE_JAVA_OBJECT);
+            addStageRequest.operation = CompletionOperation.SUPPLY;
+            addStageRequest.codeLocation = codeLocation.getLocation();
+
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.writeValue(baos, addStageRequest);
+
+            HttpClient.HttpRequest request = HttpClient.preparePost(apiUrlBase + "/flow/" + flowId.getId() + "/stage").withBody(baos.toByteArray());
+            try (HttpClient.HttpResponse resp = httpClient.execute(request)) {
+                validateSuccessful(resp);
+                AddStageResponse addStageResponse = objectMapper.readValue(resp.body, AddStageResponse.class);
+                return new CompletionId(addStageResponse.stageId);
+            } catch (Exception e) {
+                throw new PlatformCommunicationException("Failed to add stage ", e);
+            }
+        } catch (IOException e) {
+            throw new PlatformException("Failed to create AddStageRequest");
+        }
     }
 
     @Override
@@ -225,25 +281,6 @@ public class RemoteFlowApiClient implements CompleterClient {
     private static boolean isSuccessful(HttpClient.HttpResponse response) {
         return response.getStatusCode() == 200 || response.getStatusCode() == 201;
     }
-
-    private CompletionId requestCompletion(String url, Function<HttpClient.HttpRequest, HttpClient.HttpRequest> fn) {
-        HttpClient.HttpRequest req = fn.andThen(RemoteFlowApiClient::addParentIdIfPresent)
-                .apply(HttpClient.preparePost(apiUrlBase + url));
-
-        try (HttpClient.HttpResponse resp = httpClient.execute(req)) {
-            validateSuccessful(resp);
-            String completionId = resp.getHeader(STAGE_ID_HEADER);
-            if (completionId == null) {
-                throw new PlatformException("Got successful response from completer but no " + STAGE_ID_HEADER + " was present");
-            }
-            return new CompletionId(completionId);
-        } catch (PlatformException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new PlatformException("Failed to get response from completer: ", e);
-        }
-    }
-
 
     private static  HttpClient.HttpRequest addParentIdIfPresent(HttpClient.HttpRequest req) {
         return FlowRuntimeGlobals.getCurrentCompletionId().map((id) -> req.withHeader(CALLER_ID_HEADER, id.getId())).orElse(req);
