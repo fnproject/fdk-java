@@ -118,11 +118,15 @@ public class RemoteFlowApiClient implements CompleterClient {
 
     @Override
     public CompletionId supply(FlowId flowId, Serializable supplier, CodeLocation codeLocation) {
+        return addStage(CompletionOperation.SUPPLY, flowId, supplier, codeLocation);
+    }
+
+    private CompletionId addStage(CompletionOperation operation, FlowId flowId, Serializable supplier, CodeLocation codeLocation) {
         try {
             AddStageRequest addStageRequest = new AddStageRequest();
             byte[] serialized = SerUtils.serialize(supplier);
-            addStageRequest.closure = blobApiClient.writeBlob(serialized, CONTENT_TYPE_JAVA_OBJECT);
-            addStageRequest.operation = CompletionOperation.SUPPLY;
+            addStageRequest.closure = blobApiClient.writeBlob(flowId.getId() + "-", serialized, CONTENT_TYPE_JAVA_OBJECT);
+            addStageRequest.operation = operation;
             addStageRequest.codeLocation = codeLocation.getLocation();
 
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
