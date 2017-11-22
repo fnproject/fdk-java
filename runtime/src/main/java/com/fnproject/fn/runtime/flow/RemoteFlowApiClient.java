@@ -104,7 +104,7 @@ public class RemoteFlowApiClient implements CompleterClient {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             ObjectMapper objectMapper = new ObjectMapper();
             objectMapper.writeValue(baos, createGraphRequest);
-            HttpClient.HttpRequest request = HttpClient.preparePost(apiUrlBase + "/flow/create").withBody(baos.toByteArray());
+            HttpClient.HttpRequest request = HttpClient.preparePost(apiUrlBase + "/flows").withBody(baos.toByteArray());
             try (HttpClient.HttpResponse resp = httpClient.execute(request)) {
                 validateSuccessful(resp);
                 CreateGraphResponse createGraphResponse = objectMapper.readValue(resp.body, CreateGraphResponse.class);
@@ -296,7 +296,7 @@ public class RemoteFlowApiClient implements CompleterClient {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.writeValue(baos, addStageRequest);
 
-        HttpClient.HttpRequest request = HttpClient.preparePost(apiUrlBase + "/flow/" + flowId.getId() + "/stage").withBody(baos.toByteArray());
+        HttpClient.HttpRequest request = HttpClient.preparePost(apiUrlBase + "/flows/" + flowId.getId() + "/stage").withBody(baos.toByteArray());
         try (HttpClient.HttpResponse resp = httpClient.execute(request)) {
             validateSuccessful(resp);
             AddStageResponse addStageResponse = objectMapper.readValue(resp.body, AddStageResponse.class);
