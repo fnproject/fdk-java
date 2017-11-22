@@ -5,7 +5,6 @@ import com.fnproject.fn.api.flow.*;
 import com.fnproject.fn.runtime.exception.FunctionInputHandlingException;
 import com.fnproject.fn.runtime.exception.InternalFunctionInvocationException;
 import com.fnproject.fn.runtime.flow.blobs.BlobApiClient;
-import com.fnproject.fn.runtime.flow.blobs.BlobDatum;
 import com.fnproject.fn.runtime.flow.blobs.RemoteBlobApiClient;
 
 import java.io.ByteArrayOutputStream;
@@ -45,7 +44,7 @@ public final class FlowContinuationInvoker implements FunctionInvoker {
         public synchronized CompleterClient get() {
             if (this.client == null) {
                 this.client = new RemoteFlowApiClient(completerBaseUrl + "/v1",
-                        new RemoteBlobApiClient(completerBaseUrl + "/blobs", new HttpClient()), new HttpClient());
+                   new RemoteBlobApiClient(completerBaseUrl + "/blobs", new HttpClient()), new HttpClient());
             }
             return this.client;
         }
@@ -98,18 +97,18 @@ public final class FlowContinuationInvoker implements FunctionInvoker {
             Flows.setCurrentFlowSource(attachedSource);
 
             FlowRuntimeGlobals.setCurrentCompletionId(evt.getHeaders().get(STAGE_ID_HEADER)
-                    .map(CompletionId::new)
-                    .orElse(null));
+               .map(CompletionId::new)
+               .orElse(null));
 
 
             try {
                 return evt.consumeBody((is) -> {
-                    SerUtils.ContentStream cs ;
+                    SerUtils.ContentStream cs;
                     try {
                         cs = new SerUtils.ContentStream(
-                                evt.getHeaders().get(CONTENT_TYPE_HEADER)
-                                        .orElseThrow(() -> new RuntimeException(CONTENT_TYPE_HEADER + " header not present, expected value to multipart/form-data")),
-                                is);
+                           evt.getHeaders().get(CONTENT_TYPE_HEADER)
+                              .orElseThrow(() -> new RuntimeException(CONTENT_TYPE_HEADER + " header not present, expected value to multipart/form-data")),
+                           is);
                     } catch (IOException e) {
                         throw new FunctionInputHandlingException("Error reading continuation content", e);
                     }
@@ -118,7 +117,7 @@ public final class FlowContinuationInvoker implements FunctionInvoker {
                         RemoteBlobApiClient blobClient = new RemoteBlobApiClient(completerBaseUrl + "/blobs", new HttpClient());
 
                         // readObject for blobs returns a function, so that we can pass a blob client and flow Id to it
-                        continuation = ((BiFunction<BlobApiClient, FlowId, Object>)cs.readObject(DATUM_TYPE_BLOB)).apply(blobClient, flowId);
+                        continuation = ((BiFunction<BlobApiClient, FlowId, Object>) cs.readObject(DATUM_TYPE_BLOB)).apply(blobClient, flowId);
 
                     } catch (IOException e) {
                         throw new FunctionInputHandlingException("Error reading continuation content ", e);
@@ -194,15 +193,15 @@ public final class FlowContinuationInvoker implements FunctionInvoker {
     // and return a modified output event that contains a reference to it
     private OutputEvent writeBlob(String completerBaseUrl, FlowId flowId, OutputEvent result) {
         Optional<String> contentType = result.getContentType();
-        if(contentType.isPresent() && contentType.get().equals(CONTENT_TYPE_JAVA_OBJECT)) {
+        if (contentType.isPresent() && contentType.get().equals(CONTENT_TYPE_JAVA_OBJECT)) {
             try {
                 RemoteBlobApiClient blobClient = new RemoteBlobApiClient(completerBaseUrl + "/blobs", new HttpClient());
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 result.writeToOutput(baos);
-                BlobDatum blobDatum = blobClient.writeBlob(flowId.getId(), baos.toByteArray(), CONTENT_TYPE_JAVA_OBJECT);
+                APIModel.Blob blobDatum = blobClient.writeBlob(flowId.getId(), baos.toByteArray(), CONTENT_TYPE_JAVA_OBJECT);
                 HashMap<String, String> headers = new HashMap<>();
-                headers.put(BLOB_ID_HEADER, blobDatum.getBlobId());
-                headers.put(BLOB_LENGTH_HEADER, String.valueOf(blobDatum.getLength()));
+                headers.put(BLOB_ID_HEADER, blobDatum.blobId);
+                headers.put(BLOB_LENGTH_HEADER, String.valueOf(blobDatum.blobLength));
                 headers.put(DATUM_TYPE_HEADER, DATUM_TYPE_BLOB);
                 return new ContinuationOutputEvent(true, CONTENT_TYPE_JAVA_OBJECT, headers, new byte[0]);
             } catch (IOException e) {
@@ -221,9 +220,9 @@ public final class FlowContinuationInvoker implements FunctionInvoker {
         } catch (InvocationTargetException ite) {
             ite.printStackTrace(System.err);
             throw new InternalFunctionInvocationException(
-                    "Error invoking flows lambda",
-                    ite.getCause(),
-                    constructExceptionOutputEvent(ite.getCause())
+               "Error invoking flows lambda",
+               ite.getCause(),
+               constructExceptionOutputEvent(ite.getCause())
             );
         } catch (Exception ex) {
             throw new PlatformException(ex);
@@ -245,9 +244,9 @@ public final class FlowContinuationInvoker implements FunctionInvoker {
         } catch (IOException e) {
             ResultSerializationException rse = new ResultSerializationException("Result returned by stage is not serializable: " + e.getMessage(), e);
             throw new InternalFunctionInvocationException(
-                    "Error handling response from flow stage lambda",
-                    rse,
-                    constructExceptionOutputEvent(rse)
+               "Error handling response from flow stage lambda",
+               rse,
+               constructExceptionOutputEvent(rse)
             );
         }
     }
