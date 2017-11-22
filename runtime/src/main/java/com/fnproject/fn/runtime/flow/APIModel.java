@@ -12,6 +12,7 @@ import java.util.List;
 public class APIModel {
 
 
+
     enum CompletionOperation {
         UNKNOWN_OPERATION("unknown_operation"),
         ACCEPT_EITHER("acceptEither"),
@@ -278,5 +279,26 @@ public class APIModel {
     public static class AwaitStageResponse {
         @JsonProperty("result")
         public CompletionResult result;
+    }
+
+    public static class InvokeStageRequest {
+        @JsonProperty("flow_id")
+        public String flowId;
+
+        @JsonProperty("stage_id")
+        public String stageId;
+
+        @JsonProperty("closure")
+        public Blob closure;
+
+        @JsonProperty("args")
+        public List<Datum> args;
+
+    }
+
+    public static class InvokeStageResponse {
+        @JsonProperty("result")
+        public CompletionResult result;
+
     }
 }

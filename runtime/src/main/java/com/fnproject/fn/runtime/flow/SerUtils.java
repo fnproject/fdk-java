@@ -310,6 +310,8 @@ final class SerUtils {
             throw new Deserializer.DeserializeException("Unexpected FnProject-DatumType: wanted " + expectedDatumType + ", received: " + part.getDatumType());
         }
 
+
+
         public ContentPart readContentPart() throws IOException, Deserializer.DeserializeException, ClassNotFoundException {
             if (bis.atEndMarker()) {
                 throw new EOFException();
