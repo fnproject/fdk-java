@@ -13,6 +13,7 @@ import com.fnproject.fn.runtime.flow.blobs.BlobDatum;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
@@ -121,34 +122,9 @@ public class RemoteFlowApiClient implements CompleterClient {
         return addStage(CompletionOperation.SUPPLY, flowId, supplier, codeLocation);
     }
 
-    private CompletionId addStage(CompletionOperation operation, FlowId flowId, Serializable supplier, CodeLocation codeLocation) {
-        try {
-            AddStageRequest addStageRequest = new AddStageRequest();
-            byte[] serialized = SerUtils.serialize(supplier);
-            addStageRequest.closure = blobApiClient.writeBlob(flowId.getId() + "-", serialized, CONTENT_TYPE_JAVA_OBJECT);
-            addStageRequest.operation = operation;
-            addStageRequest.codeLocation = codeLocation.getLocation();
-
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ObjectMapper objectMapper = new ObjectMapper();
-            objectMapper.writeValue(baos, addStageRequest);
-
-            HttpClient.HttpRequest request = HttpClient.preparePost(apiUrlBase + "/flow/" + flowId.getId() + "/stage").withBody(baos.toByteArray());
-            try (HttpClient.HttpResponse resp = httpClient.execute(request)) {
-                validateSuccessful(resp);
-                AddStageResponse addStageResponse = objectMapper.readValue(resp.body, AddStageResponse.class);
-                return new CompletionId(addStageResponse.stageId);
-            } catch (Exception e) {
-                throw new PlatformCommunicationException("Failed to add stage ", e);
-            }
-        } catch (IOException e) {
-            throw new PlatformException("Failed to create AddStageRequest");
-        }
-    }
-
     @Override
     public CompletionId thenApply(FlowId flowId, CompletionId completionId, Serializable fn, CodeLocation codeLocation) {
-        return null;
+        return addChainedStage(CompletionOperation.THEN_APPLY, completionId, flowId, fn, codeLocation);
     }
 
     @Override
@@ -286,7 +262,47 @@ public class RemoteFlowApiClient implements CompleterClient {
         return response.getStatusCode() == 200 || response.getStatusCode() == 201;
     }
 
-    private static  HttpClient.HttpRequest addParentIdIfPresent(HttpClient.HttpRequest req) {
-        return FlowRuntimeGlobals.getCurrentCompletionId().map((id) -> req.withHeader(CALLER_ID_HEADER, id.getId())).orElse(req);
+    private CompletionId addStage(CompletionOperation operation, FlowId flowId, Serializable supplier, CodeLocation codeLocation) {
+        try {
+            AddStageRequest addStageRequest = new AddStageRequest();
+            byte[] serialized = SerUtils.serialize(supplier);
+            addStageRequest.closure = blobApiClient.writeBlob(flowId.getId() + "-", serialized, CONTENT_TYPE_JAVA_OBJECT);
+            addStageRequest.operation = operation;
+            addStageRequest.codeLocation = codeLocation.getLocation();
+
+            return executeAddStageRequest(flowId, addStageRequest);
+        } catch (IOException e) {
+            throw new PlatformException("Failed to create AddStageRequest");
+        }
+    }
+
+    private CompletionId addChainedStage(CompletionOperation operation, CompletionId other, FlowId flowId, Serializable supplier, CodeLocation codeLocation) {
+        try {
+            AddStageRequest addStageRequest = new AddStageRequest();
+            byte[] serialized = SerUtils.serialize(supplier);
+            addStageRequest.closure = blobApiClient.writeBlob(flowId.getId() + "-", serialized, CONTENT_TYPE_JAVA_OBJECT);
+            addStageRequest.operation = operation;
+            addStageRequest.codeLocation = codeLocation.getLocation();
+            addStageRequest.deps = Arrays.asList(other.getId());
+
+            return executeAddStageRequest(flowId, addStageRequest);
+        } catch (IOException e) {
+            throw new PlatformException("Failed to create AddStageRequest");
+        }
+    }
+
+    private CompletionId executeAddStageRequest(FlowId flowId, AddStageRequest addStageRequest) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.writeValue(baos, addStageRequest);
+
+        HttpClient.HttpRequest request = HttpClient.preparePost(apiUrlBase + "/flow/" + flowId.getId() + "/stage").withBody(baos.toByteArray());
+        try (HttpClient.HttpResponse resp = httpClient.execute(request)) {
+            validateSuccessful(resp);
+            AddStageResponse addStageResponse = objectMapper.readValue(resp.body, AddStageResponse.class);
+            return new CompletionId(addStageResponse.stageId);
+        } catch (Exception e) {
+            throw new PlatformCommunicationException("Failed to add stage ", e);
+        }
     }
 }
