@@ -266,7 +266,7 @@ public class RemoteFlowApiClient implements CompleterClient {
         try {
             AddStageRequest addStageRequest = new AddStageRequest();
             byte[] serialized = SerUtils.serialize(supplier);
-            addStageRequest.closure = blobApiClient.writeBlob(flowId.getId() + "-", serialized, CONTENT_TYPE_JAVA_OBJECT);
+            addStageRequest.closure = blobApiClient.writeBlob(flowId.getId(), serialized, CONTENT_TYPE_JAVA_OBJECT);
             addStageRequest.operation = operation;
             addStageRequest.codeLocation = codeLocation.getLocation();
 

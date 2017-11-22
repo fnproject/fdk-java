@@ -15,4 +15,16 @@ public class BlobDatum {
     String contentType;
     @JsonProperty("length")
     Integer length;
+
+    public String getContentType() {
+        return contentType;
+    }
+
+    public Integer getLength() {
+        return length;
+    }
+
+    public String getBlobId() {
+        return blobId;
+    }
 }

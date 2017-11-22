@@ -3,6 +3,9 @@ package com.fnproject.fn.runtime.flow;
 import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.flow.*;
 import com.fnproject.fn.runtime.exception.FunctionInputHandlingException;
+import com.fnproject.fn.runtime.flow.blobs.Blob;
+import com.fnproject.fn.runtime.flow.blobs.BlobApiClient;
+import com.fnproject.fn.runtime.flow.blobs.RemoteBlobApiClient;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.NullOutputStream;
 import org.apache.http.Header;
@@ -18,6 +21,7 @@ import org.apache.http.io.HttpMessageParser;
 
 import java.io.*;
 import java.util.*;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import static com.fnproject.fn.runtime.flow.RemoteCompleterApiClient.*;
@@ -81,8 +85,18 @@ final class SerUtils {
             if (!contentType.equalsIgnoreCase(CONTENT_TYPE_JAVA_OBJECT)) {
                 throw new Deserializer.DeserializeException("Unexpected content-type: " + contentType);
             }
-            try (ObjectInputStream ois = new ObjectInputStream(is)) {
-                return new ContentPart(dt, contentType, ois.readObject());
+
+            Optional<String> blobId = h.getHeaderValue("FnProject-BlobId");
+            if(blobId.isPresent()) {
+                // This is horrible, return a function, so that the caller can call this with a
+                // blob client and flow Id, as it knows them
+                BiFunction defer = (BiFunction<BlobApiClient, FlowId, Object>) (blobClient, flowId) -> {
+                    Blob blob = blobClient.readBlob(flowId.getId(), blobId.get(), contentType);
+                    return blob.data;
+                };
+                return new ContentPart(dt, contentType, defer);
+            } else {
+                throw new FunctionInputHandlingException("Invoked with a blob datum missing FnProject-BlobId header");
             }
         });
 
