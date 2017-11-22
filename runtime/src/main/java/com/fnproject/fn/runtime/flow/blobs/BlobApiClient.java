@@ -1,7 +1,9 @@
 package com.fnproject.fn.runtime.flow.blobs;
 
+import com.fnproject.fn.runtime.flow.APIModel;
+
 public interface BlobApiClient {
 
-    BlobDatum writeBlob(String prefix, byte[] bytes, String contentType);
-    Blob readBlob(String prefix, String blobId, String expectedContentType);
+    APIModel.Blob writeBlob(String prefix, byte[] bytes, String contentType);
+    BlobResponse readBlob(String prefix, String blobId, String expectedContentType);
 }

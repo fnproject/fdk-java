@@ -3,9 +3,8 @@ package com.fnproject.fn.runtime.flow;
 import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.flow.*;
 import com.fnproject.fn.runtime.exception.FunctionInputHandlingException;
-import com.fnproject.fn.runtime.flow.blobs.Blob;
+import com.fnproject.fn.runtime.flow.blobs.BlobResponse;
 import com.fnproject.fn.runtime.flow.blobs.BlobApiClient;
-import com.fnproject.fn.runtime.flow.blobs.RemoteBlobApiClient;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.NullOutputStream;
 import org.apache.http.Header;
@@ -91,8 +90,8 @@ final class SerUtils {
                 // This is horrible, return a function, so that the caller can call this with a
                 // blob client and flow Id, as it knows them
                 BiFunction defer = (BiFunction<BlobApiClient, FlowId, Object>) (blobClient, flowId) -> {
-                    Blob blob = blobClient.readBlob(flowId.getId(), blobId.get(), contentType);
-                    return blob.data;
+                    BlobResponse blobResponse = blobClient.readBlob(flowId.getId(), blobId.get(), contentType);
+                    return blobResponse.data;
                 };
                 return new ContentPart(dt, contentType, defer);
             } else {

@@ -3,6 +3,7 @@ package com.fnproject.fn.runtime.flow.blobs;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fnproject.fn.api.flow.PlatformException;
 import com.fnproject.fn.runtime.exception.PlatformCommunicationException;
+import com.fnproject.fn.runtime.flow.APIModel;
 import com.fnproject.fn.runtime.flow.HttpClient;
 
 import java.io.IOException;
@@ -18,16 +19,16 @@ public class RemoteBlobApiClient implements BlobApiClient {
     }
 
     @Override
-    public BlobDatum writeBlob(String prefix, byte[] bytes, String contentType) {
+    public APIModel.Blob writeBlob(String prefix, byte[] bytes, String contentType) {
         HttpClient.HttpRequest request = HttpClient.preparePost(apiUrlBase + "/" + prefix)
-                .withHeader("Content-Type", contentType)
-                .withBody(bytes);
+           .withHeader("Content-Type", contentType)
+           .withBody(bytes);
         try (HttpClient.HttpResponse resp = httpClient.execute(request)) {
-            if(resp.getStatusCode() == 200) {
+            if (resp.getStatusCode() == 200) {
                 ObjectMapper objectMapper = new ObjectMapper();
-                WriteBlobResponse writeBlobResponse = objectMapper.readValue(resp.getEntity(), WriteBlobResponse.class);
+                APIModel.Blob writeBlobResponse = objectMapper.readValue(resp.getEntity(), APIModel.Blob.class);
                 System.out.println(writeBlobResponse.blobId);
-                return new BlobDatum(writeBlobResponse.blobId, writeBlobResponse.contentType, writeBlobResponse.length);
+                return writeBlobResponse;
             } else {
                 throw new PlatformException("Failed to write blob");
             }
@@ -37,21 +38,21 @@ public class RemoteBlobApiClient implements BlobApiClient {
     }
 
     @Override
-    public Blob readBlob(String prefix, String blobId, String expectedContentType) {
+    public BlobResponse readBlob(String prefix, String blobId, String expectedContentType) {
         HttpClient.HttpRequest request = HttpClient.prepareGet(apiUrlBase + "/" + prefix + "/" + blobId).withHeader("Accept", expectedContentType);
         try (HttpClient.HttpResponse resp = httpClient.execute(request)) {
-            if(resp.getStatusCode() == 200) {
-                Blob blob = new Blob();
+            if (resp.getStatusCode() == 200) {
+                BlobResponse blobResponse = new BlobResponse();
                 // Shouldn't be reading a Java object here, as the content could be anything
                 // but the stream is closed if we just return it
                 try (ObjectInputStream ois = new ObjectInputStream(resp.getEntity())) {
-                    blob.data= ois.readObject();
+                    blobResponse.data = ois.readObject();
                 } catch (ClassNotFoundException e) {
                     throw new PlatformException("Failed to deserialize blob");
                 }
-                blob.contentType = resp.getHeaderValue("Content-type").orElse("application/octet-stream");
-                blob.length = Integer.parseInt(resp.getHeaderValue("Content-length").orElse("0"));
-                return blob;
+                blobResponse.contentType = resp.getHeaderValue("Content-type").orElse("application/octet-stream");
+                blobResponse.length = Integer.parseInt(resp.getHeaderValue("Content-length").orElse("0"));
+                return blobResponse;
             } else {
                 throw new PlatformException("Failed to read blob");
             }
