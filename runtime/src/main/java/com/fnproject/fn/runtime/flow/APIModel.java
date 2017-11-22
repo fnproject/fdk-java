@@ -71,6 +71,14 @@ public class APIModel {
     })
 
 
+    public static class CompletionResult {
+        @JsonProperty("result")
+        public Datum result;
+
+        @JsonProperty("successful")
+        public Boolean successful;
+    }
+
     public static abstract class Datum {
 
     }
@@ -82,12 +90,12 @@ public class APIModel {
 
     public static final class BlobDatum extends Datum {
         @JsonUnwrapped
-        Blob blob;
+        public Blob blob;
     }
 
     public static final class StageRefDatum extends Datum {
         @JsonProperty("stage_id")
-        String stageId;
+        public String stageId;
     }
 
 
@@ -104,9 +112,9 @@ public class APIModel {
 
     public static final class ErrorDatum extends Datum {
         @JsonProperty("type")
-        ErrorType type;
+        public ErrorType type;
         @JsonProperty("message")
-        String message;
+        public String message;
     }
 
 
@@ -122,19 +130,28 @@ public class APIModel {
     }
 
     public static final class HTTPHeader {
-        String key;
-        String value;
+        @JsonProperty("key")
+        public String key;
+
+        @JsonProperty("value")
+        public String value;
+    }
+
+
+    public static final class HTTPReq {
+        @JsonProperty("body")
+        public Blob body;
+
+        @JsonProperty("headers")
+        public List<HTTPHeader> headers;
+
+        @JsonProperty("method")
+        public HTTPMethod method;
     }
 
     public static final class HTTPReqDatum extends Datum {
-        @JsonProperty("body")
-        Blob body;
-
-        @JsonProperty("headers")
-        List<HTTPHeader> headers;
-
-        @JsonProperty("method")
-        HTTPMethod method;
+        @JsonUnwrapped
+        public HTTPReq req;
 
     }
 
@@ -150,28 +167,34 @@ public class APIModel {
     public static final class StateDatum extends Datum {
 
         @JsonProperty("type")
-        StateDatumType type;
+        public StateDatumType type;
+    }
+
+    public static final class HTTPResp {
+        @JsonProperty("body")
+        public Blob body;
+
+        @JsonProperty("status_code")
+        public Integer statusCode;
     }
 
     public static final class HTTPRespDatum extends Datum {
-        @JsonProperty("body")
-        Blob body;
-
-        @JsonProperty("status_code")
-        Integer statusCode;
+        @JsonUnwrapped
+        public HTTPResp resp;
 
     }
 
     public static class AddStageResponse {
         @JsonProperty("flow_id")
-        String flowId;
+        public String flowId;
+
         @JsonProperty("stage_id")
-        String stageId;
+        public String stageId;
     }
 
     static class CreateGraphResponse {
         @JsonProperty("flow_id")
-        String flowId;
+        public String flowId;
     }
 
     public static class CreateGraphRequest {
@@ -180,21 +203,80 @@ public class APIModel {
         }
 
         @JsonProperty("function_id")
-        String functionId;
+        public String functionId;
     }
-
 
 
     public static class AddStageRequest {
         @JsonProperty("operation")
-        CompletionOperation operation;
+        public CompletionOperation operation;
+
         @JsonProperty("closure")
-        Blob closure;
+        public Blob closure;
+
         @JsonProperty("deps")
-        List<String> deps;
+        public List<String> deps;
+
         @JsonProperty("code_location")
-        String codeLocation;
+        public String codeLocation;
+
         @JsonProperty("caller_id")
-        String callerId;
+        public String callerId;
+    }
+
+
+    public static class CompleteStageExternallyRequest {
+        @JsonProperty("value")
+        public CompletionResult value;
+
+        @JsonProperty("code_location")
+        public String codeLocation;
+
+        @JsonProperty("caller_id")
+        public String callerId;
+    }
+
+
+    public static class AddCompletedValueStageRequest {
+        @JsonProperty("value")
+        public CompletionResult value;
+
+        @JsonProperty("code_location")
+        public String codeLocation;
+
+        @JsonProperty("caller_id")
+        public String callerId;
+    }
+
+    public static class AddDelayStageRequest {
+        @JsonProperty("delay_ms")
+        public Long delayMs;
+
+        @JsonProperty("code_location")
+        public String codeLocation;
+
+        @JsonProperty("caller_id")
+        public String callerId;
+    }
+
+
+    public static class AddInvokeFunctionStageRequest {
+        @JsonProperty("function_id")
+        public String functionId;
+
+        @JsonProperty("body")
+        public HTTPReq body;
+
+        @JsonProperty("code_location")
+        public String codeLocation;
+
+        @JsonProperty("caller_id")
+        public String callerId;
+    }
+
+
+    public static class AwaitStageResponse {
+        @JsonProperty("result")
+        public CompletionResult result;
     }
 }
