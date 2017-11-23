@@ -1,15 +1,14 @@
 package com.fnproject.fn.runtime.flow;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fnproject.fn.api.*;
 import com.fnproject.fn.api.flow.*;
 import com.fnproject.fn.runtime.exception.FunctionInputHandlingException;
 import com.fnproject.fn.runtime.exception.InternalFunctionInvocationException;
-import com.fnproject.fn.runtime.flow.blobs.BlobApiClient;
+import com.fnproject.fn.runtime.flow.blobs.BlobResponse;
 import com.fnproject.fn.runtime.flow.blobs.RemoteBlobApiClient;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collections;
@@ -29,8 +28,7 @@ public final class FlowContinuationInvoker implements FunctionInvoker {
 
     private static final String DEFAULT_COMPLETER_BASE_URL = "http://completer-svc:8081";
     private static final String COMPLETER_BASE_URL = "COMPLETER_BASE_URL";
-    public static final String BLOB_ID_HEADER = "Fnproject-BlobId";
-    public static final String BLOB_LENGTH_HEADER = "Fnproject-BlobLength";
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     private static class URLCompleterClientFactory implements CompleterClientFactory {
         private final String completerBaseUrl;
@@ -93,63 +91,111 @@ public final class FlowContinuationInvoker implements FunctionInvoker {
                 }
             };
 
-
             Flows.setCurrentFlowSource(attachedSource);
 
             FlowRuntimeGlobals.setCurrentCompletionId(evt.getHeaders().get(STAGE_ID_HEADER)
                .map(CompletionId::new)
                .orElse(null));
 
-
             try {
                 return evt.consumeBody((is) -> {
-                    SerUtils.ContentStream cs;
                     try {
-                        cs = new SerUtils.ContentStream(
-                           evt.getHeaders().get(CONTENT_TYPE_HEADER)
-                              .orElseThrow(() -> new RuntimeException(CONTENT_TYPE_HEADER + " header not present, expected value to multipart/form-data")),
-                           is);
-                    } catch (IOException e) {
-                        throw new FunctionInputHandlingException("Error reading continuation content", e);
-                    }
-                    Object continuation;
-                    try {
-                        RemoteBlobApiClient blobClient = new RemoteBlobApiClient(completerBaseUrl + "/blobs", new HttpClient());
+                        APIModel.InvokeStageRequest invokeStageRequest = objectMapper.readValue(is, APIModel.InvokeStageRequest.class);
+                        HttpClient httpClient = new HttpClient();
+                        RemoteBlobApiClient blobClient = new RemoteBlobApiClient(completerBaseUrl + "/blobs", httpClient);
 
-                        // readObject for blobs returns a function, so that we can pass a blob client and flow Id to it
-                        continuation = ((BiFunction<BlobApiClient, FlowId, Object>) cs.readObject(DATUM_TYPE_BLOB)).apply(blobClient, flowId);
-
-                    } catch (IOException e) {
-                        throw new FunctionInputHandlingException("Error reading continuation content ", e);
-                    } catch (ClassNotFoundException e) {
-                        throw new FunctionInputHandlingException("Unable to extract closure object", e);
-                    } catch (SerUtils.Deserializer.DeserializeException e) {
-                        throw new FunctionInputHandlingException("Error deserializing closure argument", e);
-                    }
-                    for (DispatchPattern dp : Dispatchers.values()) {
-                        if (dp.matches(continuation)) {
-                            Object[] args = new Object[dp.numArguments()];
-                            for (int i = 0; i < args.length; i++) {
-                                try {
-                                    // This doesn't work for blobs passed by reference
-                                    args[i] = cs.readObject();
+                        if(invokeStageRequest.closure.contentType.equals(CONTENT_TYPE_JAVA_OBJECT)) {
+                            BlobResponse closureResponse = blobClient.readBlob(flowId.getId(), invokeStageRequest.closure.blobId, (requestInputStream) -> {
+                                try(ObjectInputStream objectInputStream = new ObjectInputStream(requestInputStream)) {
+                                    return objectInputStream.readObject();
                                 } catch (IOException e) {
-                                    throw new FunctionInputHandlingException("Error reading continuation content ", e);
+                                    throw new FunctionInputHandlingException("Error reading continuation content", e);
                                 } catch (ClassNotFoundException e) {
-                                    throw new FunctionInputHandlingException("Unable to extract closure argument", e);
-                                } catch (SerUtils.Deserializer.DeserializeException e) {
-                                    throw new FunctionInputHandlingException("Error deserializing closure argument", e);
+                                    throw new FunctionInputHandlingException("Error reading continuation content", e);
+                                }
+                            }, invokeStageRequest.closure.contentType);
+
+                            Object continuation = closureResponse.data;
+
+                            DispatchPattern matchingDispatchPattern = null;
+                            for(DispatchPattern dp : Dispatchers.values()) {
+                                if(dp.matches(continuation)) {
+                                    matchingDispatchPattern = dp;
+                                    break;
                                 }
                             }
 
-                            OutputEvent result = writeBlob(completerBaseUrl, flowId, invokeContinuation(continuation, dp.getInvokeMethod(continuation), args));
+                            if(matchingDispatchPattern != null) {
+                                if(invokeStageRequest.args != null) {
+                                    if (matchingDispatchPattern.numArguments() != invokeStageRequest.args.size()) {
+                                        throw new FunctionInputHandlingException("Number of arguments provided in InvokeStageRequest does not match the number required by the function type");
+                                    }
+                                }
+                            } else {
+                                throw new FunctionInputHandlingException("No functional interface type matches the supplied continuation class");
+                            }
+
+                            Object[] args;
+
+                            if(invokeStageRequest.args != null) {
+
+                                args = invokeStageRequest.args.stream().map(arg -> {
+                                    APIModel.Datum result = arg.result;
+                                    if (result instanceof APIModel.StageRefDatum) {
+
+                                        APIModel.StageRefDatum stageRefDatum = (APIModel.StageRefDatum) result;
+                                        return ((RemoteFlow) Flows.currentFlow()).createRemoteFlowFuture(new CompletionId(stageRefDatum.stageId));
+
+                                    } else if (result instanceof APIModel.BlobDatum) {
+
+                                        APIModel.Blob blob = ((APIModel.BlobDatum) result).blob;
+
+                                        BlobResponse blobResponse = blobClient.readBlob(flowId.getId(), blob.blobId, (requestInputStream) -> {
+                                            try (ObjectInputStream objectInputStream = new ObjectInputStream(requestInputStream)) {
+                                                return objectInputStream.readObject();
+                                            } catch (IOException e) {
+                                                throw new FunctionInputHandlingException("Error reading continuation content", e);
+
+                                            } catch (ClassNotFoundException e) {
+                                                throw new FunctionInputHandlingException("Error reading continuation content", e);
+                                            }
+                                        }, blob.contentType);
+
+                                        return blobResponse.data;
+
+                                    } else if (result instanceof APIModel.EmptyDatum) {
+                                        // EmptyDatum represents null
+                                        return null;
+                                    } else if (result instanceof APIModel.ErrorDatum) {
+                                        throw new FunctionInputHandlingException("Unhandled datum type: ErrorDatum");
+                                    } else if (result instanceof APIModel.HTTPReqDatum) {
+                                        throw new FunctionInputHandlingException("Unhandled datum type: HTTPReqDatum");
+                                    } else if (result instanceof APIModel.HTTPRespDatum) {
+                                        throw new FunctionInputHandlingException("Unhandled datum type: HTTPRespDatum");
+                                    } else if (result instanceof APIModel.StateDatum) {
+                                        throw new FunctionInputHandlingException("Unhandled datum type: StateDatum");
+                                    } else {
+                                        throw new FunctionInputHandlingException("Unknown datum type");
+                                    }
+
+                                }).toArray();
+
+                            } else {
+                                args = new Object[0];
+                            }
+
+                            OutputEvent result = writeBlob(completerBaseUrl, flowId, invokeContinuation(continuation, matchingDispatchPattern.getInvokeMethod(continuation), args));
+
                             return Optional.of(result);
+
+                        } else {
+                            throw new FunctionInputHandlingException("Content type of closure isn't a Java serialized object");
                         }
+
+                    } catch (IOException e) {
+                        throw new FunctionInputHandlingException("Error reading continuation content", e);
                     }
-
-                    throw new IllegalStateException("Invalid invocation - no dispatch mechanism found for " + continuation.getClass());
                 });
-
             } finally {
                 Flows.setCurrentFlowSource(null);
                 FlowRuntimeGlobals.setCurrentCompletionId(null);
@@ -189,21 +235,35 @@ public final class FlowContinuationInvoker implements FunctionInvoker {
         }
     }
 
-    // If the output event contains a blob, then write it to the blob store
-    // and return a modified output event that contains a reference to it
+    /** If the output event contains a blob, then write it to the blob store
+     *  and return a modified output event that contains a reference to it
+     *  This needs rolling into the invokeContinuation method
+     */
     private OutputEvent writeBlob(String completerBaseUrl, FlowId flowId, OutputEvent result) {
         Optional<String> contentType = result.getContentType();
         if (contentType.isPresent() && contentType.get().equals(CONTENT_TYPE_JAVA_OBJECT)) {
             try {
+
+                // Write blob to store
                 RemoteBlobApiClient blobClient = new RemoteBlobApiClient(completerBaseUrl + "/blobs", new HttpClient());
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                result.writeToOutput(baos);
-                APIModel.Blob blobDatum = blobClient.writeBlob(flowId.getId(), baos.toByteArray(), CONTENT_TYPE_JAVA_OBJECT);
-                HashMap<String, String> headers = new HashMap<>();
-                headers.put(BLOB_ID_HEADER, blobDatum.blobId);
-                headers.put(BLOB_LENGTH_HEADER, String.valueOf(blobDatum.blobLength));
-                headers.put(DATUM_TYPE_HEADER, DATUM_TYPE_BLOB);
-                return new ContinuationOutputEvent(true, CONTENT_TYPE_JAVA_OBJECT, headers, new byte[0]);
+                ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                result.writeToOutput(byteArrayOutputStream);
+                APIModel.Blob blobDatum = blobClient.writeBlob(flowId.getId(), byteArrayOutputStream.toByteArray(), CONTENT_TYPE_JAVA_OBJECT);
+
+                // Build response
+                APIModel.InvokeStageResponse invokeStageResponse = new APIModel.InvokeStageResponse();
+                APIModel.CompletionResult completionResult = new APIModel.CompletionResult();
+                completionResult.successful = true;
+                APIModel.BlobDatum outputBlob = new APIModel.BlobDatum();
+                outputBlob.blob = blobDatum;
+                completionResult.result = outputBlob;
+                invokeStageResponse.result = completionResult;
+
+                // Convert response to JSON
+                ByteArrayOutputStream bb = new ByteArrayOutputStream();
+                objectMapper.writeValue(bb, invokeStageResponse);
+
+                return new ContinuationOutputEvent(true, "application/json" , Collections.emptyMap(), bb.toByteArray());
             } catch (IOException e) {
                 throw new PlatformException("Unable to write result to blob store");
             }
@@ -288,35 +348,9 @@ public final class FlowContinuationInvoker implements FunctionInvoker {
             return Optional.ofNullable(contentType);
         }
 
-        /**
-         * We have no way of passing out headers through the functions platform.
-         * Instead, we put the additional headers we require in the *body* (ie, the entity becomes
-         * a single MIME-encoded entity (that is, an HTTP message *including* the status line).
-         */
         @Override
         public void writeToOutput(OutputStream out) throws IOException {
-            out.write("HTTP/1.1 200\r\n".getBytes());   // The completer wants this.
-
-            addHeader(out, RESULT_STATUS_HEADER, success ? RESULT_STATUS_SUCCESS : RESULT_STATUS_FAILURE);
-
-            if (contentType != null) {
-                addHeader(out, CONTENT_TYPE_HEADER, contentType);
-            }
-            for (Map.Entry<String, String> h : headers.entrySet()) {
-                addHeader(out, h.getKey(), h.getValue());
-            }
-
-            addHeader(out, "Content-Length", Long.toString(body.length));
-            out.write(new byte[]{'\r', '\n'});
-
             out.write(body);
-        }
-
-        private void addHeader(OutputStream out, String name, String value) throws IOException {
-            out.write(name.getBytes());
-            out.write(new byte[]{':', ' '});
-            out.write(value.getBytes());
-            out.write(new byte[]{'\r', '\n'});
         }
 
         public Headers getHeaders() {
@@ -359,8 +393,12 @@ public final class FlowContinuationInvoker implements FunctionInvoker {
     }
 
     private static OutputEvent constructJavaObjectOutputEvent(Object obj) throws IOException {
-        byte[] serializedObject = SerUtils.serialize(obj);
-        return new ContinuationOutputEvent(true, CONTENT_TYPE_JAVA_OBJECT, Collections.singletonMap(DATUM_TYPE_HEADER, DATUM_TYPE_BLOB), serializedObject);
+        try (final ByteArrayOutputStream baos = new ByteArrayOutputStream(512)) {
+            try (final ObjectOutputStream out = new ObjectOutputStream(baos)) {
+                out.writeObject(obj);
+                return new ContinuationOutputEvent(true, CONTENT_TYPE_JAVA_OBJECT, Collections.singletonMap(DATUM_TYPE_HEADER, DATUM_TYPE_BLOB), baos.toByteArray());
+            }
+        }
     }
 
     private interface DispatchPattern {

@@ -59,26 +59,23 @@ public class APIModel {
         public String contentType;
     }
 
-
-    @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.WRAPPER_OBJECT)
-    @JsonSubTypes({@JsonSubTypes.Type(name = "empty", value = EmptyDatum.class),
-       @JsonSubTypes.Type(name = "blob", value = BlobDatum.class),
-       @JsonSubTypes.Type(name = "stage_ref", value = StageRefDatum.class),
-       @JsonSubTypes.Type(name = "error", value = ErrorDatum.class),
-       @JsonSubTypes.Type(name = "http_req", value = HTTPReqDatum.class),
-       @JsonSubTypes.Type(name = "http_resp", value = HTTPRespDatum.class),
-       @JsonSubTypes.Type(name = "state", value = StateDatum.class),
-
-    })
-
-
     public static class CompletionResult {
-        @JsonProperty("result")
+        @JsonProperty("datum")
         public Datum result;
 
         @JsonProperty("successful")
         public Boolean successful;
     }
+
+    @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.WRAPPER_OBJECT)
+    @JsonSubTypes({@JsonSubTypes.Type(name = "Empty", value = EmptyDatum.class),
+            @JsonSubTypes.Type(name = "blob", value = BlobDatum.class),
+            @JsonSubTypes.Type(name = "stage_ref", value = StageRefDatum.class),
+            @JsonSubTypes.Type(name = "error", value = ErrorDatum.class),
+            @JsonSubTypes.Type(name = "http_req", value = HTTPReqDatum.class),
+            @JsonSubTypes.Type(name = "http_resp", value = HTTPRespDatum.class),
+            @JsonSubTypes.Type(name = "state", value = StateDatum.class),
+    })
 
     public static abstract class Datum {
 
@@ -292,8 +289,7 @@ public class APIModel {
         public Blob closure;
 
         @JsonProperty("args")
-        public List<Datum> args;
-
+        public List<CompletionResult> args;
     }
 
     public static class InvokeStageResponse {

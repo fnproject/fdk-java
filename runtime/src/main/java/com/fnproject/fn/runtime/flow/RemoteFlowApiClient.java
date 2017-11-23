@@ -10,7 +10,6 @@ import com.fnproject.fn.runtime.flow.blobs.BlobApiClient;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -24,13 +23,7 @@ public class RemoteFlowApiClient implements CompleterClient {
     private transient final HttpClient httpClient;
     private final String apiUrlBase;
     private final BlobApiClient blobApiClient;
-
-    private static final String HEADER_PREFIX = "FnProject-";
-    public static final String CALLER_ID_HEADER = HEADER_PREFIX + "CallerID";
-
     public static final String CONTENT_TYPE_JAVA_OBJECT = "application/java-serialized-object";
-
-    public static final String DATUM_TYPE_HEADER = HEADER_PREFIX + "DatumType";
 
     public RemoteFlowApiClient(String apiUrlBase, BlobApiClient blobClient, HttpClient httpClient) {
         this.apiUrlBase = Objects.requireNonNull(apiUrlBase);

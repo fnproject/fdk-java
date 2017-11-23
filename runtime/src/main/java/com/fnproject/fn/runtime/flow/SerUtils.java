@@ -87,10 +87,17 @@ final class SerUtils {
 
             Optional<String> blobId = h.getHeaderValue("FnProject-BlobId");
             if(blobId.isPresent()) {
-                // This is horrible, return a function, so that the caller can call this with a
-                // blob client and flow Id, as it knows them
+
                 BiFunction defer = (BiFunction<BlobApiClient, FlowId, Object>) (blobClient, flowId) -> {
-                    BlobResponse blobResponse = blobClient.readBlob(flowId.getId(), blobId.get(), contentType);
+                    BlobResponse blobResponse = blobClient.readBlob(flowId.getId(), blobId.get(), (requestInputStream) -> {
+                        try(ObjectInputStream objectInputStream = new ObjectInputStream(requestInputStream)) {
+                            return objectInputStream.readObject();
+                        } catch (IOException e) {
+                            throw new FunctionInputHandlingException("Error reading continuation content", e);
+                        } catch (ClassNotFoundException e) {
+                            throw new FunctionInputHandlingException("Error reading continuation content", e);
+                        }
+                    }, contentType);
                     return blobResponse.data;
                 };
                 return new ContentPart(dt, contentType, defer);

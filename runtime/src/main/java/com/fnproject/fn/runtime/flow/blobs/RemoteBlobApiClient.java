@@ -7,7 +7,8 @@ import com.fnproject.fn.runtime.flow.APIModel;
 import com.fnproject.fn.runtime.flow.HttpClient;
 
 import java.io.IOException;
-import java.io.ObjectInputStream;
+import java.io.InputStream;
+import java.util.function.Function;
 
 public class RemoteBlobApiClient implements BlobApiClient {
     private final String apiUrlBase;
@@ -38,18 +39,12 @@ public class RemoteBlobApiClient implements BlobApiClient {
     }
 
     @Override
-    public BlobResponse readBlob(String prefix, String blobId, String expectedContentType) {
+    public BlobResponse readBlob(String prefix, String blobId, Function<InputStream, Object> writer, String expectedContentType) {
         HttpClient.HttpRequest request = HttpClient.prepareGet(apiUrlBase + "/" + prefix + "/" + blobId).withHeader("Accept", expectedContentType);
         try (HttpClient.HttpResponse resp = httpClient.execute(request)) {
             if (resp.getStatusCode() == 200) {
                 BlobResponse blobResponse = new BlobResponse();
-                // Shouldn't be reading a Java object here, as the content could be anything
-                // but the stream is closed if we just return it
-                try (ObjectInputStream ois = new ObjectInputStream(resp.getEntity())) {
-                    blobResponse.data = ois.readObject();
-                } catch (ClassNotFoundException e) {
-                    throw new PlatformException("Failed to deserialize blob");
-                }
+                blobResponse.data = writer.apply(resp.getEntity());
                 blobResponse.contentType = resp.getHeaderValue("Content-type").orElse("application/octet-stream");
                 blobResponse.length = Integer.parseInt(resp.getHeaderValue("Content-length").orElse("0"));
                 return blobResponse;
