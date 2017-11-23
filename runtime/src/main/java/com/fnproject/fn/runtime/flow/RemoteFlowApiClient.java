@@ -63,22 +63,22 @@ public class RemoteFlowApiClient implements CompleterClient {
 
     @Override
     public CompletionId thenCompose(FlowId flowId, CompletionId completionId, Serializable fn, CodeLocation codeLocation) {
-        return null;
+        return addChainedStage(APIModel.CompletionOperation.THEN_COMPOSE, completionId, flowId, fn, codeLocation);
     }
 
     @Override
     public CompletionId whenComplete(FlowId flowId, CompletionId completionId, Serializable fn, CodeLocation codeLocation) {
-        return null;
+        return addChainedStage(APIModel.CompletionOperation.WHEN_COMPLETE, completionId, flowId, fn, codeLocation);
     }
 
     @Override
     public CompletionId thenAccept(FlowId flowId, CompletionId completionId, Serializable fn, CodeLocation codeLocation) {
-        return null;
+        return addChainedStage(APIModel.CompletionOperation.THEN_ACCEPT, completionId, flowId, fn, codeLocation);
     }
 
     @Override
     public CompletionId thenRun(FlowId flowId, CompletionId completionId, Serializable fn, CodeLocation codeLocation) {
-        return null;
+        return addChainedStage(APIModel.CompletionOperation.THEN_RUN, completionId, flowId, fn, codeLocation);
     }
 
     @Override
@@ -123,17 +123,17 @@ public class RemoteFlowApiClient implements CompleterClient {
 
     @Override
     public CompletionId exceptionally(FlowId flowId, CompletionId completionId, Serializable fn, CodeLocation codeLocation) {
-        return null;
+        return addChainedStage(APIModel.CompletionOperation.EXCEPTIONALLY, completionId, flowId, fn, codeLocation);
     }
 
     @Override
     public CompletionId exceptionallyCompose(FlowId flowId, CompletionId completionId, Serializable fn, CodeLocation codeLocation) {
-        return null;
+        return addChainedStage(APIModel.CompletionOperation.EXCEPTIONALLY_COMPOSE, completionId, flowId, fn, codeLocation);
     }
 
     @Override
     public CompletionId thenCombine(FlowId flowId, CompletionId completionId, Serializable fn, CompletionId alternate, CodeLocation codeLocation) {
-        return null;
+        return addChainedStage(APIModel.CompletionOperation.THEN_COMBINE, completionId, flowId, fn, codeLocation);
     }
 
     @Override
