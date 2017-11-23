@@ -98,13 +98,24 @@ public class APIModel {
 
 
     public enum ErrorType {
-        UnknownError,
-        StageTimeout,
-        StageFailed,
-        FunctionTimeout,
-        FunctionInvokeFailed,
-        StageLost,
-        InvalidStageResponse
+        UnknownError("unknown_error"),
+        StageTimeout("stage_timeout"),
+        StageFailed("stage_failed"),
+        FunctionTimeout("function_timeout"),
+        FunctionInvokeFailed("function_invoke_failed"),
+        StageLost("stage_lost"),
+        InvalidStageResponse("invalid_stage_response");
+
+        private String errorType;
+
+        ErrorType(String errorType) {
+            this.errorType = errorType;
+        }
+
+        @JsonValue
+        String getName() {
+            return errorType;
+        }
     }
 
 

@@ -167,7 +167,24 @@ public final class FlowContinuationInvoker implements FunctionInvoker {
                                         // EmptyDatum represents null
                                         return null;
                                     } else if (result instanceof APIModel.ErrorDatum) {
-                                        throw new FunctionInputHandlingException("Unhandled datum type: ErrorDatum");
+                                        APIModel.ErrorDatum errorDatum = (APIModel.ErrorDatum) result;
+                                        switch(errorDatum.type) {
+                                            case StageTimeout:
+                                                return new StageTimeoutException(errorDatum.message);
+                                            case StageLost:
+                                                return new StageLostException(errorDatum.message);
+                                            case StageFailed:
+                                                return new StageInvokeFailedException(errorDatum.message);
+                                            case FunctionTimeout:
+                                                return new FunctionTimeoutException(errorDatum.message);
+                                            case FunctionInvokeFailed:
+                                                return new FunctionInvokeFailedException(errorDatum.message);
+                                            case InvalidStageResponse:
+                                                return new InvalidStageResponseException(errorDatum.message);
+                                            default:
+                                                return new PlatformException(errorDatum.message);
+                                        }
+
                                     } else if (result instanceof APIModel.HTTPReqDatum) {
                                         throw new FunctionInputHandlingException("Unhandled datum type: HTTPReqDatum");
                                     } else if (result instanceof APIModel.HTTPRespDatum) {
