@@ -6,7 +6,6 @@ import com.fnproject.fn.runtime.exception.PlatformCommunicationException;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;

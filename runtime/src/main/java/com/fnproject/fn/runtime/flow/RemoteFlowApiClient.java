@@ -10,13 +10,13 @@ import com.fnproject.fn.runtime.flow.blobs.BlobApiClient;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
+
+import static com.fnproject.fn.runtime.flow.RemoteCompleterApiClient.CONTENT_TYPE_HEADER;
+import static com.fnproject.fn.runtime.flow.RemoteCompleterApiClient.DEFAULT_CONTENT_TYPE;
 
 /**
  * REST client for accessing the Flow service API
@@ -26,6 +26,7 @@ public class RemoteFlowApiClient implements CompleterClient {
     private final String apiUrlBase;
     private final BlobApiClient blobApiClient;
     public static final String CONTENT_TYPE_JAVA_OBJECT = "application/java-serialized-object";
+    private ObjectMapper objectMapper = new ObjectMapper();
 
     public RemoteFlowApiClient(String apiUrlBase, BlobApiClient blobClient, HttpClient httpClient) {
         this.apiUrlBase = Objects.requireNonNull(apiUrlBase);
@@ -38,7 +39,7 @@ public class RemoteFlowApiClient implements CompleterClient {
         try {
             APIModel.CreateGraphRequest createGraphRequest = new APIModel.CreateGraphRequest(functionId);
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ObjectMapper objectMapper = new ObjectMapper();
+            ObjectMapper objectMapper = this.objectMapper;
             objectMapper.writeValue(baos, createGraphRequest);
             HttpClient.HttpRequest request = HttpClient.preparePost(apiUrlBase + "/flows").withBody(baos.toByteArray());
             try (HttpClient.HttpResponse resp = httpClient.execute(request)) {
@@ -107,7 +108,38 @@ public class RemoteFlowApiClient implements CompleterClient {
 
     @Override
     public CompletionId invokeFunction(FlowId flowId, String functionId, byte[] data, HttpMethod method, Headers headers, CodeLocation codeLocation) {
-        return null;
+
+        APIModel.HTTPReq httpReq = new APIModel.HTTPReq();
+
+        if(headers != null) {
+            if(data.length > 0) {
+                APIModel.Blob blob = blobApiClient.writeBlob(flowId.getId(), data, headers.get(CONTENT_TYPE_HEADER).orElse(DEFAULT_CONTENT_TYPE));
+                httpReq.body = blob;
+            }
+
+            httpReq.headers = new ArrayList<>();
+
+            headers.getAll().forEach((k, v) -> {
+                APIModel.HTTPHeader h = new APIModel.HTTPHeader();
+                h.key = k;
+                h.value = v;
+                httpReq.headers.add(h);
+            });
+        }
+
+        httpReq.method = APIModel.HTTPMethod.fromString(method.toString());
+
+        APIModel.AddInvokeFunctionStageRequest addInvokeFunctionStageRequest = new APIModel.AddInvokeFunctionStageRequest();
+        addInvokeFunctionStageRequest.arg = httpReq;
+        addInvokeFunctionStageRequest.codeLocation = codeLocation.getLocation();
+        addInvokeFunctionStageRequest.callerId = FlowRuntimeGlobals.getCurrentCompletionId().map(CompletionId::toString).orElse(null);;
+        addInvokeFunctionStageRequest.functionId = functionId;
+
+        try {
+            return executeAddInvokeFunctionStageRequest(flowId, addInvokeFunctionStageRequest);
+        } catch (IOException e) {
+            throw new PlatformException("Failed to create invokeFunction stage", e);
+        }
     }
 
     @Override
@@ -247,7 +279,6 @@ public class RemoteFlowApiClient implements CompleterClient {
 
     private CompletionId executeAddStageRequest(FlowId flowId, APIModel.AddStageRequest addStageRequest) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.writeValue(baos, addStageRequest);
 
         HttpClient.HttpRequest request = HttpClient.preparePost(apiUrlBase + "/flows/" + flowId.getId() + "/stage").withBody(baos.toByteArray());
@@ -260,12 +291,27 @@ public class RemoteFlowApiClient implements CompleterClient {
         }
     }
 
-    private CompletionId executeAddCompletedValueStageRequest(FlowId flowId, APIModel.AddCompletedValueStageRequest addStageRequest) throws IOException {
+    private CompletionId executeAddCompletedValueStageRequest(FlowId flowId, APIModel.AddCompletedValueStageRequest addCompletedValueStageRequest) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.writeValue(baos, addStageRequest);
+        objectMapper.writeValue(baos, addCompletedValueStageRequest);
 
         HttpClient.HttpRequest request = HttpClient.preparePost(apiUrlBase + "/flows/" + flowId.getId() + "/value").withBody(baos.toByteArray());
+        try (HttpClient.HttpResponse resp = httpClient.execute(request)) {
+            validateSuccessful(resp);
+            APIModel.AddStageResponse addStageResponse = objectMapper.readValue(resp.body, APIModel.AddStageResponse.class);
+            return new CompletionId(addStageResponse.stageId);
+        } catch (Exception e) {
+            throw new PlatformCommunicationException("Failed to add stage ", e);
+        }
+    }
+
+    private CompletionId executeAddInvokeFunctionStageRequest(FlowId flowId, APIModel.AddInvokeFunctionStageRequest addInvokeFunctionStageRequest) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        objectMapper.writeValue(baos, addInvokeFunctionStageRequest);
+
+        byte[] bytes = baos.toByteArray();
+        System.out.println(new String(bytes));
+        HttpClient.HttpRequest request = HttpClient.preparePost(apiUrlBase + "/flows/" + flowId.getId() + "/invoke").withBody(bytes);
         try (HttpClient.HttpResponse resp = httpClient.execute(request)) {
             validateSuccessful(resp);
             APIModel.AddStageResponse addStageResponse = objectMapper.readValue(resp.body, APIModel.AddStageResponse.class);
