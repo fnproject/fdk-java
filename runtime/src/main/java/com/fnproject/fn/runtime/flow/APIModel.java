@@ -68,7 +68,8 @@ public class APIModel {
     }
 
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.WRAPPER_OBJECT)
-    @JsonSubTypes({@JsonSubTypes.Type(name = "Empty", value = EmptyDatum.class),
+    @JsonSubTypes({
+            @JsonSubTypes.Type(name = "empty", value = EmptyDatum.class),
             @JsonSubTypes.Type(name = "blob", value = BlobDatum.class),
             @JsonSubTypes.Type(name = "stage_ref", value = StageRefDatum.class),
             @JsonSubTypes.Type(name = "error", value = ErrorDatum.class),
