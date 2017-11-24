@@ -365,6 +365,7 @@ public final class FlowContinuationInvoker implements FunctionInvoker {
         completionResult.successful = true;
         APIModel.StageRefDatum stageRefDatum = new APIModel.StageRefDatum();
         stageRefDatum.stageId = future.id();
+        completionResult.result = stageRefDatum;
         invokeStageResponse.result = completionResult;
 
         ByteArrayOutputStream bb = new ByteArrayOutputStream();
