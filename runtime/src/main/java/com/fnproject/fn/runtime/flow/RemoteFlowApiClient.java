@@ -112,7 +112,27 @@ public class RemoteFlowApiClient implements CompleterClient {
 
     @Override
     public CompletionId completedValue(FlowId flowId, boolean success, Object value, CodeLocation codeLocation) {
-        return null;
+        try {
+            // Only support blob datums at the moment
+            byte[]  serialized = SerUtils.serialize(value);
+            APIModel.Blob blob = blobApiClient.writeBlob(flowId.getId(), serialized, CONTENT_TYPE_JAVA_OBJECT);
+
+            APIModel.BlobDatum blobDatum = new APIModel.BlobDatum();
+            blobDatum.blob = blob;
+
+            APIModel.AddCompletedValueStageRequest addCompletedValueStageRequest = new APIModel.AddCompletedValueStageRequest();
+            addCompletedValueStageRequest.callerId = FlowRuntimeGlobals.getCurrentCompletionId().map(CompletionId::toString).orElse(null);;
+            addCompletedValueStageRequest.codeLocation = codeLocation.getLocation();
+            APIModel.CompletionResult completionResult = new APIModel.CompletionResult();
+            completionResult.successful = true;
+            completionResult.result = blobDatum;
+
+            addCompletedValueStageRequest.value = completionResult;
+
+            return executeAddCompletedValueStageRequest(flowId, addCompletedValueStageRequest);
+        } catch (IOException e) {
+            throw new PlatformException("Failed to create completedValue stage", e);
+        }
     }
 
     @Override
@@ -231,6 +251,21 @@ public class RemoteFlowApiClient implements CompleterClient {
         objectMapper.writeValue(baos, addStageRequest);
 
         HttpClient.HttpRequest request = HttpClient.preparePost(apiUrlBase + "/flows/" + flowId.getId() + "/stage").withBody(baos.toByteArray());
+        try (HttpClient.HttpResponse resp = httpClient.execute(request)) {
+            validateSuccessful(resp);
+            APIModel.AddStageResponse addStageResponse = objectMapper.readValue(resp.body, APIModel.AddStageResponse.class);
+            return new CompletionId(addStageResponse.stageId);
+        } catch (Exception e) {
+            throw new PlatformCommunicationException("Failed to add stage ", e);
+        }
+    }
+
+    private CompletionId executeAddCompletedValueStageRequest(FlowId flowId, APIModel.AddCompletedValueStageRequest addStageRequest) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.writeValue(baos, addStageRequest);
+
+        HttpClient.HttpRequest request = HttpClient.preparePost(apiUrlBase + "/flows/" + flowId.getId() + "/value").withBody(baos.toByteArray());
         try (HttpClient.HttpResponse resp = httpClient.execute(request)) {
             validateSuccessful(resp);
             APIModel.AddStageResponse addStageResponse = objectMapper.readValue(resp.body, APIModel.AddStageResponse.class);
