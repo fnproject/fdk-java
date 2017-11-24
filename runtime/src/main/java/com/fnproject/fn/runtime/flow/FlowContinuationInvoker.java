@@ -5,6 +5,7 @@ import com.fnproject.fn.api.*;
 import com.fnproject.fn.api.flow.*;
 import com.fnproject.fn.runtime.exception.FunctionInputHandlingException;
 import com.fnproject.fn.runtime.exception.InternalFunctionInvocationException;
+import com.fnproject.fn.runtime.flow.blobs.BlobApiClient;
 import com.fnproject.fn.runtime.flow.blobs.BlobResponse;
 import com.fnproject.fn.runtime.flow.blobs.RemoteBlobApiClient;
 
@@ -140,6 +141,7 @@ public final class FlowContinuationInvoker implements FunctionInvoker {
                             if(invokeStageRequest.args != null) {
 
                                 args = invokeStageRequest.args.stream().map(arg -> {
+
                                     APIModel.Datum result = arg.result;
                                     if (result instanceof APIModel.StageRefDatum) {
 
@@ -201,7 +203,7 @@ public final class FlowContinuationInvoker implements FunctionInvoker {
                                 args = new Object[0];
                             }
 
-                            OutputEvent result = writeBlob(completerBaseUrl, flowId, invokeContinuation(continuation, matchingDispatchPattern.getInvokeMethod(continuation), args));
+                            OutputEvent result = invokeContinuation(blobClient, flowId, continuation, matchingDispatchPattern.getInvokeMethod(continuation), args);
 
                             return Optional.of(result);
 
@@ -252,44 +254,7 @@ public final class FlowContinuationInvoker implements FunctionInvoker {
         }
     }
 
-    /** If the output event contains a blob, then write it to the blob store
-     *  and return a modified output event that contains a reference to it
-     *  This needs rolling into the invokeContinuation method
-     */
-    private OutputEvent writeBlob(String completerBaseUrl, FlowId flowId, OutputEvent result) {
-        Optional<String> contentType = result.getContentType();
-        if (contentType.isPresent() && contentType.get().equals(CONTENT_TYPE_JAVA_OBJECT)) {
-            try {
-
-                // Write blob to store
-                RemoteBlobApiClient blobClient = new RemoteBlobApiClient(completerBaseUrl + "/blobs", new HttpClient());
-                ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-                result.writeToOutput(byteArrayOutputStream);
-                APIModel.Blob blobDatum = blobClient.writeBlob(flowId.getId(), byteArrayOutputStream.toByteArray(), CONTENT_TYPE_JAVA_OBJECT);
-
-                // Build response
-                APIModel.InvokeStageResponse invokeStageResponse = new APIModel.InvokeStageResponse();
-                APIModel.CompletionResult completionResult = new APIModel.CompletionResult();
-                completionResult.successful = true;
-                APIModel.BlobDatum outputBlob = new APIModel.BlobDatum();
-                outputBlob.blob = blobDatum;
-                completionResult.result = outputBlob;
-                invokeStageResponse.result = completionResult;
-
-                // Convert response to JSON
-                ByteArrayOutputStream bb = new ByteArrayOutputStream();
-                objectMapper.writeValue(bb, invokeStageResponse);
-
-                return new ContinuationOutputEvent(true, "application/json" , Collections.emptyMap(), bb.toByteArray());
-            } catch (IOException e) {
-                throw new PlatformException("Unable to write result to blob store");
-            }
-        } else {
-            return result;
-        }
-    }
-
-    private static OutputEvent invokeContinuation(Object instance, Method m, Object[] args) {
+    private OutputEvent invokeContinuation(BlobApiClient blobApiClient, FlowId flowId, Object instance, Method m, Object[] args) {
         Object result;
         try {
             m.setAccessible(true);
@@ -299,7 +264,7 @@ public final class FlowContinuationInvoker implements FunctionInvoker {
             throw new InternalFunctionInvocationException(
                "Error invoking flows lambda",
                ite.getCause(),
-               constructExceptionOutputEvent(ite.getCause())
+               constructExceptionOutputEvent(ite.getCause(), blobApiClient, flowId)
             );
         } catch (Exception ex) {
             throw new PlatformException(ex);
@@ -316,14 +281,14 @@ public final class FlowContinuationInvoker implements FunctionInvoker {
                 return constructStageRefOutputEvent((RemoteFlow.RemoteFlowFuture) result);
             } else {
 
-                return constructJavaObjectOutputEvent(result);
+                return constructJavaObjectOutputEvent(result, true, blobApiClient, flowId);
             }
         } catch (IOException e) {
             ResultSerializationException rse = new ResultSerializationException("Result returned by stage is not serializable: " + e.getMessage(), e);
             throw new InternalFunctionInvocationException(
                "Error handling response from flow stage lambda",
                rse,
-               constructExceptionOutputEvent(rse)
+               constructExceptionOutputEvent(rse, blobApiClient, flowId)
             );
         }
     }
@@ -387,21 +352,15 @@ public final class FlowContinuationInvoker implements FunctionInvoker {
         return new ContinuationOutputEvent(true, null, Collections.singletonMap(DATUM_TYPE_HEADER, DATUM_TYPE_EMPTY), new byte[0]);
     }
 
-    private static OutputEvent constructExceptionOutputEvent(Throwable t) {
-        byte[] serializedException;
-        try {
-            serializedException = SerUtils.serialize(t);
-        } catch (IOException ignored) {
-            // do we need to do this? - can we use the FaaS Error types to construct these Exceptions?
-            try {
-                serializedException = SerUtils.serialize(new WrappedFunctionException(t));
-            } catch (IOException e) {
-                throw new PlatformException("Unexpected error serializing wrapped exception");
-            }
+    private OutputEvent constructExceptionOutputEvent(Throwable t, BlobApiClient blobClient, FlowId flowId) {
+       try {
+           return constructJavaObjectOutputEvent(t, false, blobClient, flowId);
+        } catch (IOException e) {
+            throw new PlatformException("Unexpected error serializing wrapped exception");
         }
-        return new ContinuationOutputEvent(false, CONTENT_TYPE_JAVA_OBJECT, Collections.singletonMap(DATUM_TYPE_HEADER, DATUM_TYPE_BLOB), serializedException);
     }
 
+    // TODO: this needs to be an output event with an InvokeStageResponse in it
     private static OutputEvent constructStageRefOutputEvent(RemoteFlow.RemoteFlowFuture future) {
         Map<String, String> headers = new HashMap<>();
         headers.put(DATUM_TYPE_HEADER, DATUM_TYPE_STAGEREF);
@@ -409,11 +368,32 @@ public final class FlowContinuationInvoker implements FunctionInvoker {
         return new ContinuationOutputEvent(true, null, headers, new byte[0]);
     }
 
-    private static OutputEvent constructJavaObjectOutputEvent(Object obj) throws IOException {
+    private OutputEvent constructJavaObjectOutputEvent(Object obj, boolean success, BlobApiClient blobClient, FlowId flowId) throws IOException {
         try (final ByteArrayOutputStream baos = new ByteArrayOutputStream(512)) {
             try (final ObjectOutputStream out = new ObjectOutputStream(baos)) {
+
+                // Serialize object
                 out.writeObject(obj);
-                return new ContinuationOutputEvent(true, CONTENT_TYPE_JAVA_OBJECT, Collections.singletonMap(DATUM_TYPE_HEADER, DATUM_TYPE_BLOB), baos.toByteArray());
+
+                // Write blob to store
+                APIModel.Blob blobDatum = blobClient.writeBlob(flowId.getId(), baos.toByteArray(), CONTENT_TYPE_JAVA_OBJECT);
+
+                // Build response
+                APIModel.InvokeStageResponse invokeStageResponse = new APIModel.InvokeStageResponse();
+                APIModel.CompletionResult completionResult = new APIModel.CompletionResult();
+
+                completionResult.successful = success;
+                APIModel.BlobDatum outputBlob = new APIModel.BlobDatum();
+                outputBlob.blob = blobDatum;
+                completionResult.result = outputBlob;
+                invokeStageResponse.result = completionResult;
+
+                // Convert response to JSON
+                ByteArrayOutputStream bb = new ByteArrayOutputStream();
+                objectMapper.writeValue(bb, invokeStageResponse);
+
+                return new ContinuationOutputEvent(success, "application/json", Collections.emptyMap(), bb.toByteArray());
+
             }
         }
     }
@@ -469,8 +449,5 @@ public final class FlowContinuationInvoker implements FunctionInvoker {
             this.numArguments = numArguments;
             this.methodName = methodName;
         }
-
     }
-
-
 }
