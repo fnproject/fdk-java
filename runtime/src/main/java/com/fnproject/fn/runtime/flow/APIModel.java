@@ -129,14 +129,34 @@ public class APIModel {
 
 
     public enum HTTPMethod {
-        UnknownMethod,
-        Get,
-        Head,
-        Post,
-        Put,
-        Delete,
-        Options,
-        Patch
+        UnknownMethod("unknown_method"),
+        Get("get"),
+        Head("head"),
+        Post("post"),
+        Put("put"),
+        Delete("delete"),
+        Options("options"),
+        Patch("patch");
+
+        private String method;
+
+        HTTPMethod(String method) {
+            this.method = method;
+        }
+
+        @JsonValue
+        String getName() {
+            return method;
+        }
+
+        public static HTTPMethod fromString(String method) {
+            for (HTTPMethod b : HTTPMethod.values()) {
+                if (b.method.equalsIgnoreCase(method)) {
+                    return b;
+                }
+            }
+            return null;
+        }
     }
 
     public static final class HTTPHeader {
@@ -149,7 +169,7 @@ public class APIModel {
 
 
     public static final class HTTPReq {
-        @JsonProperty("body")
+        @JsonProperty("arg")
         public Blob body;
 
         @JsonProperty("headers")
@@ -183,6 +203,9 @@ public class APIModel {
     public static final class HTTPResp {
         @JsonProperty("body")
         public Blob body;
+
+        @JsonProperty("headers")
+        public List<HTTPHeader> headers;
 
         @JsonProperty("status_code")
         public Integer statusCode;
@@ -274,8 +297,8 @@ public class APIModel {
         @JsonProperty("function_id")
         public String functionId;
 
-        @JsonProperty("body")
-        public HTTPReq body;
+        @JsonProperty("arg")
+        public HTTPReq arg;
 
         @JsonProperty("code_location")
         public String codeLocation;
