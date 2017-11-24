@@ -10,11 +10,13 @@ import com.fnproject.fn.runtime.flow.blobs.BlobApiClient;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 
 /**
  * REST client for accessing the Flow service API
@@ -53,47 +55,49 @@ public class RemoteFlowApiClient implements CompleterClient {
 
     @Override
     public CompletionId supply(FlowId flowId, Serializable supplier, CodeLocation codeLocation) {
-        return addStage(APIModel.CompletionOperation.SUPPLY, flowId, supplier, codeLocation);
+        return addStageWithClosure(APIModel.CompletionOperation.SUPPLY, flowId, supplier, codeLocation, Collections.emptyList());
     }
 
     @Override
     public CompletionId thenApply(FlowId flowId, CompletionId completionId, Serializable fn, CodeLocation codeLocation) {
-        return addChainedStage(APIModel.CompletionOperation.THEN_APPLY, completionId, flowId, fn, codeLocation);
+        return addStageWithClosure(APIModel.CompletionOperation.THEN_APPLY, flowId, fn, codeLocation, Collections.singletonList(completionId));
     }
 
     @Override
     public CompletionId thenCompose(FlowId flowId, CompletionId completionId, Serializable fn, CodeLocation codeLocation) {
-        return addChainedStage(APIModel.CompletionOperation.THEN_COMPOSE, completionId, flowId, fn, codeLocation);
+        return addStageWithClosure(APIModel.CompletionOperation.THEN_COMPOSE, flowId, fn, codeLocation, Collections.singletonList(completionId));
     }
 
     @Override
     public CompletionId whenComplete(FlowId flowId, CompletionId completionId, Serializable fn, CodeLocation codeLocation) {
-        return addChainedStage(APIModel.CompletionOperation.WHEN_COMPLETE, completionId, flowId, fn, codeLocation);
+        return addStageWithClosure(APIModel.CompletionOperation.WHEN_COMPLETE, flowId, fn, codeLocation, Collections.singletonList(completionId));
     }
 
     @Override
     public CompletionId thenAccept(FlowId flowId, CompletionId completionId, Serializable fn, CodeLocation codeLocation) {
-        return addChainedStage(APIModel.CompletionOperation.THEN_ACCEPT, completionId, flowId, fn, codeLocation);
+        return addStageWithClosure(APIModel.CompletionOperation.THEN_ACCEPT, flowId, fn, codeLocation, Collections.singletonList(completionId));
     }
 
     @Override
     public CompletionId thenRun(FlowId flowId, CompletionId completionId, Serializable fn, CodeLocation codeLocation) {
-        return addChainedStage(APIModel.CompletionOperation.THEN_RUN, completionId, flowId, fn, codeLocation);
+        return addStageWithClosure(APIModel.CompletionOperation.THEN_RUN, flowId, fn, codeLocation, Collections.singletonList(completionId));
     }
 
     @Override
     public CompletionId acceptEither(FlowId flowId, CompletionId completionId, CompletionId alternate, Serializable fn, CodeLocation codeLocation) {
-        return null;
+        return addStageWithClosure(APIModel.CompletionOperation.THEN_RUN, flowId, fn, codeLocation, Arrays.asList(completionId, alternate));
+
     }
 
     @Override
     public CompletionId applyToEither(FlowId flowId, CompletionId completionId, CompletionId alternate, Serializable fn, CodeLocation codeLocation) {
-        return null;
+        return addStageWithClosure(APIModel.CompletionOperation.THEN_RUN, flowId, fn, codeLocation, Arrays.asList(completionId, alternate));
+
     }
 
     @Override
     public CompletionId thenAcceptBoth(FlowId flowId, CompletionId completionId, CompletionId alternate, Serializable fn, CodeLocation codeLocation) {
-        return null;
+        return addStageWithClosure(APIModel.CompletionOperation.THEN_RUN, flowId, fn, codeLocation, Arrays.asList(completionId, alternate));
     }
 
 
@@ -112,28 +116,28 @@ public class RemoteFlowApiClient implements CompleterClient {
     }
 
     @Override
-    public CompletionId allOf(FlowId flowId, List<CompletionId> deps, CodeLocation codeLocation) {
-        return null;
+    public CompletionId allOf(FlowId flowId, List<CompletionId> cids, CodeLocation codeLocation) {
+        return addStage(APIModel.CompletionOperation.ALL_OF, null, cids, flowId, codeLocation);
     }
 
     @Override
     public CompletionId handle(FlowId flowId, CompletionId completionId, Serializable fn, CodeLocation codeLocation) {
-        return null;
+        return addStageWithClosure(APIModel.CompletionOperation.HANDLE, flowId, fn, codeLocation, Collections.singletonList(completionId));
     }
 
     @Override
     public CompletionId exceptionally(FlowId flowId, CompletionId completionId, Serializable fn, CodeLocation codeLocation) {
-        return addChainedStage(APIModel.CompletionOperation.EXCEPTIONALLY, completionId, flowId, fn, codeLocation);
+        return addStageWithClosure(APIModel.CompletionOperation.EXCEPTIONALLY, flowId, fn, codeLocation, Collections.singletonList(completionId));
     }
 
     @Override
     public CompletionId exceptionallyCompose(FlowId flowId, CompletionId completionId, Serializable fn, CodeLocation codeLocation) {
-        return addChainedStage(APIModel.CompletionOperation.EXCEPTIONALLY_COMPOSE, completionId, flowId, fn, codeLocation);
+        return addStageWithClosure(APIModel.CompletionOperation.EXCEPTIONALLY_COMPOSE, flowId, fn, codeLocation, Collections.singletonList(completionId));
     }
 
     @Override
     public CompletionId thenCombine(FlowId flowId, CompletionId completionId, Serializable fn, CompletionId alternate, CodeLocation codeLocation) {
-        return addChainedStage(APIModel.CompletionOperation.THEN_COMBINE, completionId, flowId, fn, codeLocation);
+        return addStageWithClosure(APIModel.CompletionOperation.THEN_COMBINE, flowId, fn, codeLocation, Collections.singletonList(completionId));
     }
 
     @Override
@@ -148,7 +152,7 @@ public class RemoteFlowApiClient implements CompleterClient {
 
     @Override
     public CompletionId anyOf(FlowId flowId, List<CompletionId> cids, CodeLocation codeLocation) {
-        return null;
+        return addStage(APIModel.CompletionOperation.ANY_OF, null, cids, flowId, codeLocation);
     }
 
     @Override
@@ -196,35 +200,28 @@ public class RemoteFlowApiClient implements CompleterClient {
         return response.getStatusCode() == 200 || response.getStatusCode() == 201;
     }
 
-    private CompletionId addStage(APIModel.CompletionOperation operation, FlowId flowId, Serializable supplier, CodeLocation codeLocation) {
+    private CompletionId addStageWithClosure(APIModel.CompletionOperation operation, FlowId flowId, Serializable supplier, CodeLocation codeLocation, List<CompletionId> deps) {
         try {
-            APIModel.AddStageRequest addStageRequest = new APIModel.AddStageRequest();
             byte[] serialized = SerUtils.serialize(supplier);
-            addStageRequest.closure = blobApiClient.writeBlob(flowId.getId(), serialized, CONTENT_TYPE_JAVA_OBJECT);
-            addStageRequest.operation = operation;
-            addStageRequest.codeLocation = codeLocation.getLocation();
-            addStageRequest.callerId = FlowRuntimeGlobals.getCurrentCompletionId().map(CompletionId::toString).orElse(null);
-
-            return executeAddStageRequest(flowId, addStageRequest);
+            APIModel.Blob closure = blobApiClient.writeBlob(flowId.getId(), serialized, CONTENT_TYPE_JAVA_OBJECT);
+            return addStage(operation, closure, deps, flowId, codeLocation);
         } catch (IOException e) {
-            throw new PlatformException("Failed to create AddStageRequest");
+            throw new PlatformException("Failed to create AddStageRequest", e);
         }
     }
 
-    private CompletionId addChainedStage(APIModel.CompletionOperation operation, CompletionId other, FlowId flowId, Serializable supplier, CodeLocation codeLocation) {
+    private CompletionId addStage(APIModel.CompletionOperation operation, APIModel.Blob closure, List<CompletionId> deps, FlowId flowId, CodeLocation codeLocation) {
         try {
             APIModel.AddStageRequest addStageRequest = new APIModel.AddStageRequest();
-            byte[] serialized = SerUtils.serialize(supplier);
-            addStageRequest.closure = blobApiClient.writeBlob(flowId.getId(), serialized, CONTENT_TYPE_JAVA_OBJECT);
-
+            addStageRequest.closure = closure;
             addStageRequest.operation = operation;
             addStageRequest.codeLocation = codeLocation.getLocation();
             addStageRequest.callerId = FlowRuntimeGlobals.getCurrentCompletionId().map(CompletionId::toString).orElse(null);
-            addStageRequest.deps = Collections.singletonList(other.getId());
+            addStageRequest.deps = deps.stream().map(dep -> dep.getId()).collect(Collectors.toList());
 
             return executeAddStageRequest(flowId, addStageRequest);
         } catch (IOException e) {
-            throw new PlatformException("Failed to create AddStageRequest");
+            throw new PlatformException("Failed to add stage", e);
         }
     }
 
