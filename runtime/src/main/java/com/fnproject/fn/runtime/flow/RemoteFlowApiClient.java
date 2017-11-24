@@ -209,7 +209,15 @@ public class RemoteFlowApiClient implements CompleterClient {
 
     @Override
     public CompletionId delay(FlowId flowId, long l, CodeLocation codeLocation) {
-        return null;
+        try {
+            APIModel.AddDelayStageRequest addDelayStageRequest = new APIModel.AddDelayStageRequest();
+            addDelayStageRequest.callerId = FlowRuntimeGlobals.getCurrentCompletionId().map(CompletionId::toString).orElse(null);;
+            addDelayStageRequest.codeLocation = codeLocation.getLocation();
+            addDelayStageRequest.delayMs = l;
+            return executeAddDelayStageRequest(flowId, addDelayStageRequest);
+        } catch (IOException e) {
+            throw new PlatformException("Failed to create completedValue stage", e);
+        }
     }
 
     // wait for completion  -> result
@@ -312,6 +320,22 @@ public class RemoteFlowApiClient implements CompleterClient {
         byte[] bytes = baos.toByteArray();
         System.out.println(new String(bytes));
         HttpClient.HttpRequest request = HttpClient.preparePost(apiUrlBase + "/flows/" + flowId.getId() + "/invoke").withBody(bytes);
+        try (HttpClient.HttpResponse resp = httpClient.execute(request)) {
+            validateSuccessful(resp);
+            APIModel.AddStageResponse addStageResponse = objectMapper.readValue(resp.body, APIModel.AddStageResponse.class);
+            return new CompletionId(addStageResponse.stageId);
+        } catch (Exception e) {
+            throw new PlatformCommunicationException("Failed to add stage ", e);
+        }
+    }
+
+    private CompletionId executeAddDelayStageRequest(FlowId flowId, APIModel.AddDelayStageRequest addDelayStageRequest) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        objectMapper.writeValue(baos, addDelayStageRequest);
+
+        byte[] bytes = baos.toByteArray();
+        System.out.println(new String(bytes));
+        HttpClient.HttpRequest request = HttpClient.preparePost(apiUrlBase + "/flows/" + flowId.getId() + "/delay").withBody(bytes);
         try (HttpClient.HttpResponse resp = httpClient.execute(request)) {
             validateSuccessful(resp);
             APIModel.AddStageResponse addStageResponse = objectMapper.readValue(resp.body, APIModel.AddStageResponse.class);
