@@ -13,7 +13,6 @@ import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Callable;
@@ -360,12 +359,18 @@ public final class FlowContinuationInvoker implements FunctionInvoker {
         }
     }
 
-    // TODO: this needs to be an output event with an InvokeStageResponse in it
-    private static OutputEvent constructStageRefOutputEvent(RemoteFlow.RemoteFlowFuture future) {
-        Map<String, String> headers = new HashMap<>();
-        headers.put(DATUM_TYPE_HEADER, DATUM_TYPE_STAGEREF);
-        headers.put(STAGE_ID_HEADER, future.id());
-        return new ContinuationOutputEvent(true, null, headers, new byte[0]);
+    private OutputEvent constructStageRefOutputEvent(RemoteFlow.RemoteFlowFuture future) throws IOException {
+        APIModel.InvokeStageResponse invokeStageResponse = new APIModel.InvokeStageResponse();
+        APIModel.CompletionResult completionResult = new APIModel.CompletionResult();
+        completionResult.successful = true;
+        APIModel.StageRefDatum stageRefDatum = new APIModel.StageRefDatum();
+        stageRefDatum.stageId = future.id();
+        invokeStageResponse.result = completionResult;
+
+        ByteArrayOutputStream bb = new ByteArrayOutputStream();
+        objectMapper.writeValue(bb, invokeStageResponse);
+
+        return new ContinuationOutputEvent(true, "application/json", Collections.emptyMap(), bb.toByteArray());
     }
 
     private OutputEvent constructJavaObjectOutputEvent(Object obj, boolean success, BlobApiClient blobClient, FlowId flowId) throws IOException {
@@ -393,7 +398,6 @@ public final class FlowContinuationInvoker implements FunctionInvoker {
                 objectMapper.writeValue(bb, invokeStageResponse);
 
                 return new ContinuationOutputEvent(success, "application/json", Collections.emptyMap(), bb.toByteArray());
-
             }
         }
     }
