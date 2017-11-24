@@ -8,6 +8,7 @@ import com.fnproject.fn.runtime.exception.InternalFunctionInvocationException;
 import com.fnproject.fn.runtime.flow.blobs.BlobApiClient;
 import com.fnproject.fn.runtime.flow.blobs.BlobResponse;
 import com.fnproject.fn.runtime.flow.blobs.RemoteBlobApiClient;
+import org.apache.commons.io.IOUtils;
 
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
@@ -189,7 +190,52 @@ public final class FlowContinuationInvoker implements FunctionInvoker {
                                     } else if (result instanceof APIModel.HTTPReqDatum) {
                                         throw new FunctionInputHandlingException("Unhandled datum type: HTTPReqDatum");
                                     } else if (result instanceof APIModel.HTTPRespDatum) {
-                                        throw new FunctionInputHandlingException("Unhandled datum type: HTTPRespDatum");
+                                        APIModel.HTTPRespDatum httpRespDatum = (APIModel.HTTPRespDatum) result;
+
+                                        final APIModel.HTTPResp response = httpRespDatum.resp;
+
+                                        HttpResponse httpResponse = new HttpResponse() {
+
+                                            byte[] body;
+
+                                            @Override
+                                            public int getStatusCode() {
+                                                return response.statusCode;
+                                            }
+
+                                            @Override
+                                            public Headers getHeaders() {
+                                                return Headers.emptyHeaders();
+                                            }
+
+                                            @Override
+                                            public byte[] getBodyAsBytes() {
+                                                if(body != null) {
+                                                    return body;
+                                                } else {
+
+                                                    if (response.body != null) {
+                                                        BlobResponse blobResponse = blobClient.readBlob(flowId.getId(), response.body.blobId, (inputStream) -> {
+                                                            try {
+                                                                ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                                                                IOUtils.copy(inputStream, byteArrayOutputStream);
+                                                                return byteArrayOutputStream.toByteArray();
+                                                            } catch (IOException e) {
+                                                                throw new FunctionInputHandlingException("Unable to read blob");
+                                                            }
+                                                        }, response.body.contentType);
+
+                                                        body = (byte[]) blobResponse.data;
+                                                        return body;
+                                                    } else {
+                                                        return new byte[0];
+                                                    }
+                                                }
+                                            }
+                                        };
+
+                                        return httpResponse;
+
                                     } else if (result instanceof APIModel.StateDatum) {
                                         throw new FunctionInputHandlingException("Unhandled datum type: StateDatum");
                                     } else {
