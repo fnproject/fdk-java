@@ -25,7 +25,7 @@ public class StringCoercion implements InputCoercion<String>, OutputCoercion {
                         try {
                             return IOUtils.toString(is, StandardCharsets.UTF_8);
                         } catch (IOException e) {
-                            throw new RuntimeException("Error reading input as string");
+                            throw new InvalidFunctionInputException("Error reading input as string");
                         }
                     }));
         } else {

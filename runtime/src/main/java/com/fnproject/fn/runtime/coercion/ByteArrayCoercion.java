@@ -41,7 +41,7 @@ public class ByteArrayCoercion implements InputCoercion<byte[]>, OutputCoercion 
                         try {
                             return toByteArray(is);
                         } catch (IOException e) {
-                            throw new RuntimeException("Error reading input as bytes", e);
+                            throw new InvalidFunctionInputException("Error reading input as bytes", e);
                         }
                     }));
         } else {

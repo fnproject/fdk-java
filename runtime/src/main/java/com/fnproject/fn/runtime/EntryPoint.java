@@ -2,6 +2,7 @@ package com.fnproject.fn.runtime;
 
 
 import com.fnproject.fn.api.FunctionInvoker;
+import com.fnproject.fn.api.InputCoercion;
 import com.fnproject.fn.api.InputEvent;
 import com.fnproject.fn.api.OutputEvent;
 import com.fnproject.fn.runtime.flow.FlowContinuationInvoker;
@@ -71,7 +72,7 @@ public class EntryPoint {
             } else if (format == null || format.equalsIgnoreCase("default")) {
                 codec = new DefaultEventCodec(env, functionInput, functionOutput);
             } else {
-                throw new FunctionInputHandlingException("Unsupported function format:" + format);
+                throw new FunctionFormatException("Unsupported function format: " + format);
             }
 
             do {
@@ -101,6 +102,10 @@ public class EntryPoint {
                             lastStatus = 1;
                             fic.fireOnFailedInvocation();
                         }
+                    } catch (InputCoercion.InvalidFunctionInputException e) {
+                        fic.fireOnFailedInvocation();
+                        lastStatus = 1;
+                        codec.writeEvent(OutputEvent.fromBytes(e.getMessage().getBytes(), 400, "text/plain"));
                     } catch (IOException e) {
                         fic.fireOnFailedInvocation();
                         throw new FunctionInputHandlingException("Error closing function input", e);

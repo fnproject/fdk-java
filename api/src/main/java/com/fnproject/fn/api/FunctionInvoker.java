@@ -12,8 +12,11 @@ public interface FunctionInvoker {
      * If the invoker returns an empty option then no action has been taken and another invoker may attempt to tryInvoke
      * <p>
      * In particular this means that implementations must not read the input event body until they are committed to handling this event.
-     *
-     * A RuntimeException thrown by the implementation will cause the entire function invocation to fail.
+     * <p>
+     * An {@link InputCoercion.InvalidFunctionInputException} thrown by the implementation will indicate that the input
+     * provided to the function by the user is invalid.
+     * <p>
+     * Any other RuntimeException thrown by the implementation will cause the entire function invocation to fail.
      *
      * @param ctx the context for a single invocation
      * @param evt the incoming event

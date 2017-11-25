@@ -57,7 +57,7 @@ public class JacksonCoercionTest {
             causedExpectedError = false;
         } catch (RuntimeException e) {
             causedExpectedError = true;
-            Assert.assertEquals("Failed to coerce event to user function parameter type java.util.List<com.fnproject.fn.runtime.testfns.Animal>", e.getMessage());
+            Assert.assertEquals("Failed to coerce function input to user function parameter type java.util.List<com.fnproject.fn.runtime.testfns.Animal>", e.getMessage());
             Assert.assertTrue(e.getCause().getMessage().startsWith("Unrecognized token 'INVALID':"));
         }
         Assert.assertTrue(causedExpectedError);
