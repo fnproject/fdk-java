@@ -83,6 +83,7 @@ public final class FnTestingRule implements TestRule {
 
         addSharedClass(CompleterClient.class);
         addSharedClass(BlobStoreClient.class);
+        addSharedClass(BlobResponse.class);
 
         addSharedClass(CompleterClientFactory.class);
         addSharedClass(CompletionId.class);

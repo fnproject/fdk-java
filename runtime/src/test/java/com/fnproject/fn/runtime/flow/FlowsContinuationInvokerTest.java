@@ -475,8 +475,9 @@ public class FlowsContinuationInvokerTest {
         public FlowRequestBuilder withHttpRespArg(boolean status, int code, String body, APIModel.HTTPHeader... httpHeaders) {
             APIModel.HTTPResp resp = new APIModel.HTTPResp();
             resp.statusCode = code;
-            APIModel.Blob blob = blobStore.writeBlob(flowId, body.getBytes(), "application/octet");
-            resp.body = blob;
+            BlobResponse blobResponse = blobStore.writeBlob(flowId, body.getBytes(), "application/octet");
+
+            resp.body = APIModel.Blob.fromBlobResponse(blobResponse);
             resp.headers = Arrays.asList(httpHeaders);
             APIModel.CompletionResult res = new APIModel.CompletionResult();
             APIModel.HTTPRespDatum datum = new APIModel.HTTPRespDatum();

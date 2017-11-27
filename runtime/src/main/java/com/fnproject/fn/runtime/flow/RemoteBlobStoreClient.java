@@ -17,15 +17,14 @@ public class RemoteBlobStoreClient implements BlobStoreClient {
     }
 
     @Override
-    public APIModel.Blob writeBlob(String prefix, byte[] bytes, String contentType) {
+    public BlobResponse writeBlob(String prefix, byte[] bytes, String contentType) {
         HttpClient.HttpRequest request = HttpClient.preparePost(apiUrlBase + "/" + prefix)
            .withHeader("Content-Type", contentType)
            .withBody(bytes);
         try (HttpClient.HttpResponse resp = httpClient.execute(request)) {
             if (resp.getStatusCode() == 200) {
                 ObjectMapper objectMapper = new ObjectMapper();
-                APIModel.Blob writeBlobResponse = objectMapper.readValue(resp.getEntity(), APIModel.Blob.class);
-                return writeBlobResponse;
+                return objectMapper.readValue(resp.getEntity(), BlobResponse.class);
             } else {
                 throw new PlatformCommunicationException("Failed to write blob, got non 200 response:" + resp.getStatusCode() + " from blob store");
             }

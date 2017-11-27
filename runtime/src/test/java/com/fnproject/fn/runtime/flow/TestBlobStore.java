@@ -19,11 +19,11 @@ public class TestBlobStore implements BlobStoreClient {
     AtomicInteger blobCount = new AtomicInteger();
 
     @Override
-    public APIModel.Blob writeBlob(String prefix, byte[] bytes, String contentType) {
+    public BlobResponse writeBlob(String prefix, byte[] bytes, String contentType) {
 
         String blobId = prefix + "-" + blobCount.incrementAndGet();
         blobs.put(blobId, bytes);
-        APIModel.Blob blob = new APIModel.Blob();
+        BlobResponse blob = new BlobResponse();
         blob.contentType = contentType;
         blob.blobLength = (long) bytes.length;
         blob.blobId = blobId;
@@ -48,7 +48,8 @@ public class TestBlobStore implements BlobStoreClient {
             ObjectOutputStream oos = new ObjectOutputStream(bos);
             oos.writeObject(o);
             oos.close();
-            return writeBlob(prefix, bos.toByteArray(), CONTENT_TYPE_JAVA_OBJECT);
+            BlobResponse br = writeBlob(prefix, bos.toByteArray(), CONTENT_TYPE_JAVA_OBJECT);
+            return APIModel.Blob.fromBlobResponse(br);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

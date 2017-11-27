@@ -80,6 +80,14 @@ public class APIModel {
 
         @JsonProperty("content_type")
         public String contentType;
+
+        public static Blob fromBlobResponse(BlobResponse blobResponse) {
+            Blob blob= new Blob();
+            blob.blobId = blobResponse.blobId;
+            blob.contentType = blobResponse.contentType;
+            blob.blobLength = blobResponse.blobLength;
+            return blob;
+        }
     }
 
     public static class CompletionResult {
@@ -142,17 +150,21 @@ public class APIModel {
         public Object toJava(boolean successful, FlowId flowId, BlobStoreClient blobStore, ClassLoader classLoader) {
             return blobStore.readBlob(flowId.getId(), blob.blobId, (requestInputStream) -> {
 
-                try {
+                try (ObjectInputStream ois = new ObjectInputStream(requestInputStream) {
+                    @Override
+                    protected Class resolveClass(ObjectStreamClass classDesc)
+                       throws IOException, ClassNotFoundException {
 
-                    ObjectInputStream objectInputStream = new ObjectInputStream(requestInputStream);
-
-                    ClassLoader previous =  Thread.currentThread().getContextClassLoader();
-                    try {
-                        Thread.currentThread().setContextClassLoader(classLoader);
-                        return objectInputStream.readObject();
-                    }finally {
-                        Thread.currentThread().setContextClassLoader(previous);
+                        String cname = classDesc.getName();
+                        try {
+                            return classLoader.loadClass(cname);
+                        } catch (ClassNotFoundException ex) {
+                            return super.resolveClass(classDesc);
+                        }
                     }
+                }) {
+
+                    return ois.readObject();
 
                 } catch (ClassNotFoundException | InvalidClassException | StreamCorruptedException | OptionalDataException e) {
                     throw new FunctionInputHandlingException("Error reading continuation content", e);
@@ -430,7 +442,9 @@ public class APIModel {
                 }
 
 
-                Blob blob = blobStore.writeBlob(flow.getId(), data, RemoteFlowApiClient.CONTENT_TYPE_JAVA_OBJECT);
+                BlobResponse blobResponse = blobStore.writeBlob(flow.getId(), data, RemoteFlowApiClient.CONTENT_TYPE_JAVA_OBJECT);
+                APIModel.Blob blob = APIModel.Blob.fromBlobResponse(blobResponse);
+
                 BlobDatum bd = new BlobDatum();
                 bd.blob = blob;
                 return bd;

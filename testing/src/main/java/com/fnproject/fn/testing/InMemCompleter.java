@@ -30,16 +30,19 @@ class InMemCompleter implements CompleterClient, BlobStoreClient, CompleterClien
     private static ExecutorService faasExecutor = Executors.newCachedThreadPool();
 
     @Override
-    public APIModel.Blob writeBlob(String prefix, byte[] bytes, String contentType) {
+    public BlobResponse writeBlob(String prefix, byte[] bytes, String contentType) {
         FlowId flow = new FlowId(prefix);
         if (!graphs.containsKey(flow)) {
             throw new IllegalStateException("flow " + flow + " does not exist");
         }
+
+
         String blobId = UUID.randomUUID().toString();
         Blob blob = new Blob(bytes, contentType);
+        System.err.println("writing blob" + blobId + " : " + bytes.length+ ":"  + contentType);
 
         graphs.get(flow).blobs.put(blobId, blob);
-        APIModel.Blob returnBlob = new APIModel.Blob();
+        BlobResponse returnBlob = new BlobResponse();
         returnBlob.blobId = blobId;
         returnBlob.contentType = contentType;
         returnBlob.blobLength = (long) bytes.length;
@@ -128,7 +131,9 @@ class InMemCompleter implements CompleterClient, BlobStoreClient, CompleterClien
             ObjectOutputStream oos = new ObjectOutputStream(bos);
             oos.writeObject(code);
             oos.close();
-            return writeBlob(flowId.getId(), bos.toByteArray(), RemoteFlowApiClient.CONTENT_TYPE_JAVA_OBJECT);
+            BlobResponse blobResponse =  writeBlob(flowId.getId(), bos.toByteArray(), RemoteFlowApiClient.CONTENT_TYPE_JAVA_OBJECT);
+
+            return APIModel.Blob.fromBlobResponse(blobResponse);
         } catch (Exception e) {
             e.printStackTrace();
             throw new LambdaSerializationException("Error serializing closure");
@@ -576,9 +581,9 @@ class InMemCompleter implements CompleterClient, BlobStoreClient, CompleterClien
                        apiResp.headers = res.getHeaders().getAll().entrySet()
                           .stream().map(e -> APIModel.HTTPHeader.create(e.getKey(), e.getValue())).collect(Collectors.toList());
 
-                       APIModel.Blob blob = writeBlob(flowId.getId(), res.getBodyAsBytes(), res.getHeaders().get("Content-type").orElse("application/octet-stream"));
+                       BlobResponse blobResponse = writeBlob(flowId.getId(), res.getBodyAsBytes(), res.getHeaders().get("Content-type").orElse("application/octet-stream"));
 
-                       apiResp.body = blob;
+                       apiResp.body = APIModel.Blob.fromBlobResponse(blobResponse);
                        apiResp.statusCode = res.getStatusCode();
 
                        APIModel.HTTPRespDatum datum = APIModel.HTTPRespDatum.create(apiResp);

@@ -114,7 +114,8 @@ public class RemoteFlowApiClient implements CompleterClient {
 
         if (headers != null) {
             if (data.length > 0) {
-                httpReq.body = blobStoreClient.writeBlob(flowId.getId(), data, headers.get(CONTENT_TYPE_HEADER).orElse(CONTENT_TYPE_OCTET_STREAM));
+                BlobResponse blobResponse = blobStoreClient.writeBlob(flowId.getId(), data, headers.get(CONTENT_TYPE_HEADER).orElse(CONTENT_TYPE_OCTET_STREAM));
+                httpReq.body = APIModel.Blob.fromBlobResponse(blobResponse);
             }
 
             httpReq.headers = new ArrayList<>();
@@ -336,8 +337,9 @@ public class RemoteFlowApiClient implements CompleterClient {
     private CompletionId addStageWithClosure(APIModel.CompletionOperation operation, FlowId flowId, Serializable supplier, CodeLocation codeLocation, List<CompletionId> deps) {
 
         byte[] serialized = serializeClosure(supplier);
-        APIModel.Blob closure = blobStoreClient.writeBlob(flowId.getId(), serialized, CONTENT_TYPE_JAVA_OBJECT);
-        return addStage(operation, closure, deps, flowId, codeLocation);
+        BlobResponse blobResponse   = blobStoreClient.writeBlob(flowId.getId(), serialized, CONTENT_TYPE_JAVA_OBJECT);
+
+        return addStage(operation, APIModel.Blob.fromBlobResponse(blobResponse), deps, flowId, codeLocation);
 
     }
 
