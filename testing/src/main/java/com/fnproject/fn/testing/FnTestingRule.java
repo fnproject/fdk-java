@@ -21,6 +21,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
+import static com.fnproject.fn.runtime.flow.RemoteFlowApiClient.CONTENT_TYPE_HEADER;
+
 /**
  * Testing {@link org.junit.Rule} for fn Java FDK functions.
  * <p>
@@ -530,8 +532,8 @@ public final class FnTestingRule implements TestRule {
                     .withAppName("appName")
                     .withRoute("/route").withRequestUrl("http://some/url")
                     .withMethod("POST")
-                    .withHeader(RemoteCompleterApiClient.CONTENT_TYPE_HEADER, String.format("multipart/mixed; boundary=\"%s\"", boundary))
-                    .withHeader(RemoteCompleterApiClient.FLOW_ID_HEADER, flowId.getId()).withHeader(RemoteCompleterApiClient.STAGE_ID_HEADER, stageId.getId()).currentEventInputStream();
+                    .withHeader(CONTENT_TYPE_HEADER, String.format("multipart/mixed; boundary=\"%s\"", boundary))
+                    .withHeader(RemoteFlowApiClient.FLOW_ID_HEADER, flowId.getId()).withHeader(RemoteFlowApiClient.STAGE_ID_HEADER, stageId.getId()).currentEventInputStream();
 
             ByteArrayOutputStream output = new ByteArrayOutputStream();
             Map<String, String> mutableEnv = new HashMap<>();

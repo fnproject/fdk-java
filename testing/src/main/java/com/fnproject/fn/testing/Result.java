@@ -1,6 +1,5 @@
 package com.fnproject.fn.testing;
 
-import com.fnproject.fn.runtime.flow.RemoteCompleterApiClient;
 import org.apache.http.HttpResponse;
 
 import java.io.IOException;

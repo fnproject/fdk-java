@@ -1,20 +1,17 @@
-package com.fnproject.fn.runtime.flow.blobs;
+package com.fnproject.fn.runtime.flow;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fnproject.fn.api.flow.PlatformException;
 import com.fnproject.fn.runtime.exception.PlatformCommunicationException;
-import com.fnproject.fn.runtime.flow.APIModel;
-import com.fnproject.fn.runtime.flow.HttpClient;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.function.Function;
 
-public class RemoteBlobApiClient implements BlobApiClient {
+public class RemoteBlobStoreClient implements BlobStoreClient {
     private final String apiUrlBase;
     private final HttpClient httpClient;
 
-    public RemoteBlobApiClient(String apiUrlBase, HttpClient httpClient) {
+    public RemoteBlobStoreClient(String apiUrlBase, HttpClient httpClient) {
         this.httpClient = httpClient;
         this.apiUrlBase = apiUrlBase;
     }
@@ -28,10 +25,9 @@ public class RemoteBlobApiClient implements BlobApiClient {
             if (resp.getStatusCode() == 200) {
                 ObjectMapper objectMapper = new ObjectMapper();
                 APIModel.Blob writeBlobResponse = objectMapper.readValue(resp.getEntity(), APIModel.Blob.class);
-                System.out.println(writeBlobResponse.blobId);
                 return writeBlobResponse;
             } else {
-                throw new PlatformException("Failed to write blob");
+                throw new PlatformCommunicationException("Failed to write blob, got non 200 response:" + resp.getStatusCode() + " from blob store");
             }
         } catch (IOException e) {
             throw new PlatformCommunicationException("Failed to write blob", e);
@@ -39,17 +35,13 @@ public class RemoteBlobApiClient implements BlobApiClient {
     }
 
     @Override
-    public BlobResponse readBlob(String prefix, String blobId, Function<InputStream, Object> writer, String expectedContentType) {
+    public <T> T readBlob(String prefix, String blobId, Function<InputStream, T> writer, String expectedContentType) {
         HttpClient.HttpRequest request = HttpClient.prepareGet(apiUrlBase + "/" + prefix + "/" + blobId).withHeader("Accept", expectedContentType);
         try (HttpClient.HttpResponse resp = httpClient.execute(request)) {
             if (resp.getStatusCode() == 200) {
-                BlobResponse blobResponse = new BlobResponse();
-                blobResponse.data = writer.apply(resp.getEntity());
-                blobResponse.contentType = resp.getHeaderValue("Content-type").orElse("application/octet-stream");
-                blobResponse.length = Integer.parseInt(resp.getHeaderValue("Content-length").orElse("0"));
-                return blobResponse;
+                return writer.apply(resp.getContentStream());
             } else {
-                throw new PlatformException("Failed to read blob");
+                throw new PlatformCommunicationException("Failed to read blob, got non-200 status : " + resp.getStatusCode() + " from blob store");
             }
         } catch (IOException e) {
             throw new PlatformCommunicationException("Failed to read blob", e);

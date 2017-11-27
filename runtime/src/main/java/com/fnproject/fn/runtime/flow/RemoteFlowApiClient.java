@@ -3,34 +3,35 @@ package com.fnproject.fn.runtime.flow;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.flow.HttpMethod;
+import com.fnproject.fn.api.flow.LambdaSerializationException;
 import com.fnproject.fn.api.flow.PlatformException;
 import com.fnproject.fn.runtime.exception.PlatformCommunicationException;
-import com.fnproject.fn.runtime.flow.blobs.BlobApiClient;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.Serializable;
+import java.io.*;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
-import static com.fnproject.fn.runtime.flow.RemoteCompleterApiClient.CONTENT_TYPE_HEADER;
-import static com.fnproject.fn.runtime.flow.RemoteCompleterApiClient.DEFAULT_CONTENT_TYPE;
+import static com.fnproject.fn.runtime.flow.HttpClient.preparePost;
+
 
 /**
  * REST client for accessing the Flow service API
  */
 public class RemoteFlowApiClient implements CompleterClient {
+    private static final String CONTENT_TYPE_HEADER = "Content-type";
     private transient final HttpClient httpClient;
     private final String apiUrlBase;
-    private final BlobApiClient blobApiClient;
+    private final BlobStoreClient blobStoreClient;
     public static final String CONTENT_TYPE_JAVA_OBJECT = "application/java-serialized-object";
+    public static final String CONTENT_TYPE_OCTET_STREAM = "application/octet-stream";
+
     private ObjectMapper objectMapper = new ObjectMapper();
 
-    public RemoteFlowApiClient(String apiUrlBase, BlobApiClient blobClient, HttpClient httpClient) {
+    public RemoteFlowApiClient(String apiUrlBase, BlobStoreClient blobClient, HttpClient httpClient) {
         this.apiUrlBase = Objects.requireNonNull(apiUrlBase);
-        this.blobApiClient = Objects.requireNonNull(blobClient);
+        this.blobStoreClient = Objects.requireNonNull(blobClient);
         this.httpClient = Objects.requireNonNull(httpClient);
     }
 
@@ -38,10 +39,9 @@ public class RemoteFlowApiClient implements CompleterClient {
     public FlowId createFlow(String functionId) {
         try {
             APIModel.CreateGraphRequest createGraphRequest = new APIModel.CreateGraphRequest(functionId);
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
             ObjectMapper objectMapper = this.objectMapper;
-            objectMapper.writeValue(baos, createGraphRequest);
-            HttpClient.HttpRequest request = HttpClient.preparePost(apiUrlBase + "/flows").withBody(baos.toByteArray());
+            byte[] body = objectMapper.writeValueAsBytes(createGraphRequest);
+            HttpClient.HttpRequest request = preparePost(apiUrlBase + "/flows").withBody(body);
             try (HttpClient.HttpResponse resp = httpClient.execute(request)) {
                 validateSuccessful(resp);
                 APIModel.CreateGraphResponse createGraphResponse = objectMapper.readValue(resp.body, APIModel.CreateGraphResponse.class);
@@ -50,7 +50,7 @@ public class RemoteFlowApiClient implements CompleterClient {
                 throw new PlatformCommunicationException("Failed to create flow ", e);
             }
         } catch (IOException e) {
-            throw new PlatformException("Failed to create CreateGraphRequest");
+            throw new PlatformCommunicationException("Failed to create CreateGraphRequest");
         }
     }
 
@@ -111,10 +111,9 @@ public class RemoteFlowApiClient implements CompleterClient {
 
         APIModel.HTTPReq httpReq = new APIModel.HTTPReq();
 
-        if(headers != null) {
-            if(data.length > 0) {
-                APIModel.Blob blob = blobApiClient.writeBlob(flowId.getId(), data, headers.get(CONTENT_TYPE_HEADER).orElse(DEFAULT_CONTENT_TYPE));
-                httpReq.body = blob;
+        if (headers != null) {
+            if (data.length > 0) {
+                httpReq.body = blobStoreClient.writeBlob(flowId.getId(), data, headers.get(CONTENT_TYPE_HEADER).orElse(CONTENT_TYPE_OCTET_STREAM));
             }
 
             httpReq.headers = new ArrayList<>();
@@ -127,18 +126,18 @@ public class RemoteFlowApiClient implements CompleterClient {
             });
         }
 
-        httpReq.method = APIModel.HTTPMethod.fromString(method.toString());
+        httpReq.method = APIModel.HTTPMethod.fromFlow(method);
 
         APIModel.AddInvokeFunctionStageRequest addInvokeFunctionStageRequest = new APIModel.AddInvokeFunctionStageRequest();
         addInvokeFunctionStageRequest.arg = httpReq;
         addInvokeFunctionStageRequest.codeLocation = codeLocation.getLocation();
-        addInvokeFunctionStageRequest.callerId = FlowRuntimeGlobals.getCurrentCompletionId().map(CompletionId::toString).orElse(null);;
+        addInvokeFunctionStageRequest.callerId = FlowRuntimeGlobals.getCurrentCompletionId().map(CompletionId::toString).orElse(null);
         addInvokeFunctionStageRequest.functionId = functionId;
 
         try {
             return executeAddInvokeFunctionStageRequest(flowId, addInvokeFunctionStageRequest);
         } catch (IOException e) {
-            throw new PlatformException("Failed to create invokeFunction stage", e);
+            throw new PlatformCommunicationException("Failed to create invokeFunction stage", e);
         }
     }
 
@@ -146,14 +145,12 @@ public class RemoteFlowApiClient implements CompleterClient {
     public CompletionId completedValue(FlowId flowId, boolean success, Object value, CodeLocation codeLocation) {
         try {
             // Only support blob datums at the moment
-            byte[]  serialized = SerUtils.serialize(value);
-            APIModel.Blob blob = blobApiClient.writeBlob(flowId.getId(), serialized, CONTENT_TYPE_JAVA_OBJECT);
 
-            APIModel.BlobDatum blobDatum = new APIModel.BlobDatum();
-            blobDatum.blob = blob;
+            APIModel.Datum blobDatum = APIModel.datumFromJava(flowId, value, blobStoreClient);
 
             APIModel.AddCompletedValueStageRequest addCompletedValueStageRequest = new APIModel.AddCompletedValueStageRequest();
-            addCompletedValueStageRequest.callerId = FlowRuntimeGlobals.getCurrentCompletionId().map(CompletionId::toString).orElse(null);;
+            addCompletedValueStageRequest.callerId = FlowRuntimeGlobals.getCurrentCompletionId().map(CompletionId::toString).orElse(null);
+
             addCompletedValueStageRequest.codeLocation = codeLocation.getLocation();
             APIModel.CompletionResult completionResult = new APIModel.CompletionResult();
             completionResult.successful = true;
@@ -163,7 +160,7 @@ public class RemoteFlowApiClient implements CompleterClient {
 
             return executeAddCompletedValueStageRequest(flowId, addCompletedValueStageRequest);
         } catch (IOException e) {
-            throw new PlatformException("Failed to create completedValue stage", e);
+            throw new PlatformCommunicationException("Failed to create completedValue stage", e);
         }
     }
 
@@ -211,31 +208,68 @@ public class RemoteFlowApiClient implements CompleterClient {
     public CompletionId delay(FlowId flowId, long l, CodeLocation codeLocation) {
         try {
             APIModel.AddDelayStageRequest addDelayStageRequest = new APIModel.AddDelayStageRequest();
-            addDelayStageRequest.callerId = FlowRuntimeGlobals.getCurrentCompletionId().map(CompletionId::toString).orElse(null);;
+            addDelayStageRequest.callerId = FlowRuntimeGlobals.getCurrentCompletionId().map(CompletionId::toString).orElse(null);
             addDelayStageRequest.codeLocation = codeLocation.getLocation();
             addDelayStageRequest.delayMs = l;
             return executeAddDelayStageRequest(flowId, addDelayStageRequest);
         } catch (IOException e) {
-            throw new PlatformException("Failed to create completedValue stage", e);
+            throw new PlatformCommunicationException("Failed to create completedValue stage", e);
         }
     }
 
     // wait for completion  -> result
     @Override
     public Object waitForCompletion(FlowId flowId, CompletionId id, ClassLoader ignored, long timeout, TimeUnit unit) throws TimeoutException {
-        return null;
+        long msTimeout = unit.convert(timeout, TimeUnit.MILLISECONDS);
+        long start = System.currentTimeMillis();
+        do {
+            long lastStart = System.currentTimeMillis();
+
+            long remainingTimeout = Math.max(1, start + msTimeout - lastStart);
+
+            try (HttpClient.HttpResponse response =
+                    httpClient.execute(preparePost(apiUrlBase + "/flows/" + flowId.getId() + "/stages/" + id.getId() + "/await?timeout_ms=" + remainingTimeout))) {
+
+                if (response.getStatusCode() == 200) {
+                    APIModel.AwaitStageResponse resp = objectMapper.readValue(response.getContentStream(), APIModel.AwaitStageResponse.class);
+                    return resp.result.toJava(flowId, blobStoreClient);
+                } else if (response.getStatusCode() == 408) {
+                    // do nothing go round again
+                } else {
+                    throw asError(response);
+                }
+
+                try {
+                    Thread.sleep(Math.max(0, 500 - (System.currentTimeMillis() - lastStart)));
+                } catch (InterruptedException e) {
+                    throw new PlatformCommunicationException("Interrupted", e);
+                }
+            } catch (IOException e) {
+                throw new PlatformCommunicationException("Error fetching result", e);
+            }
+
+
+        } while (System.currentTimeMillis() - start < msTimeout);
+
+        throw new TimeoutException("Stage did not completed before timeout ");
+
+
     }
 
     @Override
     public Object waitForCompletion(FlowId flowId, CompletionId id, ClassLoader ignored) {
-        return null;
+        try {
+            return waitForCompletion(flowId, id, ignored, 10, TimeUnit.MINUTES);
+        } catch (TimeoutException e) {
+            throw new PlatformCommunicationException("timeout", e);
+        }
     }
 
     public void commit(FlowId flowId) {
-        try (HttpClient.HttpResponse response = httpClient.execute(HttpClient.preparePost(apiUrlBase + "/graph/" + flowId.getId() + "/commit"))) {
+        try (HttpClient.HttpResponse response = httpClient.execute(preparePost(apiUrlBase + "/flows/" + flowId.getId() + "/commit"))) {
             validateSuccessful(response);
         } catch (Exception e) {
-            throw new PlatformException(e);
+            throw new PlatformCommunicationException("Failed to commit graph", e);
         }
     }
 
@@ -245,14 +279,18 @@ public class RemoteFlowApiClient implements CompleterClient {
 
     private static void validateSuccessful(HttpClient.HttpResponse response) {
         if (!isSuccessful(response)) {
-            try {
-                String body = response.entityAsString();
-                throw new PlatformException(String.format("Received unexpected response (%d) from " +
-                   "completer: %s", response.getStatusCode(), body == null ? "Empty body" : body));
-            } catch (IOException e) {
-                throw new PlatformException(String.format("Received unexpected response (%d) from " +
-                   "completer. Could not read body.", response.getStatusCode()), e);
-            }
+            throw asError(response);
+        }
+    }
+
+    private static PlatformCommunicationException asError(HttpClient.HttpResponse response) {
+        try {
+            String body = response.entityAsString();
+            return new PlatformCommunicationException(String.format("Received unexpected response (%d) from " +
+               "completer: %s", response.getStatusCode(), body == null ? "Empty body" : body));
+        } catch (IOException e) {
+            return new PlatformCommunicationException(String.format("Received unexpected response (%d) from " +
+               "completer. Could not read body.", response.getStatusCode()), e);
         }
     }
 
@@ -260,14 +298,27 @@ public class RemoteFlowApiClient implements CompleterClient {
         return response.getStatusCode() == 200 || response.getStatusCode() == 201;
     }
 
-    private CompletionId addStageWithClosure(APIModel.CompletionOperation operation, FlowId flowId, Serializable supplier, CodeLocation codeLocation, List<CompletionId> deps) {
-        try {
-            byte[] serialized = SerUtils.serialize(supplier);
-            APIModel.Blob closure = blobApiClient.writeBlob(flowId.getId(), serialized, CONTENT_TYPE_JAVA_OBJECT);
-            return addStage(operation, closure, deps, flowId, codeLocation);
+    private static byte[] serializeClosure(Object data) {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        try (ObjectOutputStream oos = new ObjectOutputStream(bos)) {
+
+            oos.writeObject(data);
+            oos.close();
+            return bos.toByteArray();
+        } catch (NotSerializableException nse) {
+            throw new LambdaSerializationException("Closure not serializable", nse);
         } catch (IOException e) {
-            throw new PlatformException("Failed to create AddStageRequest", e);
+            throw new PlatformException("Failed to write closure", e);
         }
+
+    }
+
+    private CompletionId addStageWithClosure(APIModel.CompletionOperation operation, FlowId flowId, Serializable supplier, CodeLocation codeLocation, List<CompletionId> deps) {
+
+        byte[] serialized = serializeClosure(supplier);
+        APIModel.Blob closure = blobStoreClient.writeBlob(flowId.getId(), serialized, CONTENT_TYPE_JAVA_OBJECT);
+        return addStage(operation, closure, deps, flowId, codeLocation);
+
     }
 
     private CompletionId addStage(APIModel.CompletionOperation operation, APIModel.Blob closure, List<CompletionId> deps, FlowId flowId, CodeLocation codeLocation) {
@@ -289,21 +340,19 @@ public class RemoteFlowApiClient implements CompleterClient {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         objectMapper.writeValue(baos, addStageRequest);
 
-        HttpClient.HttpRequest request = HttpClient.preparePost(apiUrlBase + "/flows/" + flowId.getId() + "/stage").withBody(baos.toByteArray());
-        try (HttpClient.HttpResponse resp = httpClient.execute(request)) {
-            validateSuccessful(resp);
-            APIModel.AddStageResponse addStageResponse = objectMapper.readValue(resp.body, APIModel.AddStageResponse.class);
-            return new CompletionId(addStageResponse.stageId);
-        } catch (Exception e) {
-            throw new PlatformCommunicationException("Failed to add stage ", e);
-        }
+        HttpClient.HttpRequest request = preparePost(apiUrlBase + "/flows/" + flowId.getId() + "/stage").withBody(baos.toByteArray());
+        return requestForCompletionId(request);
     }
 
     private CompletionId executeAddCompletedValueStageRequest(FlowId flowId, APIModel.AddCompletedValueStageRequest addCompletedValueStageRequest) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         objectMapper.writeValue(baos, addCompletedValueStageRequest);
 
-        HttpClient.HttpRequest request = HttpClient.preparePost(apiUrlBase + "/flows/" + flowId.getId() + "/value").withBody(baos.toByteArray());
+        HttpClient.HttpRequest request = preparePost(apiUrlBase + "/flows/" + flowId.getId() + "/value").withBody(baos.toByteArray());
+        return requestForCompletionId(request);
+    }
+
+    private CompletionId requestForCompletionId(HttpClient.HttpRequest request) {
         try (HttpClient.HttpResponse resp = httpClient.execute(request)) {
             validateSuccessful(resp);
             APIModel.AddStageResponse addStageResponse = objectMapper.readValue(resp.body, APIModel.AddStageResponse.class);
@@ -319,14 +368,7 @@ public class RemoteFlowApiClient implements CompleterClient {
 
         byte[] bytes = baos.toByteArray();
         System.out.println(new String(bytes));
-        HttpClient.HttpRequest request = HttpClient.preparePost(apiUrlBase + "/flows/" + flowId.getId() + "/invoke").withBody(bytes);
-        try (HttpClient.HttpResponse resp = httpClient.execute(request)) {
-            validateSuccessful(resp);
-            APIModel.AddStageResponse addStageResponse = objectMapper.readValue(resp.body, APIModel.AddStageResponse.class);
-            return new CompletionId(addStageResponse.stageId);
-        } catch (Exception e) {
-            throw new PlatformCommunicationException("Failed to add stage ", e);
-        }
+        return requestForCompletionId(preparePost(apiUrlBase + "/flows/" + flowId.getId() + "/invoke").withBody(bytes));
     }
 
     private CompletionId executeAddDelayStageRequest(FlowId flowId, APIModel.AddDelayStageRequest addDelayStageRequest) throws IOException {
@@ -335,13 +377,7 @@ public class RemoteFlowApiClient implements CompleterClient {
 
         byte[] bytes = baos.toByteArray();
         System.out.println(new String(bytes));
-        HttpClient.HttpRequest request = HttpClient.preparePost(apiUrlBase + "/flows/" + flowId.getId() + "/delay").withBody(bytes);
-        try (HttpClient.HttpResponse resp = httpClient.execute(request)) {
-            validateSuccessful(resp);
-            APIModel.AddStageResponse addStageResponse = objectMapper.readValue(resp.body, APIModel.AddStageResponse.class);
-            return new CompletionId(addStageResponse.stageId);
-        } catch (Exception e) {
-            throw new PlatformCommunicationException("Failed to add stage ", e);
-        }
+        HttpClient.HttpRequest request = preparePost(apiUrlBase + "/flows/" + flowId.getId() + "/delay").withBody(bytes);
+        return requestForCompletionId(request);
     }
 }

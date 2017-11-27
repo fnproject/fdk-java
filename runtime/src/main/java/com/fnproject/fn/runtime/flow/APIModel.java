@@ -1,51 +1,74 @@
 package com.fnproject.fn.runtime.flow;
 
-import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
+import com.fnproject.fn.api.Headers;
+import com.fnproject.fn.api.flow.*;
+import com.fnproject.fn.runtime.exception.FunctionInputHandlingException;
+import com.fnproject.fn.runtime.exception.PlatformCommunicationException;
+import org.apache.commons.io.IOUtils;
 
-import java.util.List;
+import java.io.*;
+import java.util.*;
 
 /**
  * Created on 22/11/2017.
  * <p>
  * (c) 2017 Oracle Corporation
  */
-public class APIModel {
-
-
+class APIModel {
 
     enum CompletionOperation {
-        UNKNOWN_OPERATION("unknown_operation"),
-        ACCEPT_EITHER("acceptEither"),
-        APPLY_TO_EITHER("applyToEither"),
-        THEN_ACCEPT_BOTH("thenAcceptBoth"),
-        THEN_APPLY("thenApply"),
-        THEN_RUN("thenRun"),
-        THEN_ACCEPT("thenAccept"),
-        THEN_COMPOSE("thenCompose"),
-        THEN_COMBINE("thenCombine"),
-        WHEN_COMPLETE("whenComplete"),
-        HANDLE("handle"),
-        SUPPLY("supply"),
-        INVOKE_FUNCTION("invokeFunction"),
-        COMPLETED_VALUE("completedValue"),
-        DELAY("delay"),
-        ALL_OF("allOf"),
-        ANY_OF("anyOf"),
-        EXTERNAL_COMPLETION("externalCompletion"),
-        EXCEPTIONALLY("exceptionally"),
-        TERMINATION_HOOK("terminationHook"),
-        EXCEPTIONALLY_COMPOSE("exceptionallyCompose");
+        @JsonProperty("unknown_operation")
+        UNKNOWN_OPERATION,
+        @JsonProperty("acceptEither")
+        ACCEPT_EITHER,
+        @JsonProperty("applyToEither")
+        APPLY_TO_EITHER,
+        @JsonProperty("thenAcceptBoth")
+        THEN_ACCEPT_BOTH,
+        @JsonProperty("thenApply")
+        THEN_APPLY,
+        @JsonProperty("thenRun")
+        THEN_RUN,
+        @JsonProperty("thenAccept")
+        THEN_ACCEPT,
+        @JsonProperty("thenCompose")
+        THEN_COMPOSE,
+        @JsonProperty("thenCombine")
+        THEN_COMBINE,
+        @JsonProperty("whenComplete")
+        WHEN_COMPLETE,
+        @JsonProperty("handle")
+        HANDLE(),
+        @JsonProperty("supply")
+        SUPPLY(),
+        @JsonProperty("invokeFunction")
+        INVOKE_FUNCTION(),
+        @JsonProperty("completedValue")
+        COMPLETED_VALUE(),
+        @JsonProperty("delay")
+        DELAY(),
+        @JsonProperty("allOf")
+        ALL_OF(),
+        @JsonProperty("anyOf")
+        ANY_OF(),
+        @JsonProperty("externalCompletion")
+        EXTERNAL_COMPLETION(),
+        @JsonProperty("exceptionally")
+        EXCEPTIONALLY(),
+        @JsonProperty("terminationHook")
+        TERMINATION_HOOK(),
+        @JsonProperty("exceptionallyCompose")
+        EXCEPTIONALLY_COMPOSE();
 
-        private String operation;
 
-        CompletionOperation(String operation) {
-            this.operation = operation;
+        CompletionOperation() {
         }
 
-        @JsonValue
-        String getName() {
-            return operation;
-        }
+
     }
 
     public static final class Blob {
@@ -65,58 +88,88 @@ public class APIModel {
 
         @JsonProperty("successful")
         public Boolean successful;
+
+        public Object toJava(FlowId flowId, BlobStoreClient blobClient) {
+            return result.toJava(successful, flowId, blobClient);
+        }
     }
 
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.WRAPPER_OBJECT)
     @JsonSubTypes({
-            @JsonSubTypes.Type(name = "empty", value = EmptyDatum.class),
-            @JsonSubTypes.Type(name = "blob", value = BlobDatum.class),
-            @JsonSubTypes.Type(name = "stage_ref", value = StageRefDatum.class),
-            @JsonSubTypes.Type(name = "error", value = ErrorDatum.class),
-            @JsonSubTypes.Type(name = "http_req", value = HTTPReqDatum.class),
-            @JsonSubTypes.Type(name = "http_resp", value = HTTPRespDatum.class),
-            @JsonSubTypes.Type(name = "state", value = StateDatum.class),
+       @JsonSubTypes.Type(name = "empty", value = EmptyDatum.class),
+       @JsonSubTypes.Type(name = "blob", value = BlobDatum.class),
+       @JsonSubTypes.Type(name = "stage_ref", value = StageRefDatum.class),
+       @JsonSubTypes.Type(name = "error", value = ErrorDatum.class),
+       @JsonSubTypes.Type(name = "http_req", value = HTTPReqDatum.class),
+       @JsonSubTypes.Type(name = "http_resp", value = HTTPRespDatum.class),
+       @JsonSubTypes.Type(name = "state", value = StateDatum.class),
     })
-
     public static abstract class Datum {
+        public abstract Object toJava(boolean successful, FlowId flowId, BlobStoreClient blobStore);
 
     }
 
 
     public static final class EmptyDatum extends Datum {
 
+        @Override
+        public Object toJava(boolean successful, FlowId flowId, BlobStoreClient blobStore) {
+            return null;
+        }
     }
 
     public static final class BlobDatum extends Datum {
         @JsonUnwrapped
         public Blob blob;
+
+        @Override
+        public Object toJava(boolean successful, FlowId flowId, BlobStoreClient blobStore) {
+            return blobStore.readBlob(flowId.getId(), blob.blobId, (requestInputStream) -> {
+                try (ObjectInputStream objectInputStream = new ObjectInputStream(requestInputStream)) {
+                    return objectInputStream.readObject();
+                } catch (ClassNotFoundException | InvalidClassException | StreamCorruptedException | OptionalDataException e) {
+                    throw new FunctionInputHandlingException("Error reading continuation content", e);
+                } catch (IOException e) {
+                    throw new PlatformException("Error reading blob data", e);
+                }
+            }, blob.contentType);
+        }
     }
 
     public static final class StageRefDatum extends Datum {
         @JsonProperty("stage_id")
         public String stageId;
+
+        @Override
+        public Object toJava(boolean successful, FlowId flowId, BlobStoreClient blobStore) {
+            return ((RemoteFlow) Flows.currentFlow()).createFlowFuture(new CompletionId(stageId));
+        }
     }
 
 
     public enum ErrorType {
-        UnknownError("unknown_error"),
-        StageTimeout("stage_timeout"),
-        StageFailed("stage_failed"),
-        FunctionTimeout("function_timeout"),
-        FunctionInvokeFailed("function_invoke_failed"),
-        StageLost("stage_lost"),
-        InvalidStageResponse("invalid_stage_response");
+        @JsonProperty("unknown_error")
+        UnknownError(),
 
-        private String errorType;
+        @JsonProperty("stage_timeout")
+        StageTimeout(),
 
-        ErrorType(String errorType) {
-            this.errorType = errorType;
-        }
+        @JsonProperty("stage_failed")
+        StageFailed(),
 
-        @JsonValue
-        String getName() {
-            return errorType;
-        }
+        @JsonProperty("function_timeout")
+        FunctionTimeout(),
+
+        @JsonProperty("function_invoke_failed")
+        FunctionInvokeFailed(),
+
+        @JsonProperty("stage_lost")
+        StageLost(),
+
+        @JsonProperty("invalid_stage_response")
+        InvalidStageResponse();
+
+
     }
 
 
@@ -125,37 +178,57 @@ public class APIModel {
         public ErrorType type;
         @JsonProperty("message")
         public String message;
+
+        @Override
+        public Object toJava(boolean successful, FlowId flowId, BlobStoreClient blobStore) {
+            switch (type) {
+                case StageTimeout:
+                    return new StageTimeoutException(message);
+                case StageLost:
+                    return new StageLostException(message);
+                case StageFailed:
+                    return new StageInvokeFailedException(message);
+                case FunctionTimeout:
+                    return new FunctionTimeoutException(message);
+                case FunctionInvokeFailed:
+                    return new FunctionInvokeFailedException(message);
+                case InvalidStageResponse:
+                    return new InvalidStageResponseException(message);
+                default:
+                    return new PlatformException(message);
+            }
+        }
     }
 
 
     public enum HTTPMethod {
-        UnknownMethod("unknown_method"),
-        Get("get"),
-        Head("head"),
-        Post("post"),
-        Put("put"),
-        Delete("delete"),
-        Options("options"),
-        Patch("patch");
+        @JsonProperty("unknown_method")
+        UnknownMethod(HttpMethod.GET),
+        @JsonProperty("get")
+        Get(HttpMethod.GET),
+        @JsonProperty("head")
+        Head(HttpMethod.HEAD),
+        @JsonProperty("post")
+        Post(HttpMethod.POST),
+        @JsonProperty("put")
+        Put(HttpMethod.PUT),
+        @JsonProperty("delete")
+        Delete(HttpMethod.DELETE),
+        @JsonProperty("options")
+        Options(HttpMethod.OPTIONS),
+        @JsonProperty("patch")
+        Patch(HttpMethod.PATCH);
 
-        private String method;
+        final HttpMethod flowMethod;
 
-        HTTPMethod(String method) {
-            this.method = method;
+        HTTPMethod(HttpMethod flowMethod) {
+            this.flowMethod = flowMethod;
         }
 
-        @JsonValue
-        String getName() {
-            return method;
-        }
-
-        public static HTTPMethod fromString(String method) {
-            for (HTTPMethod b : HTTPMethod.values()) {
-                if (b.method.equalsIgnoreCase(method)) {
-                    return b;
-                }
-            }
-            return null;
+        public static HTTPMethod fromFlow(HttpMethod f) {
+            return Arrays.stream(values())
+               .filter((x) -> x.flowMethod == f)
+               .findFirst().orElseThrow(() -> new IllegalArgumentException("Invalid flow method"));
         }
     }
 
@@ -165,6 +238,16 @@ public class APIModel {
 
         @JsonProperty("value")
         public String value;
+
+
+        public HTTPHeader() {
+
+        }
+
+        public HTTPHeader(String key, String value) {
+            this.key = key;
+            this.value = value;
+        }
     }
 
 
@@ -183,21 +266,45 @@ public class APIModel {
         @JsonUnwrapped
         public HTTPReq req;
 
+        @Override
+        public Object toJava(boolean successful, FlowId flowId, BlobStoreClient blobStore) {
+            return null;
+        }
     }
 
 
     public enum StateDatumType {
-        UnknownState,
-        Succeeded,
-        Failed,
-        Cancelled,
-        Killed
+        @JsonProperty("unknown")
+        UnknownState(Flow.FlowState.UNKNOWN),
+        @JsonProperty("succeeded")
+        Succeeded(Flow.FlowState.SUCCEEDED),
+        @JsonProperty("failed")
+        Failed(Flow.FlowState.FAILED),
+        @JsonProperty("cancelled")
+        Cancelled(Flow.FlowState.CANCELLED),
+        @JsonProperty("killed")
+        Killed(Flow.FlowState.KILLED);
+
+        private final Flow.FlowState flowState;
+
+        StateDatumType(Flow.FlowState flowState) {
+            this.flowState = flowState;
+        }
+
+        public Flow.FlowState getFlowState() {
+            return flowState;
+        }
     }
 
     public static final class StateDatum extends Datum {
 
         @JsonProperty("type")
         public StateDatumType type;
+
+        @Override
+        public Object toJava(boolean successful, FlowId flowId, BlobStoreClient blobStore) {
+            return type.getFlowState();
+        }
     }
 
     public static final class HTTPResp {
@@ -205,7 +312,7 @@ public class APIModel {
         public Blob body;
 
         @JsonProperty("headers")
-        public List<HTTPHeader> headers;
+        public List<HTTPHeader> headers = new ArrayList<>();
 
         @JsonProperty("status_code")
         public Integer statusCode;
@@ -215,7 +322,74 @@ public class APIModel {
         @JsonUnwrapped
         public HTTPResp resp;
 
+        @Override
+        public Object toJava(boolean successful, FlowId flowId, BlobStoreClient blobStore) {
+
+            HttpResponse resp = new RemoteHTTPResponse(flowId, this.resp, blobStore);
+
+            if (successful) {
+                return resp;
+            } else {
+                return new FunctionInvocationException(resp);
+            }
+        }
     }
+
+    static Datum datumFromJava(FlowId flow, Object value, BlobStoreClient blobStore) {
+        if (value == null) {
+            return new EmptyDatum();
+        } else if (value instanceof FlowFuture) {
+            if (!(value instanceof RemoteFlow.RemoteFlowFuture)) {
+                throw new IllegalStateException("Unsupported flow future type return by function");
+            }
+            StageRefDatum datum = new StageRefDatum();
+            datum.stageId = ((RemoteFlow.RemoteFlowFuture) value).id();
+            return datum;
+        } else if (value instanceof RemoteHTTPResponse) {
+            HTTPRespDatum datum = new HTTPRespDatum();
+            datum.resp = ((RemoteHTTPResponse) value).response;
+            return datum;
+        } else if (value instanceof RemoteHTTPRequest) {
+            HTTPReqDatum datum = new HTTPReqDatum();
+            datum.req = ((RemoteHTTPRequest) value).req;
+            return datum;
+        } else {
+
+            byte[] data;
+
+            try {
+                try {
+                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                    ObjectOutputStream oos = new ObjectOutputStream(bos);
+                    oos.writeObject(value);
+                    oos.close();
+                    data = bos.toByteArray();
+                } catch (NotSerializableException e) {
+                    if (value instanceof Throwable) {
+                        // unserializable  errors are wrapped
+                        WrappedFunctionException wrapped = new WrappedFunctionException((Throwable) value);
+                        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                        ObjectOutputStream oos = new ObjectOutputStream(bos);
+                        oos.writeObject(wrapped);
+                        oos.close();
+                        data = bos.toByteArray();
+                    } else {
+                        throw new ResultSerializationException("Value not serializable", e);
+                    }
+                }
+
+
+                Blob blob = blobStore.writeBlob(flow.getId(), data, RemoteFlowApiClient.CONTENT_TYPE_JAVA_OBJECT);
+                BlobDatum bd = new BlobDatum();
+                bd.blob = blob;
+                return bd;
+            } catch (IOException e) {
+                throw new PlatformCommunicationException("Failed to store blob", e);
+            }
+
+        }
+    }
+
 
     public static class AddStageResponse {
         @JsonProperty("flow_id")
@@ -324,12 +498,107 @@ public class APIModel {
         public Blob closure;
 
         @JsonProperty("args")
-        public List<CompletionResult> args;
+        public List<CompletionResult> args = new ArrayList<>();
     }
 
     public static class InvokeStageResponse {
         @JsonProperty("result")
         public CompletionResult result;
 
+    }
+
+    private static class RemoteHTTPResponse implements HttpResponse {
+
+        private final HTTPResp response;
+        private final BlobStoreClient blobStoreClient;
+        private final FlowId flowId;
+
+        byte[] body;
+
+        RemoteHTTPResponse(FlowId flow, HTTPResp response, BlobStoreClient blobStoreClient) {
+            this.response = response;
+            this.blobStoreClient = blobStoreClient;
+            this.flowId = flow;
+        }
+
+        @Override
+        public int getStatusCode() {
+            return response.statusCode;
+        }
+
+        @Override
+        public Headers getHeaders() {
+            Map<String, String> headers = new HashMap<>();
+            response.headers.forEach((h) -> headers.put(h.key, h.value));
+            return Headers.fromMap(headers);
+        }
+
+        @Override
+        public byte[] getBodyAsBytes() {
+            if (body != null) {
+                return body;
+            }
+            return body = readBlobDataAsBytes(blobStoreClient, flowId, response.body);
+
+        }
+
+    }
+
+
+    private static class RemoteHTTPRequest implements HttpRequest {
+
+        private final HTTPReq req;
+        private final BlobStoreClient blobStoreClient;
+        private final FlowId flowId;
+
+        byte[] body;
+
+        RemoteHTTPRequest(FlowId flow, HTTPResp response, HTTPReq req, BlobStoreClient blobStoreClient) {
+            this.req = req;
+            this.blobStoreClient = blobStoreClient;
+            this.flowId = flow;
+        }
+
+
+        @Override
+        public HttpMethod getMethod() {
+            return req.method.flowMethod;
+        }
+
+        @Override
+        public Headers getHeaders() {
+            Map<String, String> headers = new HashMap<>();
+            req.headers.forEach((h) -> headers.put(h.key, h.value));
+            return Headers.fromMap(headers);
+        }
+
+        @Override
+        public byte[] getBodyAsBytes() {
+            if (body != null) {
+                return body;
+            }
+            return body = readBlobDataAsBytes(blobStoreClient, flowId, req.body);
+
+
+        }
+
+    }
+
+    private static byte[] readBlobDataAsBytes(BlobStoreClient blobStoreClient, FlowId flowId, Blob blob) {
+
+        if (blob != null) {
+            return blobStoreClient.readBlob(flowId.getId(), blob.blobId, (inputStream) -> {
+                try {
+                    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                    IOUtils.copy(inputStream, byteArrayOutputStream);
+                    return byteArrayOutputStream.toByteArray();
+                } catch (IOException e) {
+                    throw new FunctionInputHandlingException("Unable to read blob");
+                }
+            }, blob.contentType);
+
+        } else {
+            return new byte[0];
+        }
     }
 }

@@ -4,7 +4,6 @@ import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.flow.HttpMethod;
 
 import java.io.Serializable;
-import java.net.URI;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;

@@ -1,4 +1,4 @@
-package com.fnproject.fn.runtime.flow.blobs;
+package com.fnproject.fn.runtime.flow;
 
 public class BlobResponse {
     public Object data;
