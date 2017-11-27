@@ -145,18 +145,21 @@ public class RemoteFlowApiClient implements CompleterClient {
     @Override
     public CompletionId completedValue(FlowId flowId, boolean success, Object value, CodeLocation codeLocation) {
         try {
-            // Only support blob datums at the moment
-
-            APIModel.Datum blobDatum = APIModel.datumFromJava(flowId, value, blobStoreClient);
-
             APIModel.AddCompletedValueStageRequest addCompletedValueStageRequest = new APIModel.AddCompletedValueStageRequest();
             addCompletedValueStageRequest.callerId = FlowRuntimeGlobals.getCurrentCompletionId().map(CompletionId::toString).orElse(null);
 
             addCompletedValueStageRequest.codeLocation = codeLocation.getLocation();
             APIModel.CompletionResult completionResult = new APIModel.CompletionResult();
             completionResult.successful = true;
-            completionResult.result = blobDatum;
 
+            if(value instanceof RemoteFlow.RemoteFlowFuture) {
+                APIModel.StageRefDatum stageRefDatum = new APIModel.StageRefDatum();
+                stageRefDatum.stageId = ((RemoteFlow.RemoteFlowFuture)value).id();
+                completionResult.result = stageRefDatum;
+            } else {
+                APIModel.Datum blobDatum = APIModel.datumFromJava(flowId, value, blobStoreClient);
+                completionResult.result = blobDatum;
+            }
             addCompletedValueStageRequest.value = completionResult;
 
             return executeAddCompletedValueStageRequest(flowId, addCompletedValueStageRequest);
