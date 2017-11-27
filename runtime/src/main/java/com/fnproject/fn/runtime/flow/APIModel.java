@@ -18,7 +18,7 @@ import java.util.*;
  * <p>
  * (c) 2017 Oracle Corporation
  */
-class APIModel {
+public class APIModel {
 
     enum CompletionOperation {
         @JsonProperty("unknown_operation")
@@ -89,8 +89,22 @@ class APIModel {
         @JsonProperty("successful")
         public Boolean successful;
 
-        public Object toJava(FlowId flowId, BlobStoreClient blobClient) {
-            return result.toJava(successful, flowId, blobClient);
+        public Object toJava(FlowId flowId, BlobStoreClient blobClient, ClassLoader classLoader) {
+            return result.toJava(successful, flowId, blobClient, classLoader);
+        }
+
+        public static CompletionResult failure(Datum datum) {
+            CompletionResult result = new CompletionResult();
+            result.successful = false;
+            result.result = datum;
+            return result;
+        }
+
+        public static CompletionResult success(Datum datum) {
+            CompletionResult result = new CompletionResult();
+            result.successful = true;
+            result.result = datum;
+            return result;
         }
     }
 
@@ -105,7 +119,7 @@ class APIModel {
        @JsonSubTypes.Type(name = "state", value = StateDatum.class),
     })
     public static abstract class Datum {
-        public abstract Object toJava(boolean successful, FlowId flowId, BlobStoreClient blobStore);
+        public abstract Object toJava(boolean successful, FlowId flowId, BlobStoreClient blobStore, ClassLoader classLoader);
 
     }
 
@@ -113,7 +127,7 @@ class APIModel {
     public static final class EmptyDatum extends Datum {
 
         @Override
-        public Object toJava(boolean successful, FlowId flowId, BlobStoreClient blobStore) {
+        public Object toJava(boolean successful, FlowId flowId, BlobStoreClient blobStore, ClassLoader classLoader) {
             return null;
         }
     }
@@ -123,7 +137,7 @@ class APIModel {
         public Blob blob;
 
         @Override
-        public Object toJava(boolean successful, FlowId flowId, BlobStoreClient blobStore) {
+        public Object toJava(boolean successful, FlowId flowId, BlobStoreClient blobStore, ClassLoader classLoader) {
             return blobStore.readBlob(flowId.getId(), blob.blobId, (requestInputStream) -> {
                 try (ObjectInputStream objectInputStream = new ObjectInputStream(requestInputStream)) {
                     return objectInputStream.readObject();
@@ -134,6 +148,12 @@ class APIModel {
                 }
             }, blob.contentType);
         }
+
+        public static BlobDatum fromBlob(Blob blob) {
+            BlobDatum datum = new BlobDatum();
+            datum.blob = blob;
+            return datum;
+        }
     }
 
     public static final class StageRefDatum extends Datum {
@@ -141,7 +161,7 @@ class APIModel {
         public String stageId;
 
         @Override
-        public Object toJava(boolean successful, FlowId flowId, BlobStoreClient blobStore) {
+        public Object toJava(boolean successful, FlowId flowId, BlobStoreClient blobStore, ClassLoader classLoader) {
             return ((RemoteFlow) Flows.currentFlow()).createFlowFuture(new CompletionId(stageId));
         }
     }
@@ -180,7 +200,7 @@ class APIModel {
         public String message;
 
         @Override
-        public Object toJava(boolean successful, FlowId flowId, BlobStoreClient blobStore) {
+        public Object toJava(boolean successful, FlowId flowId, BlobStoreClient blobStore, ClassLoader classLoader) {
             switch (type) {
                 case StageTimeout:
                     return new StageTimeoutException(message);
@@ -197,6 +217,13 @@ class APIModel {
                 default:
                     return new PlatformException(message);
             }
+        }
+
+        public static ErrorDatum newError(ErrorType type, String message) {
+            ErrorDatum datum = new ErrorDatum();
+            datum.type = type;
+            datum.message = message;
+            return datum;
         }
     }
 
@@ -267,7 +294,7 @@ class APIModel {
         public HTTPReq req;
 
         @Override
-        public Object toJava(boolean successful, FlowId flowId, BlobStoreClient blobStore) {
+        public Object toJava(boolean successful, FlowId flowId, BlobStoreClient blobStore, ClassLoader classLoader) {
             return null;
         }
     }
@@ -302,8 +329,14 @@ class APIModel {
         public StateDatumType type;
 
         @Override
-        public Object toJava(boolean successful, FlowId flowId, BlobStoreClient blobStore) {
+        public Object toJava(boolean successful, FlowId flowId, BlobStoreClient blobStore, ClassLoader classLoader) {
             return type.getFlowState();
+        }
+
+        public static StateDatum fromType(StateDatumType type){
+            StateDatum datum = new StateDatum();
+            datum.type = type;
+            return datum;
         }
     }
 
@@ -323,7 +356,7 @@ class APIModel {
         public HTTPResp resp;
 
         @Override
-        public Object toJava(boolean successful, FlowId flowId, BlobStoreClient blobStore) {
+        public Object toJava(boolean successful, FlowId flowId, BlobStoreClient blobStore, ClassLoader classLoader) {
 
             HttpResponse resp = new RemoteHTTPResponse(flowId, this.resp, blobStore);
 

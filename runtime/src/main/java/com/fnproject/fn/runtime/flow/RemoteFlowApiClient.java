@@ -20,7 +20,7 @@ import static com.fnproject.fn.runtime.flow.HttpClient.preparePost;
  * REST client for accessing the Flow service API
  */
 public class RemoteFlowApiClient implements CompleterClient {
-    private static final String CONTENT_TYPE_HEADER = "Content-type";
+    public static final String CONTENT_TYPE_HEADER = "Content-type";
     private transient final HttpClient httpClient;
     private final String apiUrlBase;
     private final BlobStoreClient blobStoreClient;
@@ -232,7 +232,7 @@ public class RemoteFlowApiClient implements CompleterClient {
 
                 if (response.getStatusCode() == 200) {
                     APIModel.AwaitStageResponse resp = objectMapper.readValue(response.getContentStream(), APIModel.AwaitStageResponse.class);
-                    return resp.result.toJava(flowId, blobStoreClient);
+                    return resp.result.toJava(flowId, blobStoreClient, getClass().getClassLoader());
                 } else if (response.getStatusCode() == 408) {
                     // do nothing go round again
                 } else {

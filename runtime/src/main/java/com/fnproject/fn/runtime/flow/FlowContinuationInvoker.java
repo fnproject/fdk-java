@@ -29,8 +29,7 @@ public final class FlowContinuationInvoker implements FunctionInvoker {
 
     private static final String DEFAULT_COMPLETER_BASE_URL = "http://completer-svc:8081";
     private static final String COMPLETER_BASE_URL = "COMPLETER_BASE_URL";
-    static final String FLOW_ID_HEADER = "Fnproject-FlowId";
-    static final String STAGE_ID_HEADER = "Fnproject-StageId";
+    public static final String FLOW_ID_HEADER = "Fnproject-FlowId";
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -143,7 +142,7 @@ public final class FlowContinuationInvoker implements FunctionInvoker {
                                 throw new FunctionInputHandlingException("No functional interface type matches the supplied continuation class");
                             }
 
-                            Object[] args = invokeStageRequest.args.stream().map(arg -> arg.toJava(flowId, blobClient)).toArray();
+                            Object[] args = invokeStageRequest.args.stream().map(arg -> arg.toJava(flowId, blobClient, getClass().getClassLoader())).toArray();
 
 
                             OutputEvent result = invokeContinuation(blobClient, flowId, continuation, matchingDispatchPattern.getInvokeMethod(continuation), args);
