@@ -197,7 +197,7 @@ public class RemoteFlowApiClient implements CompleterClient {
             completionResult.result = blobDatum;
             completionResult.successful = true;
 
-            return completeStageExternally(flowId, completionId, new APIModel.CompletionResult());
+            return completeStageExternally(flowId, completionId, completionResult);
         } catch (IOException e) {
             throw new PlatformCommunicationException("Failed to complete stage externally", e);
         }
