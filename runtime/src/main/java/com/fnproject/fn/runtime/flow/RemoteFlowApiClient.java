@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
+import static com.fnproject.fn.runtime.flow.HttpClient.prepareGet;
 import static com.fnproject.fn.runtime.flow.HttpClient.preparePost;
 
 
@@ -246,7 +247,7 @@ public class RemoteFlowApiClient implements CompleterClient {
             long remainingTimeout = Math.max(1, start + msTimeout - lastStart);
 
             try (HttpClient.HttpResponse response =
-                    httpClient.execute(preparePost(apiUrlBase + "/flows/" + flowId.getId() + "/stages/" + id.getId() + "/await?timeout_ms=" + remainingTimeout))) {
+                    httpClient.execute(prepareGet(apiUrlBase + "/flows/" + flowId.getId() + "/stages/" + id.getId() + "/await?timeout_ms=" + remainingTimeout))) {
 
                 if (response.getStatusCode() == 200) {
                     APIModel.AwaitStageResponse resp = objectMapper.readValue(response.getContentStream(), APIModel.AwaitStageResponse.class);

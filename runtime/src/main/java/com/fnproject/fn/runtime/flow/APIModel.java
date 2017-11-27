@@ -534,6 +534,12 @@ public class APIModel {
 
 
     public static class AwaitStageResponse {
+        @JsonProperty("flow_id")
+        public String flowId;
+
+        @JsonProperty("stage_id")
+        public String stageId;
+
         @JsonProperty("result")
         public CompletionResult result;
     }
