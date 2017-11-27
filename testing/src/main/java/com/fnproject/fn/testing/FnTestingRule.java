@@ -70,7 +70,7 @@ public final class FnTestingRule implements TestRule {
     private Map<String, FnFunctionStub> functionStubs = new HashMap<>();
     public static InMemCompleter completer = null;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     private final List<String> sharedPrefixes = new ArrayList<>();
 
@@ -585,11 +585,18 @@ public final class FnTestingRule implements TestRule {
     private class TestRuleFnInvokeClient implements InMemCompleter.FnInvokeClient {
         @Override
         public CompletableFuture<com.fnproject.fn.api.flow.HttpResponse> invokeFunction(String fnId, HttpMethod method, Headers headers, byte[] data) {
-            return CompletableFuture.completedFuture(functionStubs
+            FnFunctionStub stub = functionStubs
                .computeIfAbsent(fnId, (k) -> {
                    throw new IllegalStateException("Function was invoked that had no definition: " + k);
-               })
-               .stubFunction(method, headers, data));
+               });
+
+            try {
+                return CompletableFuture.completedFuture(stub.stubFunction(method, headers, data));
+            } catch (Exception e) {
+                CompletableFuture<com.fnproject.fn.api.flow.HttpResponse> respFuture = new CompletableFuture<>();
+                respFuture.completeExceptionally(e);
+                return respFuture;
+            }
         }
     }
 }

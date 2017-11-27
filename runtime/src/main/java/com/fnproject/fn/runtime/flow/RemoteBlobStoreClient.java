@@ -23,8 +23,7 @@ public class RemoteBlobStoreClient implements BlobStoreClient {
            .withBody(bytes);
         try (HttpClient.HttpResponse resp = httpClient.execute(request)) {
             if (resp.getStatusCode() == 200) {
-                ObjectMapper objectMapper = new ObjectMapper();
-                return objectMapper.readValue(resp.getEntity(), BlobResponse.class);
+                return FlowRuntimeGlobals.getObjectMapper().readValue(resp.getEntity(), BlobResponse.class);
             } else {
                 throw new PlatformCommunicationException("Failed to write blob, got non 200 response:" + resp.getStatusCode() + " from blob store");
             }

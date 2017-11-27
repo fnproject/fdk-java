@@ -39,7 +39,6 @@ class InMemCompleter implements CompleterClient, BlobStoreClient, CompleterClien
 
         String blobId = UUID.randomUUID().toString();
         Blob blob = new Blob(bytes, contentType);
-        System.err.println("writing blob" + blobId + " : " + bytes.length+ ":"  + contentType);
 
         graphs.get(flow).blobs.put(blobId, blob);
         BlobResponse returnBlob = new BlobResponse();
@@ -131,7 +130,7 @@ class InMemCompleter implements CompleterClient, BlobStoreClient, CompleterClien
             ObjectOutputStream oos = new ObjectOutputStream(bos);
             oos.writeObject(code);
             oos.close();
-            BlobResponse blobResponse =  writeBlob(flowId.getId(), bos.toByteArray(), RemoteFlowApiClient.CONTENT_TYPE_JAVA_OBJECT);
+            BlobResponse blobResponse = writeBlob(flowId.getId(), bos.toByteArray(), RemoteFlowApiClient.CONTENT_TYPE_JAVA_OBJECT);
 
             return APIModel.Blob.fromBlobResponse(blobResponse);
         } catch (Exception e) {
@@ -574,8 +573,8 @@ class InMemCompleter implements CompleterClient, BlobStoreClient, CompleterClien
         private Stage addInvokeFunction(String functionId, HttpMethod method, Headers headers, byte[] data) {
             return addStage(new Stage(CompletableFuture.completedFuture(Collections.emptyList()),
                (n, in) -> in.thenComposeAsync((ignored) -> {
-                   CompletionStage<HttpResponse> respFuture = fnInvokeClient.invokeFunction(functionId, method, headers, data);
 
+                   CompletionStage<HttpResponse> respFuture = fnInvokeClient.invokeFunction(functionId, method, headers, data);
                    return respFuture.thenApply((res) -> {
                        APIModel.HTTPResp apiResp = new APIModel.HTTPResp();
                        apiResp.headers = res.getHeaders().getAll().entrySet()
@@ -594,10 +593,14 @@ class InMemCompleter implements CompleterClient, BlobStoreClient, CompleterClien
                            throw new ResultException(datum);
                        }
 
-                   }).exceptionally((e) -> {
-                       APIModel.ErrorDatum error = APIModel.ErrorDatum.newError(APIModel.ErrorType.FunctionInvokeFailed, e.getMessage());
-                       throw new ResultException(error);
+                   }).exceptionally(e->{
+                       if (e.getCause() instanceof ResultException){
+                           throw (ResultException)e.getCause();
+                       }else{
+                           throw new ResultException(APIModel.ErrorDatum.newError(APIModel.ErrorType.FunctionInvokeFailed,e.getMessage()));
+                       }
                    });
+
 
                }, faasExecutor)
 
@@ -665,7 +668,7 @@ class InMemCompleter implements CompleterClient, BlobStoreClient, CompleterClien
 
             private Stage addThenRunStage(APIModel.Blob closure) {
                 return addStage(new Stage(
-                   outputFuture().thenApply(Collections::singletonList),
+                   outputFuture().thenApply((r)->Collections.emptyList()),
                    chainInvocation(closure)
                 ));
             }

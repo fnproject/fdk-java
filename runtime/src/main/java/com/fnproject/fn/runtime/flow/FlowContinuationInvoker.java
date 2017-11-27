@@ -136,7 +136,7 @@ public final class FlowContinuationInvoker implements FunctionInvoker {
 
                             if (matchingDispatchPattern != null) {
                                 if (matchingDispatchPattern.numArguments() != invokeStageRequest.args.size()) {
-                                    throw new FunctionInputHandlingException("Number of arguments provided in InvokeStageRequest does not match the number required by the function type");
+                                    throw new FunctionInputHandlingException("Number of arguments provided ("  + invokeStageRequest.args.size() + ") in .InvokeStageRequest does not match the number required by the function type (" + matchingDispatchPattern.numArguments() + ")");
                                 }
                             } else {
                                 throw new FunctionInputHandlingException("No functional interface type matches the supplied continuation class");
