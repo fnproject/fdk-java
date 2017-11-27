@@ -5,6 +5,7 @@ import java.util.function.Function;
 
 public interface BlobStoreClient {
 
+
     APIModel.Blob writeBlob(String prefix, byte[] bytes, String contentType);
 
     <T> T readBlob(String prefix, String blobId, Function<InputStream, T> reader, String expectedContentType);

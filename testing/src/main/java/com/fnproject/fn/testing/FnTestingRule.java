@@ -6,10 +6,7 @@ import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.InputEvent;
 import com.fnproject.fn.api.OutputEvent;
 import com.fnproject.fn.api.QueryParameters;
-import com.fnproject.fn.api.flow.FlowCompletionException;
-import com.fnproject.fn.api.flow.FunctionInvocationException;
-import com.fnproject.fn.api.flow.HttpMethod;
-import com.fnproject.fn.api.flow.PlatformException;
+import com.fnproject.fn.api.flow.*;
 import com.fnproject.fn.runtime.flow.*;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.TeeOutputStream;
@@ -86,9 +83,11 @@ public final class FnTestingRule implements TestRule {
 
         addSharedClass(CompleterClient.class);
         addSharedClass(BlobStoreClient.class);
+
         addSharedClass(CompleterClientFactory.class);
         addSharedClass(CompletionId.class);
         addSharedClass(FlowId.class);
+        addSharedClass(Flow.FlowState.class);
         addSharedClass(CodeLocation.class);
         addSharedClass(Headers.class);
         addSharedClass(HttpMethod.class);
@@ -377,7 +376,7 @@ public final class FnTestingRule implements TestRule {
                     try {
                         return new DefaultHttpResponse(200, Headers.emptyHeaders(), f.apply(body));
                     } catch (FunctionError functionError) {
-                        return  new DefaultHttpResponse(500, Headers.emptyHeaders(), functionError.getMessage().getBytes());
+                        return new DefaultHttpResponse(500, Headers.emptyHeaders(), functionError.getMessage().getBytes());
                     } catch (PlatformError platformError) {
                         throw new RuntimeException("Platform Error");
                     }

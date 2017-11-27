@@ -89,6 +89,7 @@ public class APIModel {
         @JsonProperty("successful")
         public Boolean successful;
 
+
         public Object toJava(FlowId flowId, BlobStoreClient blobClient, ClassLoader classLoader) {
             return result.toJava(successful, flowId, blobClient, classLoader);
         }
@@ -118,6 +119,7 @@ public class APIModel {
        @JsonSubTypes.Type(name = "http_resp", value = HTTPRespDatum.class),
        @JsonSubTypes.Type(name = "state", value = StateDatum.class),
     })
+
     public static abstract class Datum {
         public abstract Object toJava(boolean successful, FlowId flowId, BlobStoreClient blobStore, ClassLoader classLoader);
 
@@ -139,13 +141,25 @@ public class APIModel {
         @Override
         public Object toJava(boolean successful, FlowId flowId, BlobStoreClient blobStore, ClassLoader classLoader) {
             return blobStore.readBlob(flowId.getId(), blob.blobId, (requestInputStream) -> {
-                try (ObjectInputStream objectInputStream = new ObjectInputStream(requestInputStream)) {
-                    return objectInputStream.readObject();
+
+                try {
+
+                    ObjectInputStream objectInputStream = new ObjectInputStream(requestInputStream);
+
+                    ClassLoader previous =  Thread.currentThread().getContextClassLoader();
+                    try {
+                        Thread.currentThread().setContextClassLoader(classLoader);
+                        return objectInputStream.readObject();
+                    }finally {
+                        Thread.currentThread().setContextClassLoader(previous);
+                    }
+
                 } catch (ClassNotFoundException | InvalidClassException | StreamCorruptedException | OptionalDataException e) {
                     throw new FunctionInputHandlingException("Error reading continuation content", e);
                 } catch (IOException e) {
                     throw new PlatformException("Error reading blob data", e);
                 }
+
             }, blob.contentType);
         }
 
@@ -365,14 +379,14 @@ public class APIModel {
             }
         }
 
-        public static HTTPRespDatum create(HTTPResp res){
+        public static HTTPRespDatum create(HTTPResp res) {
             HTTPRespDatum datum = new HTTPRespDatum();
             datum.resp = res;
             return datum;
         }
     }
 
-    static Datum datumFromJava(FlowId flow, Object value, BlobStoreClient blobStore) {
+    public static Datum datumFromJava(FlowId flow, Object value, BlobStoreClient blobStore) {
         if (value == null) {
             return new EmptyDatum();
         } else if (value instanceof FlowFuture) {

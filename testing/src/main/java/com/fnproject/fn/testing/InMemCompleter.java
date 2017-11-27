@@ -61,6 +61,7 @@ class InMemCompleter implements CompleterClient, BlobStoreClient, CompleterClien
             throw new IllegalStateException("Blob content type mismatch");
         }
         ByteArrayInputStream bis = new ByteArrayInputStream(blob.data);
+
         return reader.apply(bis);
     }
 
@@ -167,11 +168,23 @@ class InMemCompleter implements CompleterClient, BlobStoreClient, CompleterClien
               (parent) -> parent.addThenComposeStage(serializeJava(flowId, code)))).getId();
     }
 
+    private <T> T doInClassLoader(ClassLoader cl, Callable<T> call) throws Exception {
+        ClassLoader myCL = Thread.currentThread().getContextClassLoader();
+
+        try {
+            Thread.currentThread().setContextClassLoader(cl);
+            return call.call();
+        } finally {
+            Thread.currentThread().setContextClassLoader(myCL);
+        }
+    }
+
     @Override
     public Object waitForCompletion(FlowId flowId, CompletionId completionId, ClassLoader loader) {
         return withActiveGraph(flowId, (flow) -> flow.withStage(completionId, (stage) -> {
             try {
                 return stage.outputFuture().toCompletableFuture().get().toJava(flowId, this, loader);
+
             } catch (ExecutionException e) {
                 if (e.getCause() instanceof ResultException) {
 
@@ -198,7 +211,13 @@ class InMemCompleter implements CompleterClient, BlobStoreClient, CompleterClien
         try {
             return withActiveGraph(flowId, (flow) -> flow.withStage(completionId, (stage) -> {
                 try {
-                    return stage.outputFuture().toCompletableFuture().get(timeout, unit).toJava(flowId, this, loader);
+                    ClassLoader myCL = Thread.currentThread().getContextClassLoader();
+                    try {
+                        Thread.currentThread().setContextClassLoader(loader);
+                        return stage.outputFuture().toCompletableFuture().get().toJava(flowId, this, loader);
+                    } finally {
+                        Thread.currentThread().setContextClassLoader(myCL);
+                    }
                 } catch (ExecutionException e) {
                     if (e.getCause() instanceof ResultException) {
 
