@@ -187,7 +187,7 @@ public class RemoteFlowApiClient implements CompleterClient {
 
     @Override
     public CompletionId thenCombine(FlowId flowId, CompletionId completionId, Serializable fn, CompletionId alternate, CodeLocation codeLocation) {
-        return addStageWithClosure(APIModel.CompletionOperation.THEN_COMBINE, flowId, fn, codeLocation, Collections.singletonList(completionId));
+        return addStageWithClosure(APIModel.CompletionOperation.THEN_COMBINE, flowId, fn, codeLocation, Arrays.asList(completionId, alternate));
     }
 
     @Override
