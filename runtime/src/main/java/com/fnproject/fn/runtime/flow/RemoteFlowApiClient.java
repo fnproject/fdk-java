@@ -101,9 +101,9 @@ public class RemoteFlowApiClient implements CompleterClient {
         return addStageWithClosure(APIModel.CompletionOperation.THEN_RUN, flowId, fn, codeLocation, Arrays.asList(completionId, alternate));
     }
 
-
+    @Override
     public CompletionId createCompletion(FlowId flowId, CodeLocation codeLocation) {
-        return null;
+        return addStage(APIModel.CompletionOperation.EXTERNAL_COMPLETION, null, Collections.emptyList(), flowId, codeLocation);
     }
 
     @Override
@@ -191,12 +191,30 @@ public class RemoteFlowApiClient implements CompleterClient {
 
     @Override
     public boolean complete(FlowId flowId, CompletionId completionId, Object value) {
-        return false;
+        try {
+            APIModel.Datum blobDatum = APIModel.datumFromJava(flowId, value, blobStoreClient);
+            APIModel.CompletionResult completionResult = new APIModel.CompletionResult();
+            completionResult.result = blobDatum;
+            completionResult.successful = true;
+
+            return completeStageExternally(flowId, completionId, new APIModel.CompletionResult());
+        } catch (IOException e) {
+            throw new PlatformCommunicationException("Failed to complete stage externally", e);
+        }
     }
 
     @Override
     public boolean completeExceptionally(FlowId flowId, CompletionId completionId, Throwable value) {
-        return false;
+        try {
+            APIModel.Datum blobDatum = APIModel.datumFromJava(flowId, value, blobStoreClient);
+            APIModel.CompletionResult completionResult = new APIModel.CompletionResult();
+            completionResult.result = blobDatum;
+            completionResult.successful = false;
+
+            return completeStageExternally(flowId, completionId, completionResult);
+        } catch (IOException e) {
+            throw new PlatformCommunicationException("Failed to complete stage externally", e);
+        }
     }
 
     @Override
@@ -252,8 +270,6 @@ public class RemoteFlowApiClient implements CompleterClient {
         } while (System.currentTimeMillis() - start < msTimeout);
 
         throw new TimeoutException("Stage did not completed before timeout ");
-
-
     }
 
     @Override
@@ -379,5 +395,22 @@ public class RemoteFlowApiClient implements CompleterClient {
         System.out.println(new String(bytes));
         HttpClient.HttpRequest request = preparePost(apiUrlBase + "/flows/" + flowId.getId() + "/delay").withBody(bytes);
         return requestForCompletionId(request);
+    }
+
+    private boolean completeStageExternally(FlowId flowId, CompletionId completionId, APIModel.CompletionResult completionResult) throws IOException {
+        APIModel.CompleteStageExternallyRequest completeStageExternallyRequest = new APIModel.CompleteStageExternallyRequest();
+        completeStageExternallyRequest.callerId = FlowRuntimeGlobals.getCurrentCompletionId().map(CompletionId::toString).orElse(null);
+        completeStageExternallyRequest.value = completionResult;
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        objectMapper.writeValue(baos, completeStageExternallyRequest);
+        byte[] bytes = baos.toByteArray();
+        System.out.println(new String(bytes));
+        HttpClient.HttpRequest request = preparePost(apiUrlBase + "/flows/" + flowId.getId() + "/stages/" + completionId.getId() + "/complete").withBody(bytes);
+        try (HttpClient.HttpResponse resp = httpClient.execute(request)) {
+            return isSuccessful(resp);
+        } catch (Exception e) {
+            throw new PlatformCommunicationException("Failed to add stage ", e);
+        }
     }
 }
