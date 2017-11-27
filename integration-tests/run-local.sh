@@ -20,15 +20,23 @@ set -ex
 # ----------------------------------------------------------------------
 
 if [[ -n "$REPOSITORY_LOCATION" ]]; then
-    if [[ -n "$LOCALHOST_ACTUAL_IP" ]]; then
-        echo "Using $LOCALHOST_ACTUAL_IP for the staging Maven repo."
-        export MAVEN_REPOSITORY_LOCATION="http://$LOCALHOST_ACTUAL_IP:18080"
-    else
-        echo "No LOCALHOST_ACTUAL_IP set, assuming we're running on CircleCI."
-        export MAVEN_REPOSITORY_LOCATION="http://172.17.0.1:18080"
-    fi
-    cd "$REPOSITORY_LOCATION" && python -mSimpleHTTPServer 18080 1>>/tmp/http-logs 2>&1 &
-    defer kill -9 "$!"
+    REPO_CONTAINER_ID=$(
+        docker run -d \
+            -v "$REPOSITORY_LOCATION":/repo:ro \
+            -w /repo \
+            --name repo-$SUFFIX \
+            python:2.7 \
+            python -mSimpleHTTPServer 18080
+    )
+    defer docker rm -f $REPO_CONTAINER_ID
+    REPO_INTERNAL_IP=$(
+        docker inspect \
+            --type container \
+            -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}'  \
+            $REPO_CONTAINER_ID
+       )
+    export MAVEN_REPOSITORY_LOCATION="http://$REPO_INTERNAL_IP:18080"
+    export no_proxy="$no_proxy,$REPO_INTERNAL_IP"
 fi
 
 # ----------------------------------------------------------------------
