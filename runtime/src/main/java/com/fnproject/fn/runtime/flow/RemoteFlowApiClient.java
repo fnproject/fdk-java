@@ -242,7 +242,7 @@ public class RemoteFlowApiClient implements CompleterClient {
     // wait for completion  -> result
     @Override
     public Object waitForCompletion(FlowId flowId, CompletionId id, ClassLoader ignored, long timeout, TimeUnit unit) throws TimeoutException {
-        long msTimeout = unit.convert(timeout, TimeUnit.MILLISECONDS);
+        long msTimeout = TimeUnit.MILLISECONDS.convert(timeout, unit);
         long start = System.currentTimeMillis();
         do {
             long lastStart = System.currentTimeMillis();
