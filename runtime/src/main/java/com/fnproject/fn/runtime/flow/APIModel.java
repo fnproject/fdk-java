@@ -267,13 +267,11 @@ public class APIModel {
         public String value;
 
 
-        public HTTPHeader() {
-
-        }
-
-        public HTTPHeader(String key, String value) {
-            this.key = key;
-            this.value = value;
+        public static HTTPHeader create(String key, String value) {
+            HTTPHeader header = new HTTPHeader();
+            header.key = key;
+            header.value = value;
+            return header;
         }
     }
 
@@ -333,7 +331,7 @@ public class APIModel {
             return type.getFlowState();
         }
 
-        public static StateDatum fromType(StateDatumType type){
+        public static StateDatum fromType(StateDatumType type) {
             StateDatum datum = new StateDatum();
             datum.type = type;
             return datum;
@@ -365,6 +363,12 @@ public class APIModel {
             } else {
                 return new FunctionInvocationException(resp);
             }
+        }
+
+        public static HTTPRespDatum create(HTTPResp res){
+            HTTPRespDatum datum = new HTTPRespDatum();
+            datum.resp = res;
+            return datum;
         }
     }
 

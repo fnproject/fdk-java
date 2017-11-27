@@ -104,7 +104,7 @@ func.yaml created
 You will create a function that produces the nth prime number and then returns
 an informational message once the prime number has been computed.  In this 
 example, we have chosen to block our to wait for completion of the computation
-graph by calling `get()`. This allows you to see the return value when invoking
+flow by calling `get()`. This allows you to see the return value when invoking
 your function over HTTP. *In a production application, you should avoid
 blocking*, since your function will continue to run while waiting for
 a computation result, even though it has no useful work to do.

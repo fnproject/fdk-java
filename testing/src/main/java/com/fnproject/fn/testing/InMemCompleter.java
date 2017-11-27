@@ -1,7 +1,6 @@
 package com.fnproject.fn.testing;
 
 import com.fnproject.fn.api.Headers;
-import com.fnproject.fn.api.flow.Flow;
 import com.fnproject.fn.api.flow.*;
 import com.fnproject.fn.runtime.flow.*;
 
@@ -16,11 +15,13 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import com.fnproject.fn.testing.InMemCompleter.Flow;
+
 /**
  * In memory completer
  */
-class InMemCompleter implements CompleterClient, BlobStoreClient {
-    private final Map<FlowId, Graph> graphs = new ConcurrentHashMap<>();
+class InMemCompleter implements CompleterClient, BlobStoreClient, CompleterClientFactory {
+    private final Map<FlowId, Flow> graphs = new ConcurrentHashMap<>();
     private final AtomicInteger threadCount = new AtomicInteger();
     private final CompleterInvokeClient completerInvokeClient;
     private final FnInvokeClient fnInvokeClient;
@@ -63,6 +64,16 @@ class InMemCompleter implements CompleterClient, BlobStoreClient {
         return reader.apply(bis);
     }
 
+    @Override
+    public CompleterClient getCompleterClient() {
+        return this;
+    }
+
+    @Override
+    public BlobStoreClient getBlobStoreClient() {
+        return this;
+    }
+
     public interface CompleterInvokeClient {
         APIModel.CompletionResult invokeStage(String fnId, FlowId flowId, CompletionId stageId, APIModel.Blob closure, List<APIModel.CompletionResult> body);
     }
@@ -80,7 +91,7 @@ class InMemCompleter implements CompleterClient, BlobStoreClient {
         while (true) {
             int aliveCount = 0;
 
-            for (Map.Entry<FlowId, Graph> e : graphs.entrySet()) {
+            for (Map.Entry<FlowId, Flow> e : graphs.entrySet()) {
                 if (!e.getValue().isCompleted()) {
                     aliveCount++;
                 }
@@ -100,14 +111,14 @@ class InMemCompleter implements CompleterClient, BlobStoreClient {
     @Override
     public FlowId createFlow(String functionId) {
         FlowId id = new FlowId("flow-" + threadCount.incrementAndGet());
-        graphs.put(id, new Graph(functionId, id));
+        graphs.put(id, new Flow(functionId, id));
 
         return id;
     }
 
     @Override
     public CompletionId supply(FlowId flowID, Serializable code, CodeLocation codeLocation) {
-        return withActiveGraph(flowID, graph -> graph.addSupplyStage(serializeJava(flowID, code))).getId();
+        return withActiveGraph(flowID, flow -> flow.addSupplyStage(serializeJava(flowID, code))).getId();
     }
 
     private APIModel.Blob serializeJava(FlowId flowId, Object code) {
@@ -123,8 +134,8 @@ class InMemCompleter implements CompleterClient, BlobStoreClient {
         }
     }
 
-    private <T> T withActiveGraph(FlowId t, Function<Graph, T> act) {
-        Graph g = graphs.get(t);
+    private <T> T withActiveGraph(FlowId t, Function<Flow, T> act) {
+        Flow g = graphs.get(t);
         if (g == null) {
             throw new PlatformException("unknown graph " + t.getId());
         }
@@ -137,14 +148,14 @@ class InMemCompleter implements CompleterClient, BlobStoreClient {
     @Override
     public CompletionId thenApply(FlowId flowID, CompletionId completionId, Serializable code, CodeLocation codeLocation) {
         return withActiveGraph(flowID,
-           (graph) -> graph.withStage(completionId,
+           (flow) -> flow.withStage(completionId,
               (parent) -> parent.addThenApplyStage(serializeJava(flowID, code)))).getId();
     }
 
     @Override
     public CompletionId whenComplete(FlowId flowID, CompletionId completionId, Serializable code, CodeLocation codeLocation) {
         return withActiveGraph(flowID,
-           (graph) -> graph.withStage(completionId,
+           (flow) -> flow.withStage(completionId,
               (parent) -> parent.addWhenCompleteStage(serializeJava(flowID, code)))).getId();
 
     }
@@ -152,13 +163,13 @@ class InMemCompleter implements CompleterClient, BlobStoreClient {
     @Override
     public CompletionId thenCompose(FlowId flowId, CompletionId completionId, Serializable code, CodeLocation codeLocation) {
         return withActiveGraph(flowId,
-           (graph) -> graph.withStage(completionId,
+           (flow) -> flow.withStage(completionId,
               (parent) -> parent.addThenComposeStage(serializeJava(flowId, code)))).getId();
     }
 
     @Override
     public Object waitForCompletion(FlowId flowId, CompletionId completionId, ClassLoader loader) {
-        return withActiveGraph(flowId, (graph) -> graph.withStage(completionId, (stage) -> {
+        return withActiveGraph(flowId, (flow) -> flow.withStage(completionId, (stage) -> {
             try {
                 return stage.outputFuture().toCompletableFuture().get().toJava(flowId, this, loader);
             } catch (ExecutionException e) {
@@ -185,7 +196,7 @@ class InMemCompleter implements CompleterClient, BlobStoreClient {
     @Override
     public Object waitForCompletion(FlowId flowId, CompletionId completionId, ClassLoader loader, long timeout, TimeUnit unit) throws TimeoutException {
         try {
-            return withActiveGraph(flowId, (graph) -> graph.withStage(completionId, (stage) -> {
+            return withActiveGraph(flowId, (flow) -> flow.withStage(completionId, (stage) -> {
                 try {
                     return stage.outputFuture().toCompletableFuture().get(timeout, unit).toJava(flowId, this, loader);
                 } catch (ExecutionException e) {
@@ -216,14 +227,14 @@ class InMemCompleter implements CompleterClient, BlobStoreClient {
     @Override
     public CompletionId thenAccept(FlowId flowId, CompletionId completionId, Serializable code, CodeLocation codeLocation) {
         return withActiveGraph(flowId,
-           (graph) -> graph.withStage(completionId,
+           (flow) -> flow.withStage(completionId,
               (parent) -> parent.addThenAcceptStage(serializeJava(flowId, code)))).getId();
     }
 
     @Override
     public CompletionId thenRun(FlowId flowId, CompletionId completionId, Serializable code, CodeLocation codeLocation) {
         return withActiveGraph(flowId,
-           (graph) -> graph.withStage(completionId,
+           (flow) -> flow.withStage(completionId,
               (parent) -> parent.addThenRunStage(serializeJava(flowId, code)))).getId();
 
     }
@@ -231,10 +242,10 @@ class InMemCompleter implements CompleterClient, BlobStoreClient {
     @Override
     public CompletionId acceptEither(FlowId flowId, CompletionId completionId, CompletionId alternate, Serializable code, CodeLocation codeLocation) {
         return withActiveGraph(flowId,
-           (graph) ->
-              graph.withStage(alternate,
+           (flow) ->
+              flow.withStage(alternate,
                  (other) ->
-                    graph.appendChildStage(completionId,
+                    flow.appendChildStage(completionId,
                        (parent) -> parent.addAcceptEitherStage(other, serializeJava(flowId, code))).getId()));
 
     }
@@ -242,35 +253,35 @@ class InMemCompleter implements CompleterClient, BlobStoreClient {
     @Override
     public CompletionId applyToEither(FlowId flowId, CompletionId completionId, CompletionId alternate, Serializable code, CodeLocation codeLocation) {
         return withActiveGraph(flowId,
-           (graph) ->
-              graph.withStage(alternate,
+           (flow) ->
+              flow.withStage(alternate,
                  (other) ->
-                    graph.withStage(completionId,
+                    flow.withStage(completionId,
                        (parent) -> parent.addApplyToEitherStage(other, serializeJava(flowId, code))).getId()));
     }
 
     @Override
     public boolean complete(FlowId flowId, CompletionId completionId, Object value) {
-        return withActiveGraph(flowId, (graph) -> graph.withStage(completionId, (stage) -> stage.complete(APIModel.BlobDatum.fromBlob(serializeJava(flowId, value)))));
+        return withActiveGraph(flowId, (flow) -> flow.withStage(completionId, (stage) -> stage.complete(APIModel.BlobDatum.fromBlob(serializeJava(flowId, value)))));
     }
 
     @Override
     public boolean completeExceptionally(FlowId flowId, CompletionId completionId, Throwable value) {
-        return withActiveGraph(flowId, (graph) -> graph.withStage(completionId, (stage) -> stage.completeExceptionally(APIModel.BlobDatum.fromBlob(serializeJava(flowId, value)))));
+        return withActiveGraph(flowId, (flow) -> flow.withStage(completionId, (stage) -> stage.completeExceptionally(APIModel.BlobDatum.fromBlob(serializeJava(flowId, value)))));
     }
 
     @Override
     public CompletionId anyOf(FlowId flowId, List<CompletionId> cids, CodeLocation codeLocation) {
         return withActiveGraph(flowId,
-           (graph) ->
-              graph.withStages(cids, graph::addAnyOf).getId());
+           (flow) ->
+              flow.withStages(cids, flow::addAnyOf).getId());
 
     }
 
     @Override
     public CompletionId delay(FlowId flowId, long l, CodeLocation codeLocation) {
         return withActiveGraph(flowId,
-           (graph) -> graph.addDelayStage(l)).getId();
+           (flow) -> flow.addDelayStage(l)).getId();
 
     }
 
@@ -278,10 +289,10 @@ class InMemCompleter implements CompleterClient, BlobStoreClient {
     @Override
     public CompletionId thenAcceptBoth(FlowId flowId, CompletionId completionId, CompletionId alternate, Serializable code, CodeLocation codeLocation) {
         return withActiveGraph(flowId,
-           (graph) ->
-              graph.withStage(alternate,
+           (flow) ->
+              flow.withStage(alternate,
                  (other) ->
-                    graph.withStage(completionId,
+                    flow.withStage(completionId,
                        (parent) -> parent.addThenAcceptBothStage(other, serializeJava(flowId, code))).getId()));
 
     }
@@ -290,69 +301,69 @@ class InMemCompleter implements CompleterClient, BlobStoreClient {
     public CompletionId createCompletion(FlowId flowId, CodeLocation codeLocation) {
         CompletableFuture<APIModel.CompletionResult> resultFuture = new CompletableFuture<>();
 
-        Graph.Stage stage = withActiveGraph(flowId,
-           graph -> graph.addExternalStage(resultFuture));
+        Flow.Stage stage = withActiveGraph(flowId,
+           flow -> flow.addExternalStage(resultFuture));
 
         return stage.getId();
     }
 
     @Override
     public CompletionId invokeFunction(FlowId flowId, String functionId, byte[] data, HttpMethod method, Headers headers, CodeLocation codeLocation) {
-        return withActiveGraph(flowId, (graph) ->
-           graph.addInvokeFunction(functionId, method, headers, data)).getId();
+        return withActiveGraph(flowId, (flow) ->
+           flow.addInvokeFunction(functionId, method, headers, data)).getId();
     }
 
     @Override
     public CompletionId completedValue(FlowId flowId, boolean success, Object value, CodeLocation codeLocation) {
-        return withActiveGraph(flowId, (graph) ->
-           graph.addCompletedValue(success, APIModel.BlobDatum.fromBlob(serializeJava(flowId, value)))).getId();
+        return withActiveGraph(flowId, (flow) ->
+           flow.addCompletedValue(success, APIModel.BlobDatum.fromBlob(serializeJava(flowId, value)))).getId();
     }
 
     @Override
     public CompletionId allOf(FlowId flowId, List<CompletionId> cids, CodeLocation codeLocation) {
         return withActiveGraph(flowId,
-           (graph) ->
-              graph.withStages(cids, graph::addAllOf).getId());
+           (flow) ->
+              flow.withStages(cids, flow::addAllOf).getId());
     }
 
     @Override
     public CompletionId handle(FlowId flowId, CompletionId completionId, Serializable code, CodeLocation codeLocation) {
         return withActiveGraph(flowId,
-           (graph) ->
-              graph.withStage(completionId,
+           (flow) ->
+              flow.withStage(completionId,
                  (stage) -> stage.addHandleStage(serializeJava(flowId, code))).getId());
     }
 
     @Override
     public CompletionId exceptionally(FlowId flowId, CompletionId completionId, Serializable code, CodeLocation codeLocation) {
         return withActiveGraph(flowId,
-           (graph) ->
-              graph.withStage(completionId,
+           (flow) ->
+              flow.withStage(completionId,
                  (stage) -> stage.addExceptionallyStage(serializeJava(flowId, code))).getId());
     }
 
     @Override
     public CompletionId exceptionallyCompose(FlowId flowId, CompletionId completionId, Serializable code, CodeLocation codeLocation) {
         return withActiveGraph(flowId,
-           (graph) ->
-              graph.withStage(completionId,
+           (flow) ->
+              flow.withStage(completionId,
                  (stage) -> stage.addExceptionallyComposeStage(serializeJava(flowId, code))).getId());
     }
 
     @Override
     public CompletionId thenCombine(FlowId flowId, CompletionId completionId, Serializable code, CompletionId alternate, CodeLocation codeLocation) {
         return withActiveGraph(flowId,
-           (graph) ->
-              graph.withStage(alternate,
+           (flow) ->
+              flow.withStage(alternate,
                  (other) ->
-                    graph.appendChildStage(completionId,
+                    flow.appendChildStage(completionId,
                        (parent) -> parent.addThenCombineStage(other, serializeJava(flowId, code))).getId()));
 
     }
 
     @Override
     public void commit(FlowId flowId) {
-        withActiveGraph(flowId, Graph::commit);
+        withActiveGraph(flowId, Flow::commit);
     }
 
     @Override
@@ -385,23 +396,23 @@ class InMemCompleter implements CompleterClient, BlobStoreClient {
         }
     }
 
-    class Graph {
+    class Flow {
         private final Map<String, Blob> blobs = new HashMap<>();
 
         private final String functionId;
-        private final FlowId graphId;
+        private final FlowId flowId;
         private final AtomicBoolean committed = new AtomicBoolean(false);
         private final AtomicInteger stageCount = new AtomicInteger();
         private final AtomicInteger activeCount = new AtomicInteger();
         private final Map<CompletionId, Stage> stages = new ConcurrentHashMap<>();
         private final AtomicBoolean mainFinished = new AtomicBoolean(false);
-        private final AtomicReference<Flow.FlowState> terminationSTate = new AtomicReference<>();
+        private final AtomicReference<com.fnproject.fn.api.flow.Flow.FlowState> terminationSTate = new AtomicReference<>();
         private final AtomicBoolean complete = new AtomicBoolean(false);
         private final List<TerminationHook> terminationHooks = Collections.synchronizedList(new ArrayList<>());
 
-        Graph(String functionId, FlowId graphId) {
+        Flow(String functionId, FlowId flowId) {
             this.functionId = functionId;
-            this.graphId = graphId;
+            this.flowId = flowId;
         }
 
         boolean isCompleted() {
@@ -422,7 +433,7 @@ class InMemCompleter implements CompleterClient, BlobStoreClient {
             if (terminationHooks.size() != 0) {
                 TerminationHook hook = terminationHooks.remove(0);
                 CompletableFuture.runAsync(() -> {
-                    completerInvokeClient.invokeStage(functionId, graphId, hook.id, hook.code,
+                    completerInvokeClient.invokeStage(functionId, flowId, hook.id, hook.code,
                        Collections.singletonList(APIModel.CompletionResult.success(APIModel.StateDatum.fromType(APIModel.StateDatumType.Succeeded))));
                 }).whenComplete((r, e) -> this.workShutdown());
             } else {
@@ -538,13 +549,40 @@ class InMemCompleter implements CompleterClient, BlobStoreClient {
 
         private Stage addInvokeFunction(String functionId, HttpMethod method, Headers headers, byte[] data) {
             return addStage(new Stage(CompletableFuture.completedFuture(Collections.emptyList()),
-               (n, in) -> in.thenComposeAsync((ignored) ->
-                  fnInvokeClient.invokeFunction(functionId, method, headers, data), faasExecutor)));
+               (n, in) -> in.thenComposeAsync((ignored) -> {
+                   CompletionStage<HttpResponse> respFuture = fnInvokeClient.invokeFunction(functionId, method, headers, data);
+
+                   return respFuture.thenApply((res) -> {
+                       APIModel.HTTPResp apiResp = new APIModel.HTTPResp();
+                       apiResp.headers = res.getHeaders().getAll().entrySet()
+                          .stream().map(e -> APIModel.HTTPHeader.create(e.getKey(), e.getValue())).collect(Collectors.toList());
+
+                       APIModel.Blob blob = writeBlob(flowId.getId(), res.getBodyAsBytes(), res.getHeaders().get("Content-type").orElse("application/octet-stream"));
+
+                       apiResp.body = blob;
+                       apiResp.statusCode = res.getStatusCode();
+
+                       APIModel.HTTPRespDatum datum = APIModel.HTTPRespDatum.create(apiResp);
+
+                       if (apiResp.statusCode >= 200 && apiResp.statusCode < 400) {
+                           return APIModel.CompletionResult.success(datum);
+                       } else {
+                           throw new ResultException(datum);
+                       }
+
+                   }).exceptionally((e) -> {
+                       APIModel.ErrorDatum error = APIModel.ErrorDatum.newError(APIModel.ErrorType.FunctionInvokeFailed, e.getMessage());
+                       throw new ResultException(error);
+                   });
+
+               }, faasExecutor)
+
+            ));
         }
 
         private BiFunction<Stage, CompletionStage<List<APIModel.CompletionResult>>, CompletionStage<APIModel.CompletionResult>> chainInvocation(APIModel.Blob closure) {
             return (stage, trigger) -> trigger.thenApplyAsync((input) -> {
-                return completerInvokeClient.invokeStage(functionId, graphId, stage.id, closure, input);
+                return completerInvokeClient.invokeStage(functionId, flowId, stage.id, closure, input);
             }, faasExecutor);
         }
 
@@ -712,7 +750,7 @@ class InMemCompleter implements CompleterClient, BlobStoreClient {
                                           }
                                       });
                                } else {
-                                   result.completeExceptionally(new ResultException(APIModel.ErrorDatum.newError(APIModel.ErrorType.UnknownError,"Unexpected error" + err.getMessage())));
+                                   result.completeExceptionally(new ResultException(APIModel.ErrorDatum.newError(APIModel.ErrorType.UnknownError, "Unexpected error" + err.getMessage())));
                                }
                            } else {
                                result.complete(results.get(0));

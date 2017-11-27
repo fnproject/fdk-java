@@ -85,6 +85,7 @@ public final class FnTestingRule implements TestRule {
         addSharedClassPrefix("jdk.");
 
         addSharedClass(CompleterClient.class);
+        addSharedClass(BlobStoreClient.class);
         addSharedClass(CompleterClientFactory.class);
         addSharedClass(CompletionId.class);
         addSharedClass(FlowId.class);
@@ -372,16 +373,15 @@ public final class FnTestingRule implements TestRule {
 
             @Override
             public FnTestingRule withAction(ExternalFunctionAction f) {
-//                functionStubs.put(id, (HttpMethod method, Headers headers, byte[] body) -> {
-//                    try {
-//
-//                        return Result.success(new Datum.HttpRespDatum(200, Headers.emptyHeaders(), f.apply(body)));
-//                    } catch (FunctionError functionError) {
-//                        throw new ResultException(new Datum.HttpRespDatum(500, Headers.emptyHeaders(), functionError.getMessage().getBytes()));
-//                    } catch (PlatformError platformError) {
-//                        throw new ResultException(new Datum.ErrorDatum(Datum.ErrorType.function_invoke_failed, platformError.getMessage()));
-//                    }
-//                });
+                functionStubs.put(id, (HttpMethod method, Headers headers, byte[] body) -> {
+                    try {
+                        return new DefaultHttpResponse(200, Headers.emptyHeaders(), f.apply(body));
+                    } catch (FunctionError functionError) {
+                        return  new DefaultHttpResponse(500, Headers.emptyHeaders(), functionError.getMessage().getBytes());
+                    } catch (PlatformError platformError) {
+                        throw new RuntimeException("Platform Error");
+                    }
+                });
                 return FnTestingRule.this;
             }
         };

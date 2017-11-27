@@ -289,7 +289,7 @@ public class FlowsContinuationInvokerTest {
                assertThat(x.getStatusCode()).isEqualTo(201);
                assertThat(x.getHeaders().get("Foo")).contains("Bar");
            })
-           .withHttpRespArg(201, "Hello", new APIModel.HTTPHeader("Foo", "Bar"))
+           .withHttpRespArg(201, "Hello", APIModel.HTTPHeader.create("Foo", "Bar"))
            .asEvent();
 
 
@@ -312,7 +312,7 @@ public class FlowsContinuationInvokerTest {
                assertThat(x.getStatusCode()).isEqualTo(201);
                assertThat(x.getHeaders().get("Foo")).contains("Bar");
            })
-           .withHttpRespArg(false, 201, "Hello", new APIModel.HTTPHeader("Foo", "Bar"))
+           .withHttpRespArg(false, 201, "Hello", APIModel.HTTPHeader.create("Foo", "Bar"))
            .asEvent();
 
 

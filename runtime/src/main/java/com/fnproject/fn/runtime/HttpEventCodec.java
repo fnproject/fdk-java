@@ -33,7 +33,7 @@ import java.util.function.Function;
  */
 public class HttpEventCodec implements EventCodec {
 
-    private static final String CONTENT_TYPE_HEADER = "Content-type";
+    private static final String CONTENT_TYPE_HEADER = "Content-Type";
     private final SessionInputBuffer sib;
     private final SessionOutputBuffer sob;
     private final HttpMessageParser<HttpRequest> parser;

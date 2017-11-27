@@ -68,11 +68,10 @@ class FnTestingClassLoader extends ClassLoader {
         return cls;
     }
 
-    void setCompleterClient(CompleterClient completer) {
+    void setCompleterClient(CompleterClientFactory completerClientFactory) {
         try {
             Class<?> completerGlobals = loadClass(FlowRuntimeGlobals.class.getName());
-            CompleterClientFactory ccf = (CompleterClientFactory) () -> completer;
-            callMethodInFnClassloader(completerGlobals, "setCompleterClientFactory", CompleterClientFactory.class).invoke(completerGlobals, ccf);
+            callMethodInFnClassloader(completerGlobals, "setCompleterClientFactory", CompleterClientFactory.class).invoke(completerGlobals, completerClientFactory);
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | ClassNotFoundException | IllegalArgumentException e) {
             throw new RuntimeException("Something broke in the reflective classloader", e);
         }
