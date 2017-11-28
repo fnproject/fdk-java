@@ -47,9 +47,9 @@ else
     fn apps create "$TESTNAME"
 fi
 
-if [[ -x delpoy.sh ]]
+if [[ -x deploy.sh ]]
 then
-    ./route-create.sh
+    ./deploy.sh
 else
      fn deploy --app "$TESTNAME" --local
 fi
