@@ -303,7 +303,7 @@ public class APIModel {
 
 
     public static final class HTTPReq {
-        @JsonProperty("arg")
+        @JsonProperty("body")
         public Blob body;
 
         @JsonProperty("headers")
