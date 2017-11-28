@@ -95,7 +95,7 @@ public class APIModel {
         public Datum result;
 
         @JsonProperty("successful")
-        public Boolean successful;
+        public boolean successful;
 
 
         public Object toJava(FlowId flowId, BlobStoreClient blobClient, ClassLoader classLoader) {
