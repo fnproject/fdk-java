@@ -86,19 +86,19 @@ public class RemoteFlowApiClient implements CompleterClient {
 
     @Override
     public CompletionId acceptEither(FlowId flowId, CompletionId completionId, CompletionId alternate, Serializable fn, CodeLocation codeLocation) {
-        return addStageWithClosure(APIModel.CompletionOperation.THEN_RUN, flowId, fn, codeLocation, Arrays.asList(completionId, alternate));
+        return addStageWithClosure(APIModel.CompletionOperation.ACCEPT_EITHER, flowId, fn, codeLocation, Arrays.asList(completionId, alternate));
 
     }
 
     @Override
     public CompletionId applyToEither(FlowId flowId, CompletionId completionId, CompletionId alternate, Serializable fn, CodeLocation codeLocation) {
-        return addStageWithClosure(APIModel.CompletionOperation.THEN_RUN, flowId, fn, codeLocation, Arrays.asList(completionId, alternate));
+        return addStageWithClosure(APIModel.CompletionOperation.APPLY_TO_EITHER, flowId, fn, codeLocation, Arrays.asList(completionId, alternate));
 
     }
 
     @Override
     public CompletionId thenAcceptBoth(FlowId flowId, CompletionId completionId, CompletionId alternate, Serializable fn, CodeLocation codeLocation) {
-        return addStageWithClosure(APIModel.CompletionOperation.THEN_RUN, flowId, fn, codeLocation, Arrays.asList(completionId, alternate));
+        return addStageWithClosure(APIModel.CompletionOperation.THEN_ACCEPT_BOTH, flowId, fn, codeLocation, Arrays.asList(completionId, alternate));
     }
 
     @Override
