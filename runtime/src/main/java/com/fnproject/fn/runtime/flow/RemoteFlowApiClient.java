@@ -151,7 +151,7 @@ public class RemoteFlowApiClient implements CompleterClient {
 
             addCompletedValueStageRequest.codeLocation = codeLocation.getLocation();
             APIModel.CompletionResult completionResult = new APIModel.CompletionResult();
-            completionResult.successful = true;
+            completionResult.successful = success;
 
             if(value instanceof RemoteFlow.RemoteFlowFuture) {
                 APIModel.StageRefDatum stageRefDatum = new APIModel.StageRefDatum();
@@ -255,7 +255,7 @@ public class RemoteFlowApiClient implements CompleterClient {
 
                 if (response.getStatusCode() == 200) {
                     APIModel.AwaitStageResponse resp = FlowRuntimeGlobals.getObjectMapper().readValue(response.getContentStream(), APIModel.AwaitStageResponse.class);
-                    if(resp.result.successful) {
+                    if (resp.result.successful) {
                         return resp.result.toJava(flowId, blobStoreClient, getClass().getClassLoader());
                     } else {
                         throw new FlowCompletionException((Throwable)resp.result.toJava(flowId, blobStoreClient, getClass().getClassLoader()));
