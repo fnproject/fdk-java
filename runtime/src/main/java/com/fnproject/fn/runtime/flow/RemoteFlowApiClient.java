@@ -2,6 +2,7 @@ package com.fnproject.fn.runtime.flow;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fnproject.fn.api.Headers;
+import com.fnproject.fn.api.flow.FlowCompletionException;
 import com.fnproject.fn.api.flow.HttpMethod;
 import com.fnproject.fn.api.flow.LambdaSerializationException;
 import com.fnproject.fn.api.flow.PlatformException;
@@ -254,7 +255,11 @@ public class RemoteFlowApiClient implements CompleterClient {
 
                 if (response.getStatusCode() == 200) {
                     APIModel.AwaitStageResponse resp = FlowRuntimeGlobals.getObjectMapper().readValue(response.getContentStream(), APIModel.AwaitStageResponse.class);
-                    return resp.result.toJava(flowId, blobStoreClient, getClass().getClassLoader());
+                    if(resp.result.successful) {
+                        return resp.result.toJava(flowId, blobStoreClient, getClass().getClassLoader());
+                    } else {
+                        throw new FlowCompletionException((Throwable)resp.result.toJava(flowId, blobStoreClient, getClass().getClassLoader()));
+                    }
                 } else if (response.getStatusCode() == 408) {
                     // do nothing go round again
                 } else {
