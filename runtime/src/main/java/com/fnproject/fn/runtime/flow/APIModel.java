@@ -470,6 +470,9 @@ public class APIModel {
     }
 
     public static class CreateGraphRequest {
+        public CreateGraphRequest() {
+        }
+
         public CreateGraphRequest(String functionId) {
             this.functionId = functionId;
         }
