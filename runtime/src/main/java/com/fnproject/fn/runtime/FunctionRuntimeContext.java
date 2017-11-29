@@ -18,7 +18,7 @@ import com.fnproject.fn.runtime.coercion.VoidCoercion;
 import com.fnproject.fn.runtime.coercion.jackson.JacksonCoercion;
 import com.fnproject.fn.runtime.exception.FunctionClassInstantiationException;
 import com.fnproject.fn.runtime.exception.FunctionConfigurationException;
-import com.fnproject.fn.runtime.exception.FunctionInputHandlingException;
+import com.fnproject.fn.api.exception.FunctionInputHandlingException;
 import com.fnproject.fn.runtime.flow.FlowContinuationInvoker;
 
 import java.lang.annotation.Annotation;
@@ -127,17 +127,8 @@ public class FunctionRuntimeContext implements RuntimeContext {
         userInputCoercions.add(Objects.requireNonNull(ic));
     }
 
-    /**
-     * Gets a stream of the possible {@link InputCoercion} for this parameter.
-     * <p>
-     * If the parameter has been annotated with a specific coercion, only that coercion is
-     * tried, otherwise configuration-provided coercions are tried first and builtin
-     * coercions second.
-     *
-     * @param targetMethod The user function method
-     * @param param        The index of the parameter
-     */
-    List<InputCoercion> getInputCoercions(MethodWrapper targetMethod, int param) {
+    @Override
+    public List<InputCoercion> getInputCoercions(MethodWrapper targetMethod, int param) {
         Annotation parameterAnnotations[] = targetMethod.getTargetMethod().getParameterAnnotations()[param];
         Optional<Annotation> coercionAnnotation = Arrays.stream(parameterAnnotations)
                 .filter((ann) -> ann.annotationType().equals(InputBinding.class))
@@ -190,16 +181,8 @@ public class FunctionRuntimeContext implements RuntimeContext {
         return output;
     }
 
-    /**
-     * Gets a stream of the possible {@link OutputCoercion} for the method.
-     * <p>
-     * If the method has been annotated with a specific coercion, only that coercion is
-     * tried, otherwise configuration-provided coercions are tried first and builtin
-     * coercions second.
-     *
-     * @param method The user function method
-     */
-    List<OutputCoercion> getOutputCoercions(Method method) {
+    @Override
+    public List<OutputCoercion> getOutputCoercions(Method method) {
         OutputBinding coercionAnnotation = method.getAnnotation(OutputBinding.class);
         if (coercionAnnotation != null) {
             try {

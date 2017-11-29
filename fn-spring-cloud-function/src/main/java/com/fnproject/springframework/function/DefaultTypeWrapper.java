@@ -1,4 +1,4 @@
-package com.fnproject.fn.runtime;
+package com.fnproject.springframework.function;
 
 import com.fnproject.fn.api.TypeWrapper;
 

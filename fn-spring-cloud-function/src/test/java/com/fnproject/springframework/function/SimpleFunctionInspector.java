@@ -1,4 +1,4 @@
-package com.fnproject.fn.runtime.spring;
+package com.fnproject.springframework.function;
 
 import net.jodah.typetools.TypeResolver;
 import org.springframework.cloud.function.context.FunctionInspector;

@@ -1,8 +1,6 @@
-package com.fnproject.fn.runtime.spring.function;
+package com.fnproject.springframework.function.functions;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.function.context.FunctionInspector;
-import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 
 import java.util.function.Function;

@@ -2,7 +2,7 @@ package com.fnproject.fn.examples;
 
 import com.fnproject.fn.api.FnConfiguration;
 import com.fnproject.fn.api.RuntimeContext;
-import com.fnproject.fn.runtime.spring.SpringCloudFunctionInvoker;
+import blah.spring.SpringCloudFunctionInvoker;
 import org.springframework.cloud.function.context.ContextFunctionCatalogAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;

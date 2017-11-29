@@ -1,10 +1,14 @@
-package com.fnproject.fn.runtime.spring;
+package com.fnproject.springframework.function;
 
+import com.fnproject.fn.api.FunctionInvoker;
 import com.fnproject.fn.api.InputEvent;
 import com.fnproject.fn.api.InvocationContext;
+import com.fnproject.fn.api.MethodWrapper;
 import com.fnproject.fn.api.OutputEvent;
-import com.fnproject.fn.runtime.MethodFunctionInvoker;
-import com.fnproject.fn.runtime.spring.function.SpringCloudMethod;
+import com.fnproject.fn.api.RuntimeContext;
+import com.fnproject.fn.api.exception.FunctionInputHandlingException;
+import com.fnproject.fn.api.exception.FunctionOutputHandlingException;
+import com.fnproject.springframework.function.functions.SpringCloudMethod;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
 import reactor.core.publisher.Flux;
@@ -16,7 +20,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
-public class SpringCloudFunctionInvoker extends MethodFunctionInvoker implements Closeable {
+public class SpringCloudFunctionInvoker implements FunctionInvoker, Closeable {
     private final SpringCloudFunctionLoader loader;
     private ConfigurableApplicationContext applicationContext;
 
@@ -40,6 +44,52 @@ public class SpringCloudFunctionInvoker extends MethodFunctionInvoker implements
         return coerceReturnValue(ctx, method, result);
     }
 
+    // TODO (MJG): this is copy-pasted from the 'runtime' module
+    private Object[] coerceParameters(InvocationContext ctx, MethodWrapper targetMethod, InputEvent evt) {
+        try {
+            Object[] userFunctionParams = new Object[targetMethod.getParameterCount()];
+
+            for (int paramIndex = 0; paramIndex < userFunctionParams.length; paramIndex++) {
+                userFunctionParams[paramIndex] = coerceParameter(ctx, targetMethod, paramIndex, evt);
+            }
+
+            return userFunctionParams;
+
+        } catch (RuntimeException e) {
+            throw new FunctionInputHandlingException("An exception was thrown during Input Coercion: " + e.getMessage(), e);
+        }
+    }
+
+    // TODO (MJG): this is copy-pasted from the 'runtime' module
+    protected Optional<OutputEvent> coerceReturnValue(InvocationContext ctx, MethodWrapper method, Object rawResult) {
+        try {
+            return Optional.of((ctx.getRuntimeContext()).getOutputCoercions(method.getTargetMethod())
+                    .stream()
+                    .map((c) -> c.wrapFunctionResult(ctx, method, rawResult))
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .findFirst()
+                    .orElseThrow(() -> new FunctionOutputHandlingException("No coercion found for return type")));
+
+        } catch (RuntimeException e) {
+            throw new FunctionOutputHandlingException("An exception was thrown during Output Coercion: " + e.getMessage(), e);
+        }
+    }
+
+    // TODO (MJG): this is copy-pasted from the 'runtime' module
+    private Object coerceParameter(InvocationContext ctx, MethodWrapper targetMethod, int param, InputEvent evt) {
+        RuntimeContext runtimeContext = ctx.getRuntimeContext();
+
+        return runtimeContext.getInputCoercions(targetMethod, param)
+                .stream()
+                .map((c) -> c.tryCoerceParam(ctx, param, evt, targetMethod))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .findFirst()
+                .orElseThrow(() -> new FunctionInputHandlingException("No type coercion for argument " + param + " of " + targetMethod + " of found"));
+    }
+
+    // TODO: this could be private except it's tested directly.
     protected Object tryInvoke(SpringCloudMethod method, Object[] userFunctionParams) {
         Object userFunctionParam = null;
         if (userFunctionParams.length > 0) {

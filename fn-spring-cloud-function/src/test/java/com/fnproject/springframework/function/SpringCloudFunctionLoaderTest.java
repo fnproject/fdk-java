@@ -1,6 +1,6 @@
-package com.fnproject.fn.runtime.spring;
+package com.fnproject.springframework.function;
 
-import com.fnproject.fn.runtime.spring.function.SpringCloudMethod;
+import com.fnproject.springframework.function.functions.SpringCloudMethod;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -19,7 +19,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
-public class SpringCloudFunctionLoaderTests {
+public class SpringCloudFunctionLoaderTest {
     @Rule
     public final EnvironmentVariables environmentVariables = new EnvironmentVariables();
 

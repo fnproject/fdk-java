@@ -6,7 +6,7 @@ project running on fn using the
 
 
 ```bash
-$ fn deploy --local spring-fn
+$ fn deploy --local --app spring-fn
 $ fn routes config set spring-fn /fn FN_SPRING_FUNCTION upperCase
 $ echo "Hello World" | fn call spring-fn /fn
 HELLO WORLD

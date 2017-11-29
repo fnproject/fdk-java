@@ -2,9 +2,9 @@ package com.fnproject.fn.runtime;
 
 
 import com.fnproject.fn.api.*;
-import com.fnproject.fn.runtime.exception.FunctionInputHandlingException;
+import com.fnproject.fn.api.exception.FunctionInputHandlingException;
 import com.fnproject.fn.runtime.exception.InternalFunctionInvocationException;
-import com.fnproject.fn.runtime.exception.FunctionOutputHandlingException;
+import com.fnproject.fn.api.exception.FunctionOutputHandlingException;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Optional;
@@ -58,7 +58,7 @@ public class MethodFunctionInvoker implements FunctionInvoker {
     }
 
     private Object coerceParameter(InvocationContext ctx, MethodWrapper targetMethod, int param, InputEvent evt) {
-        FunctionRuntimeContext runtimeContext = (FunctionRuntimeContext) ctx.getRuntimeContext();
+        RuntimeContext runtimeContext = ctx.getRuntimeContext();
 
         return runtimeContext.getInputCoercions(targetMethod, param)
                 .stream()
@@ -71,7 +71,7 @@ public class MethodFunctionInvoker implements FunctionInvoker {
 
     protected Optional<OutputEvent> coerceReturnValue(InvocationContext ctx, MethodWrapper method, Object rawResult) {
         try {
-            return Optional.of(((FunctionRuntimeContext) ctx.getRuntimeContext()).getOutputCoercions(method.getTargetMethod())
+            return Optional.of(ctx.getRuntimeContext().getOutputCoercions(method.getTargetMethod())
                     .stream()
                     .map((c) -> c.wrapFunctionResult(ctx, method, rawResult))
                     .filter(Optional::isPresent)

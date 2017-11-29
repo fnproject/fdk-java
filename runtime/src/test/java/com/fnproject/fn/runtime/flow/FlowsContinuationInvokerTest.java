@@ -6,7 +6,7 @@ import com.fnproject.fn.api.*;
 import com.fnproject.fn.api.flow.*;
 import com.fnproject.fn.runtime.QueryParametersImpl;
 import com.fnproject.fn.runtime.ReadOnceInputEvent;
-import com.fnproject.fn.runtime.exception.FunctionInputHandlingException;
+import com.fnproject.fn.api.exception.FunctionInputHandlingException;
 import com.fnproject.fn.runtime.exception.InternalFunctionInvocationException;
 import org.junit.After;
 import org.junit.Before;
@@ -18,6 +18,7 @@ import java.io.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
+import java.lang.reflect.Method;
 import java.util.*;
 
 import static com.fnproject.fn.runtime.flow.FlowContinuationInvoker.FLOW_ID_HEADER;
@@ -617,8 +618,18 @@ public class FlowsContinuationInvokerTest {
         }
 
         @Override
+        public List<InputCoercion> getInputCoercions(MethodWrapper targetMethod, int param) {
+            return null;
+        }
+
+        @Override
         public void addOutputCoercion(OutputCoercion oc) {
             throw new RuntimeException("You can't modify the empty runtime context in the tests, sorry.");
+        }
+
+        @Override
+        public List<OutputCoercion> getOutputCoercions(Method method) {
+            return null;
         }
 
         @Override

@@ -49,47 +49,6 @@ public class FunctionLoader {
         return namedMethods.get(0);
     }
 
-    // MJG delete this?
-    private void applyUserConfigurationMethod(Class<?> targetClass, FunctionRuntimeContext runtimeContext) {
-
-        Arrays.stream(targetClass.getMethods())
-                .filter(this::isConfigurationMethod)
-                .sorted(Comparator.<Method>comparingInt((m) -> Modifier.isStatic(m.getModifiers()) ? 0 : 1) // run static methods first
-                        .thenComparing(Comparator.<Method>comparingInt((m) -> { // depth first in implementation
-                            int depth = 0;
-                            Class<?> cc = m.getDeclaringClass();
-                            while (null != cc) {
-                                depth++;
-                                cc = cc.getSuperclass();
-                            }
-                            return depth;
-                        })))
-                .forEach(configMethod -> {
-                    try {
-                        Optional<Object> fnInstance = runtimeContext.getInvokeInstance();
-
-                        // Allow the runtime context parameter to be optional
-                        if (configMethod.getParameterCount() == 0) {
-                            configMethod.invoke(fnInstance.orElse(null));
-                        } else {
-                            configMethod.invoke(fnInstance.orElse(null), runtimeContext);
-                        }
-
-                    } catch ( InvocationTargetException e){
-                        throw new FunctionConfigurationException("Error invoking configuration method: " + configMethod.getName(), e.getCause());
-
-                    } catch (IllegalAccessException e) {
-                        throw new FunctionConfigurationException("Error invoking configuration method: " + configMethod.getName(), e);
-                    }
-                });
-    }
-
-// MJG delete this?
-    private boolean isConfigurationMethod(Method m) {
-        return m.getDeclaredAnnotationsByType(FnConfiguration.class).length > 0 && !m.getDeclaringClass().isInterface();
-    }
-
-
     private List<Method> findMethodsByName(String fnName, Class<?> fnClass) {
         return Arrays.stream(fnClass.getMethods())
                 .filter((m) -> !m.getDeclaringClass().equals(Object.class))

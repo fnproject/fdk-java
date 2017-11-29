@@ -6,7 +6,7 @@ import com.fnproject.fn.api.*;
 import com.fnproject.fn.api.flow.Flow;
 import com.fnproject.fn.api.flow.Flows;
 import com.fnproject.fn.api.flow.PlatformException;
-import com.fnproject.fn.runtime.exception.FunctionInputHandlingException;
+import com.fnproject.fn.api.exception.FunctionInputHandlingException;
 import com.fnproject.fn.runtime.exception.InternalFunctionInvocationException;
 import com.fnproject.fn.runtime.exception.PlatformCommunicationException;
 

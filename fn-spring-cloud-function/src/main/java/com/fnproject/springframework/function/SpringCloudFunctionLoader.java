@@ -1,9 +1,9 @@
-package com.fnproject.fn.runtime.spring;
+package com.fnproject.springframework.function;
 
-import com.fnproject.fn.runtime.spring.function.SpringCloudConsumer;
-import com.fnproject.fn.runtime.spring.function.SpringCloudFunction;
-import com.fnproject.fn.runtime.spring.function.SpringCloudMethod;
-import com.fnproject.fn.runtime.spring.function.SpringCloudSupplier;
+import com.fnproject.springframework.function.functions.SpringCloudConsumer;
+import com.fnproject.springframework.function.functions.SpringCloudFunction;
+import com.fnproject.springframework.function.functions.SpringCloudMethod;
+import com.fnproject.springframework.function.functions.SpringCloudSupplier;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.function.context.FunctionInspector;
 import org.springframework.cloud.function.core.FunctionCatalog;

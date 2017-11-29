@@ -1,10 +1,8 @@
-package com.fnproject.fn.runtime.spring.function;
+package com.fnproject.springframework.function.functions;
 
 import com.fnproject.fn.api.TypeWrapper;
-import com.fnproject.fn.runtime.DefaultTypeWrapper;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.fnproject.springframework.function.DefaultTypeWrapper;
 import org.springframework.cloud.function.context.FunctionInspector;
-import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 
 import java.util.function.Supplier;

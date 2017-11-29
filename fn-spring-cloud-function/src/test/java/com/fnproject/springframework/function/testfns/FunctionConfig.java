@@ -1,8 +1,8 @@
-package com.fnproject.fn.runtime.spring.testfns;
+package com.fnproject.springframework.function.testfns;
 
 import com.fnproject.fn.api.FnConfiguration;
 import com.fnproject.fn.api.RuntimeContext;
-import com.fnproject.fn.runtime.spring.SpringCloudFunctionInvoker;
+import com.fnproject.springframework.function.SpringCloudFunctionInvoker;
 import org.springframework.cloud.function.context.ContextFunctionCatalogAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
