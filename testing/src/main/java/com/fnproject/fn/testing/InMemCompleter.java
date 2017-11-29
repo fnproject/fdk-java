@@ -15,8 +15,6 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import com.fnproject.fn.testing.InMemCompleter.Flow;
-
 /**
  * In memory completer
  */
@@ -457,7 +455,7 @@ class InMemCompleter implements CompleterClient, BlobStoreClient, CompleterClien
                 TerminationHook hook = terminationHooks.remove(0);
                 CompletableFuture.runAsync(() -> {
                     completerInvokeClient.invokeStage(functionId, flowId, hook.id, hook.code,
-                       Collections.singletonList(APIModel.CompletionResult.success(APIModel.StateDatum.fromType(APIModel.StateDatumType.Succeeded))));
+                       Collections.singletonList(APIModel.CompletionResult.success(APIModel.StatusDatum.fromType(APIModel.StatusDatumType.Succeeded))));
                 }).whenComplete((r, e) -> this.workShutdown());
             } else {
                 complete.set(true);

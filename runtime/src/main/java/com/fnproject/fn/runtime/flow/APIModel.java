@@ -125,7 +125,7 @@ public class APIModel {
        @JsonSubTypes.Type(name = "error", value = ErrorDatum.class),
        @JsonSubTypes.Type(name = "http_req", value = HTTPReqDatum.class),
        @JsonSubTypes.Type(name = "http_resp", value = HTTPRespDatum.class),
-       @JsonSubTypes.Type(name = "state", value = StateDatum.class),
+       @JsonSubTypes.Type(name = "status", value = StatusDatum.class),
     })
 
     public static abstract class Datum {
@@ -324,8 +324,8 @@ public class APIModel {
     }
 
 
-    public enum StateDatumType {
-        @JsonProperty("unknown")
+    public enum StatusDatumType {
+        @JsonProperty("unknown_state")
         UnknownState(Flow.FlowState.UNKNOWN),
         @JsonProperty("succeeded")
         Succeeded(Flow.FlowState.SUCCEEDED),
@@ -338,7 +338,7 @@ public class APIModel {
 
         private final Flow.FlowState flowState;
 
-        StateDatumType(Flow.FlowState flowState) {
+        StatusDatumType(Flow.FlowState flowState) {
             this.flowState = flowState;
         }
 
@@ -347,18 +347,18 @@ public class APIModel {
         }
     }
 
-    public static final class StateDatum extends Datum {
+    public static final class StatusDatum extends Datum {
 
         @JsonProperty("type")
-        public StateDatumType type;
+        public StatusDatumType type;
 
         @Override
         public Object toJava(boolean successful, FlowId flowId, BlobStoreClient blobStore, ClassLoader classLoader) {
             return type.getFlowState();
         }
 
-        public static StateDatum fromType(StateDatumType type) {
-            StateDatum datum = new StateDatum();
+        public static StatusDatum fromType(StatusDatumType type) {
+            StatusDatum datum = new StatusDatum();
             datum.type = type;
             return datum;
         }
