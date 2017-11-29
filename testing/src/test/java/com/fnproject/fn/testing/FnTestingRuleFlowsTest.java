@@ -3,10 +3,7 @@ package com.fnproject.fn.testing;
 import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.RuntimeContext;
 import com.fnproject.fn.api.flow.*;
-import org.junit.AssumptionViolatedException;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 
 import java.io.Serializable;
 import java.util.Arrays;
@@ -377,7 +374,7 @@ public class FnTestingRuleFlowsTest {
             } catch (ClassNotFoundException e) {
             }
         }
-        throw new AssumptionViolatedException("Object " + o + "is not an instance of any of " + Arrays.toString(cs));
+        Assert.fail("Object " + o + "is not an instance of any of " + Arrays.toString(cs));
     }
 
     public static class TestFn {

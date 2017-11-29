@@ -21,6 +21,10 @@ public class HttpClient {
     private static final int CONNECT_TIMEOUT_MS = 1000;
 
     public HttpResponse execute(HttpRequest request) throws IOException {
+
+        request.headers.putIfAbsent("Content-Type", "application/octet-stream");
+        request.headers.putIfAbsent("Accept", "application/octet-stream");
+
         URLConnection connection = request.toUrl().openConnection();
 
         connection.setConnectTimeout(CONNECT_TIMEOUT_MS);
@@ -158,8 +162,7 @@ public class HttpClient {
         private HttpRequest(String method, String url) {
             this.method = method;
             this.url = url;
-            this.headers.put("Accept", "application/octet-stream");
-            this.headers.put("Content-Type", "application/octet-stream");
+
         }
 
         public HttpRequest withQueryParam(String key, String value) {

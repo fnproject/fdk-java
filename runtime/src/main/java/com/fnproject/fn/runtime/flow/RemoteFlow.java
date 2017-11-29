@@ -4,7 +4,6 @@ import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.flow.*;
 
 import java.io.Serializable;
-import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -18,7 +17,7 @@ import java.util.stream.Collectors;
  * <p>
  * This
  */
-public final class RemoteFlow implements Flow, Serializable {
+public final class RemoteFlow implements Flow, Serializable, FlowFutureSource {
     private transient CompleterClient client;
     private final FlowId flowId;
 
@@ -28,13 +27,18 @@ public final class RemoteFlow implements Flow, Serializable {
 
     private CompleterClient getClient() {
         if (client == null) {
-            client = FlowRuntimeGlobals.getCompleterClientFactory().get();
+            client = FlowRuntimeGlobals.getCompleterClientFactory().getCompleterClient();
         }
         return client;
     }
 
-    RemoteFlowFuture createRemoteFlowFuture(CompletionId completionId) {
-        return new RemoteFlowFuture(completionId);
+    @Override
+    public <V> FlowFuture<V> createFlowFuture(CompletionId completionId) {
+        return new RemoteFlowFuture<>(completionId);
+    }
+
+    public FlowId getFlowId() {
+        return flowId;
     }
 
     class RemoteFlowFuture<T> implements FlowFuture<T>, Serializable {
@@ -68,17 +72,17 @@ public final class RemoteFlow implements Flow, Serializable {
 
         @Override
         public boolean complete(T value) {
-            return getClient().complete(flowId, completionId, value);
+            return getClient().complete(flowId, completionId, value, CodeLocation.fromCallerLocation(1));
         }
 
         @Override
         public boolean completeExceptionally(Throwable throwable) {
-            return getClient().completeExceptionally(flowId, completionId, throwable);
+            return getClient().completeExceptionally(flowId, completionId, throwable, CodeLocation.fromCallerLocation(1));
         }
 
         @Override
         public boolean cancel() {
-            return getClient().completeExceptionally(flowId, completionId, new CancellationException());
+            return getClient().completeExceptionally(flowId, completionId, new CancellationException(), CodeLocation.fromCallerLocation(1));
         }
 
         @Override
@@ -154,12 +158,12 @@ public final class RemoteFlow implements Flow, Serializable {
 
     @Override
     public <T extends Serializable, U> FlowFuture<T> invokeFunction(String functionId, HttpMethod method, Headers headers, U input, Class<T> responseType) {
-        return JsonInvoke.invokeFunction(this,functionId,method,headers,input,responseType);
+        return JsonInvoke.invokeFunction(this, functionId, method, headers, input, responseType);
     }
 
     @Override
     public <U> FlowFuture<HttpResponse> invokeFunction(String functionId, HttpMethod method, Headers headers, U input) {
-        return JsonInvoke.invokeFunction(this,functionId,method,headers,input);
+        return JsonInvoke.invokeFunction(this, functionId, method, headers, input);
     }
 
 
