@@ -394,7 +394,6 @@ public class RemoteFlowApiClient implements CompleterClient {
         FlowRuntimeGlobals.getObjectMapper().writeValue(baos, addInvokeFunctionStageRequest);
 
         byte[] bytes = baos.toByteArray();
-        System.out.println(new String(bytes));
         return requestForCompletionId(preparePost(apiUrlBase + "/flows/" + flowId.getId() + "/invoke").withBody(bytes));
     }
 
@@ -403,7 +402,6 @@ public class RemoteFlowApiClient implements CompleterClient {
         FlowRuntimeGlobals.getObjectMapper().writeValue(baos, addDelayStageRequest);
 
         byte[] bytes = baos.toByteArray();
-        System.out.println(new String(bytes));
         HttpClient.HttpRequest request = preparePost(apiUrlBase + "/flows/" + flowId.getId() + "/delay").withBody(bytes);
         return requestForCompletionId(request);
     }
@@ -416,7 +414,6 @@ public class RemoteFlowApiClient implements CompleterClient {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         FlowRuntimeGlobals.getObjectMapper().writeValue(baos, completeStageExternallyRequest);
         byte[] bytes = baos.toByteArray();
-        System.out.println(new String(bytes));
         HttpClient.HttpRequest request = preparePost(apiUrlBase + "/flows/" + flowId.getId() + "/stages/" + completionId.getId() + "/complete").withBody(bytes);
         try (HttpClient.HttpResponse resp = httpClient.execute(request)) {
             return isSuccessful(resp);
