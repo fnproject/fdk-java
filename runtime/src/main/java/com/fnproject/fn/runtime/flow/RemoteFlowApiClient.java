@@ -300,6 +300,7 @@ public class RemoteFlowApiClient implements CompleterClient {
 
     @Override
     public void addTerminationHook(FlowId flowId, Serializable code, CodeLocation codeLocation) {
+        addStageWithClosure(APIModel.CompletionOperation.TERMINATION_HOOK, flowId, code, codeLocation, Collections.emptyList());
     }
 
     private static void validateSuccessful(HttpClient.HttpResponse response) {
