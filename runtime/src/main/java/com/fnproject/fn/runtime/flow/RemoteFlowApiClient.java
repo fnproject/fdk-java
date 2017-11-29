@@ -195,28 +195,28 @@ public class RemoteFlowApiClient implements CompleterClient {
     }
 
     @Override
-    public boolean complete(FlowId flowId, CompletionId completionId, Object value) {
+    public boolean complete(FlowId flowId, CompletionId completionId, Object value, CodeLocation codeLocation) {
         try {
             APIModel.Datum blobDatum = APIModel.datumFromJava(flowId, value, blobStoreClient);
             APIModel.CompletionResult completionResult = new APIModel.CompletionResult();
             completionResult.result = blobDatum;
             completionResult.successful = true;
 
-            return completeStageExternally(flowId, completionId, completionResult);
+            return completeStageExternally(flowId, completionId, completionResult, codeLocation);
         } catch (IOException e) {
             throw new PlatformCommunicationException("Failed to complete stage externally", e);
         }
     }
 
     @Override
-    public boolean completeExceptionally(FlowId flowId, CompletionId completionId, Throwable value) {
+    public boolean completeExceptionally(FlowId flowId, CompletionId completionId, Throwable value, CodeLocation codeLocation) {
         try {
             APIModel.Datum blobDatum = APIModel.datumFromJava(flowId, value, blobStoreClient);
             APIModel.CompletionResult completionResult = new APIModel.CompletionResult();
             completionResult.result = blobDatum;
             completionResult.successful = false;
 
-            return completeStageExternally(flowId, completionId, completionResult);
+            return completeStageExternally(flowId, completionId, completionResult, codeLocation);
         } catch (IOException e) {
             throw new PlatformCommunicationException("Failed to complete stage externally", e);
         }
@@ -406,11 +406,11 @@ public class RemoteFlowApiClient implements CompleterClient {
         return requestForCompletionId(request);
     }
 
-    private boolean completeStageExternally(FlowId flowId, CompletionId completionId, APIModel.CompletionResult completionResult) throws IOException {
+    private boolean completeStageExternally(FlowId flowId, CompletionId completionId, APIModel.CompletionResult completionResult, CodeLocation codeLocation) throws IOException {
         APIModel.CompleteStageExternallyRequest completeStageExternallyRequest = new APIModel.CompleteStageExternallyRequest();
         completeStageExternallyRequest.callerId = FlowRuntimeGlobals.getCurrentCompletionId().map(CompletionId::toString).orElse(null);
         completeStageExternallyRequest.value = completionResult;
-
+        completeStageExternallyRequest.codeLocation = codeLocation.getLocation();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         FlowRuntimeGlobals.getObjectMapper().writeValue(baos, completeStageExternallyRequest);
         byte[] bytes = baos.toByteArray();

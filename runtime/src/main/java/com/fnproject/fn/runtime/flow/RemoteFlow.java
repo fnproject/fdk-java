@@ -72,17 +72,17 @@ public final class RemoteFlow implements Flow, Serializable, FlowFutureSource {
 
         @Override
         public boolean complete(T value) {
-            return getClient().complete(flowId, completionId, value);
+            return getClient().complete(flowId, completionId, value, CodeLocation.fromCallerLocation(1));
         }
 
         @Override
         public boolean completeExceptionally(Throwable throwable) {
-            return getClient().completeExceptionally(flowId, completionId, throwable);
+            return getClient().completeExceptionally(flowId, completionId, throwable, CodeLocation.fromCallerLocation(1));
         }
 
         @Override
         public boolean cancel() {
-            return getClient().completeExceptionally(flowId, completionId, new CancellationException());
+            return getClient().completeExceptionally(flowId, completionId, new CancellationException(), CodeLocation.fromCallerLocation(1));
         }
 
         @Override

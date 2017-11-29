@@ -51,9 +51,9 @@ public interface CompleterClient {
 
     CompletionId applyToEither(FlowId flowId, CompletionId completionId, CompletionId alternate, Serializable fn, CodeLocation codeLocation);
 
-    boolean complete(FlowId flowId, CompletionId completionId, Object value);
+    boolean complete(FlowId flowId, CompletionId completionId, Object value, CodeLocation codeLocation);
 
-    boolean completeExceptionally(FlowId flowId, CompletionId completionId, Throwable value);
+    boolean completeExceptionally(FlowId flowId, CompletionId completionId, Throwable value, CodeLocation codeLocation);
 
     CompletionId anyOf(FlowId flowId, List<CompletionId> cids, CodeLocation codeLocation);
 

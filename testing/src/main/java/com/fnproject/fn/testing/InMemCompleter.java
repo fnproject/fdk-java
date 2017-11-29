@@ -282,12 +282,12 @@ class InMemCompleter implements CompleterClient, BlobStoreClient, CompleterClien
     }
 
     @Override
-    public boolean complete(FlowId flowId, CompletionId completionId, Object value) {
+    public boolean complete(FlowId flowId, CompletionId completionId, Object value, CodeLocation codeLocation) {
         return withActiveGraph(flowId, (flow) -> flow.withStage(completionId, (stage) -> stage.complete(APIModel.BlobDatum.fromBlob(serializeJava(flowId, value)))));
     }
 
     @Override
-    public boolean completeExceptionally(FlowId flowId, CompletionId completionId, Throwable value) {
+    public boolean completeExceptionally(FlowId flowId, CompletionId completionId, Throwable value, CodeLocation codeLocation) {
         return withActiveGraph(flowId, (flow) -> flow.withStage(completionId, (stage) -> stage.completeExceptionally(APIModel.BlobDatum.fromBlob(serializeJava(flowId, value)))));
     }
 
