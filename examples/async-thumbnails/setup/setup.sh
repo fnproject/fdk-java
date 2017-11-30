@@ -4,7 +4,7 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 STORAGE_DIR="/tmp/example-storage-server-files"
 
 COMPLETER_IMAGE=fnproject/flow
-FUNCTIONS_IMAGE=fnproject/functions
+FUNCTIONS_IMAGE=fnproject/fnserver
 MINIO_IMAGE=minio/minio
 
 # Checks
