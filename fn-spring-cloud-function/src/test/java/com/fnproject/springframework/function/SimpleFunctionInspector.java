@@ -2,7 +2,6 @@ package com.fnproject.springframework.function;
 
 import net.jodah.typetools.TypeResolver;
 import org.springframework.cloud.function.context.FunctionInspector;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -11,7 +10,7 @@ import java.util.function.Supplier;
 public class SimpleFunctionInspector implements FunctionInspector {
     @Override
     public boolean isMessage(Object function) {
-        throw new NotImplementedException();
+        throw new IllegalStateException("Not implemented");
     }
 
     @Override
@@ -46,17 +45,17 @@ public class SimpleFunctionInspector implements FunctionInspector {
 
     @Override
     public Class<?> getInputWrapper(Object function) {
-        throw new NotImplementedException();
+        throw new IllegalStateException("Not implemented");
     }
 
     @Override
     public Class<?> getOutputWrapper(Object function) {
-        throw new NotImplementedException();
+        throw new IllegalStateException("Not implemented");
     }
 
     @Override
     public Object convert(Object function, String value) {
-        throw new NotImplementedException();
+        throw new IllegalStateException("Not implemented");
     }
 
     @Override

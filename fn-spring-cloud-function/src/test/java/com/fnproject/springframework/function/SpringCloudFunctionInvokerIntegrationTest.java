@@ -47,7 +47,7 @@ public class SpringCloudFunctionInvokerIntegrationTest {
         fnRule.thenRun(FunctionConfig.class, "handleRequest");
 
         String output = fnRule.getOnlyResult().getBodyAsString();
-        assertThat(output).isEqualTo("Hellxxxo");
+        assertThat(output).isEqualTo("Hello");
     }
 }
 
