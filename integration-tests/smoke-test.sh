@@ -9,7 +9,7 @@
 # - LIBFUNS points to the shell helper library
 # - up-to-date "fn" command on the PATH
 # - FN_TOKEN is set to something that the functions platform will approve
-# - API_URL points to the functions platform endpoint
+# - FN_API_URL points to the functions platform endpoint
 # - any http_proxy, etc. settings are correct to permit access to that endpoint and any maven repos required by fn build
 # - COMPLETER_BASE_URL is set to a value that should be configured on the target function
 # - MAVEN_REPOSITORY_LOCATION, if set, corresponds to the URL that should be replaced in the test pom files.
@@ -63,7 +63,7 @@ if [[ -x run-test.sh ]]
 then
     ./run-test.sh
 else
-    curl -v "$API_URL/r/$TESTNAME/$TESTNAME" -d @input > actual
+    curl -v "$FN_API_URL/r/$TESTNAME/$TESTNAME" -d @input > actual
 fi
 
 if [[ -x expected.sh ]]

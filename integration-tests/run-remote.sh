@@ -19,7 +19,7 @@ export FN_TOKEN=${FN_TOKEN:-$(cat ~/.fn-token)}
 # The following variables should be set in the integration environment
 # ----------------------------------------------------------------------
 
-export API_URL=$(cat ~/.fn-api-url)
+export FN_API_URL=$(cat ~/.fn-api-url)
 export COMPLETER_BASE_URL=$(cat ~/.fn-flow-base-url)
 
 

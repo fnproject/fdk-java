@@ -11,7 +11,7 @@ set -ex
 # The following variables may be set to parameterise the operation of this script
 # ----------------------------------------------------------------------
 
-: ${FUNCTIONS_DOCKER_IMAGE:=fnproject/functions}
+: ${FUNCTIONS_DOCKER_IMAGE:=fnproject/fnserver}
 : ${SUFFIX:=$(git rev-parse HEAD)}
 : ${COMPLETER_DOCKER_IMAGE:=fnproject/flow}
 
@@ -50,7 +50,7 @@ FUNCTIONS_CONTAINER_ID=$(
         -p 8080 \
         -v /var/run/docker.sock:/var/run/docker.sock \
         --name functions-$SUFFIX \
-        -e LOG_LEVEL=debug \
+        -e FN_LOG_LEVEL=debug \
         $FUNCTIONS_DOCKER_IMAGE
     )
 defer docker rm -f $FUNCTIONS_CONTAINER_ID
@@ -78,7 +78,7 @@ FUNCTIONS_INTERNAL_IP=$(
         $FUNCTIONS_CONTAINER_ID
    )
 
-export API_URL="http://$FUNCTIONS_HOST:$FUNCTIONS_PORT"
+export FN_API_URL="http://$FUNCTIONS_HOST:$FUNCTIONS_PORT"
 export no_proxy="$no_proxy,$FUNCTIONS_HOST"
 
 
@@ -131,7 +131,7 @@ export HTTP_PROXY="$http_proxy"
 export HTTPS_PROXY="$https_proxy"
 export NO_PROXY="$no_proxy"
 
-wait_for_http "$API_URL"
+wait_for_http "$FN_API_URL"
 wait_for_http "http://$COMPLETER_HOST:$COMPLETER_PORT/ping"
 
 set +x
