@@ -122,7 +122,7 @@ No. Fn Flow was released in 2017 and is not related to any other Java library.
 Fn Flow was 'inspired by' the `CompletionStage` API and shares a number of similar methods. However, as the semantics of Fn Flow are subtly different, and because we require our operations to implement `Serializable` we have implemented a new API.
 
 ### Can I run my own Fn Flow server?
-Fn Flow is open source just like the rest of the Fn project. You can [get the code](https://github.com/fnproject/completer) and [run a server](https://github.com/fnproject/completer#running-the-completer) easily.
+Fn Flow is open source just like the rest of the Fn project. You can [get the code](https://github.com/fnproject/flow) and [run a server](https://github.com/fnproject/flow#running-the-flow-service) easily.
 
 ## Troubleshooting
 

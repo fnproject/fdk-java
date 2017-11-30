@@ -313,10 +313,10 @@ public class RemoteFlowApiClient implements CompleterClient {
         try {
             String body = response.entityAsString();
             return new PlatformCommunicationException(String.format("Received unexpected response (%d) from " +
-               "completer: %s", response.getStatusCode(), body == null ? "Empty body" : body));
+               "Flow service: %s", response.getStatusCode(), body == null ? "Empty body" : body));
         } catch (IOException e) {
             return new PlatformCommunicationException(String.format("Received unexpected response (%d) from " +
-               "completer. Could not read body.", response.getStatusCode()), e);
+               "Flow service. Could not read body.", response.getStatusCode()), e);
         }
     }
 
