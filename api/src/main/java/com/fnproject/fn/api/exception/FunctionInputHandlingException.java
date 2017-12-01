@@ -1,4 +1,4 @@
-package com.fnproject.fn.runtime.exception;
+package com.fnproject.fn.api.exception;
 
 /**
  * This used to wrap any exception thrown by an {@link com.fnproject.fn.api.InputCoercion}. It is
@@ -13,6 +13,5 @@ public class FunctionInputHandlingException extends RuntimeException {
 
     public FunctionInputHandlingException(String s) {
         super(s);
-
     }
 }

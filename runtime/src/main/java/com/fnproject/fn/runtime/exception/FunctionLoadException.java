@@ -13,7 +13,6 @@ public abstract class FunctionLoadException extends RuntimeException {
         super(message, cause);
     }
 
-
     public FunctionLoadException(String msg) {
         super(msg);
     }

@@ -4,8 +4,8 @@ package com.fnproject.fn.runtime;
 import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.InputEvent;
 import com.fnproject.fn.api.OutputEvent;
-import com.fnproject.fn.runtime.exception.FunctionInputHandlingException;
-import com.fnproject.fn.runtime.exception.FunctionOutputHandlingException;
+import com.fnproject.fn.api.exception.FunctionInputHandlingException;
+import com.fnproject.fn.api.exception.FunctionOutputHandlingException;
 import org.apache.http.Header;
 import org.apache.http.HttpException;
 import org.apache.http.HttpRequest;
@@ -94,7 +94,6 @@ public class HttpEventCodec implements EventCodec {
            QueryParametersParser.getParams(requestUrl)));
 
     }
-
 
     @Override
     public boolean shouldContinue() {

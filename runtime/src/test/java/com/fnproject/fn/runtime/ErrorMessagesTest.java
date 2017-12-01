@@ -43,13 +43,13 @@ public class ErrorMessagesTest {
     @Test
     public void userSpecifiesClassWithNoMethods(){
         fn.thenRun(ErrorMessages.NoMethodsClass.class, "thisClassHasNoMethods");
-        assertIsErrorWithoutStacktrace("Method 'thisClassHasNoMethods' was not found in class 'com.fnproject.fn.runtime.testfns.ErrorMessages$NoMethodsClass'. Available functions were: []");
+        assertIsErrorWithoutStacktrace("Method 'thisClassHasNoMethods' was not found in class 'com.fnproject.fn.runtime.testfns.ErrorMessages.NoMethodsClass'. Available functions were: []");
     }
 
     @Test
     public void userSpecifiesMethodWhichDoesNotExist(){
         fn.thenRun(ErrorMessages.OneMethodClass.class, "notTheMethod");
-        assertIsErrorWithoutStacktrace("Method 'notTheMethod' was not found in class 'com.fnproject.fn.runtime.testfns.ErrorMessages$OneMethodClass'. Available functions were: [theMethod]");
+        assertIsErrorWithoutStacktrace("Method 'notTheMethod' was not found in class 'com.fnproject.fn.runtime.testfns.ErrorMessages.OneMethodClass'. Available functions were: [theMethod]");
     }
 
     @Test

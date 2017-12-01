@@ -1,6 +1,6 @@
 package com.fnproject.fn.runtime;
 
-import com.fnproject.fn.runtime.exception.FunctionInputHandlingException;
+import com.fnproject.fn.api.exception.FunctionInputHandlingException;
 import com.fnproject.fn.api.InputEvent;
 import com.fnproject.fn.api.OutputEvent;
 import org.apache.commons.io.input.NullInputStream;
