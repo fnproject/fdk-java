@@ -6,7 +6,7 @@ is a [Spring](https://spring.io/) project for building Java functions with the
 
 We support execution of Spring cloud functions through the
 `SpringCloudFunctionInvoker` which manages the discovery and invocation of your
-functions
+functions.
 
 ## Tutorial
 
@@ -37,14 +37,11 @@ public class FunctionConfig {
 
     // Blank entrypoint necessary to load the FunctionConfig class, this isn't invoked
     public void handleRequest() { }
+	
+	@Bean
+	public Function<String, String> upperCase(){
+	    return String::toUpperCase;
+	}
 }
 ```
 
-
-## Design
-
-
-## TODO
-
-* Throw exception if we can't find the users function (log bean name)
-* 
