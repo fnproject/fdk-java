@@ -69,7 +69,7 @@ public interface RuntimeContext {
     void addInputCoercion(InputCoercion ic);
 
     /**
-     * Gets a stream of the possible {@link InputCoercion} for this parameter.
+     * Gets a list of the possible {@link InputCoercion} for this parameter.
      * <p>
      * If the parameter has been annotated with a specific coercion, only that coercion is
      * tried, otherwise configuration-provided coercions are tried first and builtin

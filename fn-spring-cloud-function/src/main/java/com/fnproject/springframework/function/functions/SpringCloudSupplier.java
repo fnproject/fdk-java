@@ -1,12 +1,16 @@
 package com.fnproject.springframework.function.functions;
 
 import com.fnproject.fn.api.TypeWrapper;
-import com.fnproject.springframework.function.DefaultTypeWrapper;
+import com.fnproject.springframework.function.SimpleTypeWrapper;
 import org.springframework.cloud.function.context.FunctionInspector;
 import reactor.core.publisher.Flux;
 
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+/**
+ * {@link SpringCloudMethod} representing a {@link Supplier}
+ */
 public class SpringCloudSupplier extends SpringCloudMethod {
     private Supplier<Flux<?>> supplier;
 
@@ -27,7 +31,7 @@ public class SpringCloudSupplier extends SpringCloudMethod {
 
     @Override
     public TypeWrapper getParamType(int i) {
-        return new DefaultTypeWrapper(Void.class);
+        return new SimpleTypeWrapper(Void.class);
     }
 
     @Override

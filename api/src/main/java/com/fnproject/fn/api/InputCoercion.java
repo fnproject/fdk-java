@@ -19,7 +19,7 @@ public interface InputCoercion<T> {
      * @param currentContext the invocation context for this event - this links to the {@link RuntimeContext} and method and class
      * @param arg            the parameter index for the argument being extracted
      * @param input          the input event
-     * @param methodWrapper
+     * @param methodWrapper  the method which the parameter is for
      * @return               the result of the coercion, if it succeeded
      */
     Optional<T> tryCoerceParam(InvocationContext currentContext, int arg, InputEvent input, MethodWrapper methodWrapper);

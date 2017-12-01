@@ -13,6 +13,22 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+/**
+ * The Loader for Spring Cloud Functions
+ *
+ * Looks up Functions from the {@link FunctionCatalog} (which is likely populated by your
+ * function class, see {@link SpringCloudFunctionInvoker#SpringCloudFunctionInvoker(Class<?>)})
+ *
+ * Lookup is in the following order:
+ *
+ * Environment variable `FN_SPRING_FUNCTION` returning a `Function`
+ * Environment variable `FN_SPRING_CONSUMER` returning a `Consumer`
+ * Environment variable `FN_SPRING_SUPPLIER` returning a `Supplier`
+ * Bean named `function` returning a `Function`
+ * Bean named `consumer` returning a `Consumer`
+ * Bean named `supplier` returning a `Supplier`
+
+ */
 public class SpringCloudFunctionLoader {
     public static final String DEFAULT_SUPPLIER_BEAN = "supplier";
     public static final String DEFAULT_CONSUMER_BEAN = "consumer";
@@ -47,8 +63,8 @@ public class SpringCloudFunctionLoader {
             } else if (supplierName != null) {
                 supplier = this.catalog.lookupSupplier(supplierName);
             }
-            // TODO: throw exception if we don't find the specified function
-            // TODO: throw exception if multiple values are set
+            // TODO: throw exception if we don't find the specified function?
+            // TODO: throw exception if multiple values are set?
         } else {
             function = this.catalog.lookupFunction(DEFAULT_FUNCTION_BEAN);
             if (function == null) {
@@ -58,7 +74,7 @@ public class SpringCloudFunctionLoader {
                 }
             }
         }
-        // TODO throw exception if no function found
+        // TODO throw exception if no function found?
     }
 
     private boolean checkForBeanNameInEnvVars() {

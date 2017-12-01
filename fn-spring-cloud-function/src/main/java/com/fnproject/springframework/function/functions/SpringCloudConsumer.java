@@ -1,12 +1,15 @@
 package com.fnproject.springframework.function.functions;
 
 import com.fnproject.fn.api.TypeWrapper;
-import com.fnproject.springframework.function.DefaultTypeWrapper;
+import com.fnproject.springframework.function.SimpleTypeWrapper;
 import org.springframework.cloud.function.context.FunctionInspector;
 import reactor.core.publisher.Flux;
 
 import java.util.function.Consumer;
 
+/**
+ * {@link SpringCloudMethod} representing a {@link Consumer}
+ */
 public class SpringCloudConsumer extends SpringCloudMethod {
     private Consumer<Flux<?>> consumer;
 
@@ -27,7 +30,7 @@ public class SpringCloudConsumer extends SpringCloudMethod {
 
     @Override
     public TypeWrapper getReturnType() {
-        return new DefaultTypeWrapper(Void.class);
+        return new SimpleTypeWrapper(Void.class);
     }
     @Override
     public Flux<?> invoke(Flux<?> arg) {

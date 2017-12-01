@@ -2,13 +2,18 @@ package com.fnproject.springframework.function.functions;
 
 import com.fnproject.fn.api.MethodWrapper;
 import com.fnproject.fn.api.TypeWrapper;
-import com.fnproject.springframework.function.DefaultTypeWrapper;
+import com.fnproject.springframework.function.SimpleTypeWrapper;
 import org.springframework.cloud.function.context.FunctionInspector;
 import reactor.core.publisher.Flux;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
 
+
+/**
+ * Superclass for classes which represent java.util.function.* objects as
+ * Spring Cloud Functions
+ */
 public abstract class SpringCloudMethod implements MethodWrapper {
     private FunctionInspector inspector;
 
@@ -52,12 +57,12 @@ public abstract class SpringCloudMethod implements MethodWrapper {
 
     @Override
     public TypeWrapper getParamType(int index) {
-        return new DefaultTypeWrapper(inspector.getInputType(getFunction()));
+        return new SimpleTypeWrapper(inspector.getInputType(getFunction()));
     }
 
     @Override
     public TypeWrapper getReturnType() {
-        return new DefaultTypeWrapper(inspector.getOutputType(getFunction()));
+        return new SimpleTypeWrapper(inspector.getOutputType(getFunction()));
     }
 
     /**

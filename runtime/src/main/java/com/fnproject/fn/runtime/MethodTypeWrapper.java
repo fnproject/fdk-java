@@ -7,8 +7,7 @@ import net.jodah.typetools.TypeResolver;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 
-
-public class MethodTypeWrapper implements TypeWrapper {
+public abstract class MethodTypeWrapper implements TypeWrapper {
     protected final MethodWrapper src;
     protected Class<?> parameterClass;
 
@@ -36,4 +35,5 @@ public class MethodTypeWrapper implements TypeWrapper {
             return resolvedType;
         }
     }
+
 }

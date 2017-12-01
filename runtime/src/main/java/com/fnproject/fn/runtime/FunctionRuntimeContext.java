@@ -137,9 +137,9 @@ public class FunctionRuntimeContext implements RuntimeContext {
             try {
                 List<InputCoercion> coercionList = new ArrayList<InputCoercion>();
                 InputBinding inputBindingAnnotation = (InputBinding) coercionAnnotation.get();
-                coercionList.add(inputBindingAnnotation.coercion().newInstance());
+                coercionList.add(inputBindingAnnotation.coercion().getDeclaredConstructor().newInstance());
                 return coercionList;
-            } catch (IllegalAccessException | InstantiationException e) {
+            } catch (IllegalAccessException | InstantiationException | NoSuchMethodException | InvocationTargetException e) {
                 throw new FunctionInputHandlingException("Unable to instantiate input coercion class for argument " + param + " of " + targetMethod);
             }
         }
@@ -156,7 +156,6 @@ public class FunctionRuntimeContext implements RuntimeContext {
 
     @Override
     public void setInvoker(FunctionInvoker invoker) {
-        // TODO: Decide whether to remove default invoker, or simply let this invoker take precedence
         configuredInvokers.add(1, invoker);
     }
 
@@ -187,10 +186,10 @@ public class FunctionRuntimeContext implements RuntimeContext {
         if (coercionAnnotation != null) {
             try {
                 List<OutputCoercion> coercionList = new ArrayList<OutputCoercion>();
-                coercionList.add(coercionAnnotation.coercion().newInstance());
+                coercionList.add(coercionAnnotation.coercion().getDeclaredConstructor().newInstance());
                 return coercionList;
 
-            } catch (IllegalAccessException | InstantiationException e) {
+            } catch (IllegalAccessException | InstantiationException | NoSuchMethodException | InvocationTargetException e) {
                 throw new FunctionConfigurationException("Unable to instantiate output coercion class for method " + getMethod());
             }
         }

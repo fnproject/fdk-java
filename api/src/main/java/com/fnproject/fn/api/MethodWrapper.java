@@ -48,6 +48,11 @@ public interface MethodWrapper {
         return getTargetClass().getCanonicalName() + "::" + getTargetMethod().getName();
     }
 
+    /**
+     * Get the number of parameters the method has.
+     *
+     * @return Parameter count
+     */
     default int getParameterCount() {
         return getTargetMethod().getParameterTypes().length;
     }

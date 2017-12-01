@@ -20,6 +20,12 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * A {@link FunctionInvoker} for Spring Cloud Functions
+ *
+ * Call {@link RuntimeContext#setInvoker(FunctionInvoker)} before any function invocations
+ * to use this.
+ */
 public class SpringCloudFunctionInvoker implements FunctionInvoker, Closeable {
     private final SpringCloudFunctionLoader loader;
     private ConfigurableApplicationContext applicationContext;
@@ -28,6 +34,12 @@ public class SpringCloudFunctionInvoker implements FunctionInvoker, Closeable {
         this.loader = loader;
     }
 
+    /**
+     * A common pattern is to call this function from within a Configuration method of
+     * a {@link org.springframework.beans.factory.annotation.Configurable} function.
+     *
+     * @param configClass The class which defines your Spring Cloud Function @Beans
+     */
     public SpringCloudFunctionInvoker(Class<?> configClass) {
         SpringApplicationBuilder builder = new SpringApplicationBuilder(configClass);
         applicationContext = builder.web(false).run();
@@ -35,6 +47,12 @@ public class SpringCloudFunctionInvoker implements FunctionInvoker, Closeable {
         loader.loadFunction();
     }
 
+    /**
+     * Invoke the user's function with params generated from:
+     *
+     * @param ctx the {@link InvocationContext}
+     * @param evt the {@link InputEvent}
+     */
     @Override
     public Optional<OutputEvent> tryInvoke(InvocationContext ctx, InputEvent evt) {
         SpringCloudMethod method = loader.getFunction();
@@ -44,7 +62,6 @@ public class SpringCloudFunctionInvoker implements FunctionInvoker, Closeable {
         return coerceReturnValue(ctx, method, result);
     }
 
-    // TODO (MJG): this is copy-pasted from the 'runtime' module
     private Object[] coerceParameters(InvocationContext ctx, MethodWrapper targetMethod, InputEvent evt) {
         try {
             Object[] userFunctionParams = new Object[targetMethod.getParameterCount()];
@@ -60,8 +77,7 @@ public class SpringCloudFunctionInvoker implements FunctionInvoker, Closeable {
         }
     }
 
-    // TODO (MJG): this is copy-pasted from the 'runtime' module
-    protected Optional<OutputEvent> coerceReturnValue(InvocationContext ctx, MethodWrapper method, Object rawResult) {
+    private Optional<OutputEvent> coerceReturnValue(InvocationContext ctx, MethodWrapper method, Object rawResult) {
         try {
             return Optional.of((ctx.getRuntimeContext()).getOutputCoercions(method.getTargetMethod())
                     .stream()
@@ -76,7 +92,6 @@ public class SpringCloudFunctionInvoker implements FunctionInvoker, Closeable {
         }
     }
 
-    // TODO (MJG): this is copy-pasted from the 'runtime' module
     private Object coerceParameter(InvocationContext ctx, MethodWrapper targetMethod, int param, InputEvent evt) {
         RuntimeContext runtimeContext = ctx.getRuntimeContext();
 
@@ -89,7 +104,7 @@ public class SpringCloudFunctionInvoker implements FunctionInvoker, Closeable {
                 .orElseThrow(() -> new FunctionInputHandlingException("No type coercion for argument " + param + " of " + targetMethod + " of found"));
     }
 
-    // TODO: this could be private except it's tested directly.
+    // NB: this could be private except it's tested directly
     protected Object tryInvoke(SpringCloudMethod method, Object[] userFunctionParams) {
         Object userFunctionParam = null;
         if (userFunctionParams.length > 0) {
