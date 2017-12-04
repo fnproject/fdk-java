@@ -133,7 +133,7 @@ public class RemoteFlowApiClient implements CompleterClient {
         APIModel.AddInvokeFunctionStageRequest addInvokeFunctionStageRequest = new APIModel.AddInvokeFunctionStageRequest();
         addInvokeFunctionStageRequest.arg = httpReq;
         addInvokeFunctionStageRequest.codeLocation = codeLocation.getLocation();
-        addInvokeFunctionStageRequest.callerId = FlowRuntimeGlobals.getCurrentCompletionId().map(CompletionId::toString).orElse(null);
+        addInvokeFunctionStageRequest.callerId = FlowRuntimeGlobals.getCurrentCompletionId().map(CompletionId::getId).orElse(null);
         addInvokeFunctionStageRequest.functionId = functionId;
 
         try {
@@ -147,7 +147,7 @@ public class RemoteFlowApiClient implements CompleterClient {
     public CompletionId completedValue(FlowId flowId, boolean success, Object value, CodeLocation codeLocation) {
         try {
             APIModel.AddCompletedValueStageRequest addCompletedValueStageRequest = new APIModel.AddCompletedValueStageRequest();
-            addCompletedValueStageRequest.callerId = FlowRuntimeGlobals.getCurrentCompletionId().map(CompletionId::toString).orElse(null);
+            addCompletedValueStageRequest.callerId = FlowRuntimeGlobals.getCurrentCompletionId().map(CompletionId::getId).orElse(null);
 
             addCompletedValueStageRequest.codeLocation = codeLocation.getLocation();
             APIModel.CompletionResult completionResult = new APIModel.CompletionResult();
@@ -231,7 +231,7 @@ public class RemoteFlowApiClient implements CompleterClient {
     public CompletionId delay(FlowId flowId, long l, CodeLocation codeLocation) {
         try {
             APIModel.AddDelayStageRequest addDelayStageRequest = new APIModel.AddDelayStageRequest();
-            addDelayStageRequest.callerId = FlowRuntimeGlobals.getCurrentCompletionId().map(CompletionId::toString).orElse(null);
+            addDelayStageRequest.callerId = FlowRuntimeGlobals.getCurrentCompletionId().map(CompletionId::getId).orElse(null);
             addDelayStageRequest.codeLocation = codeLocation.getLocation();
             addDelayStageRequest.delayMs = l;
             return executeAddDelayStageRequest(flowId, addDelayStageRequest);
@@ -354,7 +354,7 @@ public class RemoteFlowApiClient implements CompleterClient {
             addStageRequest.closure = closure;
             addStageRequest.operation = operation;
             addStageRequest.codeLocation = codeLocation.getLocation();
-            addStageRequest.callerId = FlowRuntimeGlobals.getCurrentCompletionId().map(CompletionId::toString).orElse(null);
+            addStageRequest.callerId = FlowRuntimeGlobals.getCurrentCompletionId().map(CompletionId::getId).orElse(null);
             addStageRequest.deps = deps.stream().map(dep -> dep.getId()).collect(Collectors.toList());
 
             return executeAddStageRequest(flowId, addStageRequest);
@@ -408,7 +408,7 @@ public class RemoteFlowApiClient implements CompleterClient {
 
     private boolean completeStageExternally(FlowId flowId, CompletionId completionId, APIModel.CompletionResult completionResult, CodeLocation codeLocation) throws IOException {
         APIModel.CompleteStageExternallyRequest completeStageExternallyRequest = new APIModel.CompleteStageExternallyRequest();
-        completeStageExternallyRequest.callerId = FlowRuntimeGlobals.getCurrentCompletionId().map(CompletionId::toString).orElse(null);
+        completeStageExternallyRequest.callerId = FlowRuntimeGlobals.getCurrentCompletionId().map(CompletionId::getId).orElse(null);
         completeStageExternallyRequest.value = completionResult;
         completeStageExternallyRequest.codeLocation = codeLocation.getLocation();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
