@@ -17,7 +17,7 @@ import com.fnproject.fn.runtime.coercion.StringCoercion;
 import com.fnproject.fn.runtime.coercion.VoidCoercion;
 import com.fnproject.fn.runtime.coercion.jackson.JacksonCoercion;
 import com.fnproject.fn.runtime.exception.FunctionClassInstantiationException;
-import com.fnproject.fn.runtime.exception.FunctionConfigurationException;
+import com.fnproject.fn.api.exception.FunctionConfigurationException;
 import com.fnproject.fn.api.exception.FunctionInputHandlingException;
 import com.fnproject.fn.runtime.flow.FlowContinuationInvoker;
 

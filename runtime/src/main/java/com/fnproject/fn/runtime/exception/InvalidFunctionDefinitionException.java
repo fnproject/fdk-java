@@ -1,5 +1,7 @@
 package com.fnproject.fn.runtime.exception;
 
+import com.fnproject.fn.api.exception.FunctionLoadException;
+
 /**
  * the function definition passed was invalid (e.g. class or method did not exist in jar, or method did not match required signature)
  */

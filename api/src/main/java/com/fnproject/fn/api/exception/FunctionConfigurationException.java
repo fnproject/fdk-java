@@ -1,4 +1,4 @@
-package com.fnproject.fn.runtime.exception;
+package com.fnproject.fn.api.exception;
 
 /**
  * The function class's configuration methods could not be invoked.

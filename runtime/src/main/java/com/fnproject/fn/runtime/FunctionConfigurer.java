@@ -2,7 +2,7 @@ package com.fnproject.fn.runtime;
 
 import com.fnproject.fn.api.FnConfiguration;
 import com.fnproject.fn.api.MethodWrapper;
-import com.fnproject.fn.runtime.exception.FunctionConfigurationException;
+import com.fnproject.fn.api.exception.FunctionConfigurationException;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;

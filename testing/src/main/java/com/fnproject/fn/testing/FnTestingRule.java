@@ -100,6 +100,7 @@ public final class FnTestingRule implements TestRule {
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     private final List<String> sharedPrefixes = new ArrayList<>();
+    private int lastExitCode;
 
     {
         // Internal shared classes required to bridge completer into tests
@@ -261,7 +262,7 @@ public final class FnTestingRule implements TestRule {
                 oldSystemErr.println("         This may result in unexpected behaviour around function initialization and configuration.");
             }
             forked.setCompleterClient(completer);
-            forked.run(
+            lastExitCode = forked.run(
                mutableEnv,
                pendingInput,
                functionOut,
@@ -281,6 +282,16 @@ public final class FnTestingRule implements TestRule {
             System.setErr(oldSystemErr);
 
         }
+    }
+
+    /**
+     * Get the exit code from the most recent invocation
+     * 0 = success
+     * 1 = failed
+     * 2 = not run due to initialization error
+     */
+    public int getLastExitCode() {
+        return lastExitCode;
     }
 
     /**

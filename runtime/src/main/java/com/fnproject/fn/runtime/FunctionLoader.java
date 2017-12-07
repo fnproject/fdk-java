@@ -1,17 +1,11 @@
 package com.fnproject.fn.runtime;
 
-import com.fnproject.fn.api.FnConfiguration;
 import com.fnproject.fn.api.MethodWrapper;
-import com.fnproject.fn.runtime.exception.FunctionConfigurationException;
 import com.fnproject.fn.runtime.exception.InvalidFunctionDefinitionException;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class FunctionLoader {
