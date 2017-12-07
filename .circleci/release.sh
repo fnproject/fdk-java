@@ -44,29 +44,29 @@ mvn -s ./settings-deploy.xml \
   moving_version=${release_version%.*}-latest
 
   ## jdk8 runtime
-  docker tag $USER/$RUNTIME_IMAGE:latest $USER/$RUNTIME_IMAGE:${release_version}
-  docker tag $USER/$RUNTIME_IMAGE:latest $USER/$RUNTIME_IMAGE:${moving_version}
+  docker tag $USER/$RUNTIME_IMAGE:${release_version} $USER/$RUNTIME_IMAGE:latest
+  docker tag $USER/$RUNTIME_IMAGE:${release_version} $USER/$RUNTIME_IMAGE:${moving_version}
   docker push $USER/$RUNTIME_IMAGE:latest
   docker push $USER/$RUNTIME_IMAGE:${release_version}
   docker push $USER/$RUNTIME_IMAGE:${moving_version}
 
   ## jdk8 build
-  docker tag $USER/$BUILD_IMAGE:latest $USER/$BUILD_IMAGE:${release_version}
-  docker tag $USER/$BUILD_IMAGE:latest $USER/$BUILD_IMAGE:${moving_version}
+  docker tag $USER/$BUILD_IMAGE:${release_version} $USER/$BUILD_IMAGE:latest
+  docker tag $USER/$BUILD_IMAGE:${release_version} $USER/$BUILD_IMAGE:${moving_version}
   docker push $USER/$BUILD_IMAGE:latest
   docker push $USER/$BUILD_IMAGE:${release_version}
   docker push $USER/$BUILD_IMAGE:${moving_version}
 
   ## jdk9 runtime
-  docker tag $USER/$RUNTIME_IMAGE:jdk9-latest $USER/$RUNTIME_IMAGE:jdk9-${release_version}
-  docker tag $USER/$RUNTIME_IMAGE:jdk9-latest $USER/$RUNTIME_IMAGE:jdk9-${moving_version}
+  docker tag $USER/$RUNTIME_IMAGE:jdk9-${release_version} $USER/$RUNTIME_IMAGE:jdk9-latest
+  docker tag $USER/$RUNTIME_IMAGE:jdk9-${release_version} $USER/$RUNTIME_IMAGE:jdk9-${moving_version}
   docker push $USER/$RUNTIME_IMAGE:jdk9-latest
   docker push $USER/$RUNTIME_IMAGE:jdk9-${release_version}
   docker push $USER/$RUNTIME_IMAGE:jdk9-${moving_version}
 
   ## jdk9 build
-  docker tag $USER/$BUILD_IMAGE:jdk9-latest $USER/$BUILD_IMAGE:jdk9-${release_version}
-  docker tag $USER/$BUILD_IMAGE:jdk9-latest $USER/$BUILD_IMAGE:jdk9-${moving_version}
+  docker tag $USER/$BUILD_IMAGE:jdk9-${release_version} $USER/$BUILD_IMAGE:jdk9-latest
+  docker tag $USER/$BUILD_IMAGE:jdk9-${release_version} $USER/$BUILD_IMAGE:jdk9-${moving_version}
   docker push $USER/$BUILD_IMAGE:jdk9-latest
   docker push $USER/$BUILD_IMAGE:jdk9-${release_version}
   docker push $USER/$BUILD_IMAGE:jdk9-${moving_version}
