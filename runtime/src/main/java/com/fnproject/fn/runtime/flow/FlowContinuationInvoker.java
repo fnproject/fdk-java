@@ -31,7 +31,6 @@ public final class FlowContinuationInvoker implements FunctionInvoker {
     private static final String COMPLETER_BASE_URL = "COMPLETER_BASE_URL";
     public static final String FLOW_ID_HEADER = "Fnproject-FlowId";
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
 
     private static class URLCompleterClientFactory implements CompleterClientFactory {
         private final String completerBaseUrl;
@@ -110,7 +109,7 @@ public final class FlowContinuationInvoker implements FunctionInvoker {
                 return evt.consumeBody((is) -> {
                     try {
 
-                        APIModel.InvokeStageRequest invokeStageRequest = objectMapper.readValue(is, APIModel.InvokeStageRequest.class);
+                        APIModel.InvokeStageRequest invokeStageRequest = FlowRuntimeGlobals.getObjectMapper().readValue(is, APIModel.InvokeStageRequest.class);
                         HttpClient httpClient = new HttpClient();
                         BlobStoreClient blobClient = ccf.getBlobStoreClient();
 
@@ -266,7 +265,7 @@ public final class FlowContinuationInvoker implements FunctionInvoker {
 
         String json;
         try {
-            json = objectMapper.writeValueAsString(resp);
+            json = FlowRuntimeGlobals.getObjectMapper().writeValueAsString(resp);
         } catch (JsonProcessingException e) {
             throw new PlatformException("Error writing JSON", e);
         }

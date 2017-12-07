@@ -15,13 +15,19 @@ public class FlowRuntimeGlobals {
     private static ObjectMapper objectMapper;
 
 
-
-    public static ObjectMapper getObjectMapper(){
+    /**
+     * Get the default object mapper to use for Flow Invocations
+     *
+     * this will return a runtime-local
+     * @return an initialized objectmapper
+     */
+    public synchronized static ObjectMapper getObjectMapper(){
         if(objectMapper == null){
             objectMapper = new ObjectMapper();
         }
         return objectMapper;
     }
+
     /**
      * Get the current completion ID  - returns an empty optional if the current invocation is not a completion
      *
