@@ -11,6 +11,7 @@
     <modules>
         <module>api</module>
         <module>runtime</module>
+        <module>fn-spring-cloud-function</module>
         <module>testing</module>
         <module>examples</module>
         <module>integration-tests</module>

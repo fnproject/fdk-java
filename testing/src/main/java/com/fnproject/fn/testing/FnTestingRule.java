@@ -1,25 +1,54 @@
 package com.fnproject.fn.testing;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.InputEvent;
 import com.fnproject.fn.api.OutputEvent;
 import com.fnproject.fn.api.QueryParameters;
-import com.fnproject.fn.api.flow.*;
-import com.fnproject.fn.runtime.flow.*;
+import com.fnproject.fn.api.flow.Flow;
+import com.fnproject.fn.api.flow.FlowCompletionException;
+import com.fnproject.fn.api.flow.FunctionInvocationException;
+import com.fnproject.fn.api.flow.HttpMethod;
+import com.fnproject.fn.api.flow.PlatformException;
+import com.fnproject.fn.runtime.flow.APIModel;
+import com.fnproject.fn.runtime.flow.BlobResponse;
+import com.fnproject.fn.runtime.flow.BlobStoreClient;
+import com.fnproject.fn.runtime.flow.CodeLocation;
+import com.fnproject.fn.runtime.flow.CompleterClient;
+import com.fnproject.fn.runtime.flow.CompleterClientFactory;
+import com.fnproject.fn.runtime.flow.CompletionId;
+import com.fnproject.fn.runtime.flow.DefaultHttpResponse;
+import com.fnproject.fn.runtime.flow.FlowContinuationInvoker;
+import com.fnproject.fn.runtime.flow.FlowId;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.TeeOutputStream;
 import org.apache.http.HttpResponse;
 import org.apache.http.NoHttpResponseException;
-import org.apache.http.entity.InputStreamEntity;
-import org.apache.http.impl.io.*;
+import org.apache.http.impl.io.ContentLengthInputStream;
+import org.apache.http.impl.io.DefaultHttpResponseParser;
+import org.apache.http.impl.io.HttpTransportMetricsImpl;
+import org.apache.http.impl.io.IdentityInputStream;
+import org.apache.http.impl.io.SessionInputBufferImpl;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
-import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.io.PrintStream;
+import java.io.SequenceInputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+
+import static com.fnproject.fn.runtime.flow.RemoteFlowApiClient.CONTENT_TYPE_HEADER;
 
 /**
  * Testing {@link org.junit.Rule} for fn Java FDK functions.
@@ -68,6 +97,8 @@ public final class FnTestingRule implements TestRule {
     private Map<String, FnFunctionStub> functionStubs = new HashMap<>();
     public static InMemCompleter completer = null;
 
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+
     private final List<String> sharedPrefixes = new ArrayList<>();
 
     {
@@ -78,10 +109,13 @@ public final class FnTestingRule implements TestRule {
         addSharedClassPrefix("jdk.");
 
         addSharedClass(CompleterClient.class);
+        addSharedClass(BlobStoreClient.class);
+        addSharedClass(BlobResponse.class);
+
         addSharedClass(CompleterClientFactory.class);
         addSharedClass(CompletionId.class);
         addSharedClass(FlowId.class);
-        addSharedClass(CompleterClient.ExternalCompletion.class);
+        addSharedClass(Flow.FlowState.class);
         addSharedClass(CodeLocation.class);
         addSharedClass(Headers.class);
         addSharedClass(HttpMethod.class);
@@ -92,7 +126,6 @@ public final class FnTestingRule implements TestRule {
         addSharedClass(OutputEvent.class);
         addSharedClass(FlowCompletionException.class);
         addSharedClass(FunctionInvocationException.class);
-        addSharedClass(ExternalCompletionException.class);
         addSharedClass(PlatformException.class);
 
     }
@@ -229,11 +262,11 @@ public final class FnTestingRule implements TestRule {
             }
             forked.setCompleterClient(completer);
             forked.run(
-                    mutableEnv,
-                    pendingInput,
-                    functionOut,
-                    functionErr,
-                    cls + "::" + method);
+               mutableEnv,
+               pendingInput,
+               functionOut,
+               functionErr,
+               cls + "::" + method);
 
             stdOut.flush();
             stdErr.flush();
@@ -324,7 +357,7 @@ public final class FnTestingRule implements TestRule {
                     public Headers getHeaders() {
                         Map<String, String> headers = new HashMap<>();
                         Arrays.stream(response.getAllHeaders()).forEach((h) ->
-                                headers.put(h.getName(), h.getValue()));
+                           headers.put(h.getName(), h.getValue()));
                         return Headers.fromMap(headers);
                     }
 
@@ -369,11 +402,11 @@ public final class FnTestingRule implements TestRule {
             public FnTestingRule withAction(ExternalFunctionAction f) {
                 functionStubs.put(id, (HttpMethod method, Headers headers, byte[] body) -> {
                     try {
-                        return Result.success(new Datum.HttpRespDatum(200, Headers.emptyHeaders(), f.apply(body)));
+                        return new DefaultHttpResponse(200, Headers.emptyHeaders(), f.apply(body));
                     } catch (FunctionError functionError) {
-                        throw new ResultException(new Datum.HttpRespDatum(500, Headers.emptyHeaders(), functionError.getMessage().getBytes()));
+                        return new DefaultHttpResponse(500, Headers.emptyHeaders(), functionError.getMessage().getBytes());
                     } catch (PlatformError platformError) {
-                        throw new ResultException(new Datum.ErrorDatum(Datum.ErrorType.function_invoke_failed, platformError.getMessage()));
+                        throw new RuntimeException("Platform Error");
                     }
                 });
                 return FnTestingRule.this;
@@ -382,7 +415,7 @@ public final class FnTestingRule implements TestRule {
     }
 
     private interface FnFunctionStub {
-        Result stubFunction(HttpMethod method, Headers headers, byte[] body);
+        com.fnproject.fn.api.flow.HttpResponse stubFunction(HttpMethod method, Headers headers, byte[] body);
     }
 
     /**
@@ -391,9 +424,9 @@ public final class FnTestingRule implements TestRule {
     private class DefaultFnEventBuilder implements FnEventBuilder {
 
         FnHttpEventBuilder builder = new FnHttpEventBuilder().withMethod("GET")
-                .withAppName("appName")
-                .withRoute("/route")
-                .withRequestUrl("http://example.com/r/appName/route");
+           .withAppName("appName")
+           .withRoute("/route")
+           .withRequestUrl("http://example.com/r/appName/route");
 
 
         @Override
@@ -496,44 +529,35 @@ public final class FnTestingRule implements TestRule {
 
 
         @Override
-        public Result invokeStage(String fnId, FlowId flowId, CompletionId stageId, Datum.Blob closure, List<Result> input) {
+        public APIModel.CompletionResult invokeStage(String fnId, FlowId flowId, CompletionId stageId, APIModel.Blob closure, List<APIModel.CompletionResult> input) {
             // Construct a new ClassLoader hierarchy with a copy of the statics embedded in the runtime.
             // Initialise it appropriately.
             FnTestingClassLoader fcl = new FnTestingClassLoader(functionClassLoader, sharedPrefixes);
             fcl.setCompleterClient(completer);
 
 
-            // TODO avoid repeating MIME stuff (library-ise with CT/runtime? )
-            // TODO de-dupe shared env setup
-            // TODO Making up event details (app path?)
+            APIModel.InvokeStageRequest request = new APIModel.InvokeStageRequest();
+            request.stageId = stageId.getId();
+            request.flowId = flowId.getId();
+            request.closure = closure;
+            request.args = input;
 
-            byte[] inputBody;
-            String boundary = UUID.randomUUID().toString().replaceAll("-", "");
-
+            String inputBody = null;
             try {
-                ByteArrayOutputStream bodyBytes = new ByteArrayOutputStream();
-                bodyBytes.write(("\r\n--" + boundary + "\r\n").getBytes(StandardCharsets.UTF_8));
-                new Datum.BlobDatum(closure).writePart(bodyBytes);
-
-                for (Result r : input) {
-                    bodyBytes.write(("\r\n--" + boundary + "\r\n").getBytes(StandardCharsets.UTF_8));
-                    r.writePart(bodyBytes);
-                }
-                bodyBytes.write(("\r\n--" + boundary + "--\r\n").getBytes(StandardCharsets.UTF_8));
-                inputBody = bodyBytes.toByteArray();
-            } catch (IOException e) {
-                throw new RuntimeException("Failed to write inputBody", e);
+                inputBody = objectMapper.writeValueAsString(request);
+            } catch (JsonProcessingException e) {
+                throw new IllegalStateException("Invalid request");
             }
 
             // oldSystemErr.println("Body\n" + new String(inputBody));
 
             InputStream is = new FnHttpEventBuilder()
-                    .withBody(inputBody)
-                    .withAppName("appName")
-                    .withRoute("/route").withRequestUrl("http://some/url")
-                    .withMethod("POST")
-                    .withHeader(RemoteCompleterApiClient.CONTENT_TYPE_HEADER, String.format("multipart/mixed; boundary=\"%s\"", boundary))
-                    .withHeader(RemoteCompleterApiClient.FLOW_ID_HEADER, flowId.getId()).withHeader(RemoteCompleterApiClient.STAGE_ID_HEADER, stageId.getId()).currentEventInputStream();
+               .withBody(inputBody)
+               .withAppName("appName")
+               .withRoute("/route").withRequestUrl("http://some/url")
+               .withMethod("POST")
+               .withHeader(CONTENT_TYPE_HEADER, "application/json")
+               .withHeader(FlowContinuationInvoker.FLOW_ID_HEADER, flowId.getId()).currentEventInputStream();
 
             ByteArrayOutputStream output = new ByteArrayOutputStream();
             Map<String, String> mutableEnv = new HashMap<>();
@@ -550,48 +574,35 @@ public final class FnTestingRule implements TestRule {
 
 
             fcl.run(
-                    mutableEnv,
-                    is,
-                    functionOut,
-                    functionErr,
-                    cls + "::" + method);
+               mutableEnv,
+               is,
+               functionOut,
+               functionErr,
+               cls + "::" + method);
 
 
             SessionInputBufferImpl sib = new SessionInputBufferImpl(new HttpTransportMetricsImpl(), 65535);
             ByteArrayInputStream parseStream = new ByteArrayInputStream(output.toByteArray());
             sib.bind(parseStream);
             DefaultHttpResponseParser parser = new DefaultHttpResponseParser(sib);
-            Result r;
+            APIModel.CompletionResult r;
             try {
                 // Read wrapping result, and throw it away
                 parser.parse();
                 IdentityInputStream iis = new IdentityInputStream(sib);
                 byte[] responseBody = IOUtils.toByteArray(iis);
 
-                // System.err.println("Got Fn response body: \n" + new String(responseBody));
-                // HTTP in HTTP :(
-                SessionInputBufferImpl sib2 = new SessionInputBufferImpl(new HttpTransportMetricsImpl(), 65535);
-                InputStream frameStream = new ByteArrayInputStream(responseBody);
-                sib2.bind(frameStream);
-
-                DefaultHttpResponseParser parser2 = new DefaultHttpResponseParser(sib2);
-                HttpResponse wrappedResponse = parser2.parse();
-
-                IdentityInputStream frameBodyStream = new IdentityInputStream(sib2);
-
-                wrappedResponse.setEntity(new InputStreamEntity(frameBodyStream));
-
-                r = Result.readResult(wrappedResponse);
-
+                APIModel.InvokeStageResponse response = objectMapper.readValue(responseBody, APIModel.InvokeStageResponse.class);
+                r = response.result;
 
             } catch (Exception e) {
                 oldSystemErr.println("Err\n" + e);
                 e.printStackTrace(oldSystemErr);
-                r = Result.failure(new Datum.ErrorDatum(Datum.ErrorType.unknown_error, "Error reading fn Response:" + e.getMessage()));
+                r = APIModel.CompletionResult.failure(APIModel.ErrorDatum.newError(APIModel.ErrorType.UnknownError, "Error reading fn Response:" + e.getMessage()));
             }
 
-            if (!r.isSuccess()) {
-                throw new ResultException(r.getDatum());
+            if (!r.successful) {
+                throw new ResultException(r.result);
             }
             return r;
 
@@ -600,12 +611,19 @@ public final class FnTestingRule implements TestRule {
 
     private class TestRuleFnInvokeClient implements InMemCompleter.FnInvokeClient {
         @Override
-        public CompletableFuture<Result> invokeFunction(String fnId, HttpMethod method, Headers headers, byte[] data) {
-            return CompletableFuture.completedFuture(functionStubs
-                    .computeIfAbsent(fnId, (k) -> {
-                        throw new IllegalStateException("Function was invoked that had no definition: " + k);
-                    })
-                    .stubFunction(method, headers, data));
+        public CompletableFuture<com.fnproject.fn.api.flow.HttpResponse> invokeFunction(String fnId, HttpMethod method, Headers headers, byte[] data) {
+            FnFunctionStub stub = functionStubs
+               .computeIfAbsent(fnId, (k) -> {
+                   throw new IllegalStateException("Function was invoked that had no definition: " + k);
+               });
+
+            try {
+                return CompletableFuture.completedFuture(stub.stubFunction(method, headers, data));
+            } catch (Exception e) {
+                CompletableFuture<com.fnproject.fn.api.flow.HttpResponse> respFuture = new CompletableFuture<>();
+                respFuture.completeExceptionally(e);
+                return respFuture;
+            }
         }
     }
 }

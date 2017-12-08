@@ -3,7 +3,7 @@ package com.fnproject.fn.runtime;
 import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.InputEvent;
 import com.fnproject.fn.api.QueryParameters;
-import com.fnproject.fn.runtime.exception.FunctionInputHandlingException;
+import com.fnproject.fn.api.exception.FunctionInputHandlingException;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;

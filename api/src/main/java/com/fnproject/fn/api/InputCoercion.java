@@ -16,10 +16,12 @@ public interface InputCoercion<T> {
      * <p>
      * If a coercion throws a RuntimeException, no further coercions will be tried and the function invocation will fail.
      *
-     * @param currentContext the invocation context for this event - this links to the {@link com.fnproject.fn.api.RuntimeContext} and method and class
+     * @param currentContext the invocation context for this event - this links to the {@link RuntimeContext} and method and class
      * @param arg            the parameter index for the argument being extracted
      * @param input          the input event
+     * @param methodWrapper  the method which the parameter is for
      * @return               the result of the coercion, if it succeeded
      */
-    Optional<T> tryCoerceParam(InvocationContext currentContext, int arg, InputEvent input);
+    Optional<T> tryCoerceParam(InvocationContext currentContext, int arg, InputEvent input, MethodWrapper methodWrapper);
+
 }

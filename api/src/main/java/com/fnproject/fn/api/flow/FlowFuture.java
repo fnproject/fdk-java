@@ -1,6 +1,7 @@
 package com.fnproject.fn.api.flow;
 
 import java.io.Serializable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -185,6 +186,76 @@ public interface FlowFuture<T> extends Serializable {
      * @see java.util.concurrent.CompletionStage#whenComplete(BiConsumer)
      */
     FlowFuture<T> whenComplete(Flows.SerBiConsumer<T, Throwable> fn);
+
+
+    /**
+     * If not already completed, completes this future with the given value.
+     *
+     * <p>
+     * An example is where you want to complete a future with a default value
+     * if it doesn't complete within a given time.
+     * </p>
+     * <blockquote><pre>{@code
+     *
+     * Flow flow = Flows.currentFlow();
+     * FlowFuture<Integer> f = flow.supply(() -> {
+     *      // some computation
+     * });
+     *
+     * // Complete the future with a default value after a timeout
+     * flow.delay(10, TimeUnit.SECONDS)
+     *  .thenAccept(v -> f.complete(1));
+     * }</pre></blockquote>
+     *
+     * @param value the value to assign to the future
+     * @return true if this invocation caused this future to transition to a completed state, else false
+     */
+    boolean complete(T value);
+
+    /**
+     * If not already completed, completes this future exceptionally with the supplied {@link Throwable}.
+     *
+     * <p>
+     * An example is where you want to complete a future exceptionally with a custom
+     * exception if it doesn't complete within a given time.
+     * </p>
+     * <blockquote><pre>{@code
+     *
+     * Flow flow = Flows.currentFlow();
+     * FlowFuture<Integer> f = flow.supply(() -> {
+     *      // some computation
+     * });
+     * flow.delay(10, TimeUnit.SECONDS)
+     *  .thenAccept(v -> f.completeExceptionally(new ComputationTimeoutException()));
+     * }</pre></blockquote>
+     *
+     * @param throwable the @{link Throwable} to complete the future exceptionally with
+     * @return true if this invocation caused this future to transition to a completed state, else false
+     */
+    boolean completeExceptionally(Throwable throwable);
+
+    /**
+     * If not already completed, completes this future exceptionally with a @{link java.util.concurrent.CancellationException}
+     *
+     * <p>
+     * An example is where you want to cancel the execution of a future and its
+     * dependents if it doesn't complete within a given time.
+     * </p>
+     * <blockquote><pre>{@code
+     *
+     * Flow flow = Flows.currentFlow();
+     * FlowFuture<Integer> f = flow.supply(() -> {
+     *      // some computation
+     * }).thenAccept(x -> {
+     *      // some action
+     * });
+     * flow.delay(10, TimeUnit.SECONDS)
+     *  .thenAccept(v -> f.cancel());
+     * }</pre></blockquote>
+     *
+     * @return true if this invocation caused this future to transition to a completed state, else false
+     */
+    boolean cancel();
 
     /**
      * Perform an action when this future completes successfully.

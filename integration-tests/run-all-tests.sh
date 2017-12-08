@@ -12,7 +12,7 @@ set -ex
 # ----------------------------------------------------------------------
 
 # This is an awful bashism
-if [[ -z "${API_URL+x}" ]]; then echo "Please set API_URL"; exit 1; fi
+if [[ -z "${FN_API_URL+x}" ]]; then echo "Please set FN_API_URL"; exit 1; fi
 if [[ -z "${COMPLETER_BASE_URL+x}" ]]; then echo "Please set COMPLETER_BASE_URL"; exit 1; fi
 
 

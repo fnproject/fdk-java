@@ -4,7 +4,6 @@ import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.flow.HttpMethod;
 
 import java.io.Serializable;
-import java.net.URI;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -14,19 +13,8 @@ import java.util.concurrent.TimeoutException;
  */
 public interface CompleterClient {
 
-
-    interface ExternalCompletion {
-
-        CompletionId completionId();
-
-        URI completeURI();
-
-        URI failureURI();
-
-    }
-
     /**
-     * create a new flow against the completer
+     * create a new flow against the flow service
      *
      * @param functionId
      * @return
@@ -63,13 +51,17 @@ public interface CompleterClient {
 
     CompletionId applyToEither(FlowId flowId, CompletionId completionId, CompletionId alternate, Serializable fn, CodeLocation codeLocation);
 
+    boolean complete(FlowId flowId, CompletionId completionId, Object value, CodeLocation codeLocation);
+
+    boolean completeExceptionally(FlowId flowId, CompletionId completionId, Throwable value, CodeLocation codeLocation);
+
     CompletionId anyOf(FlowId flowId, List<CompletionId> cids, CodeLocation codeLocation);
 
     CompletionId delay(FlowId flowId, long l, CodeLocation codeLocation);
 
     CompletionId thenAcceptBoth(FlowId flowId, CompletionId completionId, CompletionId alternate, Serializable fn, CodeLocation codeLocation);
 
-    ExternalCompletion createExternalCompletion(FlowId flowId, CodeLocation codeLocation);
+    CompletionId createCompletion(FlowId flowId, CodeLocation codeLocation);
 
     CompletionId invokeFunction(FlowId flowId, String functionId, byte[] data, HttpMethod method, Headers headers, CodeLocation codeLocation);
 

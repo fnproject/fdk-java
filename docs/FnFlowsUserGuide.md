@@ -8,7 +8,7 @@ APIs.
 ## What are Flows?
 
 Fn Flow consists of a set of client-side APIs for you to use within your
-Fn apps, as well as a long-running server component (the _completer_) that
+Fn apps, as well as a long-running server component (the _flow service_) that
 orchestrates computation beyond the life-cycle of your functions. Together,
 these components enable non-blocking asynchronous execution flows, where your
 function only runs when it has useful work to perform. If you have used the Java
@@ -25,7 +25,7 @@ FDK](../README.md) and have the following things:
 
 * [Fn CLI](https://github.com/fnproject/cli)
 * [Fn Java FDK](https://github.com/fnproject/fn-java-sdk)
-* [Fn completer](https://github.com/fnproject/completer)
+* [Fn flow](https://github.com/fnproject/flow)
 * [Docker-ce 17.06+ installed locally](https://docs.docker.com/engine/installation/)
 * A [Docker Hub](http://hub.docker.com) account
 
@@ -49,7 +49,7 @@ deploy functions.
 $ docker login
 ```
 
-### Start a local Fn server and completer server
+### Start a local Fn server and Flow server
 
 In a terminal, start the functions server:
 
@@ -57,7 +57,7 @@ In a terminal, start the functions server:
 $ fn start
 ```
 
-Similarly, start the Flows completer server and point it at the functions server API URL:
+Similarly, start the Flows server server and point it at the functions server API URL:
 
 ```
 $ DOCKER_LOCALHOST=$(docker inspect --type container -f '{{.NetworkSettings.Gateway}}' functions)
@@ -67,11 +67,11 @@ $ docker run --rm  \
        -d \
        -e API_URL="http://$DOCKER_LOCALHOST:8080/r" \
        -e no_proxy=$DOCKER_LOCALHOST \
-       --name completer \
-       fnproject/completer:latest
+       --name flow-service \
+       fnproject/flow:latest
 ```
 
-Optionally, start a completer UI container to visualize your Flow applications:
+Optionally, start a flow UI container to visualize your Flow applications:
 
 ```
 $ docker run --rm \
@@ -80,7 +80,7 @@ $ docker run --rm \
        --name flowui \
        -e API_URL=http://$DOCKER_LOCALHOST:8080 \
        -e COMPLETER_BASE_URL=http://$DOCKER_LOCALHOST:8081 \
-       fnproject/completer:ui
+       fnproject/flow:ui
 ```
 
 ## Your first Fn Flow
@@ -104,7 +104,7 @@ func.yaml created
 You will create a function that produces the nth prime number and then returns
 an informational message once the prime number has been computed.  In this 
 example, we have chosen to block our to wait for completion of the computation
-graph by calling `get()`. This allows you to see the return value when invoking
+flow by calling `get()`. This allows you to see the return value when invoking
 your function over HTTP. *In a production application, you should avoid
 blocking*, since your function will continue to run while waiting for
 a computation result, even though it has no useful work to do.
@@ -173,7 +173,7 @@ $ fn deploy --app flows-example
 Updating route /primes using image your_dockerhub_account/flow-primes::0.0.2...
 ```
 
-Configure your function to talk to the local completer endpoint:
+Configure your function to talk to the local flow service endpoint:
 
 ```
 $ DOCKER_LOCALHOST=$(docker inspect --type container -f '{{.NetworkSettings.Gateway}}' functions)

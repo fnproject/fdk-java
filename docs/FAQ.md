@@ -19,7 +19,7 @@ No. You can still write Java functions on Fn without using the FDK. However usin
    1. A JUnit rule provides a realistic test harness for you to test your function in isolation.
 
 ### What is Fn Flow?
-Fn Flow is a [Java API](https://github.com/fnproject/fn-java-fdk/blob/master/docs/FnFlowsUserGuide.md) and [corresponding service](https://github.com/fnproject/completer) that helps you create complex, long-running, fault-tolerant functions using a promises-style asynchronous API. Check out the [Fn Flow docs](https://github.com/fnproject/fn-java-fdk/blob/master/docs/FnFlowsUserGuide.md) for more information.
+Fn Flow is a [Java API](https://github.com/fnproject/fn-java-fdk/blob/master/docs/FnFlowsUserGuide.md) and [corresponding service](https://github.com/fnproject/flow) that helps you create complex, long-running, fault-tolerant functions using a promises-style asynchronous API. Check out the [Fn Flow docs](https://github.com/fnproject/fn-java-fdk/blob/master/docs/FnFlowsUserGuide.md) for more information.
 
 ### How do I get the FDK?
 The FDK is automatically added to your project if you built your function using `fn init --runtime=java`. The `api` and `testing` JARs are published on [our bintray](https://bintray.com/fnproject/fnproject) and the `runtime` is published in our [Docker hub repository](https://hub.docker.com/r/fnproject/fn-java-fdk/).
@@ -99,7 +99,7 @@ Have a look on our [releases page](https://github.com/fnproject/fn-java-fdk/rele
 Please create an [issue on our GitHub repo](https://github.com/fnproject/fn-java-fdk/issues).
 
 ### My question is not answered here - how do I get more help?
-We hang out on the [Fn project slack](https://join.slack.com/t/fnproject/shared_invite/enQtMjIwNzc5MTE4ODg3LTdlYjE2YzU1MjAxODNhNGUzOGNhMmU2OTNhZmEwOTcxZDQxNGJiZmFiMzNiMTk0NjU2NTIxZGEyNjI0YmY4NTA) in #fn-flow, #fn-java-fdk and #completer.
+We hang out on the [Fn project slack](https://join.slack.com/t/fnproject/shared_invite/enQtMjIwNzc5MTE4ODg3LTdlYjE2YzU1MjAxODNhNGUzOGNhMmU2OTNhZmEwOTcxZDQxNGJiZmFiMzNiMTk0NjU2NTIxZGEyNjI0YmY4NTA) in #fn-flow, #fn-java-fdk.
 
 ## Fn Flow
 
@@ -122,7 +122,7 @@ No. Fn Flow was released in 2017 and is not related to any other Java library.
 Fn Flow was 'inspired by' the `CompletionStage` API and shares a number of similar methods. However, as the semantics of Fn Flow are subtly different, and because we require our operations to implement `Serializable` we have implemented a new API.
 
 ### Can I run my own Fn Flow server?
-Fn Flow is open source just like the rest of the Fn project. You can [get the code](https://github.com/fnproject/completer) and [run a server](https://github.com/fnproject/completer#running-the-completer) easily.
+Fn Flow is open source just like the rest of the Fn project. You can [get the code](https://github.com/fnproject/flow) and [run a server](https://github.com/fnproject/flow#running-the-flow-service) easily.
 
 ## Troubleshooting
 

@@ -11,24 +11,32 @@ set -ex
 # The following variables may be set to parameterise the operation of this script
 # ----------------------------------------------------------------------
 
-: ${FUNCTIONS_DOCKER_IMAGE:=fnproject/functions}
+: ${FUNCTIONS_DOCKER_IMAGE:=fnproject/fnserver}
 : ${SUFFIX:=$(git rev-parse HEAD)}
-: ${COMPLETER_DOCKER_IMAGE:=fnproject/completer}
+: ${COMPLETER_DOCKER_IMAGE:=fnproject/flow}
 
 # ----------------------------------------------------------------------
 # Stand up a local staging maven directory, if needed
 # ----------------------------------------------------------------------
 
 if [[ -n "$REPOSITORY_LOCATION" ]]; then
-    if [[ -n "$LOCALHOST_ACTUAL_IP" ]]; then
-        echo "Using $LOCALHOST_ACTUAL_IP for the staging Maven repo."
-        export MAVEN_REPOSITORY_LOCATION="http://$LOCALHOST_ACTUAL_IP:18080"
-    else
-        echo "No LOCALHOST_ACTUAL_IP set, assuming we're running on CircleCI."
-        export MAVEN_REPOSITORY_LOCATION="http://172.17.0.1:18080"
-    fi
-    cd "$REPOSITORY_LOCATION" && python -mSimpleHTTPServer 18080 1>>/tmp/http-logs 2>&1 &
-    defer kill -9 "$!"
+    REPO_CONTAINER_ID=$(
+        docker run -d \
+            -v "$REPOSITORY_LOCATION":/repo:ro \
+            -w /repo \
+            --name repo-$SUFFIX \
+            python:2.7 \
+            python -mSimpleHTTPServer 18080
+    )
+    defer docker rm -f $REPO_CONTAINER_ID
+    REPO_INTERNAL_IP=$(
+        docker inspect \
+            --type container \
+            -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}'  \
+            $REPO_CONTAINER_ID
+       )
+    export MAVEN_REPOSITORY_LOCATION="http://$REPO_INTERNAL_IP:18080"
+    export no_proxy="$no_proxy,$REPO_INTERNAL_IP"
 fi
 
 # ----------------------------------------------------------------------
@@ -42,7 +50,7 @@ FUNCTIONS_CONTAINER_ID=$(
         -p 8080 \
         -v /var/run/docker.sock:/var/run/docker.sock \
         --name functions-$SUFFIX \
-        -e LOG_LEVEL=debug \
+        -e FN_LOG_LEVEL=debug \
         $FUNCTIONS_DOCKER_IMAGE
     )
 defer docker rm -f $FUNCTIONS_CONTAINER_ID
@@ -70,7 +78,7 @@ FUNCTIONS_INTERNAL_IP=$(
         $FUNCTIONS_CONTAINER_ID
    )
 
-export API_URL="http://$FUNCTIONS_HOST:$FUNCTIONS_PORT"
+export FN_API_URL="http://$FUNCTIONS_HOST:$FUNCTIONS_PORT"
 export no_proxy="$no_proxy,$FUNCTIONS_HOST"
 
 
@@ -83,7 +91,7 @@ COMPLETER_CONTAINER_ID=$(
         -p 8081 \
         --env API_URL=http://${FUNCTIONS_INTERNAL_IP}:8080 \
         --env no_proxy=$no_proxy,${FUNCTIONS_INTERNAL_IP} \
-        --name completer-$SUFFIX \
+        --name flow-server-$SUFFIX \
         $COMPLETER_DOCKER_IMAGE
     )
 defer docker rm -f $COMPLETER_CONTAINER_ID
@@ -123,7 +131,7 @@ export HTTP_PROXY="$http_proxy"
 export HTTPS_PROXY="$https_proxy"
 export NO_PROXY="$no_proxy"
 
-wait_for_http "$API_URL"
+wait_for_http "$FN_API_URL"
 wait_for_http "http://$COMPLETER_HOST:$COMPLETER_PORT/ping"
 
 set +x

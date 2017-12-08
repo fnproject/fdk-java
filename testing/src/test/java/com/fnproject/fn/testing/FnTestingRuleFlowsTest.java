@@ -3,14 +3,13 @@ package com.fnproject.fn.testing;
 import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.RuntimeContext;
 import com.fnproject.fn.api.flow.*;
-import org.junit.AssumptionViolatedException;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -229,6 +228,49 @@ public class FnTestingRuleFlowsTest {
     }
 
     @Test
+    public void cancelledFutureCompletesExceptionally() {
+        fn.givenEvent().enqueue();
+
+        fn.thenRun(TestFn.class, "cancelFuture");
+
+        assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
+        assertThat(result).isEqualTo(Result.Exceptionally);
+        assertThat(exception).isInstanceOf(CancellationException.class);
+    }
+
+    @Test
+    public void completeFutureExceptionallyWithCustomException() {
+        fn.givenEvent().enqueue();
+
+        fn.thenRun(TestFn.class, "completeFutureExceptionally");
+
+        assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
+        assertThat(result).isEqualTo(Result.Exceptionally);
+        assertThat(exception).isInstanceOf(RuntimeException.class);
+        assertThat(exception.getMessage()).isEqualTo("Custom exception");
+    }
+
+    @Test
+    public void completedFutureCompletesNormally() {
+        fn.givenEvent().enqueue();
+
+        fn.thenRun(TestFn.class, "completeFuture");
+
+        assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
+        assertThat(result).isEqualTo(Result.CompletedValue);
+    }
+
+    @Test
+    public void uncompletedFutureCanBeCompleted() {
+        fn.givenEvent().enqueue();
+
+        fn.thenRun(TestFn.class, "createFlowFuture");
+
+        assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
+        assertThat(result).isEqualTo(Result.CompletedValue);
+    }
+
+    @Test
     public void shouldLogMessagesToStdErrToPlatformStdErr() {
         // Questionable: for testing, do we point all stderr stuff to the same log stream?
         fn.givenEvent().enqueue();
@@ -332,7 +374,7 @@ public class FnTestingRuleFlowsTest {
             } catch (ClassNotFoundException e) {
             }
         }
-        throw new AssumptionViolatedException("Object " + o + "is not an instance of any of " + Arrays.toString(cs));
+        Assert.fail("Object " + o + "is not an instance of any of " + Arrays.toString(cs));
     }
 
     public static class TestFn {
@@ -496,6 +538,60 @@ public class FnTestingRuleFlowsTest {
                     });
         }
 
+        public void cancelFuture() {
+            Flow fl = Flows.currentFlow();
+
+            FlowFuture<Result> f = fl.supply(() -> {
+                new CompletableFuture<>().get();
+                return Result.Supply;
+            });
+
+            f.exceptionally((ex) -> {
+                result = Result.Exceptionally;
+                exception = ex;
+                return Result.Exceptionally;
+            });
+
+            f.cancel();
+        }
+
+        public void completeFutureExceptionally() {
+            Flow fl = Flows.currentFlow();
+
+            FlowFuture<Result> f = fl.supply(() -> {
+                new CompletableFuture<>().get();
+                return Result.Supply;
+            });
+
+            f.exceptionally((ex) -> {
+                result = Result.Exceptionally;
+                exception = ex;
+                return Result.Exceptionally;
+            });
+
+            f.completeExceptionally(new RuntimeException("Custom exception"));
+        }
+
+        public void completeFuture() {
+            Flow fl = Flows.currentFlow();
+
+            FlowFuture<Result> f = fl.supply(() -> {
+                new CompletableFuture<>().get();
+                return Result.Supply;
+            });
+
+            f.thenAccept((r) -> result = r);
+            f.complete(Result.CompletedValue);
+        }
+
+        public void createFlowFuture() {
+            Flow fl = Flows.currentFlow();
+
+            FlowFuture<Result> f = fl.createFlowFuture();
+
+            f.thenAccept((r) -> result = r);
+            f.complete(Result.CompletedValue);
+        }
 
         public void logToStdErrInContinuation() {
             Flow fl = Flows.currentFlow();

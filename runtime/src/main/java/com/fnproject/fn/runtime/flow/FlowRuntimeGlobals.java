@@ -1,5 +1,7 @@
 package com.fnproject.fn.runtime.flow;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.util.Objects;
 import java.util.Optional;
 
@@ -9,6 +11,22 @@ import java.util.Optional;
 public class FlowRuntimeGlobals {
     private static CompleterClientFactory completerClientFactory = null;
     private static CompletionId currentCompletionId;
+
+    private static ObjectMapper objectMapper;
+
+
+    /**
+     * Get the default object mapper to use for Flow Invocations
+     *
+     * this will return a runtime-local
+     * @return an initialized objectmapper
+     */
+    public synchronized static ObjectMapper getObjectMapper(){
+        if(objectMapper == null){
+            objectMapper = new ObjectMapper();
+        }
+        return objectMapper;
+    }
 
     /**
      * Get the current completion ID  - returns an empty optional if the current invocation is not a completion

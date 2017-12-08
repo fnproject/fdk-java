@@ -3,7 +3,6 @@ package com.fnproject.fn.integration;
 import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.InputEvent;
 import com.fnproject.fn.api.flow.*;
-import com.fnproject.fn.runtime.flow.HttpClient;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.TeeOutputStream;
 
@@ -41,18 +40,18 @@ public class ExerciseEverything {
     @Test(3)
     public FlowFuture<Void> allOfWithCompletedValue(Flow fl) {
         return fl.allOf(
-                fl.completedValue(1),
-                fl.completedValue(2),
-                fl.completedValue(3)
+           fl.completedValue(1),
+           fl.completedValue(2),
+           fl.completedValue(3)
         );
     }
 
     @Test(4)
     public FlowFuture<Void> allOfWithSuppliedValue(Flow fl) {
         return fl.allOf(
-                fl.supply(() -> 1),
-                fl.supply(() -> 2),
-                fl.supply(() -> 3)
+           fl.supply(() -> 1),
+           fl.supply(() -> 2),
+           fl.supply(() -> 3)
         );
     }
 
@@ -62,9 +61,9 @@ public class ExerciseEverything {
     @Test.Expect("3")
     public FlowFuture<Object> anyOfWithCompletedValue(Flow fl) {
         return fl.anyOf(
-                fl.completedValue("1"),
-                fl.completedValue("2"),
-                fl.completedValue("3")
+           fl.completedValue("1"),
+           fl.completedValue("2"),
+           fl.completedValue("3")
         );
     }
 
@@ -74,9 +73,9 @@ public class ExerciseEverything {
     @Test.Expect("3")
     public FlowFuture<Object> anyOfWithSuppliedValue(Flow fl) {
         return fl.anyOf(
-                fl.supply(() -> "1"),
-                fl.supply(() -> "2"),
-                fl.supply(() -> "3")
+           fl.supply(() -> "1"),
+           fl.supply(() -> "2"),
+           fl.supply(() -> "3")
         );
     }
 
@@ -116,14 +115,14 @@ public class ExerciseEverything {
     @Test.Expect("-3")
     public FlowFuture<Integer> catchBubbledException(Flow fl) {
         return fl.completedValue(0)
-                .thenApply((x) -> x + 1)
-                .thenApply((x) -> {
-                    if (x == 1) throw new MyException("boom");
-                    else return x + 1;
-                })
-                .thenApply((x) -> x + 1)
-                .thenApply((x) -> x + 1)
-                .exceptionally((e) -> -3);
+           .thenApply((x) -> x + 1)
+           .thenApply((x) -> {
+               if (x == 1) throw new MyException("boom");
+               else return x + 1;
+           })
+           .thenApply((x) -> x + 1)
+           .thenApply((x) -> x + 1)
+           .exceptionally((e) -> -3);
     }
 
     @Test(11)
@@ -136,7 +135,7 @@ public class ExerciseEverything {
     @Test.Expect("okay")
     public FlowFuture<String> checkPassingExternalInvocation(Flow fl) {
         return fl.invokeFunction(inputEvent.getAppName() + inputEvent.getRoute(), HttpMethod.POST, Headers.emptyHeaders(), "PASS".getBytes())
-                .thenApply((resp) -> resp.getStatusCode() != 200 ? "failure" : new String(resp.getBodyAsBytes()));
+           .thenApply((resp) -> resp.getStatusCode() != 200 ? "failure" : new String(resp.getBodyAsBytes()));
     }
 
     // There is currently no way for a hot function to signal failure in the Fn platform.
@@ -162,32 +161,32 @@ public class ExerciseEverything {
     @Test.Expect("hello world")
     public FlowFuture<String> thenCompose(Flow fl) {
         return fl.completedValue("hello")
-                .thenCompose((s) ->
-                        fl.supply(() -> s)
-                                .thenApply((s2) -> s2 + " world")
-                );
+           .thenCompose((s) ->
+              fl.supply(() -> s)
+                 .thenApply((s2) -> s2 + " world")
+           );
     }
 
     @Test(16)
     @Test.Expect("foo")
     public FlowFuture<String> thenComposeThenError(Flow fl) {
         return fl.completedValue("hello")
-                .thenCompose((s) -> fl.supply(() -> {
-                    if (s.equals("hello")) throw new MyException("foo");
-                    else return s;
-                }))
-                .exceptionally(Throwable::getMessage);
+           .thenCompose((s) -> fl.supply(() -> {
+               if (s.equals("hello")) throw new MyException("foo");
+               else return s;
+           }))
+           .exceptionally(Throwable::getMessage);
     }
 
     @Test(17)
     @Test.Expect("foo")
     public FlowFuture<String> thenComposeWithErrorInBody(Flow fl) {
         return fl.completedValue("hello")
-                .thenCompose((s) -> {
-                    if (s.equals("hello")) throw new MyException("foo");
-                    else return fl.completedValue(s);
-                })
-                .exceptionally(Throwable::getMessage);
+           .thenCompose((s) -> {
+               if (s.equals("hello")) throw new MyException("foo");
+               else return fl.completedValue(s);
+           })
+           .exceptionally(Throwable::getMessage);
     }
 
     @Test(18)
@@ -207,10 +206,10 @@ public class ExerciseEverything {
     @Test(20)
     public FlowFuture<Void> harmlessAcceptBoth(Flow fl) {
         return fl.completedValue("a")
-                .thenAcceptBoth(
-                        fl.completedValue("b"),
-                        (a, b) -> System.err.println(a + "; " + b)
-                );
+           .thenAcceptBoth(
+              fl.completedValue("b"),
+              (a, b) -> System.err.println(a + "; " + b)
+           );
     }
 
     @Test(21)
@@ -218,12 +217,12 @@ public class ExerciseEverything {
     @Test.Expect("ab")
     public FlowFuture<Void> acceptBoth(Flow fl) {
         return fl.completedValue("a")
-                .thenAcceptBoth(
-                        fl.completedValue("b"),
-                        (a, b) -> {
-                            System.err.println("A is " + a + " and B is " + b);
-                            throw new MyException(a + b);
-                        });
+           .thenAcceptBoth(
+              fl.completedValue("b"),
+              (a, b) -> {
+                  System.err.println("A is " + a + " and B is " + b);
+                  throw new MyException(a + b);
+              });
     }
 
     @Test(22)
@@ -232,20 +231,20 @@ public class ExerciseEverything {
     @Test.Expect("b")
     public FlowFuture<Void> acceptEither(Flow fl) {
         return fl.completedValue("a")
-                .acceptEither(
-                        fl.completedValue("b"),
-                        (x) -> {
-                            throw new MyException(x);
-                        }
-                );
+           .acceptEither(
+              fl.completedValue("b"),
+              (x) -> {
+                  throw new MyException(x);
+              }
+           );
     }
 
     @Test(23)
     @Test.Expect("foobar")
     public FlowFuture<String> thenCombine(Flow fl) {
         return fl.completedValue("foo")
-                .thenCombine(fl.completedValue("bar"),
-                        (a, b) -> a + b);
+           .thenCombine(fl.completedValue("bar"),
+              (a, b) -> a + b);
     }
 
     @Test(24)
@@ -254,20 +253,20 @@ public class ExerciseEverything {
         return fl.supply(() -> {
             throw new MyException("foo");
         })
-                .thenCombine(fl.completedValue("bar"),
-                        (a, b) -> a + b)
-                .exceptionally(Throwable::getMessage);
+           .thenCombine(fl.completedValue("bar"),
+              (a, b) -> a + b)
+           .exceptionally(Throwable::getMessage);
     }
 
     @Test(25)
     @Test.Expect("bar")
     public FlowFuture<String> thenCombineE2(Flow fl) {
         return fl.completedValue("foo")
-                .thenCombine(fl.supply(() -> {
-                            throw new MyException("bar");
-                        }),
-                        (a, b) -> a + b)
-                .exceptionally(Throwable::getMessage);
+           .thenCombine(fl.supply(() -> {
+                  throw new MyException("bar");
+              }),
+              (a, b) -> a + b)
+           .exceptionally(Throwable::getMessage);
     }
 
 
@@ -275,19 +274,19 @@ public class ExerciseEverything {
     @Test.Expect("foobar")
     public FlowFuture<String> thenCombineE3(Flow fl) {
         return fl.completedValue("foo")
-                .thenCombine(fl.completedValue("bar"),
-                        (a, b) -> {
-                            if (!a.equals(b)) throw new MyException(a + b);
-                            else return "baz";
-                        })
-                .exceptionally(Throwable::getMessage);
+           .thenCombine(fl.completedValue("bar"),
+              (a, b) -> {
+                  if (!a.equals(b)) throw new MyException(a + b);
+                  else return "baz";
+              })
+           .exceptionally(Throwable::getMessage);
     }
 
     @Test(27)
     @Test.Expect("foo")
     public FlowFuture<String> handleNoError(Flow fl) {
         return fl.completedValue("foo")
-                .handle((v, e) -> v);
+           .handle((v, e) -> v);
     }
 
     @Test(28)
@@ -296,22 +295,22 @@ public class ExerciseEverything {
         return fl.supply(() -> {
             throw new MyException("bar");
         })
-                .handle((v, e) -> e.getMessage());
+           .handle((v, e) -> e.getMessage());
     }
 
     @Test(29)
     @Test.Expect("foo")
     public FlowFuture<String> whenCompleteNoError(Flow fl) {
         return fl.completedValue("foo")
-                .whenComplete((v, e) -> {
-                    System.err.println("In whenComplete, v=" + v);
-                    throw new MyException(v);
-                })
-                .exceptionally(t -> {
-                    // Should *not* get called.
-                    System.err.println("In whenComplete.exceptionally, t=" + t);
-                    return t.getMessage() + "bar";
-                });
+           .whenComplete((v, e) -> {
+               System.err.println("In whenComplete, v=" + v);
+               throw new MyException(v);
+           })
+           .exceptionally(t -> {
+               // Should *not* get called.
+               System.err.println("In whenComplete.exceptionally, t=" + t);
+               return t.getMessage() + "bar";
+           });
     }
 
     @Test(30)
@@ -325,82 +324,12 @@ public class ExerciseEverything {
         }).exceptionally(t -> t.getMessage() + "baz");
     }
 
-    @Test(31)
-    @Test.Expect("foobar")
-    public FlowFuture<String> externallyCompletable(Flow fl) throws IOException {
-        ExternalFlowFuture<HttpRequest> cf = fl.createExternalFuture();
-        HttpClient httpClient = new HttpClient();
-        httpClient.execute(HttpClient
-                .preparePost(cf.completionUrl().toString())
-                .withHeader("My-Header", "foo")
-                .withHeader("FnProject-Method", "post")
-                .withBody("bar".getBytes()));
-        return cf.thenApply((req) ->
-                req.getHeaders().get("my-header").get() + new String(req.getBodyAsBytes())
-        );
-    }
-
-    @Test(32)
-    @Test.Expect("bar")
-    public FlowFuture<HttpRequest> externallyCompletableDirectGet(Flow fl) throws IOException {
-        ExternalFlowFuture<HttpRequest> cf = fl.createExternalFuture();
-        HttpClient httpClient = new HttpClient();
-        httpClient.execute(HttpClient
-                .preparePost(cf.completionUrl().toString())
-                .withHeader("My-Header", "foo")
-                .withHeader("FnProject-Method", "post")
-                .withBody("bar".getBytes()));
-        return cf;
-    }
-
-
-    @Test(33)
-    @Test.Catch({FlowCompletionException.class, ExternalCompletionException.class})
-    @Test.Expect("External completion failed")
-    public FlowFuture<HttpRequest> externalFutureFailureAndGet(Flow fl) throws IOException {
-        ExternalFlowFuture<HttpRequest> cf = fl.createExternalFuture();
-        HttpClient httpClient = new HttpClient();
-        httpClient.execute(HttpClient
-                .preparePost(cf.failUrl().toString())
-                .withHeader("My-Header", "foo")
-                .withHeader("FnProject-Method", "post")
-                .withBody("bar".getBytes()));
-        return cf;
-    }
-
-
-    @Test(34)
-    @Test.Expect("foobar")
-    public FlowFuture<String> externallyCompletableFailure(Flow fl) throws IOException {
-        ExternalFlowFuture<HttpRequest> cf = fl.createExternalFuture();
-        System.err.println("Running against external future:" + cf.completionUrl() + " : " + cf.failUrl());
-
-        HttpClient httpClient = new HttpClient();
-        httpClient.execute(HttpClient
-                .preparePost(cf.failUrl().toString())
-                .withHeader("My-Header", "foo")
-                .withHeader("FnProject-Method", "post")
-                .withBody("bar".getBytes()));
-        return cf.thenApply((req) -> {
-            System.err.println("got here");
-            return "failed";
-        })
-                .exceptionally(e -> {
-                            System.err.println("Got into exception with e=" + e);
-                            return
-                                    ((ExternalCompletionException) e).getExternalRequest().getHeaders().get("my-header").get() +
-                                            new String(((ExternalCompletionException) e).getExternalRequest().getBodyAsBytes());
-                        }
-                );
-    }
-
-
     @Test(35)
     @Test.Expect("foobar")
     public FlowFuture<String> exceptionallyComposeHandle(Flow fl) throws IOException {
 
         return fl.<String>failedFuture(new RuntimeException("foobar"))
-                .exceptionallyCompose((e) -> fl.completedValue(e.getMessage()));
+           .exceptionallyCompose((e) -> fl.completedValue(e.getMessage()));
     }
 
     @Test(36)
@@ -408,7 +337,7 @@ public class ExerciseEverything {
     public FlowFuture<String> exceptionallyComposePassThru(Flow fl) throws IOException {
 
         return fl.completedValue("foobar")
-                .exceptionallyCompose((e) -> fl.completedValue(e.getMessage()));
+           .exceptionallyCompose((e) -> fl.completedValue(e.getMessage()));
     }
 
 
@@ -416,21 +345,36 @@ public class ExerciseEverything {
     @Test.Expect("foobar")
     public FlowFuture<String> exceptionallyComposePropagateError(Flow fl) throws IOException {
         return fl.<String>failedFuture(new RuntimeException("foo"))
-                .exceptionallyCompose((e) -> {
-                    throw new RuntimeException("foobar");
-                }).exceptionally(Throwable::getMessage);
+           .exceptionallyCompose((e) -> {
+               throw new RuntimeException("foobar");
+           }).exceptionally(Throwable::getMessage);
     }
 
     @Test(38)
     @Test.Catch({FlowCompletionException.class, MyException.class})
     public FlowFuture<Void> allOfWithFailedValue(Flow fl) {
         return fl.allOf(
-                fl.supply(() -> 1),
-                fl.supply(() -> 2),
-                fl.supply(() -> {
-                    throw new MyException("foobar");
-                })
+           fl.supply(() -> 1),
+           fl.supply(() -> 2),
+           fl.supply(() -> {
+               throw new MyException("foobar");
+           })
         );
+    }
+
+
+    @Test(39)
+    @Test.Expect("foobar")
+    public FlowFuture<String> completeFuture(Flow fl) {
+        FlowFuture<String> a = fl.createFlowFuture();
+        FlowFuture<String> b = fl.createFlowFuture();
+
+        a.complete("foobar");
+
+        return a.applyToEither(b, (s) -> {
+            b.cancel();
+            return s;
+        });
     }
 
     private int id;
@@ -476,7 +420,8 @@ public class ExerciseEverything {
                 out.println("Failure setting up test " + id + ": " + ex.getCause());
                 ex.printStackTrace(out);
                 fail();
-            } catch (IllegalAccessException ignored) { }
+            } catch (IllegalAccessException ignored) {
+            }
         }
 
         for (Map.Entry<Integer, Method> e : findTests(this).entrySet()) {
@@ -537,7 +482,7 @@ public class ExerciseEverything {
                     fail();
                 }
             }
-            if(!failures.contains(id)){
+            if (!failures.contains(id)) {
                 out.println("Test " + id + ": Passed");
             }
         }
@@ -578,7 +523,7 @@ public class ExerciseEverything {
         }
     }
 
-   private boolean huntForValues(String match, String... values) {
+    private boolean huntForValues(String match, String... values) {
         for (String v : values) {
             if ((v == null && match == null) || (v != null && v.equals(match))) {
                 return true;
@@ -604,9 +549,9 @@ public class ExerciseEverything {
         }
 
         return Arrays.stream(testSelector.split(","))
-                .map(String::trim)
-                .map(Integer::valueOf)
-                .filter(tests::containsKey)
-                .collect(Collectors.toMap((x) -> x, tests::get));
+           .map(String::trim)
+           .map(Integer::valueOf)
+           .filter(tests::containsKey)
+           .collect(Collectors.toMap((x) -> x, tests::get));
     }
 }

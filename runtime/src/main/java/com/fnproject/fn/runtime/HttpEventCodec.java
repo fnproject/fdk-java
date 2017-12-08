@@ -4,8 +4,8 @@ package com.fnproject.fn.runtime;
 import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.InputEvent;
 import com.fnproject.fn.api.OutputEvent;
-import com.fnproject.fn.runtime.exception.FunctionInputHandlingException;
-import com.fnproject.fn.runtime.exception.FunctionOutputHandlingException;
+import com.fnproject.fn.api.exception.FunctionInputHandlingException;
+import com.fnproject.fn.api.exception.FunctionOutputHandlingException;
 import org.apache.http.Header;
 import org.apache.http.HttpException;
 import org.apache.http.HttpRequest;
@@ -25,7 +25,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 
-import static com.fnproject.fn.runtime.flow.RemoteCompleterApiClient.CONTENT_TYPE_HEADER;
 
 /**
  * Reads input via an InputStream as an HTTP request.
@@ -34,6 +33,7 @@ import static com.fnproject.fn.runtime.flow.RemoteCompleterApiClient.CONTENT_TYP
  */
 public class HttpEventCodec implements EventCodec {
 
+    private static final String CONTENT_TYPE_HEADER = "Content-Type";
     private final SessionInputBuffer sib;
     private final SessionOutputBuffer sob;
     private final HttpMessageParser<HttpRequest> parser;
@@ -74,7 +74,7 @@ public class HttpEventCodec implements EventCodec {
             long contentLength = Long.parseLong(requiredHeader(req, "content-length"));
             bodyStream = new ContentLengthInputStream(sib, contentLength);
         } else if (req.getHeaders("transfer-encoding").length > 0 &&
-                req.getFirstHeader("transfer-encoding").getValue().equalsIgnoreCase("chunked")) {
+           req.getFirstHeader("transfer-encoding").getValue().equalsIgnoreCase("chunked")) {
             bodyStream = new ChunkedInputStream(sib);
         } else {
             bodyStream = new ByteArrayInputStream(new byte[]{});
@@ -90,11 +90,10 @@ public class HttpEventCodec implements EventCodec {
         }
 
         return Optional.of(new ReadOnceInputEvent(appName, route, requestUrl, method,
-                bodyStream, Headers.fromMap(headers),
-                QueryParametersParser.getParams(requestUrl)));
+           bodyStream, Headers.fromMap(headers),
+           QueryParametersParser.getParams(requestUrl)));
 
     }
-
 
     @Override
     public boolean shouldContinue() {

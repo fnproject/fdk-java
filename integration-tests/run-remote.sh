@@ -19,8 +19,8 @@ export FN_TOKEN=${FN_TOKEN:-$(cat ~/.fn-token)}
 # The following variables should be set in the integration environment
 # ----------------------------------------------------------------------
 
-export API_URL=$(cat ~/.fn-api-url)
-export COMPLETER_BASE_URL=$(cat ~/.fn-completer-bare-url)
+export FN_API_URL=$(cat ~/.fn-api-url)
+export COMPLETER_BASE_URL=$(cat ~/.fn-flow-base-url)
 
 
 # We need to push our images into the test environment, so let's ensure that our tunnel is set up

@@ -1,13 +1,15 @@
 package com.fnproject.fn.testing;
 
-class ResultException extends RuntimeException {
-    private final Datum datum;
+import com.fnproject.fn.runtime.flow.APIModel;
 
-    ResultException(Datum datum) {
+class ResultException extends RuntimeException {
+    private final APIModel.Datum datum;
+
+    ResultException(APIModel.Datum datum) {
         this.datum = datum;
     }
 
-    Result toResult() {
-        return Result.failure(datum);
+    APIModel.CompletionResult toResult() {
+        return APIModel.CompletionResult.failure(datum);
     }
 }

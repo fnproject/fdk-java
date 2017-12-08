@@ -2,6 +2,7 @@ package com.fnproject.fn.api;
 
 
 import java.lang.reflect.Method;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -12,21 +13,19 @@ import java.util.Optional;
  * of a function; they will not change between multiple invocations of a hot function.
  */
 public interface RuntimeContext {
+    /**
+     * Create an instance of the user specified class on which the target function to invoke is declared.
+     *
+     * @return new instance of class containing the target function
+     */
     Optional<Object> getInvokeInstance();
 
     /**
-     * Get the target class for the function invocation
-     *
-     * @return the class the user has configured as the function entrypoint
-     */
-    Class<?> getTargetClass();
-
-    /**
-     * Get the target method of the function invocation
+     * Get the target method of the user specified function wrapped in a {@link MethodWrapper}.
      *
      * @return the target method of the function invocation
      */
-    Method getTargetMethod();
+    MethodWrapper getMethod();
 
     /**
      * Get a configuration variable value by key
@@ -44,7 +43,7 @@ public interface RuntimeContext {
     Map<String, String> getConfiguration();
 
     /**
-     * get an attribute from the context.
+     * Get an attribute from the context.
      *
      * @param att  the attribute ID
      * @param type the type of the attribute
@@ -70,6 +69,18 @@ public interface RuntimeContext {
     void addInputCoercion(InputCoercion ic);
 
     /**
+     * Gets a list of the possible {@link InputCoercion} for this parameter.
+     * <p>
+     * If the parameter has been annotated with a specific coercion, only that coercion is
+     * tried, otherwise configuration-provided coercions are tried first and builtin
+     * coercions second.
+     *
+     * @param targetMethod The user function method
+     * @param param        The index of the parameter
+     */
+    List<InputCoercion> getInputCoercions(MethodWrapper targetMethod, int param);
+
+    /**
      * Add an {@link OutputCoercion}. {@link OutputCoercion} instances added here will be
      * tried in order, before any of the builtin {@link OutputCoercion} are tried.
      *
@@ -77,4 +88,22 @@ public interface RuntimeContext {
      */
     void addOutputCoercion(OutputCoercion oc);
 
+    /**
+     * Gets a list of the possible {@link OutputCoercion} for the method.
+     * <p>
+     * If the method has been annotated with a specific coercion, only that coercion is
+     * tried, otherwise configuration-provided coercions are tried first and builtin
+     * coercions second.
+     *
+     * @param method The user function method
+     */
+    List<OutputCoercion> getOutputCoercions(Method method);
+
+    /**
+     * Set an {@link FunctionInvoker} for this function. The invoker will override
+     * the built in function invoker, although the cloud threads invoker will still
+     * have precedence so that cloud threads can be used from functions using custom invokers.
+     * @param invoker The {@link FunctionInvoker} to add.
+     */
+    void setInvoker(FunctionInvoker invoker);
 }

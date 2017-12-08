@@ -1,16 +1,12 @@
 package com.fnproject.fn.runtime;
 
 
-import com.fnproject.fn.api.FunctionInvoker;
-import com.fnproject.fn.api.InputEvent;
-import com.fnproject.fn.api.InvocationContext;
-import com.fnproject.fn.api.OutputEvent;
-import com.fnproject.fn.runtime.exception.FunctionInputHandlingException;
+import com.fnproject.fn.api.*;
+import com.fnproject.fn.api.exception.FunctionInputHandlingException;
 import com.fnproject.fn.runtime.exception.InternalFunctionInvocationException;
-import com.fnproject.fn.runtime.exception.FunctionOutputHandlingException;
+import com.fnproject.fn.api.exception.FunctionOutputHandlingException;
 
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.Optional;
 
 /**
@@ -30,42 +26,28 @@ public class MethodFunctionInvoker implements FunctionInvoker {
      */
     @Override
     public Optional<OutputEvent> tryInvoke(InvocationContext ctx, InputEvent evt) throws InternalFunctionInvocationException {
-
-        Object[] userFunctionParams = doInputCoercions(ctx, evt);
-
         FunctionRuntimeContext runtimeContext = (FunctionRuntimeContext) ctx.getRuntimeContext();
-        Method targetMethod = runtimeContext.getTargetMethod();
+        MethodWrapper method = runtimeContext.getMethodWrapper();
+
+        Object[] userFunctionParams = coerceParameters(ctx, method, evt);
+
         Object rawResult;
 
         try {
-            rawResult = targetMethod.invoke(ctx.getRuntimeContext().getInvokeInstance().orElse(null), userFunctionParams);
+            rawResult = method.getTargetMethod().invoke(ctx.getRuntimeContext().getInvokeInstance().orElse(null), userFunctionParams);
         } catch (IllegalAccessException | InvocationTargetException e) {
             throw new InternalFunctionInvocationException(e.getCause().getMessage(), e.getCause());
         }
 
-        return doOutputCoercion(ctx, runtimeContext, targetMethod, rawResult);
-
+        return coerceReturnValue(ctx, method, rawResult);
     }
 
-    private Object[] doInputCoercions(InvocationContext ctx, InputEvent evt) {
-
+    protected Object[] coerceParameters(InvocationContext ctx, MethodWrapper targetMethod, InputEvent evt) {
         try {
+            Object[] userFunctionParams = new Object[targetMethod.getParameterCount()];
 
-            FunctionRuntimeContext runtimeContext = (FunctionRuntimeContext) ctx.getRuntimeContext();
-            Method targetMethod = runtimeContext.getTargetMethod();
-            Class<?>[] paramTypes = targetMethod.getParameterTypes();
-
-            Object[] userFunctionParams = new Object[paramTypes.length];
-
-            for (int i = 0; i < userFunctionParams.length; i++) {
-                int param = i;
-                Optional<Object> arg = runtimeContext.getInputCoercions(targetMethod, param)
-                        .stream()
-                        .map((c) -> c.tryCoerceParam(ctx, param, evt))
-                        .filter(Optional::isPresent)
-                        .map(Optional::get).findFirst();
-
-                userFunctionParams[i] = arg.orElseThrow(() -> new FunctionInputHandlingException("No type coercion for argument " + param + " of " + targetMethod + " of found"));
+            for (int paramIndex = 0; paramIndex < userFunctionParams.length; paramIndex++) {
+                userFunctionParams[paramIndex] = coerceParameter(ctx, targetMethod, paramIndex, evt);
             }
 
             return userFunctionParams;
@@ -73,16 +55,25 @@ public class MethodFunctionInvoker implements FunctionInvoker {
         } catch (RuntimeException e) {
             throw new FunctionInputHandlingException("An exception was thrown during Input Coercion: " + e.getMessage(), e);
         }
-
     }
 
+    private Object coerceParameter(InvocationContext ctx, MethodWrapper targetMethod, int param, InputEvent evt) {
+        RuntimeContext runtimeContext = ctx.getRuntimeContext();
 
-    private Optional<OutputEvent> doOutputCoercion(InvocationContext ctx, FunctionRuntimeContext runtimeContext, Method targetMethod, Object rawResult) {
+        return runtimeContext.getInputCoercions(targetMethod, param)
+                .stream()
+                .map((c) -> c.tryCoerceParam(ctx, param, evt, targetMethod))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .findFirst()
+                .orElseThrow(() -> new FunctionInputHandlingException("No type coercion for argument " + param + " of " + targetMethod + " of found"));
+    }
 
+    protected Optional<OutputEvent> coerceReturnValue(InvocationContext ctx, MethodWrapper method, Object rawResult) {
         try {
-            return Optional.of(runtimeContext.getOutputCoercions(targetMethod)
+            return Optional.of(ctx.getRuntimeContext().getOutputCoercions(method.getTargetMethod())
                     .stream()
-                    .map((c) -> c.wrapFunctionResult(ctx, rawResult))
+                    .map((c) -> c.wrapFunctionResult(ctx, method, rawResult))
                     .filter(Optional::isPresent)
                     .map(Optional::get)
                     .findFirst()
@@ -92,4 +83,5 @@ public class MethodFunctionInvoker implements FunctionInvoker {
             throw new FunctionOutputHandlingException("An exception was thrown during Output Coercion: " + e.getMessage(), e);
         }
     }
+
 }

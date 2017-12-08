@@ -9,14 +9,14 @@
 # - LIBFUNS points to the shell helper library
 # - up-to-date "fn" command on the PATH
 # - FN_TOKEN is set to something that the functions platform will approve
-# - API_URL points to the functions platform endpoint
+# - FN_API_URL points to the functions platform endpoint
 # - any http_proxy, etc. settings are correct to permit access to that endpoint and any maven repos required by fn build
 # - COMPLETER_BASE_URL is set to a value that should be configured on the target function
 # - MAVEN_REPOSITORY_LOCATION, if set, corresponds to the URL that should be replaced in the test pom files.
 # - the runtime docker image is up-to-date
 
 rm -f success failure Dockerfile
-TESTNAME="$(basename $(pwd))"
+export TESTNAME="$(basename $(pwd))"
 set -ex
 
 if [ -f pre-test.sh ]; then
@@ -47,14 +47,25 @@ else
     fn apps create "$TESTNAME"
 fi
 
-fn routes create --timeout 120 "$TESTNAME" /test
+if [[ -x deploy.sh ]]
+then
+    ./deploy.sh
+else
+     fn deploy --app "$TESTNAME" --local
+fi
 
 [[ -n "$POST_CONFIGURE_HOOK" ]] && $POST_CONFIGURE_HOOK
 
 fn apps inspect "$TESTNAME"
-fn routes inspect "$TESTNAME" /test
+[[ -x route-create.sh ]] || fn routes inspect "$TESTNAME" "$TESTNAME"
 
-curl -v "$API_URL/r/$TESTNAME/test" -d @input > actual
+if [[ -x run-test.sh ]]
+then
+    ./run-test.sh
+else
+    curl -v "$FN_API_URL/r/$TESTNAME/$TESTNAME" -d @input > actual
+fi
+
 if [[ -x expected.sh ]]
 then
     ./expected.sh && touch success || touch failure
@@ -76,5 +87,9 @@ do
 done
 
 set -x
-fn routes delete "$TESTNAME" /test
+
+if [[ -x delete.sh ]]
+then
+    ./delete.sh
+fi
 fn apps delete "$TESTNAME"

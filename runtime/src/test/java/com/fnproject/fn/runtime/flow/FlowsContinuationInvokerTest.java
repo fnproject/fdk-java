@@ -1,578 +1,530 @@
 package com.fnproject.fn.runtime.flow;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fnproject.fn.api.*;
 import com.fnproject.fn.api.flow.*;
-import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.runtime.QueryParametersImpl;
 import com.fnproject.fn.runtime.ReadOnceInputEvent;
-import com.fnproject.fn.runtime.exception.FunctionInputHandlingException;
+import com.fnproject.fn.api.exception.FunctionInputHandlingException;
 import com.fnproject.fn.runtime.exception.InternalFunctionInvocationException;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import java.io.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.util.*;
-import java.util.function.DoubleSupplier;
 
-import static com.fnproject.fn.runtime.TestSerUtils.*;
-import static com.fnproject.fn.runtime.flow.RemoteCompleterApiClient.*;
+import static com.fnproject.fn.runtime.flow.FlowContinuationInvoker.FLOW_ID_HEADER;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.core.IsInstanceOf.instanceOf;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
+import static org.hamcrest.CoreMatchers.instanceOf;
 
 public class FlowsContinuationInvokerTest {
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
 
-    private final String FLOW_ID = UUID.randomUUID().toString();
-    private final String STAGE_ID = Integer.toString(new Random().nextInt(32));
+    private final String FLOW_ID = "flow";
+    private final String STAGE_ID = "stage_id";
+
+    private TestBlobStore blobStore = new TestBlobStore();
+    private FlowContinuationInvoker invoker = new FlowContinuationInvoker();
+
+    @Before
+    public void setupClient() {
+        FlowRuntimeGlobals.setCompleterClientFactory(new CompleterClientFactory() {
+            @Override
+            public CompleterClient getCompleterClient() {
+                throw new IllegalStateException("Should not be called");
+            }
+
+            @Override
+            public BlobStoreClient getBlobStoreClient() {
+                return blobStore;
+            }
+        });
+    }
+
+    @After
+    public void tearDownClient() {
+        FlowRuntimeGlobals.resetCompleterClientFactory();
+    }
+
 
     @Test
     public void continuationInvokedWhenGraphHeaderPresent() throws IOException, ClassNotFoundException {
 
         // Given
-        final Integer testValue = 3;
-
-        HttpMultipartSerialization ser = new HttpMultipartSerialization()
-                .addJavaEntity((Flows.SerCallable<Integer>) () -> testValue);
-
-        InputEvent event = constructContinuationInputEvent(ser);
+        InputEvent event = newRequest()
+           .withClosure((Flows.SerFunction<Integer, Integer>) (x) -> x * 2)
+           .withJavaObjectArgs(10)
+           .asEvent();
 
         // When
-        FlowContinuationInvoker invoker = new FlowContinuationInvoker();
         Optional<OutputEvent> result = invoker.tryInvoke(new EmptyInvocationContext(), event);
 
         // Then
-        assertTrue(result.isPresent());
-        Optional<Integer> resultValue = resultAsInteger(result.get());
-        assertTrue(resultValue.isPresent());
-        assertTrue(resultValue.equals(Optional.of(testValue)));
-        assertSuccessfulResult(result.get());
+        assertThat(result).isPresent();
+        APIModel.InvokeStageResponse response = fromOutput(result.get());
+        assertThat(response.result.successful).isTrue();
+        assertThat(blobStore.deserializeBlobResult(response.result, Integer.class)).isEqualTo(20);
+
     }
+
 
     @Test
     public void continuationNotInvokedWhenHeaderMissing() throws IOException, ClassNotFoundException {
 
         // Given
-        final Integer testValue = 3;
-
-        HttpMultipartSerialization ser = new HttpMultipartSerialization()
-                .addJavaEntity((Flows.SerCallable<Integer>) () -> testValue);
 
         InputEvent event = new InputEventBuilder()
-                .withHeaders(ser.getHeaders())
-                .withBody(ser.getContentStream())
-                .build();
+           .withBody("")
+           .build();
 
         // When
         FlowContinuationInvoker invoker = new FlowContinuationInvoker();
         Optional<OutputEvent> result = invoker.tryInvoke(new EmptyInvocationContext(), event);
 
         // Then
-        assertFalse(result.isPresent());
+        assertThat(result).isNotPresent();
     }
 
-    @Test
-    public void successIfFunctionInvokedWithOneParam() throws IOException, ClassNotFoundException {
-
-        // Given
-        final Integer testValue = 3;
-
-        HttpMultipartSerialization ser = new HttpMultipartSerialization()
-                .addJavaEntity((Flows.SerFunction<Integer,Integer>) (x) -> x + testValue)
-                .addJavaEntity(testValue);
-
-        InputEvent event = constructContinuationInputEvent(ser);
-
-        // When
-        FlowContinuationInvoker invoker = new FlowContinuationInvoker();
-        Optional<OutputEvent> result = invoker.tryInvoke(new EmptyInvocationContext(), event);
-
-        // Then
-        assertTrue(result.isPresent());
-        Optional<Integer> resultValue = resultAsInteger(result.get());
-        assertTrue(resultValue.isPresent());
-        assertTrue(resultValue.equals(Optional.of(testValue + testValue)));
-        assertSuccessfulResult(result.get());
-    }
 
     @Test
-    public void exceptionThrownIfFunctionInvokedWithoutParams() throws IOException, ClassNotFoundException {
-
-        // Given
-        final Integer testValue = 3;
-
-        HttpMultipartSerialization ser = new HttpMultipartSerialization()
-                .addJavaEntity((Flows.SerFunction<Integer,Integer>) (x) -> x + testValue);
-
-        InputEvent event = constructContinuationInputEvent(ser);
-
-        // Then
+    public void failsIfArgMissing() throws IOException, ClassNotFoundException {
         thrown.expect(FunctionInputHandlingException.class);
-        thrown.expectMessage("Error reading continuation content");
 
-        // When
-        FlowContinuationInvoker invoker = new FlowContinuationInvoker();
+        // Given
+        InputEvent event = newRequest()
+           .withClosure((Flows.SerFunction<Integer, Integer>) (x) -> x * 2)
+           .asEvent();
+
+        invoker.tryInvoke(new EmptyInvocationContext(), event);
+
+
+    }
+
+    private static class TestIf implements Serializable {
+        void call() {
+
+        }
+    }
+
+    @Test
+    public void failsIfUnknownClosureType() {
+        thrown.expect(FunctionInputHandlingException.class);
+        // Given
+        InputEvent event = newRequest()
+           .withClosure(new TestIf())
+           .asEvent();
         invoker.tryInvoke(new EmptyInvocationContext(), event);
     }
 
-    @Test
-    public void successIfFunctionInvokedWithTwoParams() throws IOException, ClassNotFoundException {
-        // XXX: do we really want this to succeed??
-
-        // Given
-        final Integer testValue = 3;
-
-        HttpMultipartSerialization ser = new HttpMultipartSerialization()
-                .addJavaEntity((Flows.SerFunction<Integer,Integer>) (x) -> x + testValue)
-                .addJavaEntity(testValue)
-                .addJavaEntity(testValue);
-
-        InputEvent event = constructContinuationInputEvent(ser);
-
-        // When
-        FlowContinuationInvoker invoker = new FlowContinuationInvoker();
-        Optional<OutputEvent> result = invoker.tryInvoke(new EmptyInvocationContext(), event);
-
-        // Then
-        assertTrue(result.isPresent());
-        Optional<Integer> resultValue = resultAsInteger(result.get());
-        assertTrue(resultValue.isPresent());
-        assertTrue(resultValue.equals(Optional.of(testValue + testValue)));
-        assertSuccessfulResult(result.get());
-    }
 
     @Test
-    public void successIfSupplierInvokedWithParams() throws IOException, ClassNotFoundException {
+    public void handlesAllClosureTypes() {
+        class Tc {
+            private final Serializable closure;
+            private final Object args[];
+            private final Object result;
 
-        // Given
-        final Integer testValue = 3;
+            private Tc(Serializable closure, Object result, Object... args) {
+                this.closure = closure;
 
-        HttpMultipartSerialization ser = new HttpMultipartSerialization()
-                .addJavaEntity((Flows.SerSupplier) () -> testValue)
-                .addJavaEntity(testValue);
+                this.result = result;
+                this.args = args;
+            }
+        }
 
-        InputEvent event = constructContinuationInputEvent(ser);
+        Tc[] cases = new Tc[]{
+           new Tc((Flows.SerConsumer<String>) (v) -> {
+           }, null, "hello"),
+           new Tc((Flows.SerBiFunction<String, String, String>) (String::concat), "hello bob", "hello ", "bob"),
+           new Tc((Flows.SerBiConsumer<String, String>) (a, b) -> {
+           }, null, "hello ", "bob"),
+           new Tc((Flows.SerFunction<String, String>) (String::toUpperCase), "HELLO BOB", "hello bob"),
+           new Tc((Flows.SerRunnable) () -> {
+           }, null),
+           new Tc((Flows.SerCallable<String>) () -> "hello", "hello"),
+           new Tc((Flows.SerSupplier<String>) () -> "hello", "hello"),
 
-        // When
-        FlowContinuationInvoker invoker = new FlowContinuationInvoker();
-        Optional<OutputEvent> result = invoker.tryInvoke(new EmptyInvocationContext(), event);
+        };
 
-        // Then
-        assertTrue(result.isPresent());
-        Optional<Integer> resultValue = resultAsInteger(result.get());
-        assertTrue(resultValue.isPresent());
-        assertTrue(resultValue.equals(Optional.of(testValue)));
-        assertSuccessfulResult(result.get());
-    }
 
-    @Test
-    public void exceptionThrownIfClosureDatumTypeMissing() throws IOException, ClassNotFoundException {
+        for (Tc tc : cases) {
+            InputEvent event = newRequest()
+               .withClosure(tc.closure)
+               .withJavaObjectArgs(tc.args)
+               .asEvent();
+            Optional<OutputEvent> result = invoker.tryInvoke(new EmptyInvocationContext(), event);
 
-        // Given
-        final Integer testValue = 3;
+            assertThat(result).isPresent();
+            APIModel.InvokeStageResponse res = fromOutput(result.get());
 
-        HttpMultipartSerialization ser = new HttpMultipartSerialization()
-                .addEntity(CONTENT_TYPE_JAVA_OBJECT, serializeToBytes((Flows.SerCallable<Integer>) () -> testValue), Collections.emptyMap());
+            if (tc.result == null) {
+                assertThat(res.result.result).isInstanceOf(APIModel.EmptyDatum.class);
+            } else {
+                assertThat(blobStore.deserializeBlobResult(res.result, Object.class)).isEqualTo(tc.result);
+            }
 
-        InputEvent event = constructContinuationInputEvent(ser);
-
-        // Then
-        thrown.expect(FunctionInputHandlingException.class);
-        thrown.expectMessage("Error deserializing closure object");
-
-        // When
-        FlowContinuationInvoker invoker = new FlowContinuationInvoker();
-        invoker.tryInvoke(new EmptyInvocationContext(), event);
+        }
     }
 
     @Test
     public void emptyValueCorrectlySerialized() throws IOException, ClassNotFoundException {
         // Given
-        HttpMultipartSerialization ser = new HttpMultipartSerialization()
-                .addJavaEntity((Flows.SerFunction) (x) -> x)
-                .addEmptyEntity();
-
-        InputEvent event = constructContinuationInputEvent(ser);
+        InputEvent event = newRequest()
+           .withClosure((Flows.SerConsumer<Object>) (x) -> {
+               if (x != null) {
+                   throw new RuntimeException("Not Null");
+               }
+           })
+           .withEmptyDatumArg()
+           .asEvent();
 
         // When
-        FlowContinuationInvoker invoker = new FlowContinuationInvoker();
         Optional<OutputEvent> result = invoker.tryInvoke(new EmptyInvocationContext(), event);
 
         // Then
-        assertTrue(result.isPresent());
-        assertSucessfulEmptyResult(result.get());
+        assertThat(result).isPresent();
+        APIModel.InvokeStageResponse response = fromOutput(result.get());
+        assertThat(response.result.successful).isTrue();
+
     }
 
     @Test
-    public void externalFunctionInvocationPopulatesFunctionResponse() throws Exception {
+    public void emptyValueCorrectlyDeSerialized() throws IOException, ClassNotFoundException {
         // Given
-        Map<String, String> headers = new HashMap<>();
-        headers.put("FnProject-Header-Custom-Header", "customValue");
-
-        String functionResponse = "{ \"some\": \"json\" }";
-        HttpMultipartSerialization ser = new HttpMultipartSerialization()
-                .addJavaEntity((Flows.SerFunction<HttpResponse, Boolean>) (result) -> {
-                    // Expect
-                    assertThat(result.getStatusCode()).isEqualTo(200);
-                    assertThat(new String(result.getBodyAsBytes())).isEqualTo(functionResponse);
-                    assertThat(result.getHeaders().get("Custom-Header"))
-                            .isPresent()
-                            .contains("customValue");
-                    return true;
-                })
-                .addFnResultEntity(200, headers, "application/json", functionResponse);
-
-        InputEvent event = constructContinuationInputEvent(ser);
+        InputEvent event = newRequest()
+           .withClosure((Flows.SerSupplier<Object>) () -> null)
+           .asEvent();
 
         // When
-        FlowContinuationInvoker invoker = new FlowContinuationInvoker();
         Optional<OutputEvent> result = invoker.tryInvoke(new EmptyInvocationContext(), event);
+
+        // Then
+        assertThat(result).isPresent();
+        APIModel.InvokeStageResponse response = fromOutput(result.get());
+        assertThat(response.result.successful).isTrue();
+        assertThat(response.result.result).isInstanceOf(APIModel.EmptyDatum.class);
+
     }
 
     @Test
-    public void failedExternalFunctionInvocationDeserialisesToFunctionResponse() throws Exception {
+    public void stageRefCorrectlyDeserialized() throws IOException, ClassNotFoundException {
+
         // Given
-        Map<String, String> headers = new HashMap<>();
-        headers.put("FnProject-Header-Custom-Header", "customValue");
-
-        String functionResponse = "{ \"some\": \"json\" }";
-        HttpMultipartSerialization ser = new HttpMultipartSerialization()
-                .addJavaEntity((Flows.SerFunction<HttpResponse, Boolean>) (result) -> {
-                    // Then
-                    assertThat(result.getStatusCode()).isEqualTo(500);
-                    assertThat(new String(result.getBodyAsBytes())).isEqualTo(functionResponse);
-                    assertThat(result.getHeaders().get("Custom-Header"))
-                            .isPresent()
-                            .contains("customValue");
-                    return true;
-                })
-                .addFnResultEntity(500, headers, "application/json", functionResponse);
-
-        InputEvent event = constructContinuationInputEvent(ser);
+        InputEvent event = newRequest()
+           .withClosure((Flows.SerConsumer<FlowFuture<Object>>) (x) -> {
+               assertThat(x).isNotNull();
+               assertThat(((RemoteFlow.RemoteFlowFuture<Object>) x).id()).isEqualTo("newStage");
+           })
+           .withStageRefArg("newStage")
+           .asEvent();
 
         // When
-        FlowContinuationInvoker invoker = new FlowContinuationInvoker();
         Optional<OutputEvent> result = invoker.tryInvoke(new EmptyInvocationContext(), event);
+
+        // Then
+        assertThat(result).isPresent();
+        APIModel.InvokeStageResponse response = fromOutput(result.get());
+        assertThat(response.result.successful).isTrue();
+
+    }
+
+    @Test
+    public void stageRefCorrectlySerialized() throws IOException, ClassNotFoundException {
+        RemoteFlow rf = new RemoteFlow(new FlowId(FLOW_ID));
+        FlowFuture<Object> ff = rf.createFlowFuture(new CompletionId("newStage"));
+
+        // Given
+        InputEvent event = newRequest()
+           .withClosure((Flows.SerSupplier<FlowFuture<Object>>) () -> ff)
+           .asEvent();
+
+        // When
+        Optional<OutputEvent> result = invoker.tryInvoke(new EmptyInvocationContext(), event);
+
+        // Then
+        assertThat(result).isPresent();
+        APIModel.InvokeStageResponse response = fromOutput(result.get());
+        assertThat(response.result.successful).isTrue();
+        assertThat(response.result.result).isInstanceOf(APIModel.StageRefDatum.class);
+
+        assertThat(((APIModel.StageRefDatum) response.result.result).stageId).isEqualTo("newStage");
+
     }
 
 
     @Test
-    public void failedExternalFunctionInvocationCorrectlyCoercedToException() throws Exception {
-        // Given
-        Map<String, String> headers = new HashMap<>();
-        headers.put("FnProject-Header-Custom-Header", "customValue");
-        headers.put(RESULT_STATUS_HEADER, RESULT_STATUS_FAILURE);
+    public void setsCurrentStageId() throws IOException, ClassNotFoundException {
 
-
-        String postedResult = "{ \"some\": \"json\" }";
-        HttpMultipartSerialization ser = new HttpMultipartSerialization()
-                .addJavaEntity((Flows.SerFunction<Throwable, String>) (result) ->
-                        new String(((FunctionInvocationException) result).getFunctionResponse().getBodyAsBytes()))
-                .addFnResultEntity(500, headers, "application/json", postedResult);
-
-        InputEvent event = constructContinuationInputEvent(ser);
+        InputEvent event = newRequest()
+           .withClosure((Flows.SerRunnable) () -> {
+               assertThat(FlowRuntimeGlobals.getCurrentCompletionId()).contains(new CompletionId("myStage"));
+           })
+           .withStageId("myStage")
+           .asEvent();
 
         // When
-        FlowContinuationInvoker invoker = new FlowContinuationInvoker();
+        Optional<OutputEvent> result = invoker.tryInvoke(new EmptyInvocationContext(), event);
+
+        // Then
+        assertThat(result).isPresent();
+        APIModel.InvokeStageResponse response = fromOutput(result.get());
+        assertThat(response.result.successful).isTrue();
+
+    }
+
+    @Test
+    public void httpRespToFn() throws Exception {
+        // Given
+
+        InputEvent event = newRequest()
+           .withClosure((Flows.SerConsumer<HttpResponse>) (x) -> {
+               assertThat(x.getBodyAsBytes()).isEqualTo("Hello".getBytes());
+               assertThat(x.getStatusCode()).isEqualTo(201);
+               assertThat(x.getHeaders().get("Foo")).contains("Bar");
+           })
+           .withHttpRespArg(201, "Hello", APIModel.HTTPHeader.create("Foo", "Bar"))
+           .asEvent();
+
+
+        // When
         Optional<OutputEvent> result = invoker.tryInvoke(new EmptyInvocationContext(), event);
         assertThat(result).isPresent();
-        assertThat(resultAsObject(result.get())).isEqualTo(postedResult);
+        APIModel.InvokeStageResponse resp = fromOutput(result.get());
+        assertThat(resp.result.successful).isTrue();
     }
 
-    @Test
-    public void externallyCompletableResultPopulatesHttpRequest() throws Exception {
-        // Given
-        Map<String, String> headers = new HashMap<>();
-        headers.put("FnProject-Header-Custom-Header", "customValue");
-
-        String postedResult = "{ \"some\": \"json\" }";
-        HttpMultipartSerialization ser = new HttpMultipartSerialization()
-                .addJavaEntity((Flows.SerFunction<HttpRequest, Boolean>) (result) -> {
-                    // Expect
-                    assertThat(result.getMethod()).isEqualTo(HttpMethod.POST);
-                    assertThat(new String(result.getBodyAsBytes())).isEqualTo(postedResult);
-                    assertThat(result.getHeaders().get("Content-Type"))
-                            .isPresent()
-                            .contains("application/json");
-                    assertThat(result.getHeaders().get("Custom-Header"))
-                            .isPresent()
-                            .contains("customValue");
-                    return true;
-                })
-                .addExternalCompletionEntity("POST", headers, "application/json", postedResult);
-
-        InputEvent event = constructContinuationInputEvent(ser);
-
-        // When
-        FlowContinuationInvoker invoker = new FlowContinuationInvoker();
-        Optional<OutputEvent> result = invoker.tryInvoke(new EmptyInvocationContext(), event);
-    }
 
     @Test
-    public void externallyCompletableResultFailureCorrectlyCoercedToException() throws Exception {
+    public void httpRespToFnWithError() throws Exception {
         // Given
-        Map<String, String> headers = new HashMap<>();
-        headers.put("FnProject-Header-Custom-Header", "customValue");
-        headers.put(RESULT_STATUS_HEADER, RESULT_STATUS_FAILURE);
 
-        String postedResult = "{ \"some\": \"json\" }";
-        HttpMultipartSerialization ser = new HttpMultipartSerialization()
-                .addJavaEntity((Flows.SerBiFunction<Object, Throwable, String>) (result, error) ->
-                                new String(((ExternalCompletionException) error).getExternalRequest().getBodyAsBytes()))
-                .addEmptyEntity()
-                .addExternalCompletionEntity("POST", headers, "application/json", postedResult);
+        InputEvent event = newRequest()
+           .withClosure((Flows.SerConsumer<FunctionInvocationException>) (e) -> {
+               HttpResponse x = e.getFunctionResponse();
+               assertThat(x.getBodyAsBytes()).isEqualTo("Hello".getBytes());
+               assertThat(x.getStatusCode()).isEqualTo(201);
+               assertThat(x.getHeaders().get("Foo")).contains("Bar");
+           })
+           .withHttpRespArg(false, 201, "Hello", APIModel.HTTPHeader.create("Foo", "Bar"))
+           .asEvent();
 
-        InputEvent event = constructContinuationInputEvent(ser);
 
         // When
-        FlowContinuationInvoker invoker = new FlowContinuationInvoker();
         Optional<OutputEvent> result = invoker.tryInvoke(new EmptyInvocationContext(), event);
+
+        // Then
         assertThat(result).isPresent();
-        assertThat(resultAsObject(result.get())).isEqualTo(postedResult);
-    }
-
-    @Test
-    public void deserializationSkipsExtraPadding() throws IOException, ClassNotFoundException {
-        // Given
-        final Integer testValue = 3;
-
-        HttpMultipartSerialization ser = new HttpMultipartSerialization()
-                .addEntity(CONTENT_TYPE_JAVA_OBJECT,
-                        concat(serializeToBytes((Flows.SerFunction<Integer,Integer>) (x) -> x + testValue), new byte[1024]),
-                        Collections.singletonMap(DATUM_TYPE_HEADER, DATUM_TYPE_BLOB))
-                .addJavaEntity(testValue);
-
-        InputEvent event = constructContinuationInputEvent(ser);
-
-        // When
-        FlowContinuationInvoker invoker = new FlowContinuationInvoker();
-        Optional<OutputEvent> result = invoker.tryInvoke(new EmptyInvocationContext(), event);
-
-        // Then
-        assertTrue(result.isPresent());
-        Optional<Integer> resultValue = resultAsInteger(result.get());
-        assertTrue(resultValue.isPresent());
-        assertTrue(resultValue.equals(Optional.of(testValue + testValue)));
-    }
-
-    @Test
-    public void exceptionThrownIfClosureContentTypeWrong() throws IOException, ClassNotFoundException {
-
-        // Given
-        final Integer testValue = 3;
-
-        HttpMultipartSerialization ser = new HttpMultipartSerialization()
-                .addEntity("application/octet-stream",
-                        serializeToBytes((Flows.SerCallable<Integer>) () -> testValue),
-                        Collections.singletonMap(DATUM_TYPE_HEADER, DATUM_TYPE_BLOB));
-
-        InputEvent event = constructContinuationInputEvent(ser);
-
-        // Then
-        thrown.expect(FunctionInputHandlingException.class);
-        thrown.expectMessage("Error deserializing closure object");
-
-        // When
-        FlowContinuationInvoker invoker = new FlowContinuationInvoker();
-        invoker.tryInvoke(new EmptyInvocationContext(), event);
-    }
-
-    @Test
-    public void exceptionThrownIfBodyHasErrorType() throws IOException, ClassNotFoundException {
-        // Given
-        HttpMultipartSerialization ser = new HttpMultipartSerialization()
-                .addErrorEntity(ERROR_TYPE_INVALID_STAGE_RESPONSE);
-
-        InputEvent event = constructContinuationInputEvent(ser);
-
-        // Then
-        thrown.expect(FunctionInputHandlingException.class);
-        thrown.expectMessage("Error deserializing closure object");
-
-        // When
-        FlowContinuationInvoker invoker = new FlowContinuationInvoker();
-        invoker.tryInvoke(new EmptyInvocationContext(), event);
+        APIModel.InvokeStageResponse resp = fromOutput(result.get());
+        assertThat(resp.result.successful).isTrue();
     }
 
     @Test
     public void platformErrorsBecomeExceptions() throws IOException, ClassNotFoundException {
-        // Given
-        HttpMultipartSerialization ser = new HttpMultipartSerialization()
-                .addJavaEntity((Flows.SerFunction) (x) -> x)
-                .addErrorEntity(ERROR_TYPE_FUNCTION_TIMEOUT);
 
-        InputEvent event = constructContinuationInputEvent(ser);
+        class TestCase {
+            private final APIModel.ErrorType errorType;
+            private final Class<? extends Throwable> exceptionType;
 
-        // When
-        FlowContinuationInvoker invoker = new FlowContinuationInvoker();
-        Optional<OutputEvent> result = invoker.tryInvoke(new EmptyInvocationContext(), event);
+            TestCase(APIModel.ErrorType errorType, Class<? extends Throwable> exceptionType) {
+                this.errorType = errorType;
+                this.exceptionType = exceptionType;
+            }
+        }
+        for (TestCase tc : new TestCase[]{
+           new TestCase(APIModel.ErrorType.InvalidStageResponse, InvalidStageResponseException.class),
+           new TestCase(APIModel.ErrorType.FunctionInvokeFailed, FunctionInvokeFailedException.class),
+           new TestCase(APIModel.ErrorType.FunctionTimeout, FunctionTimeoutException.class),
+           new TestCase(APIModel.ErrorType.StageFailed, StageInvokeFailedException.class),
+           new TestCase(APIModel.ErrorType.StageTimeout, StageTimeoutException.class),
+           new TestCase(APIModel.ErrorType.StageLost, StageLostException.class)
 
-        // Then
-        assertTrue(result.isPresent());
-        assertThat(resultAsObject(result.get())).isInstanceOf(FunctionTimeoutException.class);
-        assertSuccessfulResult(result.get());
-    }
+        }) {
+            Class<? extends Throwable> type = tc.exceptionType;
+            // Given
+            InputEvent event = newRequest()
+               .withClosure((Flows.SerConsumer<Throwable>) (e) -> {
+
+                   assertThat(e).hasMessage("My Error");
+                   assertThat(e).isInstanceOf(type);
+               })
+               .withErrorBody(tc.errorType, "My Error")
+               .asEvent();
 
 
-    @Test
-    public void exceptionThrownIfDispatchPatternUnmatched() throws IOException {
-        // Given
-        HttpMultipartSerialization ser = new HttpMultipartSerialization()
-                .addJavaEntity((DoubleSupplier & Serializable) () -> 3);
+            // When
+            Optional<OutputEvent> result = invoker.tryInvoke(new EmptyInvocationContext(), event);
 
-        InputEvent event = constructContinuationInputEvent(ser);
-
-        // Then
-        thrown.expect(IllegalStateException.class);
-        thrown.expectMessage("no dispatch mechanism found for class");
-
-        // When
-        FlowContinuationInvoker invoker = new FlowContinuationInvoker();
-        invoker.tryInvoke(new EmptyInvocationContext(), event);
-    }
-
-    @Test
-    public void functionInvocationExceptionThrownIfStageResultIsNotSerializable() throws IOException, ClassNotFoundException {
-        // Given
-        HttpMultipartSerialization ser = new HttpMultipartSerialization()
-                .addJavaEntity((Flows.SerSupplier) Object::new);
-
-        InputEvent event = constructContinuationInputEvent(ser);
-
-        // Then
-        thrown.expect(InternalFunctionInvocationException.class);
-        thrown.expectCause(instanceOf(ResultSerializationException.class));
-        thrown.expectMessage("Error handling response from flow stage lambda");
-
-        // When
-        try {
-            FlowContinuationInvoker invoker = new FlowContinuationInvoker();
-            invoker.tryInvoke(new EmptyInvocationContext(), event);
-        } catch(Exception ex) {
-            assertThat(ex.getCause().getMessage()).isEqualTo("Result returned by stage is not serializable: java.lang.Object");
-            throw ex;
+            // Then
+            assertThat(result).isPresent();
+            APIModel.InvokeStageResponse resp = fromOutput(result.get());
+            assertThat(resp.result.successful).isTrue();
         }
     }
 
+
     @Test
-    public void functionInvocationExceptionThrownIfStageThrowsException() throws IOException, ClassNotFoundException {
-        // Given
-        final String exceptionMessage = "oh no";
+    public void functionInvocationExceptionThrownIfStageResultIsNotSerializable() {
+        thrown.expect(ResultSerializationException.class);
+        InputEvent event = newRequest()
+           .withClosure((Flows.SerSupplier<Object>) Object::new)
+           .asEvent();
 
-        HttpMultipartSerialization ser = new HttpMultipartSerialization()
-                .addJavaEntity((Flows.SerSupplier) () -> {throw new RuntimeException(exceptionMessage);});
+        invoker.tryInvoke(new EmptyInvocationContext(), event);
 
-        InputEvent event = constructContinuationInputEvent(ser);
+    }
 
-        // Then
+
+    private static class MyRuntimeException extends RuntimeException {
+    }
+
+    @Test
+    public void functionInvocationExceptionThrownIfStageThrowsException() {
         thrown.expect(InternalFunctionInvocationException.class);
         thrown.expectCause(instanceOf(RuntimeException.class));
         thrown.expectMessage("Error invoking flows lambda");
 
-        // When
+
+        InputEvent event = newRequest()
+           .withClosure((Flows.SerRunnable) () -> {
+               throw new MyRuntimeException();
+           })
+           .asEvent();
+
+        invoker.tryInvoke(new EmptyInvocationContext(), event);
+
+    }
+
+
+    public static class FlowRequestBuilder {
+        private String flowId;
+
+        private final TestBlobStore blobStore;
+
+        APIModel.InvokeStageRequest req = new APIModel.InvokeStageRequest();
+
+        public FlowRequestBuilder(TestBlobStore blobStore, String flowId, String stageId) {
+            this.flowId = flowId;
+            req.flowId = flowId;
+            req.stageId = stageId;
+            this.blobStore = blobStore;
+        }
+
+
+        public FlowRequestBuilder withStageId(String stageId) {
+            req.stageId = stageId;
+            return this;
+        }
+
+        public FlowRequestBuilder withClosure(Serializable closure) {
+            req.closure = blobStore.withJavaBlob(flowId, closure);
+            return this;
+        }
+
+
+        public FlowRequestBuilder withJavaObjectArgs(Object... args) {
+            Arrays.stream(args).forEach((arg) ->
+               req.args.add(blobStore.withResult(flowId, arg, true)));
+            return this;
+        }
+
+        public InputEvent asEvent() {
+            ObjectMapper objectMapper = new ObjectMapper();
+            byte[] body;
+            try {
+                body = objectMapper.writeValueAsBytes(req);
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
+
+            System.err.println("Req:" + new String(body));
+
+            return new InputEventBuilder()
+               .withHeader(FLOW_ID_HEADER, flowId)
+               .withHeader("Content-type", "application/json")
+               .withBody(new ByteArrayInputStream(body))
+               .build();
+        }
+
+        public FlowRequestBuilder withEmptyDatumArg() {
+            APIModel.CompletionResult res = new APIModel.CompletionResult();
+            res.successful = true;
+            res.result = new APIModel.EmptyDatum();
+            req.args.add(res);
+            return this;
+        }
+
+        public FlowRequestBuilder withStageRefArg(String stage) {
+            APIModel.StageRefDatum stageRefDatum = new APIModel.StageRefDatum();
+            stageRefDatum.stageId = stage;
+
+            APIModel.CompletionResult res = new APIModel.CompletionResult();
+            res.result = stageRefDatum;
+            res.successful = true;
+            req.args.add(res);
+
+            return this;
+        }
+
+        public FlowRequestBuilder withHttpRespArg(boolean status, int code, String body, APIModel.HTTPHeader... httpHeaders) {
+            APIModel.HTTPResp resp = new APIModel.HTTPResp();
+            resp.statusCode = code;
+            BlobResponse blobResponse = blobStore.writeBlob(flowId, body.getBytes(), "application/octet");
+
+            resp.body = APIModel.Blob.fromBlobResponse(blobResponse);
+            resp.headers = Arrays.asList(httpHeaders);
+            APIModel.CompletionResult res = new APIModel.CompletionResult();
+            APIModel.HTTPRespDatum datum = new APIModel.HTTPRespDatum();
+            datum.resp = resp;
+            res.result = datum;
+            res.successful = status;
+            req.args.add(res);
+            return this;
+        }
+
+        public FlowRequestBuilder withHttpRespArg(int code, String body, APIModel.HTTPHeader... httpHeaders) {
+            return withHttpRespArg(true, code, body, httpHeaders);
+
+        }
+
+        public FlowRequestBuilder withErrorBody(APIModel.ErrorType errType, String message) {
+            APIModel.ErrorDatum errorDatum = new APIModel.ErrorDatum();
+            errorDatum.type = errType;
+            errorDatum.message = message;
+            APIModel.CompletionResult result = new APIModel.CompletionResult();
+            result.successful = false;
+            result.result = errorDatum;
+            req.args.add(result);
+            return this;
+        }
+    }
+
+    FlowRequestBuilder newRequest() {
+        return new FlowRequestBuilder(blobStore, FLOW_ID, STAGE_ID);
+    }
+
+    private APIModel.InvokeStageResponse fromOutput(OutputEvent result) {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
         try {
-            FlowContinuationInvoker invoker = new FlowContinuationInvoker();
-            invoker.tryInvoke(new EmptyInvocationContext(), event);
-        } catch(Exception ex) {
-            assertThat(ex.getCause().getMessage()).isEqualTo(exceptionMessage);
-            throw ex;
-        }
-    }
+            result.writeToOutput(bos);
 
-    private Object resultAsObject(OutputEvent result) throws IOException, ClassNotFoundException {
-        return SerUtils.deserializeObject(((FlowContinuationInvoker.ContinuationOutputEvent)result).getContentBody());
-    }
-
-    private byte[] resultInnerPayload(OutputEvent result) throws IOException {
-        return ((FlowContinuationInvoker.ContinuationOutputEvent)result).getContentBody();
-    }
-
-    private Optional<Integer> resultAsInteger(OutputEvent oe) {
-        if (!(oe instanceof FlowContinuationInvoker.ContinuationOutputEvent)) {
-            return Optional.empty();
-        }
-
-        FlowContinuationInvoker.ContinuationOutputEvent coe = (FlowContinuationInvoker.ContinuationOutputEvent) oe;
-
-        // Check Datum Type
-        if (!coe.getHeaders().get(DATUM_TYPE_HEADER).map((datumType) -> datumType.equalsIgnoreCase(DATUM_TYPE_BLOB)).isPresent()) {
-            return Optional.empty();
-        }
-
-        // Check Content-Type
-        if (!CONTENT_TYPE_JAVA_OBJECT.equalsIgnoreCase(coe.getInternalContentType())) {
-            return Optional.empty();
-        }
-
-        // Deserialize body and reconstruct object
-        try {
-            return Optional.of((Integer) SerUtils.deserializeObject(coe.getContentBody()));
+            System.err.println("Result: " + new String(bos.toByteArray()));
+            return new ObjectMapper().readValue(bos.toByteArray(), APIModel.InvokeStageResponse.class);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
-    private void assertSucessfulEmptyResult(OutputEvent result) throws IOException {
-        assertContinuationOutputEvent(result);
-        assertThat(resultInnerPayload(result).length).isEqualTo(0);
-        assertDatumType(DATUM_TYPE_EMPTY, (FlowContinuationInvoker.ContinuationOutputEvent) result);
-        assertResultStatus(true, (FlowContinuationInvoker.ContinuationOutputEvent) result);
-    }
-
-    private void assertSuccessfulResult(OutputEvent result) {
-        assertContinuationOutputEvent(result);
-        assertContentType(CONTENT_TYPE_JAVA_OBJECT, (FlowContinuationInvoker.ContinuationOutputEvent) result);
-        assertResultStatus(true, (FlowContinuationInvoker.ContinuationOutputEvent) result);
-        assertDatumType(DATUM_TYPE_BLOB, (FlowContinuationInvoker.ContinuationOutputEvent) result);
-    }
-
-    private void assertSuccessfulCompletionStageResult(String expectedStageId, OutputEvent result) {
-        assertContinuationOutputEvent(result);
-        assertDatumType(DATUM_TYPE_STAGEREF, (FlowContinuationInvoker.ContinuationOutputEvent) result);
-        assertResultStatus(true, (FlowContinuationInvoker.ContinuationOutputEvent) result);
-        assertHeader(STAGE_ID_HEADER, expectedStageId, (FlowContinuationInvoker.ContinuationOutputEvent) result);
-    }
-
-    private void assertContinuationOutputEvent(OutputEvent result) {
-        assertTrue(result instanceof FlowContinuationInvoker.ContinuationOutputEvent);
-    }
-
-    private static void assertContentType(String expectedContentType, FlowContinuationInvoker.ContinuationOutputEvent result) {
-        String contentType = result.getInternalContentType();
-        assertThat(contentType).isEqualTo(expectedContentType);
-    }
-
-    private void assertResultStatus(boolean status, FlowContinuationInvoker.ContinuationOutputEvent result) {
-        assertThat(result.isSuccess()).isEqualTo(status);
-    }
-
-    private void assertDatumType(String datumType, FlowContinuationInvoker.ContinuationOutputEvent result) {
-        assertHeader(DATUM_TYPE_HEADER, datumType, result);
-    }
-
-    private void assertHeader(String header, String value, FlowContinuationInvoker.ContinuationOutputEvent result) {
-        assertThat(result.getHeaders().get(header))
-                .contains(value);
-    }
-
-    private InputEvent constructContinuationInputEvent(HttpMultipartSerialization ser) throws IOException {
-        return new InputEventBuilder()
-                .withHeader(FLOW_ID_HEADER, FLOW_ID)
-                .withHeader(STAGE_ID_HEADER, STAGE_ID)
-                .withHeaders(ser.getHeaders())
-                .withBody(ser.getContentStream())
-                .build();
-    }
-
-    private class InputEventBuilder {
+    private static class InputEventBuilder {
 
         private InputStream body;
         private Headers headers = Headers.fromMap(Collections.emptyMap());
@@ -582,6 +534,19 @@ public class FlowsContinuationInvokerTest {
 
         public InputEventBuilder withBody(InputStream body) {
             this.body = body;
+            return this;
+        }
+
+
+        public InputEventBuilder withBody(String body) {
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            try {
+                bos.write(body.getBytes());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
+            this.body = new ByteArrayInputStream(bos.toByteArray());
             return this;
         }
 
@@ -604,7 +569,7 @@ public class FlowsContinuationInvokerTest {
         }
 
         private String getHeader(String key) {
-            for (Map.Entry<String, String> entry: currentHeaders().entrySet()) {
+            for (Map.Entry<String, String> entry : currentHeaders().entrySet()) {
                 if (key.equalsIgnoreCase(entry.getKey())) {
                     return entry.getValue();
                 }
@@ -614,9 +579,9 @@ public class FlowsContinuationInvokerTest {
 
         public InputEvent build() {
             return new ReadOnceInputEvent(
-                    "", "", "", "",
-                    body,
-                    headers, new QueryParametersImpl());
+               "", "", "", "",
+               body,
+               headers, new QueryParametersImpl());
         }
     }
 
@@ -625,16 +590,6 @@ public class FlowsContinuationInvokerTest {
         @Override
         public Optional<Object> getInvokeInstance() {
             return Optional.empty();
-        }
-
-        @Override
-        public Class<?> getTargetClass() {
-            return null;
-        }
-
-        @Override
-        public Method getTargetMethod() {
-            return null;
         }
 
         @Override
@@ -663,8 +618,28 @@ public class FlowsContinuationInvokerTest {
         }
 
         @Override
+        public List<InputCoercion> getInputCoercions(MethodWrapper targetMethod, int param) {
+            return null;
+        }
+
+        @Override
         public void addOutputCoercion(OutputCoercion oc) {
             throw new RuntimeException("You can't modify the empty runtime context in the tests, sorry.");
+        }
+
+        @Override
+        public List<OutputCoercion> getOutputCoercions(Method method) {
+            return null;
+        }
+
+        @Override
+        public void setInvoker(FunctionInvoker invoker) {
+            throw new RuntimeException("You can't modify the empty runtime context in the tests, sorry.");
+        }
+
+        @Override
+        public MethodWrapper getMethod() {
+            return null;
         }
 
     }

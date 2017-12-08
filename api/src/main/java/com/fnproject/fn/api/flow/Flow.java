@@ -20,7 +20,7 @@ public interface Flow extends Serializable {
     /**
      * Invoke a fn function and yield the result
      * <p>
-     * When this function is called, the completer will send a request with the body to the given function ID within
+     * When this function is called, the flow server will send a request with the body to the given function ID within
      * the fn and provide a future that can chain on the response of the function.
      * <blockquote><pre>{@code
      *         Flow fl = Flows.currentFlow();
@@ -95,7 +95,6 @@ public interface Flow extends Serializable {
      * <p>
      * Returns a future that completes with the HttpResponse of the function on success
      * if the function returns a successful http response, and completes with an {@link FunctionInvocationException} if the function invocation fails with a non-succesful http status
-     * <p>
      * <p>
      * This currently only maps to JSON via the default JSON mapper in the FDK
      *
@@ -237,18 +236,21 @@ public interface Flow extends Serializable {
      * }</pre></blockquote>
      *
      * @param ex an exception to publish to the future
+     * @param <T> the type of the future
      * @return a future that always completes with the specified exception
      */
     <T> FlowFuture<T> failedFuture(Throwable ex);
 
 
+
+
     /**
-     * Create an externally completable future that can be completed successfully or exceptionally by POSTing data to a public URL.
+     * Create an uncompleted future
      *
-     * @return an external future
-     * @see ExternalFlowFuture for details of how to complete external futures.
+     * @param <T> the type of the future
+     * @return a flow future that can only be completed via {@link FlowFuture#complete(Object)} or {@link FlowFuture#completeExceptionally(Throwable)}
      */
-    ExternalFlowFuture<HttpRequest> createExternalFuture();
+    <T> FlowFuture<T> createFlowFuture();
 
     /**
      * Wait for all a list of tasks to complete
