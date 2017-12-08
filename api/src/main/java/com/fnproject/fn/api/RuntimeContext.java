@@ -77,6 +77,7 @@ public interface RuntimeContext {
      *
      * @param targetMethod The user function method
      * @param param        The index of the parameter
+     * @return  a list of configured input coercions to apply to the given parameter
      */
     List<InputCoercion> getInputCoercions(MethodWrapper targetMethod, int param);
 
@@ -96,6 +97,7 @@ public interface RuntimeContext {
      * coercions second.
      *
      * @param method The user function method
+     * @return a list of configured output coercions to apply to the given method.
      */
     List<OutputCoercion> getOutputCoercions(Method method);
 
