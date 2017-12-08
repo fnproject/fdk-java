@@ -119,7 +119,7 @@ public class EntryPoint {
             return 2;
         } catch (Exception ee){
             loggingOutput.println("An unexpected error occured:");
-            loggingOutput.println(filterStackTraceToOnlyIncludeUsersCode(ee));
+            loggingOutput.println(ee);
             return 1;
         }
 
