@@ -1,7 +1,4 @@
-package com.fnproject.fn.runtime.exception;
-
-
-
+package com.fnproject.fn.api.exception;
 
 /**
  * an exception relating to loading the users code into runtime
