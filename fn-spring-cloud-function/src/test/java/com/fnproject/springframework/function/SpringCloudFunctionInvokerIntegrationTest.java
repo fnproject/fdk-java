@@ -1,6 +1,7 @@
 package com.fnproject.springframework.function;
 
 import com.fnproject.fn.testing.FnTestingRule;
+import com.fnproject.springframework.function.testfns.EmptyFunctionConfig;
 import com.fnproject.springframework.function.testfns.FunctionConfig;
 import org.junit.Rule;
 import org.junit.Test;
@@ -48,6 +49,32 @@ public class SpringCloudFunctionInvokerIntegrationTest {
 
         String output = fnRule.getOnlyResult().getBodyAsString();
         assertThat(output).isEqualTo("Hello");
+    }
+
+    @Test
+    public void shouldThrowFunctionLoadExceptionIfNoValidFunction() {
+        fnRule.givenEvent().enqueue();
+
+        fnRule.thenRun(EmptyFunctionConfig.class, "handleRequest");
+
+        int exitCode = fnRule.getLastExitCode();
+
+        assertThat(exitCode).isEqualTo(2);
+        assertThat(fnRule.getResults()).isEmpty(); // fails at init so no results.
+        assertThat(fnRule.getStdErrAsString()).contains("No Spring Cloud Function found");
+    }
+
+    @Test
+    public void noNPEifFunctionReturnsNull() {
+        fnRule.givenEvent().enqueue();
+
+        fnRule.thenRun(EmptyFunctionConfig.class, "handleRequest");
+
+        int exitCode = fnRule.getLastExitCode();
+
+        assertThat(exitCode).isEqualTo(2);
+        assertThat(fnRule.getResults()).isEmpty(); // fails at init so no results.
+        assertThat(fnRule.getStdErrAsString()).contains("No Spring Cloud Function found");
     }
 }
 

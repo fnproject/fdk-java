@@ -4,6 +4,7 @@ package com.fnproject.fn.runtime;
 import com.fnproject.fn.api.InputEvent;
 import com.fnproject.fn.api.OutputEvent;
 import com.fnproject.fn.api.exception.FunctionInputHandlingException;
+import com.fnproject.fn.api.exception.FunctionLoadException;
 import com.fnproject.fn.api.exception.FunctionOutputHandlingException;
 import com.fnproject.fn.runtime.exception.*;
 
@@ -116,6 +117,10 @@ public class EntryPoint {
             // catch all block;
             loggingOutput.println(filterStackTraceToOnlyIncludeUsersCode(e));
             return 2;
+        } catch (Exception ee){
+            loggingOutput.println("An unexpected error occurred:");
+            ee.printStackTrace(loggingOutput);
+            return 1;
         }
 
         return lastStatus;
