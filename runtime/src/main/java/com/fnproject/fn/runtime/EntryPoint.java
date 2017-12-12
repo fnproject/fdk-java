@@ -118,8 +118,8 @@ public class EntryPoint {
             loggingOutput.println(filterStackTraceToOnlyIncludeUsersCode(e));
             return 2;
         } catch (Exception ee){
-            loggingOutput.println("An unexpected error occured:");
-            loggingOutput.println(ee);
+            loggingOutput.println("An unexpected error occurred:");
+            ee.printStackTrace(loggingOutput);
             return 1;
         }
 
