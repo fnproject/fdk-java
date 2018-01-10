@@ -67,7 +67,7 @@ public class EntryPoint {
             EventCodec codec;
 
             if (format != null && format.equalsIgnoreCase("http")) {
-                codec = new HttpEventCodec(functionInput, functionOutput);
+                codec = new HttpEventCodec(env, functionInput, functionOutput);
             } else if (format == null || format.equalsIgnoreCase("default")) {
                 codec = new DefaultEventCodec(env, functionInput, functionOutput);
             } else {
