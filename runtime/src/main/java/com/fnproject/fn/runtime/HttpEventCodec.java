@@ -38,8 +38,11 @@ public class HttpEventCodec implements EventCodec {
     private final SessionOutputBuffer sob;
     private final HttpMessageParser<HttpRequest> parser;
 
+    private final Map<String, String> env;
 
-    HttpEventCodec(InputStream input, OutputStream output) {
+    HttpEventCodec(Map<String, String> env, InputStream input, OutputStream output) {
+
+        this.env = env;
 
         SessionInputBufferImpl sib = new SessionInputBufferImpl(new HttpTransportMetricsImpl(), 65535);
         sib.bind(Objects.requireNonNull(input));
@@ -54,6 +57,14 @@ public class HttpEventCodec implements EventCodec {
 
     private static String requiredHeader(HttpRequest req, String id) {
         return Optional.ofNullable(req.getFirstHeader(id)).map(Header::getValue).orElseThrow(() -> new FunctionInputHandlingException("Incoming HTTP frame is missing required header: " + id));
+    }
+
+    private String getRequiredEnv(String name) {
+        String val = env.get(name);
+        if (val == null) {
+            throw new FunctionInputHandlingException("Required environment variable " + name + " is not set - are you running a function outside of fn run?");
+        }
+        return val;
     }
 
     @Override
@@ -79,8 +90,8 @@ public class HttpEventCodec implements EventCodec {
         } else {
             bodyStream = new ByteArrayInputStream(new byte[]{});
         }
-        String appName = requiredHeader(req, "fn_app_name");
-        String route = requiredHeader(req, "fn_path");
+        String appName = getRequiredEnv("FN_APP_NAME");
+        String route = getRequiredEnv("FN_PATH");
         String method = requiredHeader(req, "fn_method");
         String requestUrl = requiredHeader(req, "fn_request_url");
 
