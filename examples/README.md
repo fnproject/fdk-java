@@ -34,3 +34,6 @@ access to data entering the `fn` Java FDK.
 This example showcases the Fn Flow asynchronous execution API, by
 creating a workflow that takes an image and asynchronously generates three
 thumbnails for it, then uploads them to an object storage.
+
+## 5. Gradle build 
+This shows how to use Gradle to build functions using the Java FDK. 
