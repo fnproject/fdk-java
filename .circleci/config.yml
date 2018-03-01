@@ -49,9 +49,9 @@ jobs:
       - run:
          name: Login to Docker
          command: |
-         if [[ "${CIRCLE_BRANCH}" == "master" && -z "${CIRCLE_PR_REPONAME}" ]]; then
-             docker login -u $DOCKER_USER -p $DOCKER_PASS
-         fi
+           if [[ "${CIRCLE_BRANCH}" == "master" && -z "${CIRCLE_PR_REPONAME}" ]]; then
+               docker login -u $DOCKER_USER -p $DOCKER_PASS
+           fi
 
       - run:
           name: Build fn-java-fdk Docker build image

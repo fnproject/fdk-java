@@ -58,7 +58,7 @@
     <repositories>
         <repository>
             <id>fn-maven-releases</id>
-            <url>https://dl.bintray.com/fnproject/fnproject</url>
+            <url>http://172.17.0.2:18080</url>
         </repository>
     </repositories>
 </project>
