@@ -6,3 +6,4 @@ build:
   -Dmdep.prependGroupId=true -DoutputDirectory=target
 format: http
 timeout: 120
+name: test-4
