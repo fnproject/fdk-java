@@ -35,7 +35,7 @@ fi
 
 [[ -n "$PRE_BUILD_HOOK" ]] && $PRE_BUILD_HOOK
 
-fn build --no-cache >build-output 2>&1 || {
+fn -v build --no-cache >build-output 2>&1 || {
     echo "Test function build failed:"
     cat build-output
     exit 1

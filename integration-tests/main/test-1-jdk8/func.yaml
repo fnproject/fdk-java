@@ -3,3 +3,4 @@ runtime: java8
 cmd: com.fnproject.fn.integration.test_1.CompleterFunction::handleRequest
 format: http
 timeout: 120
+name: test-1-jdk8

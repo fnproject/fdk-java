@@ -33,19 +33,21 @@ To run locally you will need to deploy the fn artifacts to a local repository:
 (in top-level dir)
 ```bash
 export REPOSITORY_LOCATION=/tmp/staging-repository
+# on OSX: 
+export DOCKER_LOCALHOST=docker.for.mac.localhost 
 
 mvn deploy -DaltDeploymentRepository=localStagingDir::default::file://"$REPOSITORY_LOCATION"
 ```
 
 You may also want to/need build local copies of the build images: 
 ```bash 
-cd build-images
+cd build-image
 ./docker-build.sh -t fnproject/fn-java-fdk-build .
-./docker-build.sh -f Dockerfile-jdk9 -t fnproject/fn-java-fdk-build:jdk9-latest .
 ```
 
 and runtime images: 
 ```
+cd runtime
 docker build -t fnproject/fn-java-fdk .
 docker build -f Dockerfile-jdk9 -t fnproject/fn-java-fdk:jdk9-latest .
 ```
