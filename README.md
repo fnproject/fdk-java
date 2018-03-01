@@ -138,7 +138,74 @@ are cached. Try passing in some input this time:
 ```bash
 $ echo -n "Universe" | fn run
 ...
+<<<<<<< HEAD
 Hello, Universe!
+```
+
+### 4. Making changes to your Function
+
+Making code changes and trying them out is simple. For example, lets
+localize our function.
+
+Update the function class to match:
+
+```java
+package com.example.faas;
+
+import java.util.Locale;
+import java.util.ResourceBundle;
+
+public class HelloFunction {
+
+    public String handleRequest(String input) {
+        String name = (input == null || input.isEmpty()) ? "world"  : input;
+        Locale.setDefault(new Locale((null == System.getenv("LANG")) ?
+                          Locale.getDefault().toString() :
+                                     System.getenv("LANG")));
+        ResourceBundle bundle =
+            ResourceBundle.getBundle("com.example.faas.HelloFunction");
+
+        return bundle.getString("greeting") + ", " + name + "!";
+    }
+
+}
+```
+
+And you need to create the properties files for some locales.  We'll do
+`HelloFunction.properties` and `HelloFunction_de.properties`,
+respectively.
+
+```bash
+greeting=Hello
+```
+
+```bash
+greeting=Guten Tag
+```
+
+Now we can run this, passing the LANG env var, like so
+
+```bash
+echo -n "Universe" | fn run --env LANG=en
+```
+
+We will see the same output as before,
+
+```bash
+Function your_dockerhub_account/hello:0.0.1 built successfully.
+Hello, Universe!
+```
+
+<<<<<<< HEAD
+But we can localize it by changing the `LANG` env var.
+
+```bash
+echo -n "Universe" | fn run --env LANG=de
+```
+
+```bash
+Function your_dockerhub_account/hello:0.0.1 built successfully.
+Guten Tag, Universe!
 ```
 
 ### 4. Testing your function
@@ -181,10 +248,11 @@ There is much more functionality to construct tests in the testing library.
 Testing functions is covered in more detail in [Testing
 Functions](docs/TestingFunctions.md).
 
-### 5. Run using HTTP and the local Fn server
+
 The previous example used `fn run` to run a function directly via docker, you
 can also  use the Fn server locally to test the deployment of your function and
 the HTTP calls to your functions.
+
 
 Open another terminal and start the Fn server:
 
