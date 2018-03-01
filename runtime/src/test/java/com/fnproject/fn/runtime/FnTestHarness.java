@@ -267,7 +267,7 @@ public class FnTestHarness implements TestRule {
         PrintStream oldSystemErr = System.err;
         try {
             PrintStream functionOut = new PrintStream(stdOut);
-            PrintStream functionErr = new PrintStream(new TeeOutputStream(stdErr, oldSystemErr));
+            PrintStream functionErr = new PrintStream(new TeeOutputStream(stdErr, oldSystemOut));
             System.setOut(functionErr);
             System.setErr(functionErr);
             exitStatus = new EntryPoint().run(
