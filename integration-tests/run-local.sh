@@ -47,7 +47,7 @@ docker pull $FUNCTIONS_DOCKER_IMAGE
 
 FUNCTIONS_CONTAINER_ID=$(
     docker run -d \
-        -p 8080 \
+        -p 8080:8080 \
         -v /var/run/docker.sock:/var/run/docker.sock \
         --name functions-$SUFFIX \
         -e FN_LOG_LEVEL=debug \

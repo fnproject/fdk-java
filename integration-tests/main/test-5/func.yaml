@@ -3,3 +3,4 @@ runtime: java9
 cmd: com.fnproject.fn.integration.test_5.CompleterFunction::handleRequest
 format: http
 timeout: 120
+name: test-5

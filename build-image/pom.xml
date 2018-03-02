@@ -8,6 +8,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <fnproject.version>1.0.0-SNAPSHOT</fnproject.version>
+        <fn.repo.url>http://172.17.0.1:18080</fn.repo.url>
     </properties>
 
     <!-- The artifact is irrelevant, this pom is only used to download dependencies. -->
@@ -64,7 +65,7 @@
     <repositories>
         <repository>
             <id>fn-maven-releases</id>
-            <url>http://172.17.0.1:18080</url>
+            <url>${fn.repo.url}</url>
         </repository>
     </repositories>
 </project>
