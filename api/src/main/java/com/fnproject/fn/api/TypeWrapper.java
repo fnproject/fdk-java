@@ -11,11 +11,11 @@ public interface TypeWrapper {
      *
      * For example, take the following classes:
      * <pre>{@code
-     * class GenericParent&lt;T&gt; {
+     * class GenericParent<T> {
      *   public void someMethod(T t) { // do something with t }
      * }
      *
-     * class ConcreteClass extends GenericParent&lt;String&gt; { }
+     * class ConcreteClass extends GenericParent<String> { }
      * }</pre>
      *
      * A {@link TypeWrapper} representing the first argument of {@code someMethod} would return {@code String.class}
