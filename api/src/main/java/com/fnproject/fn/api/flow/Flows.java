@@ -8,7 +8,9 @@ import java.util.function.*;
 /**
  * Fn Flow API entry point class  - this provides access to the current {@link Flow} for the current function invocation.
  */
-public class Flows {
+public final class Flows {
+    private Flows() {
+    }
 
     private static FlowSource flowSource;
 

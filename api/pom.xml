@@ -30,6 +30,31 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.netbeans.tools</groupId>
+                <artifactId>sigtest-maven-plugin</artifactId>
+                <version>1.0</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <sigfile>src/main/api/snapshot.sigfile</sigfile>
+                    <action>strictcheck</action>
+                    <packages>com.fnproject.fn.api,com.fnproject.fn.api.exception,com.fnproject.fn.api.flow</packages>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
+    <dependencies>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
 </project>
