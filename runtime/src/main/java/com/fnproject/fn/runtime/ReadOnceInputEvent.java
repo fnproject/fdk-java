@@ -14,8 +14,6 @@ import java.util.function.Function;
 
 /**
  * Wrapper for an incoming fn invocation event
- * <p>
- * This in
  */
 public class ReadOnceInputEvent implements InputEvent {
 

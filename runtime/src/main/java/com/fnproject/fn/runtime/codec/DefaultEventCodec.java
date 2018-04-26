@@ -1,10 +1,13 @@
-package com.fnproject.fn.runtime;
+package com.fnproject.fn.runtime.codec;
 
 import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.InputEvent;
 import com.fnproject.fn.api.OutputEvent;
 import com.fnproject.fn.api.exception.FunctionInputHandlingException;
 import com.fnproject.fn.api.exception.FunctionOutputHandlingException;
+import com.fnproject.fn.runtime.QueryParametersParser;
+import com.fnproject.fn.runtime.ReadOnceInputEvent;
+import com.fnproject.fn.runtime.codec.EventCodec;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -18,7 +21,7 @@ import java.util.Optional;
  * <p>
  * This parses inputs from environment variables and reads and writes raw body and responses to the specified input and output streams
  */
-class DefaultEventCodec implements EventCodec {
+public class DefaultEventCodec implements EventCodec {
 
     private final Map<String, String> env;
     private final InputStream in;

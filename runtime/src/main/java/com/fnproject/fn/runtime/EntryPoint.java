@@ -6,6 +6,10 @@ import com.fnproject.fn.api.OutputEvent;
 import com.fnproject.fn.api.exception.FunctionInputHandlingException;
 import com.fnproject.fn.api.exception.FunctionLoadException;
 import com.fnproject.fn.api.exception.FunctionOutputHandlingException;
+import com.fnproject.fn.runtime.codec.DefaultEventCodec;
+import com.fnproject.fn.runtime.codec.EventCodec;
+import com.fnproject.fn.runtime.codec.HttpEventCodec;
+import com.fnproject.fn.runtime.codec.JsonEventCodec;
 import com.fnproject.fn.runtime.exception.*;
 
 import java.io.IOException;
@@ -70,6 +74,8 @@ public class EntryPoint {
                 codec = new HttpEventCodec(env, functionInput, functionOutput);
             } else if (format == null || format.equalsIgnoreCase("default")) {
                 codec = new DefaultEventCodec(env, functionInput, functionOutput);
+            } else if (format.equalsIgnoreCase("json")) {
+                codec = new JsonEventCodec(env, functionInput, functionOutput);
             } else {
                 throw new FunctionInputHandlingException("Unsupported function format:" + format);
             }
