@@ -16,15 +16,13 @@ import java.util.Optional;
 class CorsInvoker implements FunctionInvoker {
     @Override
     public Optional<OutputEvent> tryInvoke(InvocationContext invocationContext, InputEvent inputEvent) {
+        // skip options calls, this uses the headers in func.yaml to set cors headers
         if (inputEvent.getMethod().equals("OPTIONS")) {
             return Optional.of(
                OutputEvent.fromBytes(new byte[0],
                   200,
                   "application/json",
-                  Headers.emptyHeaders()
-                     .withHeader("Access-Control-Allow-Origin", "*")
-                     .withHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
-                     .withHeader("ccess-Control-Allow-Headers", "Authorization, Origin, X-Requested-With, Content-Type, Accept")));
+                  Headers.emptyHeaders()));
         }
         return Optional.empty();
     }
