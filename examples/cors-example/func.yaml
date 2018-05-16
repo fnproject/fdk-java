@@ -1,0 +1,5 @@
+name: cors-example
+version: 0.0.7
+runtime: java
+cmd: com.example.fn.CorsFunction::handleRequest
+format: http
