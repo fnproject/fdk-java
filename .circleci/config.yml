@@ -2,9 +2,7 @@ version: 2
 jobs:
   build:
     working_directory: ~/fn-java-fdk
-    machine:
-      java:
-        version: oraclejdk8
+    machine: true
     environment:
       # store_artifacts doesn't shell substitute so the variable
       # definitions are duplicated in those steps too.
