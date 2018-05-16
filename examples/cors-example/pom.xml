@@ -8,7 +8,7 @@
         <fnproject.version>1.0.0-SNAPSHOT</fnproject.version>
     </properties>
     <groupId>com.example.fn</groupId>
-    <artifactId>hello</artifactId>
+    <artifactId>cors-example</artifactId>
     <version>1.0.0</version>
 
     <repositories>

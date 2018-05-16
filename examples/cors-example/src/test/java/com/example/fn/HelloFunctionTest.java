@@ -19,7 +19,6 @@ public class HelloFunctionTest {
 
         FnResult result = testing.getOnlyResult();
         assertEquals("", result.getBodyAsString());
-        assertEquals("*", result.getHeaders().get("Access-Control-Allow-Origin").get());
     }
 
     @Test
