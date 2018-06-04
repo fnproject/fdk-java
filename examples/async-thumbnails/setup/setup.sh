@@ -89,7 +89,7 @@ else
     fn config app myapp COMPLETER_BASE_URL http://10.167.103.193:8081
 fi
 
-if [[ `fn routes list myapp` == *"/resize128"* ]]; then
+if [[ `fn list routes myapp` == *"/resize128"* ]]; then
     echo "Route /resize128 is already there."
 else
     # This works around proxy issues
@@ -109,7 +109,7 @@ else
             --build-arg http_proxy=$http_proxy \
             --build-arg https_proxy=$https_proxy \
             . && \
-        fn routes create myapp /resize256
+        fn create route myapp /resize256
 fi
 if [[ `fn list routes myapp` == *"/resize512"* ]]; then
     echo "Route /resize512 is already there."
@@ -120,7 +120,7 @@ else
             --build-arg http_proxy=$http_proxy \
             --build-arg https_proxy=$https_proxy \
             . && \
-        fn routes create myapp /resize512
+        fn create route myapp /resize512
 fi
 
 

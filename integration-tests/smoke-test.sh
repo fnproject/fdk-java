@@ -80,7 +80,7 @@ do
   if [[ "$k" = "ID:" ]]; then id="$v"; fi
   if [[ -z "$k" ]]; then
     echo '[[['
-    fn logs get "$TESTNAME" "$id"
+    fn get log "$TESTNAME" "$id"
     echo ']]]'
     echo
   fi
