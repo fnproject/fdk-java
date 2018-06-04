@@ -42,9 +42,9 @@ fn -v build --no-cache >build-output 2>&1 || {
 }
 
 if [ -f config ]; then
-    fn apps create "$TESTNAME" $(echo $(prefix_lines --config config))
+    fn create app "$TESTNAME" $(echo $(prefix_lines --config config))
 else
-    fn apps create "$TESTNAME"
+    fn create app "$TESTNAME"
 fi
 
 if [[ -x deploy.sh ]]
@@ -56,8 +56,8 @@ fi
 
 [[ -n "$POST_CONFIGURE_HOOK" ]] && $POST_CONFIGURE_HOOK
 
-fn apps inspect "$TESTNAME"
-[[ -x route-create.sh ]] || fn routes inspect "$TESTNAME" "$TESTNAME"
+fn inspect app "$TESTNAME"
+[[ -x route-create.sh ]] || fn inspect route "$TESTNAME" "$TESTNAME"
 
 if [[ -x run-test.sh ]]
 then
@@ -74,7 +74,7 @@ else
 fi
 
 set +x
-fn calls list "$TESTNAME" | while read k v
+fn list calls "$TESTNAME" | while read k v
 do
   echo "$k $v"
   if [[ "$k" = "ID:" ]]; then id="$v"; fi
@@ -92,4 +92,4 @@ if [[ -x delete.sh ]]
 then
     ./delete.sh
 fi
-fn apps delete "$TESTNAME"
+fn delete app "$TESTNAME"

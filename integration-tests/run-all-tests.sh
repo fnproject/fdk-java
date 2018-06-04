@@ -21,7 +21,7 @@ if [[ -z "${COMPLETER_BASE_URL+x}" ]]; then echo "Please set COMPLETER_BASE_URL"
 # ----------------------------------------------------------------------
 
 printenv
-fn apps list
+fn list apps
 
 set +x
 

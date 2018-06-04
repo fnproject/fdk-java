@@ -166,7 +166,7 @@ path: /primes
 Create your app and deploy your function:
 
 ```
-$ fn apps create flows-example
+$ fn create app flows-example
 Successfully created app: flows-example
 
 $ fn deploy --app flows-example

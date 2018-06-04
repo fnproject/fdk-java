@@ -82,11 +82,11 @@ fi
 COMPLETER_SERVER_IP=`docker inspect --type container -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' flow-service`
 
 # Create app and routes
-if [[ `fn apps list` == *"myapp"* ]]; then
+if [[ `fn list apps` == *"myapp"* ]]; then
     echo "App myapp is already there."
 else
-    fn apps create myapp
-    fn apps config set myapp COMPLETER_BASE_URL http://10.167.103.193:8081
+    fn create app myapp
+    fn config app myapp COMPLETER_BASE_URL http://10.167.103.193:8081
 fi
 
 if [[ `fn routes list myapp` == *"/resize128"* ]]; then
@@ -98,9 +98,9 @@ else
             --build-arg http_proxy=$http_proxy \
             --build-arg https_proxy=$https_proxy \
             . && \
-        fn routes create myapp /resize128
+        fn create route myapp /resize128
 fi
-if [[ `fn routes list myapp` == *"/resize256"* ]]; then
+if [[ `fn list routes myapp` == *"/resize256"* ]]; then
     echo "Route /resize256 is already there."
 else
     # This works around proxy issues
@@ -111,7 +111,7 @@ else
             . && \
         fn routes create myapp /resize256
 fi
-if [[ `fn routes list myapp` == *"/resize512"* ]]; then
+if [[ `fn list routes myapp` == *"/resize512"* ]]; then
     echo "Route /resize512 is already there."
 else
     # This works around proxy issues
