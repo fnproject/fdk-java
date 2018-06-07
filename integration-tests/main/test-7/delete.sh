@@ -1,3 +1,3 @@
 #!/bin/bash -ex
 
-fn routes delete "$TESTNAME" /test-7
+fn  delete route "$TESTNAME" /test-7

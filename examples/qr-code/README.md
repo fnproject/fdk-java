@@ -31,8 +31,8 @@ $ fn build
 Create an app and route to host the function
 
 ```bash
-$ fn apps create qr-app
-$ fn routes create qr-app /qr
+$ fn create app qr-app
+$ fn create route qr-app /qr
 ```
 
 Invoke the function to create a QR code

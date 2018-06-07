@@ -31,8 +31,8 @@ $ fn build
 Create an app and route to host the function
 
 ```bash
-$ fn apps create string-reverse-app
-$ fn routes create string-reverse-app /reverse
+$ fn create app string-reverse-app
+$ fn create route string-reverse-app /reverse
 ```
 
 Invoke the function to reverse a string

@@ -195,7 +195,7 @@ $ fn start
 Then in your original terminal create an app:
 
 ```bash
-$ fn apps create java-app
+$ fn create app java-app
 Successfully created app: java-app
 ```
 

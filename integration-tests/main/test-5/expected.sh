@@ -8,7 +8,7 @@ ATTEMPT=0
 while [ ! -f "$FOUND_FILENAME" ] ;
 do
   sleep 1
-  calls_found=`fn calls list "test-5" | grep "Status: success" | wc -l`
+  calls_found=`fn list calls "test-5" | grep "Status: success" | wc -l`
   echo "$calls_found successful function calls found"
 
   # TODO: Remove this check when `fn logs` becomes reliable
@@ -17,11 +17,11 @@ do
   fi
 
   # TODO: Use this check instead when `fn logs` becomes reliable
-  # fn calls list "test-5" | while read k v
+  # fn list calls "test-5" | while read k v
   # do
   #   if [[ "$k" = "ID:" ]]; then id="$v"; fi
   #   if [[ -z "$k" ]]; then
-  #     LOG=`fn logs get "test-5" "$id"`
+  #     LOG=`fn get log "test-5" "$id"`
   #     echo $LOG
   #     if [[ $LOG == *"Ran the hook."* ]]; then
   #        touch "$FOUND_FILENAME"
