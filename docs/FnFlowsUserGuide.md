@@ -60,7 +60,7 @@ $ fn start
 Similarly, start the Flows server server and point it at the functions server API URL:
 
 ```
-$ DOCKER_LOCALHOST=$(docker inspect --type container -f '{{.NetworkSettings.Gateway}}' functions)
+$ DOCKER_LOCALHOST=$(docker inspect --type container -f '{{.NetworkSettings.Gateway}}' fnserver)
 
 $ docker run --rm  \
        -p 8081:8081 \
