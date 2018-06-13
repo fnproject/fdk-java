@@ -60,7 +60,7 @@ $ fn start
 Similarly, start the Flows server server and point it at the functions server API URL:
 
 ```
-$ DOCKER_LOCALHOST=$(docker inspect --type container -f '{{.NetworkSettings.Gateway}}' functions)
+$ DOCKER_LOCALHOST=$(docker inspect --type container -f '{{.NetworkSettings.Gateway}}' fnserver)
 
 $ docker run --rm  \
        -p 8081:8081 \
@@ -166,7 +166,7 @@ path: /primes
 Create your app and deploy your function:
 
 ```
-$ fn apps create flows-example
+$ fn create app flows-example
 Successfully created app: flows-example
 
 $ fn deploy --app flows-example
@@ -178,7 +178,7 @@ Configure your function to talk to the local flow service endpoint:
 ```
 $ DOCKER_LOCALHOST=$(docker inspect --type container -f '{{.NetworkSettings.Gateway}}' functions)
 
-$ fn apps config set flows-example COMPLETER_BASE_URL "http://$DOCKER_LOCALHOST:8081"
+$ fn config app flows-example COMPLETER_BASE_URL "http://$DOCKER_LOCALHOST:8081"
 ```
 
 ### Run your Flow function

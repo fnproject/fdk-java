@@ -54,7 +54,7 @@ $ fn build
 Create a route to host the function:
 
 ```bash
-$ fn routes create myapp /async-thumbnails
+$ fn create route myapp /async-thumbnails
 ```
 
 Configure the app. In order to do this you must determine the IP address of the
@@ -68,11 +68,11 @@ $ docker inspect --type container -f '{{range .NetworkSettings.Networks}}{{.IPAd
 and then use it as the storage host:
 
 ```bash
-$ fn routes config set myapp /async-thumbnails OBJECT_STORAGE_URL http://172.17.0.4:9000
+$ fn config route myapp /async-thumbnails OBJECT_STORAGE_URL http://172.17.0.4:9000
 myapp /async-thumbnails updated OBJECT_STORAGE_URL with http://172.17.0.4:9000
-$ fn routes config set myapp /async-thumbnails OBJECT_STORAGE_ACCESS alpha
+$ fn config route myapp /async-thumbnails OBJECT_STORAGE_ACCESS alpha
 myapp /async-thumbnails updated OBJECT_STORAGE_ACCESS with alpha
-$ fn routes config set myapp /async-thumbnails OBJECT_STORAGE_SECRET betabetabetabeta
+$ fn config route myapp /async-thumbnails OBJECT_STORAGE_SECRET betabetabetabeta
 myapp /async-thumbnails updated OBJECT_STORAGE_SECRET with betabetabetabeta
 ```
 

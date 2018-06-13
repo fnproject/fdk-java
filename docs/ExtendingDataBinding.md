@@ -19,7 +19,7 @@ First of all, let's create a new function project. If you haven't done it alread
 
 ```shell
 $ fn start &
-$ fn apps create java-app
+$ fn create app java-app
 Successfully created app:  java-app
 ```
 
