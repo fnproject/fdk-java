@@ -5,7 +5,7 @@ import java.io.InputStream;
 /**
  * Builder for function input events
  */
-public interface FnEventBuilder {
+public interface FnEventBuilder<T> {
 
     /**
      * Add a header to the input with a variable number of values; duplicate headers will be overwritten
@@ -14,7 +14,7 @@ public interface FnEventBuilder {
      * @param value header value(s)
      * @return an event builder
      */
-    FnEventBuilder withHeader(String key, String value);
+    FnEventBuilder<T> withHeader(String key, String value);
 
     /**
      * Set the body of the request by providing an InputStream
@@ -25,7 +25,7 @@ public interface FnEventBuilder {
      * @param contentLength how long the body is supposed to be
      * @return an event builder
      */
-    FnEventBuilder withBody(InputStream body, int contentLength);
+    FnEventBuilder<T> withBody(InputStream body, int contentLength);
 
     /**
      * Set the body of the request as a byte array
@@ -33,7 +33,7 @@ public interface FnEventBuilder {
      * @param body the bytes of the body
      * @return an event builder
      */
-    FnEventBuilder withBody(byte[] body);
+    FnEventBuilder<T> withBody(byte[] body);
 
     /**
      * Set the body of the request as a String
@@ -41,7 +41,7 @@ public interface FnEventBuilder {
      * @param body the String of the body
      * @return an event builder
      */
-    FnEventBuilder withBody(String body);
+    FnEventBuilder<T> withBody(String body);
 
     /**
      * Set the app name associated with the call
@@ -49,7 +49,7 @@ public interface FnEventBuilder {
      * @param appName the app name
      * @return an event builder
      */
-    FnEventBuilder withAppName(String appName);
+    FnEventBuilder<T> withAppName(String appName);
 
     /**
      * Set the fn route associated with the call
@@ -57,7 +57,7 @@ public interface FnEventBuilder {
      * @param route the route
      * @return an event builder
      */
-    FnEventBuilder withRoute(String route);
+    FnEventBuilder<T> withRoute(String route);
 
     /**
      * Set the HTTP method of the incoming request
@@ -65,7 +65,7 @@ public interface FnEventBuilder {
      * @param method an HTTP method
      * @return an event builder
      */
-    FnEventBuilder withMethod(String method);
+    FnEventBuilder<T> withMethod(String method);
 
     /**
      * Set the request URL of the incoming event
@@ -73,7 +73,7 @@ public interface FnEventBuilder {
      * @param requestUrl the request URL
      * @return an event builder
      */
-    FnEventBuilder withRequestUrl(String requestUrl);
+    FnEventBuilder<T> withRequestUrl(String requestUrl);
 
     /**
      * Add a query parameter to the request URL
@@ -82,7 +82,7 @@ public interface FnEventBuilder {
      * @param value - non URL encoded value
      * @return an event builder
      */
-    FnEventBuilder withQueryParameter(String key, String value);
+    FnEventBuilder<T> withQueryParameter(String key, String value);
 
     /**
      * Consume the builder and enqueue this event to be passed into the function when it is run
@@ -90,7 +90,7 @@ public interface FnEventBuilder {
      * @return The original testing rule. The builder is consumed.
      * @throws IllegalStateException if this event has already been enqueued and the event input can only be read once.
      */
-    FnTestingRule enqueue();
+    T enqueue();
 
     /**
      * Consume the builder and enqueue multiple copies of this event.
@@ -102,5 +102,7 @@ public interface FnEventBuilder {
      * @return The original testing rule. The builder is consumed.
      * @throws IllegalStateException if the body cannot be read multiple times.
      */
-    FnTestingRule enqueue(int n);
+    T enqueue(int n);
+
+
 }
