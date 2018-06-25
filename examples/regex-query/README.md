@@ -33,8 +33,8 @@ $ fn build
 Create an app and route to host the function
 
 ```bash
-$ fn apps create regex-query
-$ fn routes create regex-query /query
+$ fn create app regex-query
+$ fn create route regex-query /query
 ```
 
 Invoke the function to perform a regex search
