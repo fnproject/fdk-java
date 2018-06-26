@@ -42,10 +42,10 @@ public class ThumbnailsFunctionTest {
         testing.thenRun(ThumbnailsFunction.class, "handleRequest");
 
         // Check the final image uploads were performed
-        mockServer.verify(1, putRequestedFor(urlMatching("/alpha/.*\\.png")).withRequestBody(equalTo("testing")));
-        mockServer.verify(1, putRequestedFor(urlMatching("/alpha/.*\\.png")).withRequestBody(equalTo("128")));
-        mockServer.verify(1, putRequestedFor(urlMatching("/alpha/.*\\.png")).withRequestBody(equalTo("256")));
-        mockServer.verify(1, putRequestedFor(urlMatching("/alpha/.*\\.png")).withRequestBody(equalTo("512")));
+        mockServer.verify(putRequestedFor(urlMatching("/alpha/.*\\.png")).withRequestBody(containing("testing")));
+        mockServer.verify(putRequestedFor(urlMatching("/alpha/.*\\.png")).withRequestBody(containing("128")));
+        mockServer.verify(putRequestedFor(urlMatching("/alpha/.*\\.png")).withRequestBody(containing("256")));
+        mockServer.verify(putRequestedFor(urlMatching("/alpha/.*\\.png")).withRequestBody(containing("512")));
         mockServer.verify(4, putRequestedFor(urlMatching(".*")));
     }
 
