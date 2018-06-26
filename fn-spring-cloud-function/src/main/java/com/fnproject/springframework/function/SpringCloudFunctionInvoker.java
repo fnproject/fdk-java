@@ -145,7 +145,7 @@ public class SpringCloudFunctionInvoker implements FunctionInvoker, Closeable {
     }
 
     @Override
-    public void close() throws IOException {
+    public void close() {
         applicationContext.close();
     }
 }
