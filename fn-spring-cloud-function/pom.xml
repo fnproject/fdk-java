@@ -44,7 +44,7 @@
 
         <dependency>
             <groupId>com.fnproject.fn</groupId>
-            <artifactId>testing</artifactId>
+            <artifactId>testing-junit4</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
