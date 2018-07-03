@@ -10,13 +10,13 @@ To import the testing library add the following dependency to your Maven project
 <dependency>
     <groupId>junit</groupId>
     <artifactId>junit</artifactId>
-    <version>4.12</version> <!-- Most recent version of JUnit should work-->
+    <version>4.12</version> <!-- Most recent version of JUnit 4 should work-->
     <scope>test</scope>
 </dependency>
 <dependency>
     <groupId>com.fnproject.fn</groupId>
-    <artifactId>testing</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <artifactId>testing-junit4</artifactId>
+    <version>${fdk.version}</version>
     <scope>test</scope>
 </dependency>
 ```
