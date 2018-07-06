@@ -1,4 +1,4 @@
-package com.fnproject.fn.runtime;
+package com.fnproject.fn.runtime.codec;
 
 import com.fnproject.fn.api.exception.FunctionInputHandlingException;
 import com.fnproject.fn.api.InputEvent;
@@ -14,7 +14,7 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.fnproject.fn.runtime.HeaderBuilder.headerEntry;
+import static com.fnproject.fn.runtime.codec.HeaderBuilder.headerEntry;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 

@@ -1,4 +1,4 @@
-package com.fnproject.fn.runtime;
+package com.fnproject.fn.runtime.codec;
 
 import com.fnproject.fn.api.InputEvent;
 import com.fnproject.fn.api.OutputEvent;
@@ -13,7 +13,7 @@ public interface EventCodec {
     /**
      * Read a event from the input
      *
-     * @return an empty input stream if the end of the stream is reached or an event if otherwise
+     * @return an empty Optional if the end of the stream is reached or an event if otherwise
      */
     Optional<InputEvent> readEvent();
 

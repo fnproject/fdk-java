@@ -1,4 +1,4 @@
-package com.fnproject.fn.runtime;
+package com.fnproject.fn.runtime.codec;
 
 
 import com.fnproject.fn.api.Headers;
@@ -6,6 +6,8 @@ import com.fnproject.fn.api.InputEvent;
 import com.fnproject.fn.api.OutputEvent;
 import com.fnproject.fn.api.exception.FunctionInputHandlingException;
 import com.fnproject.fn.api.exception.FunctionOutputHandlingException;
+import com.fnproject.fn.runtime.QueryParametersParser;
+import com.fnproject.fn.runtime.ReadOnceInputEvent;
 import org.apache.http.Header;
 import org.apache.http.HttpException;
 import org.apache.http.HttpRequest;
@@ -40,7 +42,7 @@ public class HttpEventCodec implements EventCodec {
 
     private final Map<String, String> env;
 
-    HttpEventCodec(Map<String, String> env, InputStream input, OutputStream output) {
+    public HttpEventCodec(Map<String, String> env, InputStream input, OutputStream output) {
 
         this.env = env;
 
