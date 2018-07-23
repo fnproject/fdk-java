@@ -1,7 +1,5 @@
 package com.fnproject.fn.integration.test2;
 
-import com.fnproject.fn.api.*;
-
 public class PlainFunction {
 
     private String greeting;
