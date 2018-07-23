@@ -191,7 +191,7 @@ public final class FnTestingRule implements TestRule {
      *
      * @return a new event builder
      */
-    public FnEventBuilder givenEvent() {
+    public FnEventBuilderJUnit4 givenEvent() {
         return new DefaultFnEventBuilder();
     }
 
@@ -388,8 +388,8 @@ public final class FnTestingRule implements TestRule {
     }
 
 
-    public FnFunctionStubBuilder givenFn(String id) {
-        return new FnFunctionStubBuilder() {
+    public FnFunctionStubBuilderJUnit4 givenFn(String id) {
+        return new FnFunctionStubBuilderJUnit4() {
             @Override
             public FnTestingRule withResult(byte[] result) {
                 return withAction((body) -> result);
@@ -432,7 +432,7 @@ public final class FnTestingRule implements TestRule {
     /**
      * Builds a mocked input event into the function runtime
      */
-    private class DefaultFnEventBuilder implements FnEventBuilder {
+    private class DefaultFnEventBuilder implements FnEventBuilderJUnit4 {
 
         FnHttpEventBuilder builder = new FnHttpEventBuilder().withMethod("GET")
            .withAppName("appName")

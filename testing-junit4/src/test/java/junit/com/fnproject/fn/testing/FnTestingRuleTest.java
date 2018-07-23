@@ -1,9 +1,12 @@
-package com.fnproject.fn.testing;
+package junit.com.fnproject.fn.testing;
 
 import com.fnproject.fn.api.InputEvent;
 import com.fnproject.fn.api.OutputEvent;
 import com.fnproject.fn.api.RuntimeContext;
+import com.fnproject.fn.testing.FnResult;
+import com.fnproject.fn.testing.FnTestingRule;
 import org.apache.commons.io.IOUtils;
+import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -24,8 +27,8 @@ public class FnTestingRuleTest {
     public static List<byte[]> capturedBodies = new ArrayList<>();
 
     @Rule
-    public FnTestingRule fn = FnTestingRule.createDefault();
-    private final String exampleBaseUrl = "http://www.example.com";
+    public        FnTestingRule fn             = FnTestingRule.createDefault();
+    private final String        exampleBaseUrl = "http://www.example.com";
 
     @Before
     public void reset() {
@@ -90,7 +93,7 @@ public class FnTestingRuleTest {
 
         fn.thenRun(FnTestingRuleTest.TestFn.class, "copyConfiguration");
 
-        assertThat(configuration).containsEntry("CONFIG_FOO", "BAR");
+        Assertions.assertThat(configuration).containsEntry("CONFIG_FOO", "BAR");
     }
 
 
@@ -101,7 +104,7 @@ public class FnTestingRuleTest {
 
         fn.thenRun(FnTestingRuleTest.TestFn.class, "copyConfiguration");
 
-        assertThat(configuration).doesNotContainKeys("APP_NAME", "ROUTE", "METHOD", "REQUEST_URL");
+        Assertions.assertThat(configuration).doesNotContainKeys("APP_NAME", "ROUTE", "METHOD", "REQUEST_URL");
     }
 
 
@@ -111,8 +114,8 @@ public class FnTestingRuleTest {
 
         fn.thenRun(FnTestingRuleTest.TestFn.class, "err");
 
-        assertThat(fn.getOnlyResult().getStatus()).isEqualTo(500);
-        assertThat(fn.getStdErrAsString()).contains("An error occurred in function: ERR");
+        Assertions.assertThat(fn.getOnlyResult().getStatus()).isEqualTo(500);
+        Assertions.assertThat(fn.getStdErrAsString()).contains("An error occurred in function: ERR");
     }
 
 
@@ -123,7 +126,7 @@ public class FnTestingRuleTest {
 
         fn.thenRun(FnTestingRuleTest.TestFn.class, "copyInputEvent");
 
-        assertThat(inEvent.getAppName()).isEqualTo("appName");
+        Assertions.assertThat(inEvent.getAppName()).isEqualTo("appName");
     }
 
 
@@ -136,7 +139,7 @@ public class FnTestingRuleTest {
 
         fn.thenRun(FnTestingRuleTest.TestFn.class, "copyConfiguration");
 
-        assertThat(configuration).containsEntry("SOME_KEY_WITH_DASHES", "some-value");
+        Assertions.assertThat(configuration).containsEntry("SOME_KEY_WITH_DASHES", "some-value");
 
     }
 
@@ -151,10 +154,10 @@ public class FnTestingRuleTest {
 
         fn.thenRun(FnTestingRuleTest.TestFn.class, "copyInputEvent");
 
-        assertThat(inEvent.getAppName()).isEqualTo("TEST_APP");
-        assertThat(inEvent.getRoute()).isEqualTo("/myroute");
-        assertThat(inEvent.getMethod()).isEqualTo("PUT");
-        assertThat(inEvent.getRequestUrl()).isEqualTo("http://example.com/mytest");
+        Assertions.assertThat(inEvent.getAppName()).isEqualTo("TEST_APP");
+        Assertions.assertThat(inEvent.getRoute()).isEqualTo("/myroute");
+        Assertions.assertThat(inEvent.getMethod()).isEqualTo("PUT");
+        Assertions.assertThat(inEvent.getRequestUrl()).isEqualTo("http://example.com/mytest");
     }
 
 
@@ -179,17 +182,17 @@ public class FnTestingRuleTest {
         fn.thenRun(TestFn.class, "captureInput");
 
         FnResult result = fn.getOnlyResult();
-        assertThat(result.getBodyAsString()).isEmpty();
-        assertThat(result.getHeaders().getAll()).contains(headerEntry("Content-length", "0"));
-        assertThat(result.getStatus()).isEqualTo(200);
+        Assertions.assertThat(result.getBodyAsString()).isEmpty();
+        Assertions.assertThat(result.getHeaders().getAll()).contains(headerEntry("Content-length", "0"));
+        Assertions.assertThat(result.getStatus()).isEqualTo(200);
 
         InputEvent event = capturedInputs.get(0);
-        assertThat(event.getAppName()).isEqualTo(APP_NAME);
-        assertThat(event.getHeaders().getAll())
-                .contains(headerEntry("FOO", "BAR, BAZ"))
-                .contains(headerEntry("FEH", ""));
-        assertThat(event.getMethod()).isEqualTo(METHOD);
-        assertThat(capturedBodies.get(0)).isEqualTo("Body".getBytes());
+        Assertions.assertThat(event.getAppName()).isEqualTo(APP_NAME);
+        Assertions.assertThat(event.getHeaders().getAll())
+                  .contains(headerEntry("FOO", "BAR, BAZ"))
+                  .contains(headerEntry("FEH", ""));
+        Assertions.assertThat(event.getMethod()).isEqualTo(METHOD);
+        Assertions.assertThat(capturedBodies.get(0)).isEqualTo("Body".getBytes());
     }
 
 
@@ -218,27 +221,27 @@ public class FnTestingRuleTest {
         fn.thenRun(TestFn.class, "captureInput");
 
         FnResult result = fn.getResults().get(0);
-        assertThat(result.getBodyAsString()).isEmpty();
-        assertThat(result.getHeaders().getAll()).contains(headerEntry("Content-length", "0"));
-        assertThat(result.getStatus()).isEqualTo(200);
+        Assertions.assertThat(result.getBodyAsString()).isEmpty();
+        Assertions.assertThat(result.getHeaders().getAll()).contains(headerEntry("Content-length", "0"));
+        Assertions.assertThat(result.getStatus()).isEqualTo(200);
 
         InputEvent event = capturedInputs.get(0);
-        assertThat(event.getAppName()).isEqualTo("alpha");
-        assertThat(event.getHeaders().getAll()).contains(headerEntry("FOO", "BAR"));
-        assertThat(event.getMethod()).isEqualTo("POST");
-        assertThat(capturedBodies.get(0)).isEqualTo("Body".getBytes());
+        Assertions.assertThat(event.getAppName()).isEqualTo("alpha");
+        Assertions.assertThat(event.getHeaders().getAll()).contains(headerEntry("FOO", "BAR"));
+        Assertions.assertThat(event.getMethod()).isEqualTo("POST");
+        Assertions.assertThat(capturedBodies.get(0)).isEqualTo("Body".getBytes());
 
 
         FnResult result2 = fn.getResults().get(1);
-        assertThat(result2.getBodyAsString()).isEmpty();
-        assertThat(result2.getHeaders().getAll()).contains(headerEntry("Content-length", "0"));
-        assertThat(result2.getStatus()).isEqualTo(200);
+        Assertions.assertThat(result2.getBodyAsString()).isEmpty();
+        Assertions.assertThat(result2.getHeaders().getAll()).contains(headerEntry("Content-length", "0"));
+        Assertions.assertThat(result2.getStatus()).isEqualTo(200);
 
         InputEvent event2 = capturedInputs.get(1);
-        assertThat(event2.getAppName()).isEqualTo("alpha");
-        assertThat(event2.getHeaders().getAll()).contains(headerEntry("FOO2", "BAR2"));
-        assertThat(event2.getMethod()).isEqualTo("PUT");
-        assertThat(capturedBodies.get(1)).isEqualTo("Body2".getBytes());
+        Assertions.assertThat(event2.getAppName()).isEqualTo("alpha");
+        Assertions.assertThat(event2.getHeaders().getAll()).contains(headerEntry("FOO2", "BAR2"));
+        Assertions.assertThat(event2.getMethod()).isEqualTo("PUT");
+        Assertions.assertThat(capturedBodies.get(1)).isEqualTo("Body2".getBytes());
     }
 
 
@@ -256,14 +259,14 @@ public class FnTestingRuleTest {
         fn.thenRun(TestFn.class, "echoInput");
 
         List<FnResult> results = fn.getResults();
-        assertThat(results).hasSize(10);
+        Assertions.assertThat(results).hasSize(10);
 
 
         results.forEach((r) -> {
-            assertThat(r.getStatus()).isEqualTo(200);
-            assertThat(r.getHeaders().getAll())
-                    .contains(headerEntry("Content-Type", "application/octet-stream"))
-                    .contains(headerEntry("Content-length", String.valueOf("Body".getBytes().length)));
+            Assertions.assertThat(r.getStatus()).isEqualTo(200);
+            Assertions.assertThat(r.getHeaders().getAll())
+                      .contains(headerEntry("Content-Type", "application/octet-stream"))
+                      .contains(headerEntry("Content-length", String.valueOf("Body".getBytes().length)));
 
         });
     }
@@ -296,10 +299,10 @@ public class FnTestingRuleTest {
         fn.thenRun(TestFn.class, "echoInput");
 
         List<FnResult> results = fn.getResults();
-        assertThat(results).hasSize(2);
+        Assertions.assertThat(results).hasSize(2);
 
-        assertThat(results.get(0).getBodyAsString()).isEqualTo("Body");
-        assertThat(results.get(1).getBodyAsString()).isEqualTo("Body1");
+        Assertions.assertThat(results.get(0).getBodyAsString()).isEqualTo("Body");
+        Assertions.assertThat(results.get(1).getBodyAsString()).isEqualTo("Body1");
     }
 
     @Test
@@ -308,8 +311,8 @@ public class FnTestingRuleTest {
 
         fn.thenRun(TestFn.class, "captureInput");
 
-        assertThat(fn.getOnlyResult().getStatus()).isEqualTo(200);
-        assertThat(capturedBodies.get(0)).isEqualTo("FOO".getBytes());
+        Assertions.assertThat(fn.getOnlyResult().getStatus()).isEqualTo(200);
+        Assertions.assertThat(capturedBodies.get(0)).isEqualTo("FOO".getBytes());
     }
 
     @Test
@@ -320,7 +323,7 @@ public class FnTestingRuleTest {
                 .enqueue();
         fn.thenRun(TestFn.class, "copyInputEvent");
 
-        assertThat(inEvent.getRequestUrl()).isEqualTo(baseUrl);
+        Assertions.assertThat(inEvent.getRequestUrl()).isEqualTo(baseUrl);
     }
 
     @Test
@@ -331,8 +334,8 @@ public class FnTestingRuleTest {
                 .withQueryParameter("var", "val")
                 .enqueue();
         fn.thenRun(TestFn.class, "copyInputEvent");
-        assertThat(fn.getOnlyResult().getStatus()).isEqualTo(200);
-        assertThat(inEvent.getRequestUrl()).isEqualTo(baseUrl + "?var=val");
+        Assertions.assertThat(fn.getOnlyResult().getStatus()).isEqualTo(200);
+        Assertions.assertThat(inEvent.getRequestUrl()).isEqualTo(baseUrl + "?var=val");
     }
 
     @Test
@@ -345,7 +348,7 @@ public class FnTestingRuleTest {
                 .enqueue();
         fn.thenRun(TestFn.class, "copyInputEvent");
 
-        assertThat(inEvent.getRequestUrl()).isEqualTo(baseUrl + "?var1=val1&var2=val2");
+        Assertions.assertThat(inEvent.getRequestUrl()).isEqualTo(baseUrl + "?var1=val1&var2=val2");
     }
 
     @Test
@@ -358,7 +361,7 @@ public class FnTestingRuleTest {
                 .enqueue();
         fn.thenRun(TestFn.class, "copyInputEvent");
 
-        assertThat(inEvent.getRequestUrl()).isEqualTo(baseUrl + "?var=val1&var=val2");
+        Assertions.assertThat(inEvent.getRequestUrl()).isEqualTo(baseUrl + "?var=val1&var=val2");
     }
 
     @Test
@@ -369,7 +372,7 @@ public class FnTestingRuleTest {
                 .enqueue();
         fn.thenRun(TestFn.class, "copyInputEvent");
 
-        assertThat(inEvent.getRequestUrl()).isEqualTo(exampleBaseUrl + "?%26=val");
+        Assertions.assertThat(inEvent.getRequestUrl()).isEqualTo(exampleBaseUrl + "?%26=val");
     }
 
     @Test
@@ -380,7 +383,7 @@ public class FnTestingRuleTest {
                 .enqueue();
         fn.thenRun(TestFn.class, "copyInputEvent");
 
-        assertThat(inEvent.getRequestUrl()).isEqualTo(exampleBaseUrl + "?my+var=this+val");
+        Assertions.assertThat(inEvent.getRequestUrl()).isEqualTo(exampleBaseUrl + "?my+var=this+val");
     }
 
     @Test
@@ -392,7 +395,7 @@ public class FnTestingRuleTest {
                 .enqueue();
         fn.thenRun(TestFn.class, "copyInputEvent");
 
-        assertThat(inEvent.getRequestUrl()).isEqualTo(baseUrl + "?var=%26");
+        Assertions.assertThat(inEvent.getRequestUrl()).isEqualTo(baseUrl + "?var=%26");
     }
 
     private static Map.Entry<String, String> headerEntry(String key, String value) {

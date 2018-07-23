@@ -1,6 +1,8 @@
-package com.fnproject.fn.testing;
+package junit.com.fnproject.fn.testing;
 
 import com.fnproject.fn.api.flow.Flows;
+import com.fnproject.fn.testing.FnTestingRule;
+import org.assertj.core.api.Assertions;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -32,7 +34,7 @@ public class WhenCompleteTest {
 
         fn.thenRun(TestFn.class, "handleRequest");
 
-        assertThat(cas.get()).isEqualTo(2);
+        Assertions.assertThat(cas.get()).isEqualTo(2);
     }
 
 }

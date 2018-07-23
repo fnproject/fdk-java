@@ -22,6 +22,16 @@
             <artifactId>runtime</artifactId>
             <version>${project.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>com.fnproject.fn</groupId>
+            <artifactId>testing-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+
+
+
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
