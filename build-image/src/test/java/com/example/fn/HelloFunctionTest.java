@@ -1,7 +1,9 @@
 package com.example.fn;
 
-import com.fnproject.fn.testing.*;
-import org.junit.*;
+import com.fnproject.fn.testing.FnResult;
+import com.fnproject.fn.testing.FnTestingRule;
+import org.junit.Rule;
+import org.junit.Test;
 
 import static org.junit.Assert.*;
 
