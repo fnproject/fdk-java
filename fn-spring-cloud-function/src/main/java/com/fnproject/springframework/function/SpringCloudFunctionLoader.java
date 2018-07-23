@@ -6,8 +6,8 @@ import com.fnproject.springframework.function.functions.SpringCloudFunction;
 import com.fnproject.springframework.function.functions.SpringCloudMethod;
 import com.fnproject.springframework.function.functions.SpringCloudSupplier;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cloud.function.context.FunctionInspector;
-import org.springframework.cloud.function.core.FunctionCatalog;
+import org.springframework.cloud.function.context.FunctionCatalog;
+import org.springframework.cloud.function.context.catalog.FunctionInspector;
 import reactor.core.publisher.Flux;
 
 import java.util.function.Consumer;
@@ -67,24 +67,24 @@ public class SpringCloudFunctionLoader {
     private void loadSpringCloudFunctionFromEnvVars() {
         String functionName = System.getenv(ENV_VAR_FUNCTION_NAME);
         if (functionName != null) {
-            function = this.catalog.lookupFunction(functionName);
+            function = this.catalog.lookup(Function.class, functionName);
         }
 
         String consumerName = System.getenv(ENV_VAR_CONSUMER_NAME);
         if (consumerName != null) {
-            consumer = this.catalog.lookupConsumer(consumerName);
+            consumer = this.catalog.lookup(Consumer.class, consumerName);
         }
 
         String supplierName = System.getenv(ENV_VAR_SUPPLIER_NAME);
         if (supplierName != null) {
-            supplier = this.catalog.lookupSupplier(supplierName);
+            supplier = this.catalog.lookup(Supplier.class, supplierName);
         }
     }
 
     private void loadSpringCloudFunctionFromDefaults() {
-        function = this.catalog.lookupFunction(DEFAULT_FUNCTION_BEAN);
-        consumer = this.catalog.lookupConsumer(DEFAULT_CONSUMER_BEAN);
-        supplier = this.catalog.lookupSupplier(DEFAULT_SUPPLIER_BEAN);
+        function = this.catalog.lookup(Function.class, DEFAULT_FUNCTION_BEAN);
+        consumer = this.catalog.lookup(Consumer.class, DEFAULT_CONSUMER_BEAN);
+        supplier = this.catalog.lookup(Supplier.class, DEFAULT_SUPPLIER_BEAN);
     }
 
 

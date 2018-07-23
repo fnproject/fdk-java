@@ -1,13 +1,19 @@
 package com.fnproject.springframework.function;
 
 import net.jodah.typetools.TypeResolver;
-import org.springframework.cloud.function.context.FunctionInspector;
+import org.springframework.cloud.function.context.FunctionRegistration;
+import org.springframework.cloud.function.context.catalog.FunctionInspector;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class SimpleFunctionInspector implements FunctionInspector {
+    @Override
+    public FunctionRegistration<?> getRegistration(Object function) {
+        return null;
+    }
+
     @Override
     public boolean isMessage(Object function) {
         throw new IllegalStateException("Not implemented");
@@ -50,11 +56,6 @@ public class SimpleFunctionInspector implements FunctionInspector {
 
     @Override
     public Class<?> getOutputWrapper(Object function) {
-        throw new IllegalStateException("Not implemented");
-    }
-
-    @Override
-    public Object convert(Object function, String value) {
         throw new IllegalStateException("Not implemented");
     }
 
