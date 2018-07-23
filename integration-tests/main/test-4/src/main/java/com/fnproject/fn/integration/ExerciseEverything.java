@@ -2,6 +2,7 @@ package com.fnproject.fn.integration;
 
 import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.InputEvent;
+import com.fnproject.fn.api.flow.*;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.TeeOutputStream;
 
@@ -11,17 +12,18 @@ import java.io.InputStream;
 import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @SuppressWarnings("unused")
 public class ExerciseEverything {
 
-    private boolean okay = true;
-    private ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    private PrintStream out = new PrintStream(new TeeOutputStream(System.err, bos));
-    private String testSelector = null;
-    private InputEvent inputEvent;
-    private List<Integer> failures = new ArrayList<>();
+    private boolean               okay         = true;
+    private ByteArrayOutputStream bos          = new ByteArrayOutputStream();
+    private PrintStream           out          = new PrintStream(new TeeOutputStream(System.err, bos));
+    private String                testSelector = null;
+    private InputEvent            inputEvent;
+    private List<Integer>         failures     = new ArrayList<>();
 
     @Test(1)
     @Test.Expect("completed value")

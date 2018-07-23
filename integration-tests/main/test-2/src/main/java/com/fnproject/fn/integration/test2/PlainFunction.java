@@ -1,5 +1,8 @@
 package com.fnproject.fn.integration.test2;
 
+import com.fnproject.fn.api.FnConfiguration;
+import com.fnproject.fn.api.RuntimeContext;
+
 public class PlainFunction {
 
     private String greeting;

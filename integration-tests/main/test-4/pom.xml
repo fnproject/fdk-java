@@ -29,13 +29,11 @@
             <groupId>com.fnproject.fn</groupId>
             <artifactId>testing-core</artifactId>
             <version>${fnproject.version}</version>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.fnproject.fn</groupId>
             <artifactId>testing-junit4</artifactId>
             <version>${fnproject.version}</version>
-            <scope>test</scope>
         </dependency>
 		<dependency>
             <groupId>junit</groupId>
