@@ -8,7 +8,7 @@ import org.junit.contrib.java.lang.system.EnvironmentVariables;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.springframework.cloud.function.core.FunctionCatalog;
+import org.springframework.cloud.function.context.catalog.InMemoryFunctionCatalog;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -24,8 +24,9 @@ public class SpringCloudFunctionLoaderTest {
     public final EnvironmentVariables environmentVariables = new EnvironmentVariables();
 
     private SpringCloudFunctionLoader loader;
+
     @Mock
-    private FunctionCatalog catalog;
+    private InMemoryFunctionCatalog catalog;
 
     @Before
     public void setUp() {
@@ -34,9 +35,7 @@ public class SpringCloudFunctionLoaderTest {
     }
 
     private void setUpCatalogToReturnNullForLookupByDefault() {
-        when(catalog.lookupFunction(any())).thenReturn(null);
-        when(catalog.lookupConsumer(any())).thenReturn(null);
-        when(catalog.lookupSupplier(any())).thenReturn(null);
+        when(catalog.lookup(any(), any())).thenReturn(null);
     }
 
     @Test
@@ -49,7 +48,8 @@ public class SpringCloudFunctionLoaderTest {
 
     @Test
     public void shouldLoadConsumerBeanCalledConsumerIfFunctionNotAvailable() {
-        Consumer<Object> consumer = (x) -> {};
+        Consumer<Object> consumer = (x) -> {
+        };
         stubCatalogToReturnConsumer(consumer);
 
         assertThat(getDiscoveredFunction().getTargetClass()).isEqualTo(consumer.getClass());
@@ -80,7 +80,8 @@ public class SpringCloudFunctionLoaderTest {
     @Test
     public void shouldLoadUserSpecifiedConsumerInEnvVarOverDefaultFunction() {
         String beanName = "myConsumer";
-        Consumer<Object> consumer = (x) -> {};
+        Consumer<Object> consumer = (x) -> {
+        };
         Function<Object, Object> function = (x) -> x;
 
         setConsumerEnvVar(beanName);
@@ -104,15 +105,15 @@ public class SpringCloudFunctionLoaderTest {
     }
 
     private void stubCatalogToReturnFunction(String beanName, Function<Object, Object> function) {
-        when(catalog.lookupFunction(beanName)).thenReturn(function);
+        when(catalog.lookup(Function.class, beanName)).thenReturn(function);
     }
 
     private void stubCatalogToReturnConsumer(String beanName, Consumer<Object> consumer) {
-        when(catalog.lookupConsumer(beanName)).thenReturn(consumer);
+        when(catalog.lookup(Consumer.class, beanName)).thenReturn(consumer);
     }
 
     private void stubCatalogToReturnSupplier(String beanName, Supplier<Object> supplier) {
-        when(catalog.lookupSupplier(beanName)).thenReturn(supplier);
+        when(catalog.lookup(Supplier.class, beanName)).thenReturn(supplier);
     }
 
     private void stubCatalogToReturnSupplier(Supplier<Object> supplier) {

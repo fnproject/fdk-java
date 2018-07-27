@@ -3,7 +3,7 @@ package com.fnproject.springframework.function.testfns;
 import com.fnproject.fn.api.FnConfiguration;
 import com.fnproject.fn.api.RuntimeContext;
 import com.fnproject.springframework.function.SpringCloudFunctionInvoker;
-import org.springframework.cloud.function.context.ContextFunctionCatalogAutoConfiguration;
+import org.springframework.cloud.function.context.config.ContextFunctionCatalogAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -15,11 +15,14 @@ import java.util.function.Supplier;
 @Configuration
 @Import(ContextFunctionCatalogAutoConfiguration.class)
 public class FunctionConfig {
+
     @FnConfiguration
     public static void configure(RuntimeContext ctx) {
         ctx.setInvoker(new SpringCloudFunctionInvoker(FunctionConfig.class));
     }
-    public void handleRequest() { }
+
+    public void handleRequest() {
+    }
 
     @Bean
     public Supplier<String> supplier() {
@@ -28,6 +31,7 @@ public class FunctionConfig {
 
     @Bean
     public Consumer<String> consumer() {
+        System.out.println("LOADED");
         return System.out::println;
     }
 
@@ -35,13 +39,16 @@ public class FunctionConfig {
     public Function<String, String> function() {
         return String::toLowerCase;
     }
+
     @Bean
     public Function<String, String> upperCaseFunction() {
         return String::toUpperCase;
     }
 
     @Bean
-    public String notAFunction() { return "NotAFunction"; }
+    public String notAFunction() {
+        return "NotAFunction";
+    }
 
     // Empty entrypoint that isn't used but necessary for the EntryPoint. Our invoker ignores this and loads our own
     // function to invoke

@@ -13,7 +13,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <spring.cloud.function.version>1.0.0.M1</spring.cloud.function.version>
+        <spring.cloud.function.version>1.0.0.M6</spring.cloud.function.version>
     </properties>
 
     <dependencies>
@@ -73,6 +73,13 @@
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+            <version>1.1.1</version>
             <scope>test</scope>
         </dependency>
 

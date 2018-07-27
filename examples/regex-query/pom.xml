@@ -7,7 +7,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <fnproject.version>1.0.0-SNAPSHOT</fnproject.version>
-        <jackson.version>2.8.9</jackson.version>
+        <jackson.version>2.9.6</jackson.version>
     </properties>
 
     <groupId>com.fnproject.fn.examples</groupId>
