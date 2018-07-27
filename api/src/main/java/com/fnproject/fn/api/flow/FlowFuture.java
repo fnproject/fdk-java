@@ -1,7 +1,6 @@
 package com.fnproject.fn.api.flow;
 
 import java.io.Serializable;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;

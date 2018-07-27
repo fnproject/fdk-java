@@ -6,8 +6,6 @@ import org.assertj.core.api.Assertions;
 import org.junit.Rule;
 import org.junit.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 public class IntegrationTest {
 
     @Rule

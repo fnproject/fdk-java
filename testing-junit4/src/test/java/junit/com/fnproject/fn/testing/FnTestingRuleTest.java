@@ -17,8 +17,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 public class FnTestingRuleTest {
 
     public static Map<String, String> configuration;

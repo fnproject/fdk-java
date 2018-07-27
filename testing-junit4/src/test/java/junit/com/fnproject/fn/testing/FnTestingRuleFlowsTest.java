@@ -5,7 +5,10 @@ import com.fnproject.fn.api.RuntimeContext;
 import com.fnproject.fn.api.flow.*;
 import com.fnproject.fn.testing.FnTestingRule;
 import org.assertj.core.api.Assertions;
-import org.junit.*;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 
 import java.io.Serializable;
 import java.util.Arrays;

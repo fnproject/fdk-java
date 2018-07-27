@@ -3,7 +3,6 @@ package com.fnproject.springframework.function.functions;
 import org.springframework.cloud.function.context.FunctionInspector;
 import reactor.core.publisher.Flux;
 
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**

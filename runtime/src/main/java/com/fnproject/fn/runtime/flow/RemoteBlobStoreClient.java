@@ -1,6 +1,5 @@
 package com.fnproject.fn.runtime.flow;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fnproject.fn.runtime.exception.PlatformCommunicationException;
 
 import java.io.IOException;

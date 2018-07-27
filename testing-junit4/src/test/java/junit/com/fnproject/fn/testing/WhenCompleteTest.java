@@ -8,8 +8,6 @@ import org.junit.Test;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 public class WhenCompleteTest {
     @Rule
     public FnTestingRule fn = FnTestingRule.createDefault();

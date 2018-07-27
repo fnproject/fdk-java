@@ -9,8 +9,6 @@ import org.junit.Test;
 
 import java.util.concurrent.Semaphore;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 public class MultipleEventsTest {
     @Rule
     public FnTestingRule fn = FnTestingRule.createDefault();

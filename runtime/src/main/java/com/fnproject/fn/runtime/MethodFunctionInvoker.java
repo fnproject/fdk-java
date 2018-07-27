@@ -3,8 +3,8 @@ package com.fnproject.fn.runtime;
 
 import com.fnproject.fn.api.*;
 import com.fnproject.fn.api.exception.FunctionInputHandlingException;
-import com.fnproject.fn.runtime.exception.InternalFunctionInvocationException;
 import com.fnproject.fn.api.exception.FunctionOutputHandlingException;
+import com.fnproject.fn.runtime.exception.InternalFunctionInvocationException;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Optional;

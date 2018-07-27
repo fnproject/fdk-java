@@ -1,8 +1,7 @@
 package com.fnproject.fn.runtime.testfns;
 
-import com.fnproject.fn.api.RuntimeContext;
 import com.fnproject.fn.api.FnConfiguration;
-
+import com.fnproject.fn.api.RuntimeContext;
 import com.fnproject.fn.runtime.testfns.coercions.DudCoercion;
 import com.fnproject.fn.runtime.testfns.coercions.StringReversalCoercion;
 
