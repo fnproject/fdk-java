@@ -3,7 +3,7 @@ package com.fnproject.springframework.function.functions;
 import com.fnproject.fn.api.MethodWrapper;
 import com.fnproject.fn.api.TypeWrapper;
 import com.fnproject.springframework.function.SimpleTypeWrapper;
-import org.springframework.cloud.function.context.FunctionInspector;
+import org.springframework.cloud.function.context.catalog.FunctionInspector;
 import reactor.core.publisher.Flux;
 
 import java.lang.reflect.Method;
