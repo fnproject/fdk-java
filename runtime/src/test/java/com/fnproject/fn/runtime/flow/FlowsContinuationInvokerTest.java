@@ -3,10 +3,10 @@ package com.fnproject.fn.runtime.flow;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fnproject.fn.api.*;
+import com.fnproject.fn.api.exception.FunctionInputHandlingException;
 import com.fnproject.fn.api.flow.*;
 import com.fnproject.fn.runtime.QueryParametersImpl;
 import com.fnproject.fn.runtime.ReadOnceInputEvent;
-import com.fnproject.fn.api.exception.FunctionInputHandlingException;
 import com.fnproject.fn.runtime.exception.InternalFunctionInvocationException;
 import org.junit.After;
 import org.junit.Before;
@@ -15,9 +15,6 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import java.io.*;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.util.*;
 

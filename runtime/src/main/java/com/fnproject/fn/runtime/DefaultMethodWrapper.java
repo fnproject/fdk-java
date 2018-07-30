@@ -1,7 +1,7 @@
 package com.fnproject.fn.runtime;
 
-import com.fnproject.fn.api.TypeWrapper;
 import com.fnproject.fn.api.MethodWrapper;
+import com.fnproject.fn.api.TypeWrapper;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;

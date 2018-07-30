@@ -4,9 +4,9 @@ import com.fnproject.fn.api.QueryParameters;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.mapping;

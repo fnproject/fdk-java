@@ -6,7 +6,8 @@ import com.fnproject.fn.api.OutputEvent;
 import com.fnproject.fn.api.exception.FunctionInputHandlingException;
 import com.fnproject.fn.api.exception.FunctionLoadException;
 import com.fnproject.fn.api.exception.FunctionOutputHandlingException;
-import com.fnproject.fn.runtime.exception.*;
+import com.fnproject.fn.runtime.exception.InternalFunctionInvocationException;
+import com.fnproject.fn.runtime.exception.InvalidEntryPointException;
 
 import java.io.IOException;
 import java.io.InputStream;

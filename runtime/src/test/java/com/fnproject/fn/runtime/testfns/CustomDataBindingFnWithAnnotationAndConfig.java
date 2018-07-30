@@ -1,9 +1,8 @@
 package com.fnproject.fn.runtime.testfns;
 
-import com.fnproject.fn.api.RuntimeContext;
 import com.fnproject.fn.api.FnConfiguration;
 import com.fnproject.fn.api.InputBinding;
-
+import com.fnproject.fn.api.RuntimeContext;
 import com.fnproject.fn.runtime.testfns.coercions.StringReversalCoercion;
 import com.fnproject.fn.runtime.testfns.coercions.StringUpperCaseCoercion;
 

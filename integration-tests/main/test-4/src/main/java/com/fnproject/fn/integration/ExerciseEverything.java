@@ -18,12 +18,12 @@ import java.util.stream.Collectors;
 @SuppressWarnings("unused")
 public class ExerciseEverything {
 
-    private boolean okay = true;
-    private ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    private PrintStream out = new PrintStream(new TeeOutputStream(System.err, bos));
-    private String testSelector = null;
-    private InputEvent inputEvent;
-    private List<Integer> failures = new ArrayList<>();
+    private boolean               okay         = true;
+    private ByteArrayOutputStream bos          = new ByteArrayOutputStream();
+    private PrintStream           out          = new PrintStream(new TeeOutputStream(System.err, bos));
+    private String                testSelector = null;
+    private InputEvent            inputEvent;
+    private List<Integer>         failures     = new ArrayList<>();
 
     @Test(1)
     @Test.Expect("completed value")

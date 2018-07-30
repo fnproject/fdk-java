@@ -1,13 +1,13 @@
-package com.fnproject.fn.testing;
+package junit.com.fnproject.fn.testing;
 
 import com.fnproject.fn.api.flow.Flow;
 import com.fnproject.fn.api.flow.Flows;
+import com.fnproject.fn.testing.FnTestingRule;
+import org.assertj.core.api.Assertions;
 import org.junit.Rule;
 import org.junit.Test;
 
 import java.util.concurrent.Semaphore;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class MultipleEventsTest {
     @Rule
@@ -105,7 +105,7 @@ public class MultipleEventsTest {
 
         fn.thenRun(TestFn.class, "handleRequest");
 
-        assertThat(success).isTrue();
+        Assertions.assertThat(success).isTrue();
     }
 
 }

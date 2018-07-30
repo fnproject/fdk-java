@@ -1,9 +1,11 @@
 package com.fnproject.fn.api.flow;
 
+import org.junit.Test;
+
 import java.lang.reflect.Modifier;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import org.junit.Test;
 
 public class FlowsTest {
     public FlowsTest() {

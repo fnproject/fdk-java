@@ -1,7 +1,6 @@
 package com.fnproject.fn.testing;
 
 import com.fnproject.fn.runtime.EntryPoint;
-import com.fnproject.fn.runtime.flow.CompleterClient;
 import com.fnproject.fn.runtime.flow.CompleterClientFactory;
 import com.fnproject.fn.runtime.flow.FlowRuntimeGlobals;
 import org.apache.commons.io.IOUtils;

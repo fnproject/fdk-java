@@ -6,46 +6,19 @@ import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.InputEvent;
 import com.fnproject.fn.api.OutputEvent;
 import com.fnproject.fn.api.QueryParameters;
-import com.fnproject.fn.api.flow.Flow;
-import com.fnproject.fn.api.flow.FlowCompletionException;
-import com.fnproject.fn.api.flow.FunctionInvocationException;
-import com.fnproject.fn.api.flow.HttpMethod;
-import com.fnproject.fn.api.flow.PlatformException;
-import com.fnproject.fn.runtime.flow.APIModel;
-import com.fnproject.fn.runtime.flow.BlobResponse;
-import com.fnproject.fn.runtime.flow.BlobStoreClient;
-import com.fnproject.fn.runtime.flow.CodeLocation;
-import com.fnproject.fn.runtime.flow.CompleterClient;
-import com.fnproject.fn.runtime.flow.CompleterClientFactory;
-import com.fnproject.fn.runtime.flow.CompletionId;
-import com.fnproject.fn.runtime.flow.DefaultHttpResponse;
-import com.fnproject.fn.runtime.flow.FlowContinuationInvoker;
-import com.fnproject.fn.runtime.flow.FlowId;
+import com.fnproject.fn.api.flow.*;
+import com.fnproject.fn.runtime.flow.*;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.TeeOutputStream;
 import org.apache.http.HttpResponse;
 import org.apache.http.NoHttpResponseException;
-import org.apache.http.impl.io.ContentLengthInputStream;
-import org.apache.http.impl.io.DefaultHttpResponseParser;
-import org.apache.http.impl.io.HttpTransportMetricsImpl;
-import org.apache.http.impl.io.IdentityInputStream;
-import org.apache.http.impl.io.SessionInputBufferImpl;
+import org.apache.http.impl.io.*;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
-import java.io.PrintStream;
-import java.io.SequenceInputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.io.*;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 import static com.fnproject.fn.runtime.flow.RemoteFlowApiClient.CONTENT_TYPE_HEADER;
@@ -191,7 +164,7 @@ public final class FnTestingRule implements TestRule {
      *
      * @return a new event builder
      */
-    public FnEventBuilder givenEvent() {
+    public FnEventBuilderJUnit4 givenEvent() {
         return new DefaultFnEventBuilder();
     }
 
@@ -388,8 +361,8 @@ public final class FnTestingRule implements TestRule {
     }
 
 
-    public FnFunctionStubBuilder givenFn(String id) {
-        return new FnFunctionStubBuilder() {
+    public FnFunctionStubBuilderJUnit4 givenFn(String id) {
+        return new FnFunctionStubBuilderJUnit4() {
             @Override
             public FnTestingRule withResult(byte[] result) {
                 return withAction((body) -> result);
@@ -432,7 +405,7 @@ public final class FnTestingRule implements TestRule {
     /**
      * Builds a mocked input event into the function runtime
      */
-    private class DefaultFnEventBuilder implements FnEventBuilder {
+    private class DefaultFnEventBuilder implements FnEventBuilderJUnit4 {
 
         FnHttpEventBuilder builder = new FnHttpEventBuilder().withMethod("GET")
            .withAppName("appName")

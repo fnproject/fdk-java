@@ -6,7 +6,6 @@ import com.fnproject.fn.api.RuntimeContext;
 import net.glxn.qrgen.core.image.ImageType;
 import net.glxn.qrgen.javase.QRCode;
 
-import java.io.*;
 import java.net.MalformedURLException;
 
 public class QRGen {

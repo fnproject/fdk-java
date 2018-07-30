@@ -1,24 +1,11 @@
 package com.fnproject.fn.runtime;
 
-import com.fnproject.fn.api.FunctionInvoker;
-import com.fnproject.fn.api.InputBinding;
-import com.fnproject.fn.api.InputCoercion;
-import com.fnproject.fn.api.InputEvent;
-import com.fnproject.fn.api.InvocationContext;
-import com.fnproject.fn.api.MethodWrapper;
-import com.fnproject.fn.api.OutputBinding;
-import com.fnproject.fn.api.OutputCoercion;
-import com.fnproject.fn.api.OutputEvent;
-import com.fnproject.fn.api.RuntimeContext;
-import com.fnproject.fn.runtime.coercion.ByteArrayCoercion;
-import com.fnproject.fn.runtime.coercion.InputEventCoercion;
-import com.fnproject.fn.runtime.coercion.OutputEventCoercion;
-import com.fnproject.fn.runtime.coercion.StringCoercion;
-import com.fnproject.fn.runtime.coercion.VoidCoercion;
-import com.fnproject.fn.runtime.coercion.jackson.JacksonCoercion;
-import com.fnproject.fn.runtime.exception.FunctionClassInstantiationException;
+import com.fnproject.fn.api.*;
 import com.fnproject.fn.api.exception.FunctionConfigurationException;
 import com.fnproject.fn.api.exception.FunctionInputHandlingException;
+import com.fnproject.fn.runtime.coercion.*;
+import com.fnproject.fn.runtime.coercion.jackson.JacksonCoercion;
+import com.fnproject.fn.runtime.exception.FunctionClassInstantiationException;
 import com.fnproject.fn.runtime.flow.FlowContinuationInvoker;
 
 import java.lang.annotation.Annotation;
@@ -26,14 +13,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 public class FunctionRuntimeContext implements RuntimeContext {
 

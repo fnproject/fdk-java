@@ -3,14 +3,14 @@ package com.fnproject.fn.testing;
 /**
  * A builder for constructing stub external functions
  */
-public interface FnFunctionStubBuilder {
+public interface FnFunctionStubBuilder<T> {
     /**
      * Consume the builder and stub the function to return the provided byte array
      *
      * @param result A byte array returned by the function
      * @return The original testing rule (usually {@link FnTestingRule}. The builder is consumed.
      */
-    FnTestingRule withResult(byte[] result);
+    T withResult(byte[] result);
 
     /**
      * Consume the builder and stub the function to throw an error when it is invoked: this simulates a failure of the
@@ -18,7 +18,7 @@ public interface FnFunctionStubBuilder {
      *
      * @return The original testing rule (usually {@link FnTestingRule}. The builder is consumed.
      */
-    FnTestingRule withFunctionError();
+    T withFunctionError();
 
     /**
      * Consume the builder and stub the function to throw a platform error, this simulates a failure of the Fn Flow
@@ -26,7 +26,7 @@ public interface FnFunctionStubBuilder {
      *
      * @return The original testing rule (usually {@link FnTestingRule}. The builder is consumed.
      */
-    FnTestingRule withPlatformError();
+    T withPlatformError();
 
     /**
      * Consume the builder and stub the function to perform some action; the action is an implementation of the
@@ -39,7 +39,7 @@ public interface FnFunctionStubBuilder {
      * @param f an action to apply when this function is invoked
      * @return The original testing rule (usually {@link FnTestingRule}. The builder is consumed.
      */
-    FnTestingRule withAction(ExternalFunctionAction f);
+    T withAction(ExternalFunctionAction f);
 
     /**
      * Represents the calling interface of an external function. It takes a byte[] as input,

@@ -1,9 +1,10 @@
-package com.fnproject.fn.testing;
+package junit.com.fnproject.fn.testing;
 
+import com.fnproject.fn.testing.FnTestingRule;
+import com.fnproject.fn.testing.FunctionError;
+import org.assertj.core.api.Assertions;
 import org.junit.Rule;
 import org.junit.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class IntegrationTest {
 
@@ -30,7 +31,7 @@ public class IntegrationTest {
 
                 .thenRun(ExerciseEverything.class, "handleRequest");
 
-        assertThat(fn.getResults().get(0).getBodyAsString())
-                .endsWith("Everything worked\n");
+        Assertions.assertThat(fn.getResults().get(0).getBodyAsString())
+                  .endsWith("Everything worked\n");
     }
 }
