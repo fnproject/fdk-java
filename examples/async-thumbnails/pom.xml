@@ -6,6 +6,8 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
         <fnproject.version>1.0.0-SNAPSHOT</fnproject.version>
         <mockito.version>2.8.47</mockito.version>
     </properties>
