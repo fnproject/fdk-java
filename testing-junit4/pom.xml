@@ -15,27 +15,17 @@
     <dependency>
       <groupId>com.fnproject.fn</groupId>
       <artifactId>testing-core</artifactId>
-      <version>${project.version}</version>
     </dependency>
-
     <dependency>
       <groupId>com.fnproject.fn</groupId>
       <artifactId>runtime</artifactId>
-      <version>${project.version}</version>
     </dependency>
 
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>${junit.version}</version>
+      <scope>compile</scope>
     </dependency>
-    <dependency>
-      <groupId>org.assertj</groupId>
-      <artifactId>assertj-core</artifactId>
-      <version>${assertj-core.version}</version>
-      <scope>test</scope>
-    </dependency>
-
   </dependencies>
 
 </project>
