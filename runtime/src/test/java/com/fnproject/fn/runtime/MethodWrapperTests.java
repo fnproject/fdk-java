@@ -1,6 +1,7 @@
 package com.fnproject.fn.runtime;
 
 import com.fnproject.fn.api.MethodWrapper;
+import org.assertj.core.api.AbstractIntegerAssert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -34,8 +35,9 @@ public class MethodWrapperTests {
         if (parameterIndex >= 0) {
             assertThat(method.getParamType(parameterIndex).getParameterClass()).isEqualTo(expectedType);
         } else {
-            assertThat(parameterIndex).isEqualTo(-1)
-                    .withFailMessage("You can only use non negative parameter indices or -1 to represent return value in this test suite");
+            AbstractIntegerAssert<?> withFailMessage = assertThat(parameterIndex)
+                .isEqualTo(-1)
+                .withFailMessage("You can only use non negative parameter indices or -1 to represent return value in this test suite");
             assertThat(method.getReturnType().getParameterClass()).isEqualTo(expectedType);
         }
     }
