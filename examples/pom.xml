@@ -18,7 +18,8 @@
         <module>regex-query</module>
 <!--    TODO: This is currently failing unit tests
         <module>qr-code</module>
---> 
+-->
+        <module>cors-example</module>
         <module>async-thumbnails</module>
     </modules>
 
