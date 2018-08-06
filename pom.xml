@@ -27,7 +27,6 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
     <!--TDD-->
-    <!--<jacoco.version>0.7.9</jacoco.version>-->
     <jacoco.version>0.8.1</jacoco.version>
     <junit.version>4.12</junit.version>
     <mockito.version>2.21.0</mockito.version>
