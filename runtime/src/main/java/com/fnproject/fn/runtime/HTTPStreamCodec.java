@@ -3,6 +3,7 @@ package com.fnproject.fn.runtime;
 
 import com.fnproject.fn.api.InputEvent;
 import com.fnproject.fn.api.OutputEvent;
+import com.fnproject.fn.api.exception.FunctionConfigurationException;
 import com.fnproject.fn.api.exception.FunctionInputHandlingException;
 import com.fnproject.fn.api.exception.FunctionOutputHandlingException;
 import com.sun.net.httpserver.Headers;
@@ -27,8 +28,10 @@ import java.util.concurrent.Executors;
  * <p>
  * (c) 2018 Oracle Corporation
  */
-public class FnHTTPCodec implements EventCodec,Closeable {
+public class HTTPStreamCodec implements EventCodec,Closeable {
 
+
+    private static final String FN_LISTENER="FN_LISTENER";
 
     private final Map<String, String> env;
     private volatile HttpExchange current;
@@ -36,8 +39,14 @@ public class FnHTTPCodec implements EventCodec,Closeable {
     private final BlockingQueue<HttpExchange> calls = new ArrayBlockingQueue<>(1);
     private final HttpServer s;
 
-    public FnHTTPCodec(Map<String, String> env) throws IOException {
+    public HTTPStreamCodec(Map<String, String> env) throws IOException {
         this.env = env;
+
+        String listener  = env.get(FN_LISTENER);
+        if (listener == null) {
+            throw new IllegalStateException("Invalid Environment - no FN_LISTENER socket address was specified in the environment");
+        }
+        // start Jetty UDS server here ,
         s = HttpServer.create(new InetSocketAddress(8080), 10);
         s.setExecutor(Executors.newFixedThreadPool(2));
         s.createContext("/call", this::setExchange);

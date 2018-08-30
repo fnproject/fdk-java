@@ -14,7 +14,7 @@ import java.util.concurrent.CountDownLatch;
  * <p>
  * (c) 2018 Oracle Corporation
  */
-public class FnHTTPCodecTest {
+public class HTTPStreamCodecTest {
 
 
     @Test
@@ -33,7 +33,7 @@ public class FnHTTPCodecTest {
 
         });
 
-        try(FnHTTPCodec codec = new FnHTTPCodec(env)){
+        try(HTTPStreamCodec codec = new HTTPStreamCodec(env)){
             cdl.countDown();
 
             Optional<InputEvent> evt = codec.readEvent();

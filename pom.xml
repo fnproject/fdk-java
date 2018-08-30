@@ -17,7 +17,6 @@
     <module>testing-junit4</module>
     <module>testing</module>
     <module>integration-tests</module>
-
     <module>fn-spring-cloud-function</module>
     <module>examples</module>
   </modules>
@@ -26,6 +25,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
+    <jetty.version>9.4.11.v20180605</jetty.version>
     <!--TDD-->
     <jacoco.version>0.8.1</jacoco.version>
     <junit.version>4.12</junit.version>
