@@ -67,12 +67,18 @@ public class EntryPoint {
             String format = env.get("FN_FORMAT");
             EventCodec codec;
 
-            if (format != null && format.equalsIgnoreCase("http")) {
-                codec = new HttpEventCodec(env, functionInput, functionOutput);
-            } else if (format == null || format.equalsIgnoreCase("default")) {
-                codec = new DefaultEventCodec(env, functionInput, functionOutput);
+            if (format != null) {
+                if (format.equalsIgnoreCase("http")) {
+                    codec = new HttpEventCodec(env, functionInput, functionOutput);
+                } else if (format.equalsIgnoreCase("uds")) {
+                    codec = new HTTPStreamCodec(env);
+                } else if (format.equalsIgnoreCase("default")) {
+                    codec = new DefaultEventCodec(env, functionInput, functionOutput);
+                } else {
+                    throw new FunctionInputHandlingException("Unsupported function format:" + format);
+                }
             } else {
-                throw new FunctionInputHandlingException("Unsupported function format:" + format);
+                codec = new DefaultEventCodec(env, functionInput, functionOutput);
             }
 
             do {
