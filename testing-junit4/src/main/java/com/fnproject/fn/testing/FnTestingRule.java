@@ -1,30 +1,29 @@
 package com.fnproject.fn.testing;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.InputEvent;
 import com.fnproject.fn.api.OutputEvent;
 import com.fnproject.fn.api.QueryParameters;
-import com.fnproject.fn.api.flow.*;
-import com.fnproject.fn.runtime.flow.*;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.TeeOutputStream;
 import org.apache.http.HttpResponse;
 import org.apache.http.NoHttpResponseException;
-import org.apache.http.impl.io.*;
+import org.apache.http.impl.io.ContentLengthInputStream;
+import org.apache.http.impl.io.DefaultHttpResponseParser;
+import org.apache.http.impl.io.HttpTransportMetricsImpl;
+import org.apache.http.impl.io.SessionInputBufferImpl;
+import org.junit.Rule;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
 import java.io.*;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 
-import static com.fnproject.fn.runtime.flow.RemoteFlowApiClient.CONTENT_TYPE_HEADER;
 
 /**
- * Testing {@link org.junit.Rule} for fn Java FDK functions.
+ * Testing {@link Rule} for fn Java FDK functions.
  * <p>
  * This interface facilitates:
  * <ul>
@@ -46,7 +45,7 @@ import static com.fnproject.fn.runtime.flow.RemoteFlowApiClient.CONTENT_TYPE_HEA
  *            .withRoute("/bravo")
  *            .withRequestUrl("http://charlie/alpha/bravo")
  *            .withMethod("POST")
- *            .withHeader("FOO", "BAR")
+ *            .addHeader("FOO", "BAR")
  *            .withBody("Body")
  *            .enqueue();
  *
@@ -67,13 +66,11 @@ public final class FnTestingRule implements TestRule {
     private InputStream pendingInput = new ByteArrayInputStream(new byte[0]);
     private ByteArrayOutputStream stdOut = new ByteArrayOutputStream();
     private ByteArrayOutputStream stdErr = new ByteArrayOutputStream();
-    private Map<String, FnFunctionStub> functionStubs = new HashMap<>();
-    public static InMemCompleter completer = null;
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
-
     private final List<String> sharedPrefixes = new ArrayList<>();
     private int lastExitCode;
+    private final List<FnTestingRuleFeature> features = new ArrayList<>();
 
     {
         // Internal shared classes required to bridge completer into tests
@@ -82,33 +79,24 @@ public final class FnTestingRule implements TestRule {
         addSharedClassPrefix("sun.");
         addSharedClassPrefix("jdk.");
 
-        addSharedClass(CompleterClient.class);
-        addSharedClass(BlobStoreClient.class);
-        addSharedClass(BlobResponse.class);
 
-        addSharedClass(CompleterClientFactory.class);
-        addSharedClass(CompletionId.class);
-        addSharedClass(FlowId.class);
-        addSharedClass(Flow.FlowState.class);
-        addSharedClass(CodeLocation.class);
         addSharedClass(Headers.class);
-        addSharedClass(HttpMethod.class);
-        addSharedClass(com.fnproject.fn.api.flow.HttpRequest.class);
-        addSharedClass(com.fnproject.fn.api.flow.HttpResponse.class);
         addSharedClass(QueryParameters.class);
         addSharedClass(InputEvent.class);
         addSharedClass(OutputEvent.class);
-        addSharedClass(FlowCompletionException.class);
-        addSharedClass(FunctionInvocationException.class);
-        addSharedClass(PlatformException.class);
 
     }
 
     private FnTestingRule() {
     }
 
+
+    public void addFeature(FnTestingRuleFeature f) {
+        this.features.add(f);
+    }
+
     /**
-     * Create an instance of the testing {@link org.junit.Rule}, with Flows support
+     * Create an instance of the testing {@link Rule}, with Flows support
      *
      * @return a new test rule
      */
@@ -206,16 +194,9 @@ public final class FnTestingRule implements TestRule {
         PrintStream oldSystemOut = System.out;
         PrintStream oldSystemErr = System.err;
 
-        InMemCompleter.CompleterInvokeClient client = new TestRuleCompleterInvokeClient(functionClassLoader, oldSystemErr, cls, method);
-
-        InMemCompleter.FnInvokeClient fnInvokeClient = new TestRuleFnInvokeClient();
-
-        // FlowContinuationInvoker.setTestingMode(true);
-        // The following must be a static: otherwise the factory (the lambda) will not be serializable.
-        completer = new InMemCompleter(client, fnInvokeClient);
-
-        //TestSupport.installCompleterClientFactory(completer, oldSystemErr);
-
+        for (FnTestingRuleFeature f : features) {
+            f.prepareTest(functionClassLoader, oldSystemErr, cls, method);
+        }
 
         Map<String, String> mutableEnv = new HashMap<>();
 
@@ -234,18 +215,22 @@ public final class FnTestingRule implements TestRule {
                 oldSystemErr.println("WARNING: The function class under test is shared with the test ClassLoader.");
                 oldSystemErr.println("         This may result in unexpected behaviour around function initialization and configuration.");
             }
-            forked.setCompleterClient(completer);
+            for (FnTestingRuleFeature f : features) {
+                f.prepareFunctionClassLoader(forked);
+            }
             lastExitCode = forked.run(
-               mutableEnv,
-               pendingInput,
-               functionOut,
-               functionErr,
-               cls + "::" + method);
+              mutableEnv,
+              pendingInput,
+              functionOut,
+              functionErr,
+              cls + "::" + method);
 
             stdOut.flush();
             stdErr.flush();
 
-            completer.awaitTermination();
+            for (FnTestingRuleFeature f : features) {
+                f.afterTestComplete();
+            }
         } catch (Exception e) {
             throw new RuntimeException("internal error raised by entry point or flushing the test streams", e);
         } finally {
@@ -341,7 +326,7 @@ public final class FnTestingRule implements TestRule {
                     public Headers getHeaders() {
                         Map<String, String> headers = new HashMap<>();
                         Arrays.stream(response.getAllHeaders()).forEach((h) ->
-                           headers.put(h.getName(), h.getValue()));
+                          headers.put(h.getName(), h.getValue()));
                         return Headers.fromMap(headers);
                     }
 
@@ -360,47 +345,18 @@ public final class FnTestingRule implements TestRule {
         return responses;
     }
 
-
-    public FnFunctionStubBuilderJUnit4 givenFn(String id) {
-        return new FnFunctionStubBuilderJUnit4() {
-            @Override
-            public FnTestingRule withResult(byte[] result) {
-                return withAction((body) -> result);
-            }
-
-            @Override
-            public FnTestingRule withFunctionError() {
-                return withAction((body) -> {
-                    throw new FunctionError("simulated by testing platform");
-                });
-            }
-
-            @Override
-            public FnTestingRule withPlatformError() {
-                return withAction((body) -> {
-                    throw new PlatformError("simulated by testing platform");
-                });
-            }
-
-            @Override
-            public FnTestingRule withAction(ExternalFunctionAction f) {
-                functionStubs.put(id, (HttpMethod method, Headers headers, byte[] body) -> {
-                    try {
-                        return new DefaultHttpResponse(200, Headers.emptyHeaders(), f.apply(body));
-                    } catch (FunctionError functionError) {
-                        return new DefaultHttpResponse(500, Headers.emptyHeaders(), functionError.getMessage().getBytes());
-                    } catch (PlatformError platformError) {
-                        throw new RuntimeException("Platform Error");
-                    }
-                });
-                return FnTestingRule.this;
-            }
-        };
+    public List<String> getSharedPrefixes() {
+        return Collections.unmodifiableList(sharedPrefixes);
     }
 
-    private interface FnFunctionStub {
-        com.fnproject.fn.api.flow.HttpResponse stubFunction(HttpMethod method, Headers headers, byte[] body);
+    public Map<String, String> getConfig() {
+        return Collections.unmodifiableMap(config);
     }
+
+    public Map<String, String> getEventEnv() {
+        return Collections.unmodifiableMap(eventEnv);
+    }
+
 
     /**
      * Builds a mocked input event into the function runtime
@@ -408,9 +364,9 @@ public final class FnTestingRule implements TestRule {
     private class DefaultFnEventBuilder implements FnEventBuilderJUnit4 {
 
         FnHttpEventBuilder builder = new FnHttpEventBuilder().withMethod("GET")
-           .withAppName("appName")
-           .withRoute("/route")
-           .withRequestUrl("http://example.com/r/appName/route");
+          .withAppName("appName")
+          .withRoute("/route")
+          .withRequestUrl("http://example.com/r/appName/route");
 
 
         @Override
@@ -496,118 +452,4 @@ public final class FnTestingRule implements TestRule {
 
     }
 
-    private class TestRuleCompleterInvokeClient implements InMemCompleter.CompleterInvokeClient {
-        private final ClassLoader functionClassLoader;
-        private final PrintStream oldSystemErr;
-        private final String cls;
-        private final String method;
-        private final Set<FnTestingClassLoader> pool = new HashSet<>();
-
-
-        public TestRuleCompleterInvokeClient(ClassLoader functionClassLoader, PrintStream oldSystemErr, String cls, String method) {
-            this.functionClassLoader = functionClassLoader;
-            this.oldSystemErr = oldSystemErr;
-            this.cls = cls;
-            this.method = method;
-        }
-
-
-        @Override
-        public APIModel.CompletionResult invokeStage(String fnId, FlowId flowId, CompletionId stageId, APIModel.Blob closure, List<APIModel.CompletionResult> input) {
-            // Construct a new ClassLoader hierarchy with a copy of the statics embedded in the runtime.
-            // Initialise it appropriately.
-            FnTestingClassLoader fcl = new FnTestingClassLoader(functionClassLoader, sharedPrefixes);
-            fcl.setCompleterClient(completer);
-
-
-            APIModel.InvokeStageRequest request = new APIModel.InvokeStageRequest();
-            request.stageId = stageId.getId();
-            request.flowId = flowId.getId();
-            request.closure = closure;
-            request.args = input;
-
-            String inputBody = null;
-            try {
-                inputBody = objectMapper.writeValueAsString(request);
-            } catch (JsonProcessingException e) {
-                throw new IllegalStateException("Invalid request");
-            }
-
-            // oldSystemErr.println("Body\n" + new String(inputBody));
-
-            InputStream is = new FnHttpEventBuilder()
-               .withBody(inputBody)
-               .withAppName("appName")
-               .withRoute("/route").withRequestUrl("http://some/url")
-               .withMethod("POST")
-               .withHeader(CONTENT_TYPE_HEADER, "application/json")
-               .withHeader(FlowContinuationInvoker.FLOW_ID_HEADER, flowId.getId()).currentEventInputStream();
-
-            ByteArrayOutputStream output = new ByteArrayOutputStream();
-            Map<String, String> mutableEnv = new HashMap<>();
-            PrintStream functionOut = new PrintStream(output);
-            PrintStream functionErr = new PrintStream(oldSystemErr);
-
-            // Do we want to capture IO from continuations on the main log stream?
-            // System.setOut(functionErr);
-            // System.setErr(functionErr);
-
-            mutableEnv.putAll(config);
-            mutableEnv.putAll(eventEnv);
-            mutableEnv.put("FN_FORMAT", "http");
-
-
-            fcl.run(
-               mutableEnv,
-               is,
-               functionOut,
-               functionErr,
-               cls + "::" + method);
-
-
-            SessionInputBufferImpl sib = new SessionInputBufferImpl(new HttpTransportMetricsImpl(), 65535);
-            ByteArrayInputStream parseStream = new ByteArrayInputStream(output.toByteArray());
-            sib.bind(parseStream);
-            DefaultHttpResponseParser parser = new DefaultHttpResponseParser(sib);
-            APIModel.CompletionResult r;
-            try {
-                // Read wrapping result, and throw it away
-                parser.parse();
-                IdentityInputStream iis = new IdentityInputStream(sib);
-                byte[] responseBody = IOUtils.toByteArray(iis);
-
-                APIModel.InvokeStageResponse response = objectMapper.readValue(responseBody, APIModel.InvokeStageResponse.class);
-                r = response.result;
-
-            } catch (Exception e) {
-                oldSystemErr.println("Err\n" + e);
-                e.printStackTrace(oldSystemErr);
-                r = APIModel.CompletionResult.failure(APIModel.ErrorDatum.newError(APIModel.ErrorType.UnknownError, "Error reading fn Response:" + e.getMessage()));
-            }
-
-            if (!r.successful) {
-                throw new ResultException(r.result);
-            }
-            return r;
-
-        }
-    }
-
-    private class TestRuleFnInvokeClient implements InMemCompleter.FnInvokeClient {
-        @Override
-        public CompletableFuture<com.fnproject.fn.api.flow.HttpResponse> invokeFunction(String fnId, HttpMethod method, Headers headers, byte[] data) {
-            FnFunctionStub stub = functionStubs
-               .computeIfAbsent(fnId, (k) -> {
-                   throw new IllegalStateException("Function was invoked that had no definition: " + k);
-               });
-
-            try {
-                return CompletableFuture.completedFuture(stub.stubFunction(method, headers, data));
-            } catch (Exception e) {
-                CompletableFuture<com.fnproject.fn.api.flow.HttpResponse> respFuture = new CompletableFuture<>();
-                respFuture.completeExceptionally(e);
-                return respFuture;
-            }
-        }
-    }
 }

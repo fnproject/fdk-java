@@ -1,91 +1,168 @@
 package com.fnproject.fn.runtime;
 
 
+import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.InputEvent;
 import com.fnproject.fn.api.OutputEvent;
-import com.fnproject.fn.api.exception.FunctionConfigurationException;
 import com.fnproject.fn.api.exception.FunctionInputHandlingException;
 import com.fnproject.fn.api.exception.FunctionOutputHandlingException;
+import com.fnproject.fn.runtime.exception.FunctionIOException;
+import com.fnproject.fn.runtime.exception.FunctionInitializationException;
+import jnr.enxio.channels.NativeSelectorProvider;
+import jnr.unixsocket.UnixServerSocketChannel;
+import jnr.unixsocket.UnixSocket;
+import jnr.unixsocket.UnixSocketAddress;
+import org.apache.http.*;
+import org.apache.http.entity.ByteArrayEntity;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.DefaultBHttpServerConnection;
+import org.apache.http.impl.io.EmptyInputStream;
+import org.apache.http.message.BasicHeader;
+import org.apache.http.message.BasicStatusLine;
+import org.apache.http.protocol.BasicHttpContext;
+import org.apache.http.protocol.HttpService;
+import org.apache.http.protocol.ImmutableHttpProcessor;
+import org.apache.http.protocol.UriHttpRequestHandlerMapper;
 
-import java.io.Closeable;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.InetSocketAddress;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Executors;
-
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import org.eclipse.jetty.server.Request;
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.handler.AbstractHandler;
-import org.eclipse.jetty.unixsocket.UnixSocketConnector;
+import java.io.*;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
+import java.time.Instant;
+import java.time.format.DateTimeParseException;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Fn HTTP codec
+ * Fn HTTP Stream over Unix domain sockets  codec
+ * <p>
+ * <p>
+ * This creates a new unix socket on the address specified by env["FN_LISTENER"] - and accepts requests.
+ * <p>
+ * This currently only handles exactly one concurrent connection
+ * <p>
  * Created on 24/08/2018.
  * <p>
  * (c) 2018 Oracle Corporation
  */
-public class HTTPStreamCodec implements EventCodec,Closeable {
+public final class HTTPStreamCodec implements EventCodec, Closeable {
 
-    private static final String FN_LISTENER="FN_LISTENER";
-
+    private static final String FN_LISTENER = "FN_LISTENER";
     private final Map<String, String> env;
-    private final Object lock = new Object();
-    private final Server s;
-    private final UnixSocketConnector sc;
+    private final AtomicBoolean stopped = new AtomicBoolean(false);
+    private final UnixServerSocketChannel channel;
+    private final File socketFile;
+    private static final Set<String> stripHeaders;
 
-    private Request baseRequest;
-    private HttpServletRequest request;
-    private HttpServletResponse response;
+    static {
+        Set<String> h = new HashSet<>();
+        h.add("content-length");
+        h.add("host");
+        h.add("accept-encoding");
+        h.add("user-agent");
+        stripHeaders = Collections.unmodifiableSet(h);
+    }
 
-    public HTTPStreamCodec(Map<String, String> env) throws Exception {
-        this.env = env;
+    @Override
+    public void runCodec(Handler h) {
 
-        String listener  = env.get(FN_LISTENER);
-        if (listener == null) {
-            throw new IllegalStateException("Invalid Environment - no FN_LISTENER socket path was specified in the environment");
+        UriHttpRequestHandlerMapper mapper = new UriHttpRequestHandlerMapper();
+        mapper.register("/call", ((request, response, context) -> {
+            InputEvent evt;
+            try {
+                evt = readEvent(request);
+            } catch (FunctionInputHandlingException e) {
+                response.setStatusCode(500);
+                response.setEntity(new StringEntity("{\"message\":\"Invalid input from function\"}", ContentType.APPLICATION_JSON));
+                return;
+            }
+
+            OutputEvent outEvt;
+
+            try {
+                outEvt = h.handle(evt);
+            } catch (Exception e) {
+                response.setStatusCode(500);
+                response.setEntity(new StringEntity("{\"message\":\"Unhandled internal error in FDK\"}", ContentType.APPLICATION_JSON));
+                return;
+            }
+
+            try {
+                writeEvent(outEvt, response);
+            } catch (Exception e) {
+                // TODO strange edge cases might appear with headers where the response is half written here
+                response.setStatusCode(500);
+                response.setEntity(new StringEntity("{\"message\":\"Unhandled internal error while generating response FDK\"}", ContentType.APPLICATION_JSON));
+            }
         }
-        s = new Server();
-        sc = new UnixSocketConnector(s);
-        sc.setUnixSocket(listener);
-        s.addConnector(sc);
-        s.setHandler(new AbstractHandler() {
-            @Override
-            public void handle(
-                String target,
-                Request baseRequest,
-                HttpServletRequest request,
-                HttpServletResponse response
-            ) throws IOException, ServletException {
-                synchronized (HTTPStreamCodec.this.lock) {
-                    if (HTTPStreamCodec.this.baseRequest != null) {
-                        throw new IllegalStateException("Concurrent function invocation not supported");
+        ));
+
+        ImmutableHttpProcessor requestProcess = new ImmutableHttpProcessor(new HttpRequestInterceptor[0], new HttpResponseInterceptor[0]);
+        HttpService svc = new HttpService(requestProcess, mapper);
+
+        try {
+            Selector sel = NativeSelectorProvider.getInstance().openSelector();
+            channel.register(sel, SelectionKey.OP_ACCEPT, new Object());
+
+            while (!stopped.get()) {
+                UnixSocket sock;
+                try {
+                    if (sel.select(100) == 0) {
+                        continue;
                     }
-                    HTTPStreamCodec.this.baseRequest = baseRequest;
-                    HTTPStreamCodec.this.request = request;
-                    HTTPStreamCodec.this.response = response;
-                    HTTPStreamCodec.this.lock.notify();
+                    sock = new UnixSocket(channel.accept());
+
+                } catch (IOException e) {
+                    throw new FunctionIOException("failed to accept connection from platform, terminating", e);
                 }
                 try {
-                    synchronized (HTTPStreamCodec.this.lock) {
-                        lock.wait();
+                    DefaultBHttpServerConnection con = new DefaultBHttpServerConnection(65535);
+                    con.bind(sock);
+                    while (!sock.isClosed()) {
+                        try {
+                            svc.handleRequest(con, new BasicHttpContext());
+                        } catch (Exception ignored) {
+                            sock.close();
+                        }
                     }
-                } catch (InterruptedException ignored) {
+                } catch (IOException ignored) {
+                    // TODO should log here?
+                } finally {
+                    try {
+                        sock.close();
+                    } catch (IOException ignored) {
+                    }
                 }
+
             }
-        });
-        s.start();
+        } catch (IOException e) {
+            throw new FunctionIOException("Error handling FDK codec data", e);
+        }
+
+
+    }
+
+    /**
+     * Construct a new HTTPStreamCodec based on the environment
+     *
+     * @param env an env map
+     */
+    public HTTPStreamCodec(Map<String, String> env) {
+        this.env = Objects.requireNonNull(env, "env");
+        socketFile = new File(getRequiredEnv("FN_LISTENER"));
+
+
+        try {
+            channel = UnixServerSocketChannel.open();
+            UnixSocketAddress address = new UnixSocketAddress(socketFile);
+            channel.configureBlocking(false);
+            // todo correct backlog here?
+            channel.socket().bind(address, 100);
+        } catch (IOException e) {
+            throw new FunctionInitializationException("Unable to bind to unix socket in " + socketFile, e);
+        }
+
+
     }
 
     private String getRequiredEnv(String name) {
@@ -96,81 +173,88 @@ public class HTTPStreamCodec implements EventCodec,Closeable {
         return val;
     }
 
-    @Override
-    public Optional<InputEvent> readEvent() {
+    private static String getRequiredHeader(HttpRequest request, String headerName) {
+        Header header = request.getFirstHeader(headerName);
+        if (header == null) {
+            throw new FunctionInputHandlingException("Invalid call, No header \"" + headerName + "\" in request");
+        }
+        return header.getValue();
+    }
 
+    private InputEvent readEvent(HttpRequest request) {
+
+        InputStream bodyStream;
+        if (request instanceof HttpEntityEnclosingRequest) {
+            HttpEntityEnclosingRequest entityEnclosingRequest = (HttpEntityEnclosingRequest) request;
+            try {
+                bodyStream = entityEnclosingRequest.getEntity().getContent();
+            } catch (IOException exception) {
+                throw new FunctionInputHandlingException("error handling input", exception);
+            }
+        } else {
+            bodyStream = EmptyInputStream.INSTANCE;
+        }
+
+
+        String deadline = getRequiredHeader(request, "Fn-Deadline");
+        String callID = getRequiredHeader(request, "Fn-Call-Id");
+
+
+        Date deadlineDate;
         try {
-            synchronized (lock) {
-                lock.wait();
-            }
-
-            InputStream bodyStream;
-            try {
-                bodyStream = request.getInputStream();
-            } catch (IOException e) {
-                System.err.println(e.getMessage());
-                return Optional.empty();
-            }
-
-            String appName = getRequiredEnv("FN_APP_NAME");
-            String route = getRequiredEnv("FN_PATH");
-            String method = request.getHeader("X-Fn-Method");
-            // TODO remove HTTP-specific stuff
-            if (method == null) {
-                method = "GET";
-            }
-
-            String requestUrl = request.getHeader("X-Fn-Request-URL");
-            if (requestUrl == null) {
-                requestUrl = "";
-            }
-
-            Map<String, String> headers = new HashMap<>();
-            Enumeration<String> headerNames = request.getHeaderNames();
-            while (headerNames.hasMoreElements()) {
-                String name = headerNames.nextElement();
-                headers.put(name, request.getHeader(name));
-            }
-
-            ReadOnceInputEvent inputEvent = new ReadOnceInputEvent(appName, route, requestUrl, method, bodyStream, com.fnproject.fn.api.Headers.fromMap(headers), QueryParametersParser.getParams(requestUrl));
-            return Optional.of(inputEvent);
-        } catch (InterruptedException ignored) {
-            return Optional.empty();
+            deadlineDate = Date.from(Instant.parse(deadline));
+        } catch (DateTimeParseException e) {
+            throw new FunctionInputHandlingException("Invalid deadline date format", e);
         }
+
+        Headers headersIn = Headers.emptyHeaders();
+
+
+        for (Header h : request.getAllHeaders()) {
+            if(stripHeaders.contains(h.getName().toLowerCase())){
+                continue;
+            }
+            headersIn = headersIn.addHeader(h.getName(), h.getValue());
+        }
+
+        return new ReadOnceInputEvent(bodyStream, headersIn, callID, deadlineDate);
+
     }
+
+    private void writeEvent(OutputEvent evt, HttpResponse response) {
+
+        evt.getHeaders().asMap()
+           .entrySet()
+           .stream()
+           .flatMap(e -> e.getValue().stream().map((v) -> new BasicHeader(e.getKey(), v)))
+           .forEachOrdered(response::addHeader);
+
+        ContentType contentType = evt.getContentType().map(c -> {
+            try {
+                return ContentType.parse(c);
+            } catch (ParseException e) {
+                return ContentType.DEFAULT_BINARY;
+            }
+        }).orElse(ContentType.DEFAULT_BINARY);
+
+        response.setHeader("Content-Type", contentType.toString());
+        response.setStatusLine(new BasicStatusLine(HttpVersion.HTTP_1_1, evt.getStatus().getCode(), evt.getStatus().name()));
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        // TODO remove output buffering here - possibly change OutputEvent contract to support providing an InputStream?
+        try {
+            evt.writeToOutput(bos);
+        } catch (IOException e) {
+            throw new FunctionOutputHandlingException("Error writing output", e);
+        }
+        byte[] data = bos.toByteArray();
+        response.setEntity(new ByteArrayEntity(data, contentType));
+
+    }
+
 
     @Override
-    public boolean shouldContinue() {
-        return true;
-    }
-
-    @Override
-    public void writeEvent(OutputEvent evt) {
-        synchronized(lock) {
-            evt.getHeaders().getAll().forEach((k, v) -> response.setHeader(k, v));
-            evt.getContentType().ifPresent(v -> response.setHeader("Content-Type", v));
-
-            try {
-                OutputStream out = response.getOutputStream();
-                evt.writeToOutput(out);
-            } catch (IOException ignored) {
-            }
-
-            this.baseRequest.setHandled(true);
-
-            this.baseRequest = null;
-            this.request = null;
-            this.response = null;
-
-            lock.notify();
-        }
-    }
-
     public void close() {
-        try {
-            s.stop();
-            s.join();
-        } catch (Exception ignored) {
-        }
+        stopped.set(false);
+        socketFile.delete();
     }
 }

@@ -12,7 +12,7 @@ import java.net.URLEncoder;
 import java.util.*;
 import java.util.stream.Collectors;
 
-class FnHttpEventBuilder {
+public class FnHttpEventBuilder {
     private Map<String, List<String>> queryParams = new TreeMap<>();
     private boolean streamRead = false;
     private String method;

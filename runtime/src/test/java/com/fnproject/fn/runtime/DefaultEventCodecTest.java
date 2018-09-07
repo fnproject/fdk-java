@@ -30,9 +30,9 @@ public class DefaultEventCodecTest {
         Map<String, String> env = new HashMap<>();
         env.put("FN_FORMAT", "default");
         env.put("FN_METHOD", "GET");
-        env.put("FN_APP_NAME", "testapp");
-        env.put("FN_PATH", "/route");
-        env.put("FN_REQUEST_URL", "http://test.com/fn/tryInvoke");
+//        env.put("FN_APP_NAME", "testapp");
+//        env.put("FN_PATH", "/route");
+//        env.put("FN_REQUEST_URL", "http://test.com/fn/tryInvoke");
 
         env.put("FN_HEADER_CONTENT_TYPE", "text/plain");
         env.put("FN_HEADER_ACCEPT", "text/html, text/plain;q=0.9");
@@ -44,23 +44,17 @@ public class DefaultEventCodecTest {
         config.put("CONFIGPARAM", "CONFIGVAL");
 
         DefaultEventCodec codec = new DefaultEventCodec(env, asStream("input"), new NullOutputStream());
-        InputEvent evt = codec.readEvent().get();
-        assertThat(evt.getMethod()).isEqualTo("GET");
-        assertThat(evt.getAppName()).isEqualTo("testapp");
-        assertThat(evt.getRoute()).isEqualTo("/route");
-        assertThat(evt.getRequestUrl()).isEqualTo("http://test.com/fn/tryInvoke");
+        InputEvent evt = codec.readEvent();
 
 
-        assertThat(evt.getHeaders().getAll().size()).isEqualTo(4);
-        assertThat(evt.getHeaders().getAll()).contains(
+        assertThat(evt.getHeaders().asMap().size()).isEqualTo(4);
+        assertThat(evt.getHeaders().asMap()).contains(
                 headerEntry("CONTENT_TYPE", "text/plain"),
                 headerEntry("ACCEPT_ENCODING", "gzip"),
                 headerEntry("ACCEPT", "text/html, text/plain;q=0.9"),
                 headerEntry("USER_AGENT", "userAgent"));
 
         evt.consumeBody((body) -> assertThat(body).hasSameContentAs(asStream("input")));
-
-        assertThat(codec.shouldContinue()).isFalse();
     }
 
 
@@ -93,7 +87,7 @@ public class DefaultEventCodecTest {
     @Test
     public void shouldWriteOutputDirectlyToOutputStream() throws IOException{
 
-        OutputEvent evt = OutputEvent.fromBytes("hello".getBytes(),OutputEvent.SUCCESS,"text/plain");
+        OutputEvent evt = OutputEvent.fromBytes("hello".getBytes(),OutputEvent.Status.Success,"text/plain");
         ByteArrayOutputStream bos  = new ByteArrayOutputStream();
 
         DefaultEventCodec codec = new DefaultEventCodec(new HashMap<>(), new NullInputStream(0),bos);

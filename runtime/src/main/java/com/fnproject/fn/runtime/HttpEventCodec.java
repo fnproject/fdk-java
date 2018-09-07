@@ -1,6 +1,7 @@
 package com.fnproject.fn.runtime;
 
 
+import com.fasterxml.jackson.databind.util.StdDateFormat;
 import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.InputEvent;
 import com.fnproject.fn.api.OutputEvent;
@@ -19,10 +20,8 @@ import org.apache.http.message.BasicHttpResponse;
 import org.apache.http.message.BasicStatusLine;
 
 import java.io.*;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.text.ParseException;
+import java.util.*;
 import java.util.function.Function;
 
 
@@ -30,6 +29,8 @@ import java.util.function.Function;
  * Reads input via an InputStream as an HTTP request.
  * <p>
  * This does not consume the whole event from the buffer,  The caller is responsible for ensuring that either   {@link InputEvent#consumeBody(Function)} or {@link InputEvent#close()}  is called before reading a new event
+ *
+ * @deprecated all new functions should use {@link HTTPStreamCodec}
  */
 public class HttpEventCodec implements EventCodec {
 
@@ -67,8 +68,7 @@ public class HttpEventCodec implements EventCodec {
         return val;
     }
 
-    @Override
-    public final Optional<InputEvent> readEvent() {
+    protected Optional<InputEvent> readEvent() {
 
         HttpRequest req;
         try {
@@ -90,29 +90,28 @@ public class HttpEventCodec implements EventCodec {
         } else {
             bodyStream = new ByteArrayInputStream(new byte[]{});
         }
-        String appName = getRequiredEnv("FN_APP_NAME");
-        String route = getRequiredEnv("FN_PATH");
-        String method = requiredHeader(req, "fn_method");
-        String requestUrl = requiredHeader(req, "fn_request_url");
+
+
+        String deadline = requiredHeader(req, "fn_deadline");
+        String callID = requiredHeader(req, "fn_call_id");
+        Date deadlineDate;
+        try {
+            deadlineDate = StdDateFormat.getISO8601Format(TimeZone.getDefault(), Locale.getDefault()).parse(deadline);
+        } catch (ParseException e) {
+            throw new FunctionInputHandlingException("Invalid deadline date format", e);
+        }
 
         Map<String, String> headers = new HashMap<>();
         for (Header h : req.getAllHeaders()) {
             headers.put(h.getName(), h.getValue());
         }
 
-        return Optional.of(new ReadOnceInputEvent(appName, route, requestUrl, method,
-           bodyStream, Headers.fromMap(headers),
-           QueryParametersParser.getParams(requestUrl)));
+        return Optional.of(new ReadOnceInputEvent(
+           bodyStream, Headers.fromMap(headers), callID, deadlineDate));
 
     }
 
-    @Override
-    public boolean shouldContinue() {
-        return true;
-    }
-
-    @Override
-    public void writeEvent(OutputEvent evt) {
+    protected void writeEvent(OutputEvent evt) {
         try {
             // TODO: We buffer the whole output here just to get the content-length
             // TODO: functions should support chunked
@@ -126,12 +125,15 @@ public class HttpEventCodec implements EventCodec {
             BasicHttpResponse response;
 
             if (evt.isSuccess()) {
-                response = new BasicHttpResponse(new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), evt.getStatusCode(), "INVOKED"));
+                response = new BasicHttpResponse(new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), evt.getStatus().getCode(), "INVOKED"));
             } else {
-                response = new BasicHttpResponse(new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), evt.getStatusCode(), "INVOKE FAILED"));
+                response = new BasicHttpResponse(new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), evt.getStatus().getCode(), "INVOKE FAILED"));
             }
 
-            evt.getHeaders().getAll().forEach(response::setHeader);
+            evt.getHeaders().asMap().forEach((k, vs) -> {
+                vs.forEach(v -> response.addHeader(k, v));
+            });
+
             evt.getContentType().ifPresent((ct) -> response.setHeader(CONTENT_TYPE_HEADER, ct));
             response.setHeader("Content-length", String.valueOf(data.length));
 
@@ -153,4 +155,15 @@ public class HttpEventCodec implements EventCodec {
         }
     }
 
+    @Override
+    public void runCodec(Handler h) {
+
+        while (true) {
+            Optional<InputEvent> evt = readEvent();
+            if (!evt.isPresent()) {
+                return;
+            }
+            writeEvent(h.handle(evt.get()));
+        }
+    }
 }

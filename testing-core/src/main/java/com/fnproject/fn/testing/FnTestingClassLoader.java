@@ -1,8 +1,6 @@
 package com.fnproject.fn.testing;
 
 import com.fnproject.fn.runtime.EntryPoint;
-import com.fnproject.fn.runtime.flow.CompleterClientFactory;
-import com.fnproject.fn.runtime.flow.FlowRuntimeGlobals;
 import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
@@ -18,11 +16,11 @@ import java.util.Map;
 /**
  * Testing classloader that loads all classes afresh when needed, otherwise delegates shared classes to the parent classloader
  */
-class FnTestingClassLoader extends ClassLoader {
+public class FnTestingClassLoader extends ClassLoader {
     private final List<String> sharedPrefixes;
     private final Map<String, Class<?>> loaded = new HashMap<>();
 
-    FnTestingClassLoader(ClassLoader parent, List<String> sharedPrefixes) {
+    public FnTestingClassLoader(ClassLoader parent, List<String> sharedPrefixes) {
         super(parent);
         this.sharedPrefixes = sharedPrefixes;
     }
@@ -67,14 +65,7 @@ class FnTestingClassLoader extends ClassLoader {
         return cls;
     }
 
-    void setCompleterClient(CompleterClientFactory completerClientFactory) {
-        try {
-            Class<?> completerGlobals = loadClass(FlowRuntimeGlobals.class.getName());
-            callMethodInFnClassloader(completerGlobals, "setCompleterClientFactory", CompleterClientFactory.class).invoke(completerGlobals, completerClientFactory);
-        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | ClassNotFoundException | IllegalArgumentException e) {
-            throw new RuntimeException("Something broke in the reflective classloader", e);
-        }
-    }
+
 
     public int run(Map<String, String> mutableEnv, InputStream is, PrintStream functionOut, PrintStream functionErr, String... s) {
         ClassLoader currentClassLoader = Thread.currentThread().getContextClassLoader();
@@ -86,7 +77,7 @@ class FnTestingClassLoader extends ClassLoader {
             Class<?> entryPoint_class = loadClass(EntryPoint.class.getName());
             Object entryPoint = entryPoint_class.newInstance();
 
-            return (int) callMethodInFnClassloader(entryPoint, "run", Map.class, InputStream.class, OutputStream.class, PrintStream.class, String[].class)
+            return (int) getMethodInClassLoader(entryPoint, "run", Map.class, InputStream.class, OutputStream.class, PrintStream.class, String[].class)
                     .invoke(entryPoint, mutableEnv, is, functionOut, functionErr, s);
         } catch (ClassNotFoundException | IllegalAccessException | InstantiationException | NoSuchMethodException | InvocationTargetException | IllegalArgumentException e) {
             throw new RuntimeException("Something broke in the reflective classloader", e);
@@ -95,7 +86,7 @@ class FnTestingClassLoader extends ClassLoader {
         }
     }
 
-    private Method callMethodInFnClassloader(Object target, String method, Class... types) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    private Method getMethodInClassLoader(Object target, String method, Class... types) throws NoSuchMethodException {
         Class<?> targetClass;
         if (target instanceof Class) {
             targetClass = (Class) target;

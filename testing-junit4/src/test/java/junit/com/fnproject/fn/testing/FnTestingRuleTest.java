@@ -181,12 +181,12 @@ public class FnTestingRuleTest {
 
         FnResult result = fn.getOnlyResult();
         Assertions.assertThat(result.getBodyAsString()).isEmpty();
-        Assertions.assertThat(result.getHeaders().getAll()).contains(headerEntry("Content-length", "0"));
+        Assertions.assertThat(result.getHeaders().asMap()).contains(headerEntry("Content-length", "0"));
         Assertions.assertThat(result.getStatus()).isEqualTo(200);
 
         InputEvent event = capturedInputs.get(0);
         Assertions.assertThat(event.getAppName()).isEqualTo(APP_NAME);
-        Assertions.assertThat(event.getHeaders().getAll())
+        Assertions.assertThat(event.getHeaders().asMap())
                   .contains(headerEntry("FOO", "BAR, BAZ"))
                   .contains(headerEntry("FEH", ""));
         Assertions.assertThat(event.getMethod()).isEqualTo(METHOD);
@@ -220,24 +220,24 @@ public class FnTestingRuleTest {
 
         FnResult result = fn.getResults().get(0);
         Assertions.assertThat(result.getBodyAsString()).isEmpty();
-        Assertions.assertThat(result.getHeaders().getAll()).contains(headerEntry("Content-length", "0"));
+        Assertions.assertThat(result.getHeaders().asMap()).contains(headerEntry("Content-length", "0"));
         Assertions.assertThat(result.getStatus()).isEqualTo(200);
 
         InputEvent event = capturedInputs.get(0);
         Assertions.assertThat(event.getAppName()).isEqualTo("alpha");
-        Assertions.assertThat(event.getHeaders().getAll()).contains(headerEntry("FOO", "BAR"));
+        Assertions.assertThat(event.getHeaders().asMap()).contains(headerEntry("FOO", "BAR"));
         Assertions.assertThat(event.getMethod()).isEqualTo("POST");
         Assertions.assertThat(capturedBodies.get(0)).isEqualTo("Body".getBytes());
 
 
         FnResult result2 = fn.getResults().get(1);
         Assertions.assertThat(result2.getBodyAsString()).isEmpty();
-        Assertions.assertThat(result2.getHeaders().getAll()).contains(headerEntry("Content-length", "0"));
+        Assertions.assertThat(result2.getHeaders().asMap()).contains(headerEntry("Content-length", "0"));
         Assertions.assertThat(result2.getStatus()).isEqualTo(200);
 
         InputEvent event2 = capturedInputs.get(1);
         Assertions.assertThat(event2.getAppName()).isEqualTo("alpha");
-        Assertions.assertThat(event2.getHeaders().getAll()).contains(headerEntry("FOO2", "BAR2"));
+        Assertions.assertThat(event2.getHeaders().asMap()).contains(headerEntry("FOO2", "BAR2"));
         Assertions.assertThat(event2.getMethod()).isEqualTo("PUT");
         Assertions.assertThat(capturedBodies.get(1)).isEqualTo("Body2".getBytes());
     }
@@ -262,7 +262,7 @@ public class FnTestingRuleTest {
 
         results.forEach((r) -> {
             Assertions.assertThat(r.getStatus()).isEqualTo(200);
-            Assertions.assertThat(r.getHeaders().getAll())
+            Assertions.assertThat(r.getHeaders().asMap())
                       .contains(headerEntry("Content-Type", "application/octet-stream"))
                       .contains(headerEntry("Content-length", String.valueOf("Body".getBytes().length)));
 

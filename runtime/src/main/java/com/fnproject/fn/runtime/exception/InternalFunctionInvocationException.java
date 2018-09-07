@@ -19,7 +19,7 @@ public final class InternalFunctionInvocationException extends RuntimeException 
     public InternalFunctionInvocationException(String message, Throwable target) {
         super(message);
         this.cause = target;
-        this.event = OutputEvent.fromBytes(new byte[0], OutputEvent.FAILURE, null);
+        this.event = OutputEvent.fromBytes(new byte[0], OutputEvent.Status.FunctionError, null);
     }
 
 

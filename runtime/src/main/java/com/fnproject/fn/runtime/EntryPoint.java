@@ -14,6 +14,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Main entry point
@@ -27,11 +28,11 @@ public class EntryPoint {
         // without interference from the user printing stuff to what they believe is stdout.
         System.setOut(System.err);
         int exitCode = new EntryPoint().run(
-                System.getenv(),
-                System.in,
-                originalSystemOut,
-                System.err,
-                args);
+           System.getenv(),
+           System.in,
+           originalSystemOut,
+           System.err,
+           args);
         System.setOut(originalSystemOut);
         System.exit(exitCode);
     }
@@ -54,7 +55,8 @@ public class EntryPoint {
         String cls = classMethod[0];
         String mth = classMethod[1];
 
-        int lastStatus = 0;
+        // TODO deprecate with default contract
+        final AtomicInteger lastStatus = new AtomicInteger();
         try {
             final Map<String, String> configFromEnvVars = Collections.unmodifiableMap(excludeInternalConfigAndHeaders(env));
 
@@ -75,56 +77,52 @@ public class EntryPoint {
                 throw new FunctionInputHandlingException("Unsupported function format:" + format);
             }
 
-            do {
-                try {
-                    Optional<InputEvent> evtOpt = codec.readEvent();
-                    if (!evtOpt.isPresent()) {
-                        break;
-                    }
 
+            codec.runCodec((evt) -> {
+                try {
                     FunctionInvocationContext fic = runtimeContext.newInvocationContext();
-                    try (InputEvent evt = evtOpt.get()) {
+                    try (InputEvent myEvt = evt) {
                         OutputEvent output = runtimeContext.tryInvoke(evt, fic);
                         if (output == null) {
                             throw new FunctionInputHandlingException("No invoker found for input event");
                         }
-                        codec.writeEvent(output);
                         if (output.isSuccess()) {
-                            lastStatus = 0;
+                            lastStatus.set(0);
                             fic.fireOnSuccessfulInvocation();
                         } else {
-                            lastStatus = 1;
+                            lastStatus.set(1);
                             fic.fireOnFailedInvocation();
                         }
-                    } catch (IOException e) {
+                        return output;
+
+                    } catch (IOException err) {
                         fic.fireOnFailedInvocation();
-                        throw new FunctionInputHandlingException("Error closing function input", e);
+                        throw new FunctionInputHandlingException("Error closing function input", err);
                     } catch (Exception e) {
                         // Make sure we commit any pending Flows, then rethrow
                         fic.fireOnFailedInvocation();
                         throw e;
                     }
-
                 } catch (InternalFunctionInvocationException fie) {
                     loggingOutput.println("An error occurred in function: " + filterStackTraceToOnlyIncludeUsersCode(fie));
-                    codec.writeEvent(fie.toOutput());
-
                     // Here: completer-invoked continuations are *always* reported as successful to the Fn platform;
                     // the completer interprets the embedded HTTP-framed response.
-                    lastStatus = fie.toOutput().isSuccess() ? 0 : 1;
+                    lastStatus.set(fie.toOutput().isSuccess() ? 0 : 1);
+                    return fie.toOutput();
                 }
-            } while (codec.shouldContinue());
+
+            });
         } catch (FunctionLoadException | FunctionInputHandlingException | FunctionOutputHandlingException e) {
             // catch all block;
             loggingOutput.println(filterStackTraceToOnlyIncludeUsersCode(e));
             return 2;
-        } catch (Exception ee){
+        } catch (Exception ee) {
             loggingOutput.println("An unexpected error occurred:");
             ee.printStackTrace(loggingOutput);
             return 1;
         }
 
-        return lastStatus;
+        return lastStatus.get();
     }
 
 
@@ -179,7 +177,7 @@ public class EntryPoint {
      */
     private Map<String, String> excludeInternalConfigAndHeaders(Map<String, String> env) {
         Set<String> nonConfigEnvKeys = new HashSet<>(Arrays.asList("fn_app_name", "fn_path", "fn_method", "fn_request_url",
-                "fn_format", "content-length", "fn_call_id"));
+           "fn_format", "content-length", "fn_call_id"));
         Map<String, String> config = new HashMap<>();
         for (Map.Entry<String, String> entry : env.entrySet()) {
             String lowerCaseKey = entry.getKey().toLowerCase();

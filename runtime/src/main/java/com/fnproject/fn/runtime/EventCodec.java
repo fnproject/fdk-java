@@ -3,33 +3,33 @@ package com.fnproject.fn.runtime;
 import com.fnproject.fn.api.InputEvent;
 import com.fnproject.fn.api.OutputEvent;
 
-import java.io.IOException;
-import java.util.Optional;
-
 /**
  * Event Codec - deals with different calling conventions between fn and the function docker container
  */
 public interface EventCodec {
-    /**
-     * Read a event from the input
-     *
-     * @return an empty input stream if the end of the stream is reached or an event if otherwise
-     */
-    Optional<InputEvent> readEvent();
 
     /**
-     * Should the codec be used again
-     *
-     * @return true if {@link #readEvent()} can read another message
+     * Handler handles function content  based on codec events
+     * <p>
+     * A handler should generally deal with all exceptions (except errors) and convert them into appropriate OutputEvents
      */
-    boolean shouldContinue();
+    interface Handler {
+        /**
+         * Handle a function input event and generate a response
+         *
+         * @param event the event to handle
+         * @return an output event indicating the result of calling a function or an error
+         */
+        OutputEvent handle(InputEvent event);
+    }
 
     /**
-     * Write an event to the output
+     * Run Codec should continuously run the function event loop until either  the FDK should exit normally (returning normally) or an error occurred.
+     * <p>
+     * Codec should invoke the handler for each received event
      *
-     * @param evt event to write
-     * @throws IOException if an error occurs while writing
+     * @param h the handler to run
      */
-    void writeEvent(OutputEvent evt);
+    void runCodec(Handler h);
 
 }

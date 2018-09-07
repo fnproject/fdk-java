@@ -2,6 +2,7 @@ package com.fnproject.fn.api;
 
 import java.io.Closeable;
 import java.io.InputStream;
+import java.util.Date;
 import java.util.function.Function;
 
 public interface InputEvent extends Closeable {
@@ -17,29 +18,21 @@ public interface InputEvent extends Closeable {
      */
     <T> T consumeBody(Function<InputStream, T> dest);
 
+
+
     /**
-     * The application name associated with this function
+     * return the current call ID for this event
+     * @return a call ID
+     */
+    String getCallID();
+
+
+    /**
+     * return the deadline by which this event should be processed - this is information an is intended  to help you determine how long you should spend processing your event - if you exceed this deadline Fn will terminate your container ¬
      *
-     * @return an application name
+     * @return a deadline relative to the current system clock that the event must be processed by
      */
-    String getAppName();
-
-    /**
-     * @return The route (including preceding slash) of this function call
-     */
-    String getRoute();
-
-    /**
-     * @return The full request URL of this function invocation
-     */
-    String getRequestUrl();
-
-    /**
-     * The HTTP method used to invoke this function
-     *
-     * @return an UpperCase HTTP method
-     */
-    String getMethod();
+    Date getDeadline();
 
 
     /**
@@ -49,11 +42,5 @@ public interface InputEvent extends Closeable {
      */
     Headers getHeaders();
 
-    /**
-     * The query parameters of the function invocation
-     *
-     * @return an immutable map of query parameters parsed from the request URL
-     */
-    QueryParameters getQueryParameters();
 
 }

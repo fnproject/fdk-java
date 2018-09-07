@@ -26,7 +26,7 @@ public class StringReversalCoercion implements InputCoercion<String>, OutputCoer
         if (ctx.getRuntimeContext().getMethod().getTargetMethod().getReturnType().equals(String.class)) {
             try {
                 String reversedOutput = new StringBuffer((String) value).reverse().toString();
-                return Optional.of(OutputEvent.fromBytes(reversedOutput.getBytes(), OutputEvent.SUCCESS, "text/plain"));
+                return Optional.of(OutputEvent.fromBytes(reversedOutput.getBytes(), OutputEvent.Status.Success, "text/plain"));
             } catch (ClassCastException e) {
                 return Optional.empty();
             }

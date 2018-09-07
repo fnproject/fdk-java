@@ -11,7 +11,7 @@ public class VoidCoercion implements OutputCoercion {
     @Override
     public Optional<OutputEvent> wrapFunctionResult(InvocationContext ctx, MethodWrapper method, Object value) {
         if (method.getReturnType().getParameterClass().equals(Void.class)) {
-            return Optional.of(OutputEvent.emptyResult(OutputEvent.SUCCESS));
+            return Optional.of(OutputEvent.emptyResult(OutputEvent.Status.Success));
         } else {
             return Optional.empty();
         }

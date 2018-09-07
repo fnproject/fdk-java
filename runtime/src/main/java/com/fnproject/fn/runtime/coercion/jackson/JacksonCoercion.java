@@ -64,7 +64,7 @@ public class JacksonCoercion implements InputCoercion<Object>, OutputCoercion {
     public Optional<OutputEvent> wrapFunctionResult(InvocationContext ctx, MethodWrapper method, Object value) {
 
         try {
-            return Optional.of(OutputEvent.fromBytes(objectMapper(ctx).writeValueAsBytes(value), OutputEvent.SUCCESS,
+            return Optional.of(OutputEvent.fromBytes(objectMapper(ctx).writeValueAsBytes(value), OutputEvent.Status.Success,
                     "application/json"));
 
         } catch (JsonProcessingException e) {
