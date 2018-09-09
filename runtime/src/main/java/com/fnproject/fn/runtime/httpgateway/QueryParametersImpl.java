@@ -1,4 +1,4 @@
-package com.fnproject.fn.runtime;
+package com.fnproject.fn.runtime.httpgateway;
 
 import com.fnproject.fn.api.QueryParameters;
 

@@ -1,6 +1,5 @@
 package com.fnproject.fn.runtime;
 
-import com.fasterxml.jackson.databind.util.StdDateFormat;
 import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.InputEvent;
 import com.fnproject.fn.api.OutputEvent;
@@ -10,8 +9,11 @@ import com.fnproject.fn.api.exception.FunctionOutputHandlingException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.text.ParseException;
-import java.util.*;
+import java.time.Instant;
+import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoUnit;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * DefaultEventCodec handles plain docker invocations on functions
@@ -42,18 +44,20 @@ class DefaultEventCodec implements EventCodec {
     }
 
     protected InputEvent readEvent() {
-        String method = getRequiredEnv("FN_METHOD");
-        String appName = getRequiredEnv("FN_APP_NAME");
-        String route = getRequiredEnv("FN_PATH");
-        String requestUrl = getRequiredEnv("FN_REQUEST_URL");
-        String callId = getRequiredEnv("FN_CALL_ID");
-        String deadline = getRequiredEnv("FN_DEADLINE");
-        Date deadlineDate;
-        try {
-            deadlineDate = StdDateFormat.getISO8601Format(TimeZone.getDefault(), Locale.getDefault()).parse(deadline);
-        } catch (ParseException e) {
-            throw new FunctionInputHandlingException("Invalid deadline date format", e);
+        String callId = env.getOrDefault("FN_CALL_ID", "");
+        String deadline = env.get("FN_DEADLINE");
+        Instant deadlineDate;
+
+        if (deadline != null) {
+            try {
+                deadlineDate = Instant.parse(deadline);
+            } catch (DateTimeParseException e) {
+                throw new FunctionInputHandlingException("Invalid deadline date format", e);
+            }
+        } else {
+            deadlineDate = Instant.now().plus(1, ChronoUnit.HOURS);
         }
+
         Map<String, String> headers = new HashMap<>();
         for (Map.Entry<String, String> entry : env.entrySet()) {
             String lowerCaseKey = entry.getKey().toLowerCase();

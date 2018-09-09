@@ -167,7 +167,7 @@ public final class FlowContinuationInvoker implements FunctionInvoker {
                 @Override
                 public synchronized Flow currentFlow() {
                     if (runtime == null) {
-                        String functionId = evt.getAppName() + evt.getRoute();
+                        String functionId = ctx.getRuntimeContext().getFunctionID();
                         CompleterClientFactory factory = getOrCreateCompleterClientFactory(completerBaseUrl);
                         final FlowId flowId = factory.getCompleterClient().createFlow(functionId);
                         runtime = new RemoteFlow(flowId);
@@ -227,14 +227,9 @@ public final class FlowContinuationInvoker implements FunctionInvoker {
             this.body = body;
         }
 
-        /**
-         * The completer expects a 200 on the output event.
-         *
-         * @return
-         */
         @Override
-        public int getStatusCode() {
-            return OutputEvent.SUCCESS;
+        public Status getStatus() {
+            return Status.Success;
         }
 
 

@@ -9,6 +9,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
+import java.time.Instant;
 import java.util.*;
 
 public class JacksonCoercionTest {
@@ -30,7 +31,7 @@ public class JacksonCoercionTest {
         headers.put("content-type", "application/json");
 
         ByteArrayInputStream body = new ByteArrayInputStream("[{\"name\":\"Spot\",\"age\":6},{\"name\":\"Jason\",\"age\":16}]".getBytes());
-        InputEvent inputEvent = new ReadOnceInputEvent( body, Headers.fromMap(headers),"call",new Date());
+        InputEvent inputEvent = new ReadOnceInputEvent( body, Headers.fromMap(headers),"call",Instant.now());
 
         Optional<Object> object = jc.tryCoerceParam(invocationContext, 0, inputEvent, method);
 
@@ -52,7 +53,7 @@ public class JacksonCoercionTest {
         headers.put("content-type", "application/json");
 
         ByteArrayInputStream body = new ByteArrayInputStream("INVALID JSON".getBytes());
-        InputEvent inputEvent = new ReadOnceInputEvent( body, Headers.fromMap(headers), "call",new Date());
+        InputEvent inputEvent = new ReadOnceInputEvent( body, Headers.fromMap(headers), "call",Instant.now());
 
         boolean causedExpectedError;
         try {

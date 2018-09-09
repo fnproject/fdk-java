@@ -1,4 +1,4 @@
-package junit.com.fnproject.fn.testing.flow;
+package com.fnproject.fn.testing.flow;
 
 import com.fnproject.fn.api.flow.Flow;
 import com.fnproject.fn.api.flow.Flows;

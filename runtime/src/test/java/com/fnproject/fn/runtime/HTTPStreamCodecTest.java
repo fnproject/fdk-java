@@ -114,7 +114,7 @@ public class HTTPStreamCodecTest {
 
         InputEvent evt = lastEvent.get(1, TimeUnit.MILLISECONDS);
         assertThat(evt.getCallID()).isEqualTo("callID");
-        assertThat(evt.getDeadline().getTime()).isEqualTo(1033552800992L);
+        assertThat(evt.getDeadline().toEpochMilli()).isEqualTo(1033552800992L);
         assertThat(evt.getHeaders()).isEqualTo(Headers.emptyHeaders().addHeader("Fn-Call-Id", "callID").addHeader("Fn-Deadline", "2002-10-02T10:00:00.992Z").addHeader("Custom-header", "v1", "v2").addHeader("Content-Type", "text/plain"));
 
 
@@ -137,6 +137,27 @@ public class HTTPStreamCodecTest {
 
             cleanup();
         }
+
+    }
+
+    @Test
+    public void shouldStripHopToHopHeadersFromFunction() throws Exception {
+
+        for (String header : new String[]{"Content-Length","Transfer-encoding","Connection"}){
+            CompletableFuture<InputEvent> lastEvent = new CompletableFuture<>();
+
+            startCodec(defaultEnv, (in) -> {
+                lastEvent.complete(in);
+                return OutputEvent.fromBytes("hello".getBytes(), OutputEvent.Status.Success, "text/plain", Headers.emptyHeaders().addHeader(header,"foo"));
+            });
+
+            ContentResponse resp = defaultRequest().send();
+
+            assertThat(resp.getHeaders().get(header)).isNull();
+
+            cleanup();
+        }
+
 
     }
 }

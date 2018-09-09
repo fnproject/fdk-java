@@ -1,4 +1,4 @@
-package junit.com.fnproject.fn.testing;
+package com.fnproject.fn.testing.flow;
 
 import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.InputEvent;

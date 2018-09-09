@@ -29,11 +29,6 @@ public class DefaultEventCodecTest {
     public void shouldExtractBasicEvent() {
         Map<String, String> env = new HashMap<>();
         env.put("FN_FORMAT", "default");
-        env.put("FN_METHOD", "GET");
-//        env.put("FN_APP_NAME", "testapp");
-//        env.put("FN_PATH", "/route");
-//        env.put("FN_REQUEST_URL", "http://test.com/fn/tryInvoke");
-
         env.put("FN_HEADER_CONTENT_TYPE", "text/plain");
         env.put("FN_HEADER_ACCEPT", "text/html, text/plain;q=0.9");
         env.put("FN_HEADER_ACCEPT_ENCODING", "gzip");
@@ -58,31 +53,6 @@ public class DefaultEventCodecTest {
     }
 
 
-
-    @Test
-    public void shouldRejectMissingEnv() {
-        Map<String, String> requiredEnv = new HashMap<>();
-
-        requiredEnv.put("FN_PATH", "/route");
-        requiredEnv.put("FN_METHOD", "GET");
-        requiredEnv.put("FN_APP_NAME", "app_name");
-        requiredEnv.put("FN_REQUEST_URL", "http://test.com/fn/tryInvoke");
-
-        for (String key : requiredEnv.keySet()) {
-            Map<String, String> newEnv = new HashMap<>(requiredEnv);
-            newEnv.remove(key);
-
-            DefaultEventCodec codec = new DefaultEventCodec(newEnv, asStream("input"), new NullOutputStream());
-
-            try{
-                codec.readEvent();
-                fail("Should have rejected missing env "+ key);
-            }catch(FunctionInputHandlingException e){
-                assertThat(e).hasMessageContaining("Required environment variable " + key+ " is not set - are you running a function outside of fn run?");
-            }
-        }
-
-    }
 
     @Test
     public void shouldWriteOutputDirectlyToOutputStream() throws IOException{

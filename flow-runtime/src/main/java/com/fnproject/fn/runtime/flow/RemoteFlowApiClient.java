@@ -120,12 +120,7 @@ public class RemoteFlowApiClient implements CompleterClient {
 
             httpReq.headers = new ArrayList<>();
 
-            headers.asMap().forEach((k, v) -> {
-                APIModel.HTTPHeader h = new APIModel.HTTPHeader();
-                h.key = k;
-                h.value = v;
-                httpReq.headers.add(h);
-            });
+            headers.asMap().forEach((k, vs) -> vs.forEach(v -> httpReq.headers.add(APIModel.HTTPHeader.create(k, v))));
         }
 
         httpReq.method = APIModel.HTTPMethod.fromFlow(method);
@@ -153,9 +148,9 @@ public class RemoteFlowApiClient implements CompleterClient {
             APIModel.CompletionResult completionResult = new APIModel.CompletionResult();
             completionResult.successful = success;
 
-            if(value instanceof RemoteFlow.RemoteFlowFuture) {
+            if (value instanceof RemoteFlow.RemoteFlowFuture) {
                 APIModel.StageRefDatum stageRefDatum = new APIModel.StageRefDatum();
-                stageRefDatum.stageId = ((RemoteFlow.RemoteFlowFuture)value).id();
+                stageRefDatum.stageId = ((RemoteFlow.RemoteFlowFuture) value).id();
                 completionResult.result = stageRefDatum;
             } else {
                 APIModel.Datum blobDatum = APIModel.datumFromJava(flowId, value, blobStoreClient);
@@ -251,14 +246,14 @@ public class RemoteFlowApiClient implements CompleterClient {
             long remainingTimeout = Math.max(1, start + msTimeout - lastStart);
 
             try (HttpClient.HttpResponse response =
-                    httpClient.execute(prepareGet(apiUrlBase + "/flows/" + flowId.getId() + "/stages/" + id.getId() + "/await?timeout_ms=" + remainingTimeout))) {
+                   httpClient.execute(prepareGet(apiUrlBase + "/flows/" + flowId.getId() + "/stages/" + id.getId() + "/await?timeout_ms=" + remainingTimeout))) {
 
                 if (response.getStatusCode() == 200) {
                     APIModel.AwaitStageResponse resp = FlowRuntimeGlobals.getObjectMapper().readValue(response.getContentStream(), APIModel.AwaitStageResponse.class);
                     if (resp.result.successful) {
                         return resp.result.toJava(flowId, blobStoreClient, getClass().getClassLoader());
                     } else {
-                        throw new FlowCompletionException((Throwable)resp.result.toJava(flowId, blobStoreClient, getClass().getClassLoader()));
+                        throw new FlowCompletionException((Throwable) resp.result.toJava(flowId, blobStoreClient, getClass().getClassLoader()));
                     }
                 } else if (response.getStatusCode() == 408) {
                     // do nothing go round again
@@ -313,10 +308,10 @@ public class RemoteFlowApiClient implements CompleterClient {
         try {
             String body = response.entityAsString();
             return new PlatformCommunicationException(String.format("Received unexpected response (%d) from " +
-               "Flow service: %s", response.getStatusCode(), body == null ? "Empty body" : body));
+              "Flow service: %s", response.getStatusCode(), body == null ? "Empty body" : body));
         } catch (IOException e) {
             return new PlatformCommunicationException(String.format("Received unexpected response (%d) from " +
-               "Flow service. Could not read body.", response.getStatusCode()), e);
+              "Flow service. Could not read body.", response.getStatusCode()), e);
         }
     }
 
@@ -342,7 +337,7 @@ public class RemoteFlowApiClient implements CompleterClient {
     private CompletionId addStageWithClosure(APIModel.CompletionOperation operation, FlowId flowId, Serializable supplier, CodeLocation codeLocation, List<CompletionId> deps) {
 
         byte[] serialized = serializeClosure(supplier);
-        BlobResponse blobResponse   = blobStoreClient.writeBlob(flowId.getId(), serialized, CONTENT_TYPE_JAVA_OBJECT);
+        BlobResponse blobResponse = blobStoreClient.writeBlob(flowId.getId(), serialized, CONTENT_TYPE_JAVA_OBJECT);
 
         return addStage(operation, APIModel.Blob.fromBlobResponse(blobResponse), deps, flowId, codeLocation);
 

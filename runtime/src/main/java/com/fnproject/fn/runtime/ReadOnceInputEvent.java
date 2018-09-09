@@ -7,6 +7,7 @@ import com.fnproject.fn.api.exception.FunctionInputHandlingException;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.Instant;
 import java.util.Date;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -21,11 +22,11 @@ public class ReadOnceInputEvent implements InputEvent {
     private final BufferedInputStream body;
     private AtomicBoolean consumed = new AtomicBoolean(false);
     private final Headers headers;
-    private final Date deadline;
+    private final Instant deadline;
     private final String callID;
 
 
-    public ReadOnceInputEvent(InputStream body, Headers headers, String callID, Date deadline) {
+    public ReadOnceInputEvent(InputStream body, Headers headers, String callID, Instant deadline) {
         this.body = new BufferedInputStream(Objects.requireNonNull(body, "body"));
         this.headers = Objects.requireNonNull(headers, "headers");
         this.callID = Objects.requireNonNull(callID, "callID");
@@ -62,10 +63,9 @@ public class ReadOnceInputEvent implements InputEvent {
     }
 
     @Override
-    public Date getDeadline() {
+    public Instant getDeadline() {
         return deadline;
     }
-
 
     @Override
     public Headers getHeaders() {

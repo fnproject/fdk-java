@@ -36,6 +36,16 @@ public class FunctionRuntimeContext implements RuntimeContext {
     }
 
     @Override
+    public String getAppID() {
+        return config.getOrDefault("FN_APP_ID","");
+    }
+
+    @Override
+    public String getFunctionID() {
+        return config.getOrDefault("FN_FN_ID","");
+    }
+
+    @Override
     public Optional<Object> getInvokeInstance() {
         if (!Modifier.isStatic(getMethod().getTargetMethod().getModifiers())) {
             if (instance == null) {

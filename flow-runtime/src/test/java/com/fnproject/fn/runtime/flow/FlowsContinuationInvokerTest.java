@@ -15,6 +15,7 @@ import org.junit.rules.ExpectedException;
 
 import java.io.*;
 import java.lang.reflect.Method;
+import java.time.Instant;
 import java.util.*;
 
 import static com.fnproject.fn.runtime.flow.FlowContinuationInvoker.FLOW_ID_HEADER;
@@ -58,9 +59,9 @@ public class FlowsContinuationInvokerTest {
 
         // Given
         InputEvent event = newRequest()
-           .withClosure((Flows.SerFunction<Integer, Integer>) (x) -> x * 2)
-           .withJavaObjectArgs(10)
-           .asEvent();
+          .withClosure((Flows.SerFunction<Integer, Integer>) (x) -> x * 2)
+          .withJavaObjectArgs(10)
+          .asEvent();
 
         // When
         Optional<OutputEvent> result = invoker.tryInvoke(new EmptyInvocationContext(), event);
@@ -80,8 +81,8 @@ public class FlowsContinuationInvokerTest {
         // Given
 
         InputEvent event = new InputEventBuilder()
-           .withBody("")
-           .build();
+          .withBody("")
+          .build();
 
         // When
         FlowContinuationInvoker invoker = new FlowContinuationInvoker();
@@ -98,8 +99,8 @@ public class FlowsContinuationInvokerTest {
 
         // Given
         InputEvent event = newRequest()
-           .withClosure((Flows.SerFunction<Integer, Integer>) (x) -> x * 2)
-           .asEvent();
+          .withClosure((Flows.SerFunction<Integer, Integer>) (x) -> x * 2)
+          .asEvent();
 
         invoker.tryInvoke(new EmptyInvocationContext(), event);
 
@@ -117,8 +118,8 @@ public class FlowsContinuationInvokerTest {
         thrown.expect(FunctionInputHandlingException.class);
         // Given
         InputEvent event = newRequest()
-           .withClosure(new TestIf())
-           .asEvent();
+          .withClosure(new TestIf())
+          .asEvent();
         invoker.tryInvoke(new EmptyInvocationContext(), event);
     }
 
@@ -139,25 +140,25 @@ public class FlowsContinuationInvokerTest {
         }
 
         Tc[] cases = new Tc[]{
-           new Tc((Flows.SerConsumer<String>) (v) -> {
-           }, null, "hello"),
-           new Tc((Flows.SerBiFunction<String, String, String>) (String::concat), "hello bob", "hello ", "bob"),
-           new Tc((Flows.SerBiConsumer<String, String>) (a, b) -> {
-           }, null, "hello ", "bob"),
-           new Tc((Flows.SerFunction<String, String>) (String::toUpperCase), "HELLO BOB", "hello bob"),
-           new Tc((Flows.SerRunnable) () -> {
-           }, null),
-           new Tc((Flows.SerCallable<String>) () -> "hello", "hello"),
-           new Tc((Flows.SerSupplier<String>) () -> "hello", "hello"),
+          new Tc((Flows.SerConsumer<String>) (v) -> {
+          }, null, "hello"),
+          new Tc((Flows.SerBiFunction<String, String, String>) (String::concat), "hello bob", "hello ", "bob"),
+          new Tc((Flows.SerBiConsumer<String, String>) (a, b) -> {
+          }, null, "hello ", "bob"),
+          new Tc((Flows.SerFunction<String, String>) (String::toUpperCase), "HELLO BOB", "hello bob"),
+          new Tc((Flows.SerRunnable) () -> {
+          }, null),
+          new Tc((Flows.SerCallable<String>) () -> "hello", "hello"),
+          new Tc((Flows.SerSupplier<String>) () -> "hello", "hello"),
 
         };
 
 
         for (Tc tc : cases) {
             InputEvent event = newRequest()
-               .withClosure(tc.closure)
-               .withJavaObjectArgs(tc.args)
-               .asEvent();
+              .withClosure(tc.closure)
+              .withJavaObjectArgs(tc.args)
+              .asEvent();
             Optional<OutputEvent> result = invoker.tryInvoke(new EmptyInvocationContext(), event);
 
             assertThat(result).isPresent();
@@ -176,13 +177,13 @@ public class FlowsContinuationInvokerTest {
     public void emptyValueCorrectlySerialized() throws IOException, ClassNotFoundException {
         // Given
         InputEvent event = newRequest()
-           .withClosure((Flows.SerConsumer<Object>) (x) -> {
-               if (x != null) {
-                   throw new RuntimeException("Not Null");
-               }
-           })
-           .withEmptyDatumArg()
-           .asEvent();
+          .withClosure((Flows.SerConsumer<Object>) (x) -> {
+              if (x != null) {
+                  throw new RuntimeException("Not Null");
+              }
+          })
+          .withEmptyDatumArg()
+          .asEvent();
 
         // When
         Optional<OutputEvent> result = invoker.tryInvoke(new EmptyInvocationContext(), event);
@@ -198,8 +199,8 @@ public class FlowsContinuationInvokerTest {
     public void emptyValueCorrectlyDeSerialized() throws IOException, ClassNotFoundException {
         // Given
         InputEvent event = newRequest()
-           .withClosure((Flows.SerSupplier<Object>) () -> null)
-           .asEvent();
+          .withClosure((Flows.SerSupplier<Object>) () -> null)
+          .asEvent();
 
         // When
         Optional<OutputEvent> result = invoker.tryInvoke(new EmptyInvocationContext(), event);
@@ -217,12 +218,12 @@ public class FlowsContinuationInvokerTest {
 
         // Given
         InputEvent event = newRequest()
-           .withClosure((Flows.SerConsumer<FlowFuture<Object>>) (x) -> {
-               assertThat(x).isNotNull();
-               assertThat(((RemoteFlow.RemoteFlowFuture<Object>) x).id()).isEqualTo("newStage");
-           })
-           .withStageRefArg("newStage")
-           .asEvent();
+          .withClosure((Flows.SerConsumer<FlowFuture<Object>>) (x) -> {
+              assertThat(x).isNotNull();
+              assertThat(((RemoteFlow.RemoteFlowFuture<Object>) x).id()).isEqualTo("newStage");
+          })
+          .withStageRefArg("newStage")
+          .asEvent();
 
         // When
         Optional<OutputEvent> result = invoker.tryInvoke(new EmptyInvocationContext(), event);
@@ -241,8 +242,8 @@ public class FlowsContinuationInvokerTest {
 
         // Given
         InputEvent event = newRequest()
-           .withClosure((Flows.SerSupplier<FlowFuture<Object>>) () -> ff)
-           .asEvent();
+          .withClosure((Flows.SerSupplier<FlowFuture<Object>>) () -> ff)
+          .asEvent();
 
         // When
         Optional<OutputEvent> result = invoker.tryInvoke(new EmptyInvocationContext(), event);
@@ -262,11 +263,11 @@ public class FlowsContinuationInvokerTest {
     public void setsCurrentStageId() throws IOException, ClassNotFoundException {
 
         InputEvent event = newRequest()
-           .withClosure((Flows.SerRunnable) () -> {
-               assertThat(FlowRuntimeGlobals.getCurrentCompletionId()).contains(new CompletionId("myStage"));
-           })
-           .withStageId("myStage")
-           .asEvent();
+          .withClosure((Flows.SerRunnable) () -> {
+              assertThat(FlowRuntimeGlobals.getCurrentCompletionId()).contains(new CompletionId("myStage"));
+          })
+          .withStageId("myStage")
+          .asEvent();
 
         // When
         Optional<OutputEvent> result = invoker.tryInvoke(new EmptyInvocationContext(), event);
@@ -283,13 +284,13 @@ public class FlowsContinuationInvokerTest {
         // Given
 
         InputEvent event = newRequest()
-           .withClosure((Flows.SerConsumer<HttpResponse>) (x) -> {
-               assertThat(x.getBodyAsBytes()).isEqualTo("Hello".getBytes());
-               assertThat(x.getStatusCode()).isEqualTo(201);
-               assertThat(x.getHeaders().get("Foo")).contains("Bar");
-           })
-           .withHttpRespArg(201, "Hello", APIModel.HTTPHeader.create("Foo", "Bar"))
-           .asEvent();
+          .withClosure((Flows.SerConsumer<HttpResponse>) (x) -> {
+              assertThat(x.getBodyAsBytes()).isEqualTo("Hello".getBytes());
+              assertThat(x.getStatusCode()).isEqualTo(201);
+              assertThat(x.getHeaders().get("Foo")).contains("Bar");
+          })
+          .withHttpRespArg(201, "Hello", APIModel.HTTPHeader.create("Foo", "Bar"))
+          .asEvent();
 
 
         // When
@@ -305,14 +306,14 @@ public class FlowsContinuationInvokerTest {
         // Given
 
         InputEvent event = newRequest()
-           .withClosure((Flows.SerConsumer<FunctionInvocationException>) (e) -> {
-               HttpResponse x = e.getFunctionResponse();
-               assertThat(x.getBodyAsBytes()).isEqualTo("Hello".getBytes());
-               assertThat(x.getStatusCode()).isEqualTo(201);
-               assertThat(x.getHeaders().get("Foo")).contains("Bar");
-           })
-           .withHttpRespArg(false, 201, "Hello", APIModel.HTTPHeader.create("Foo", "Bar"))
-           .asEvent();
+          .withClosure((Flows.SerConsumer<FunctionInvocationException>) (e) -> {
+              HttpResponse x = e.getFunctionResponse();
+              assertThat(x.getBodyAsBytes()).isEqualTo("Hello".getBytes());
+              assertThat(x.getStatusCode()).isEqualTo(201);
+              assertThat(x.getHeaders().get("Foo")).contains("Bar");
+          })
+          .withHttpRespArg(false, 201, "Hello", APIModel.HTTPHeader.create("Foo", "Bar"))
+          .asEvent();
 
 
         // When
@@ -337,24 +338,24 @@ public class FlowsContinuationInvokerTest {
             }
         }
         for (TestCase tc : new TestCase[]{
-           new TestCase(APIModel.ErrorType.InvalidStageResponse, InvalidStageResponseException.class),
-           new TestCase(APIModel.ErrorType.FunctionInvokeFailed, FunctionInvokeFailedException.class),
-           new TestCase(APIModel.ErrorType.FunctionTimeout, FunctionTimeoutException.class),
-           new TestCase(APIModel.ErrorType.StageFailed, StageInvokeFailedException.class),
-           new TestCase(APIModel.ErrorType.StageTimeout, StageTimeoutException.class),
-           new TestCase(APIModel.ErrorType.StageLost, StageLostException.class)
+          new TestCase(APIModel.ErrorType.InvalidStageResponse, InvalidStageResponseException.class),
+          new TestCase(APIModel.ErrorType.FunctionInvokeFailed, FunctionInvokeFailedException.class),
+          new TestCase(APIModel.ErrorType.FunctionTimeout, FunctionTimeoutException.class),
+          new TestCase(APIModel.ErrorType.StageFailed, StageInvokeFailedException.class),
+          new TestCase(APIModel.ErrorType.StageTimeout, StageTimeoutException.class),
+          new TestCase(APIModel.ErrorType.StageLost, StageLostException.class)
 
         }) {
             Class<? extends Throwable> type = tc.exceptionType;
             // Given
             InputEvent event = newRequest()
-               .withClosure((Flows.SerConsumer<Throwable>) (e) -> {
+              .withClosure((Flows.SerConsumer<Throwable>) (e) -> {
 
-                   assertThat(e).hasMessage("My Error");
-                   assertThat(e).isInstanceOf(type);
-               })
-               .withErrorBody(tc.errorType, "My Error")
-               .asEvent();
+                  assertThat(e).hasMessage("My Error");
+                  assertThat(e).isInstanceOf(type);
+              })
+              .withErrorBody(tc.errorType, "My Error")
+              .asEvent();
 
 
             // When
@@ -372,8 +373,8 @@ public class FlowsContinuationInvokerTest {
     public void functionInvocationExceptionThrownIfStageResultIsNotSerializable() {
         thrown.expect(ResultSerializationException.class);
         InputEvent event = newRequest()
-           .withClosure((Flows.SerSupplier<Object>) Object::new)
-           .asEvent();
+          .withClosure((Flows.SerSupplier<Object>) Object::new)
+          .asEvent();
 
         invoker.tryInvoke(new EmptyInvocationContext(), event);
 
@@ -391,10 +392,10 @@ public class FlowsContinuationInvokerTest {
 
 
         InputEvent event = newRequest()
-           .withClosure((Flows.SerRunnable) () -> {
-               throw new MyRuntimeException();
-           })
-           .asEvent();
+          .withClosure((Flows.SerRunnable) () -> {
+              throw new MyRuntimeException();
+          })
+          .asEvent();
 
         invoker.tryInvoke(new EmptyInvocationContext(), event);
 
@@ -429,7 +430,7 @@ public class FlowsContinuationInvokerTest {
 
         public FlowRequestBuilder withJavaObjectArgs(Object... args) {
             Arrays.stream(args).forEach((arg) ->
-               req.args.add(blobStore.withResult(flowId, arg, true)));
+              req.args.add(blobStore.withResult(flowId, arg, true)));
             return this;
         }
 
@@ -445,10 +446,10 @@ public class FlowsContinuationInvokerTest {
             System.err.println("Req:" + new String(body));
 
             return new InputEventBuilder()
-               .withHeader(FLOW_ID_HEADER, flowId)
-               .withHeader("Content-type", "application/json")
-               .withBody(new ByteArrayInputStream(body))
-               .build();
+              .withHeader(FLOW_ID_HEADER, flowId)
+              .withHeader("Content-type", "application/json")
+              .withBody(new ByteArrayInputStream(body))
+              .build();
         }
 
         public FlowRequestBuilder withEmptyDatumArg() {
@@ -546,41 +547,38 @@ public class FlowsContinuationInvokerTest {
             return this;
         }
 
-        private Map<String, String> currentHeaders() {
+        private Map<String, List<String>> currentHeaders() {
             return new HashMap<>(headers.asMap());
         }
 
-        public InputEventBuilder withHeaders(Map<String, String> headers) {
-            Map<String, String> updated = currentHeaders();
-            updated.putAll(headers);
-            this.headers = Headers.fromMap(updated);
-            return this;
-        }
 
         public InputEventBuilder withHeader(String name, String value) {
-            Map<String, String> updated = currentHeaders();
-            updated.put(name, value);
-            this.headers = Headers.fromMap(updated);
+            this.headers = headers.setHeader(name,value);
             return this;
         }
 
         private String getHeader(String key) {
-            for (Map.Entry<String, String> entry : currentHeaders().entrySet()) {
-                if (key.equalsIgnoreCase(entry.getKey())) {
-                    return entry.getValue();
-                }
-            }
-            return null;
+            return headers.get(key).orElse(null);
         }
 
         public InputEvent build() {
             return new ReadOnceInputEvent(
-               body,
-               headers, "callID", new Date());
+              body,
+              headers, "callID",Instant.now());
         }
     }
 
     class EmptyRuntimeContext implements RuntimeContext {
+
+        @Override
+        public String getAppID() {
+            return "appID";
+        }
+
+        @Override
+        public String getFunctionID() {
+            return "fnID";
+        }
 
         @Override
         public Optional<Object> getInvokeInstance() {
@@ -633,7 +631,7 @@ public class FlowsContinuationInvokerTest {
         }
 
         @Override
-        public void addInvoker(FunctionInvoker invoker, FunctionInvokerPhase phase) {
+        public void addInvoker(FunctionInvoker invoker, FunctionInvoker.Phase phase) {
             throw new RuntimeException("You can't modify the empty runtime context in the tests, sorry.");
 
         }

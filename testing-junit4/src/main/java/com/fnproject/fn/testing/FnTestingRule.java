@@ -4,7 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.InputEvent;
 import com.fnproject.fn.api.OutputEvent;
-import com.fnproject.fn.api.QueryParameters;
+import com.fnproject.fn.runtime.EventCodec;
+import com.fnproject.fn.runtime.ReadOnceInputEvent;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.TeeOutputStream;
 import org.apache.http.HttpResponse;
@@ -63,8 +64,9 @@ public final class FnTestingRule implements TestRule {
     private final Map<String, String> config = new HashMap<>();
     private Map<String, String> eventEnv = new HashMap<>();
     private boolean hasEvents = false;
-    private InputStream pendingInput = new ByteArrayInputStream(new byte[0]);
-    private ByteArrayOutputStream stdOut = new ByteArrayOutputStream();
+    private List<InputEvent> pendingInput = Collections.synchronizedList(new ArrayList<>());
+    private List<FnResult> output = Collections.synchronizedList(new ArrayList<>());
+
     private ByteArrayOutputStream stdErr = new ByteArrayOutputStream();
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
@@ -81,9 +83,77 @@ public final class FnTestingRule implements TestRule {
 
 
         addSharedClass(Headers.class);
-        addSharedClass(QueryParameters.class);
         addSharedClass(InputEvent.class);
         addSharedClass(OutputEvent.class);
+        addSharedClass(OutputEvent.Status.class);
+        addSharedClass(TestOutput.class);
+        addSharedClass(TestCodec.class);
+        addSharedClass(EventCodec.class);
+        addSharedClass(EventCodec.Handler.class);
+
+
+    }
+
+    /**
+     * TestOutput represents an output of a function it wraps OutputEvent and provides buffered access to the function output
+     */
+    public static final class TestOutput implements FnResult {
+        private final OutputEvent from;
+        byte[] body;
+
+        private TestOutput(OutputEvent from) throws IOException {
+            this.from = Objects.requireNonNull(from, "from");
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            from.writeToOutput(bos);
+            body = bos.toByteArray();
+        }
+
+        /**
+         * construct a test output from an output event - this consums the body of the output event
+         *
+         * @param from an output event to consume
+         * @return a new TestEvent that wraps the passed even t
+         * @throws IOException
+         */
+        public static TestOutput fromOutputEvent(OutputEvent from) throws IOException {
+            return new TestOutput(from);
+        }
+
+        @Override
+        public Status getStatus() {
+            return from.getStatus();
+        }
+
+        @Override
+        public Optional<String> getContentType() {
+            return from.getContentType();
+        }
+
+        @Override
+        public Headers getHeaders() {
+            return from.getHeaders();
+        }
+
+        @Override
+        public void writeToOutput(OutputStream out) throws IOException {
+            out.write(body);
+        }
+
+
+        @Override
+        public byte[] getBodyAsBytes() {
+            return body;
+        }
+
+        /**
+         * Returns the buffered body of the event as a string
+         *
+         * @return the body of the event as a string
+         */
+        @Override
+        public String getBodyAsString() {
+            return new String(body);
+        }
 
     }
 
@@ -168,6 +238,27 @@ public final class FnTestingRule implements TestRule {
     }
 
 
+    static class TestCodec implements EventCodec {
+        private final List<InputEvent> input;
+        private final List<FnResult> output;
+
+        TestCodec(List<InputEvent> input, List<FnResult> output) {
+            this.input = input;
+            this.output = output;
+        }
+
+        @Override
+        public void runCodec(Handler h) {
+            for (InputEvent in : input) {
+                try {
+                    output.add(new TestOutput(h.handle(in)));
+                } catch (IOException e) {
+                    throw new RuntimeException("Unexpected exception in test", e);
+                }
+            }
+        }
+    }
+
     /**
      * Runs the function runtime with the specified class and method (and waits for Flow stages to finish
      * if the test spawns any Flow)
@@ -201,7 +292,6 @@ public final class FnTestingRule implements TestRule {
         Map<String, String> mutableEnv = new HashMap<>();
 
         try {
-            PrintStream functionOut = new PrintStream(stdOut);
             PrintStream functionErr = new PrintStream(new TeeOutputStream(stdErr, oldSystemErr));
             System.setOut(functionErr);
             System.setErr(functionErr);
@@ -218,14 +308,15 @@ public final class FnTestingRule implements TestRule {
             for (FnTestingRuleFeature f : features) {
                 f.prepareFunctionClassLoader(forked);
             }
+
+            TestCodec codec = new TestCodec(pendingInput, output);
+
             lastExitCode = forked.run(
               mutableEnv,
-              pendingInput,
-              functionOut,
+              codec,
               functionErr,
               cls + "::" + method);
 
-            stdOut.flush();
             stdErr.flush();
 
             for (FnTestingRuleFeature f : features) {
@@ -276,7 +367,7 @@ public final class FnTestingRule implements TestRule {
      * @return a list of Parsed HTTP responses (as {@link FnResult}s) from the function runtime output
      */
     public List<FnResult> getResults() {
-        return parseHttpStreamForResults(stdOut.toByteArray());
+        return output;
     }
 
     /**
@@ -294,56 +385,6 @@ public final class FnTestingRule implements TestRule {
     }
 
 
-    private List<FnResult> parseHttpStreamForResults(byte[] httpStream) {
-        SessionInputBufferImpl sib = new SessionInputBufferImpl(new HttpTransportMetricsImpl(), 65535);
-        ByteArrayInputStream parseStream = new ByteArrayInputStream(httpStream);
-        sib.bind(parseStream);
-
-        DefaultHttpResponseParser parser = new DefaultHttpResponseParser(sib);
-        List<FnResult> responses = new ArrayList<>();
-
-        while (true) {
-            try {
-                HttpResponse response = parser.parse();
-                ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                ContentLengthInputStream cis = new ContentLengthInputStream(sib, Long.parseLong(response.getFirstHeader("Content-length").getValue()));
-
-                IOUtils.copy(cis, bos);
-                cis.close();
-                byte[] body = bos.toByteArray();
-                FnResult r = new FnResult() {
-                    @Override
-                    public byte[] getBodyAsBytes() {
-                        return body;
-                    }
-
-                    @Override
-                    public String getBodyAsString() {
-                        return new String(body);
-                    }
-
-                    @Override
-                    public Headers getHeaders() {
-                        Map<String, String> headers = new HashMap<>();
-                        Arrays.stream(response.getAllHeaders()).forEach((h) ->
-                          headers.put(h.getName(), h.getValue()));
-                        return Headers.fromMap(headers);
-                    }
-
-                    @Override
-                    public int getStatus() {
-                        return response.getStatusLine().getStatusCode();
-                    }
-                };
-                responses.add(r);
-            } catch (NoHttpResponseException e) {
-                break;
-            } catch (Exception e) {
-                throw new RuntimeException("Invalid HTTP response", e);
-            }
-        }
-        return responses;
-    }
 
     public List<String> getSharedPrefixes() {
         return Collections.unmodifiableList(sharedPrefixes);
@@ -363,10 +404,7 @@ public final class FnTestingRule implements TestRule {
      */
     private class DefaultFnEventBuilder implements FnEventBuilderJUnit4 {
 
-        FnHttpEventBuilder builder = new FnHttpEventBuilder().withMethod("GET")
-          .withAppName("appName")
-          .withRoute("/route")
-          .withRequestUrl("http://example.com/r/appName/route");
+        FnHttpEventBuilder builder = new FnHttpEventBuilder();
 
 
         @Override
@@ -376,8 +414,8 @@ public final class FnTestingRule implements TestRule {
         }
 
         @Override
-        public FnEventBuilder withBody(InputStream body, int contentLength) {
-            builder.withBody(body, contentLength);
+        public FnEventBuilder withBody(InputStream body) throws IOException{
+            builder.withBody(body);
             return this;
         }
 
@@ -393,47 +431,11 @@ public final class FnTestingRule implements TestRule {
             return this;
         }
 
-        @Override
-        public FnEventBuilder withAppName(String appName) {
-            builder.withAppName(appName);
-            return this;
-        }
-
-        @Override
-        public FnEventBuilder withRoute(String route) {
-            builder.withRoute(route);
-            return this;
-        }
-
-        @Override
-        public FnEventBuilder withMethod(String method) {
-            builder.withMethod(method);
-            return this;
-        }
-
-        @Override
-        public FnEventBuilder withRequestUrl(String requestUrl) {
-            builder.withRequestUrl(requestUrl);
-            return this;
-
-        }
-
-        @Override
-        public FnEventBuilder withQueryParameter(String key, String value) {
-            builder.withQueryParameter(key, value);
-            return this;
-        }
 
         @Override
         public FnTestingRule enqueue() {
 
-            // Only set env for first event.
-            if (!hasEvents) {
-                eventEnv.putAll(builder.currentEventEnv());
-            }
-            hasEvents = true;
-
-            pendingInput = new SequenceInputStream(pendingInput, builder.currentEventInputStream());
+            pendingInput.add(builder.buildEvent());
             return FnTestingRule.this;
         }
 

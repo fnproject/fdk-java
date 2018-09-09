@@ -1,4 +1,4 @@
-package com.fnproject.fn.runtime.flowtestfns;
+package com.fnproject.fn.testing.flowtestfns;
 
 import com.fnproject.fn.api.flow.Flow;
 import com.fnproject.fn.api.flow.Flows;

@@ -1,7 +1,6 @@
 package com.fnproject.fn.runtime;
 
 
-import com.fasterxml.jackson.databind.util.StdDateFormat;
 import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.InputEvent;
 import com.fnproject.fn.api.OutputEvent;
@@ -20,8 +19,13 @@ import org.apache.http.message.BasicHttpResponse;
 import org.apache.http.message.BasicStatusLine;
 
 import java.io.*;
-import java.text.ParseException;
-import java.util.*;
+import java.time.Instant;
+import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoUnit;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Function;
 
 
@@ -85,29 +89,39 @@ public class HttpEventCodec implements EventCodec {
             long contentLength = Long.parseLong(requiredHeader(req, "content-length"));
             bodyStream = new ContentLengthInputStream(sib, contentLength);
         } else if (req.getHeaders("transfer-encoding").length > 0 &&
-           req.getFirstHeader("transfer-encoding").getValue().equalsIgnoreCase("chunked")) {
+          req.getFirstHeader("transfer-encoding").getValue().equalsIgnoreCase("chunked")) {
             bodyStream = new ChunkedInputStream(sib);
         } else {
             bodyStream = new ByteArrayInputStream(new byte[]{});
         }
 
 
-        String deadline = requiredHeader(req, "fn_deadline");
-        String callID = requiredHeader(req, "fn_call_id");
-        Date deadlineDate;
-        try {
-            deadlineDate = StdDateFormat.getISO8601Format(TimeZone.getDefault(), Locale.getDefault()).parse(deadline);
-        } catch (ParseException e) {
-            throw new FunctionInputHandlingException("Invalid deadline date format", e);
+        Instant deadlineDate;
+
+        Header deadlineHeader = req.getFirstHeader("fn_deadline");
+        if (deadlineHeader != null) {
+            try {
+                deadlineDate = Instant.parse(deadlineHeader.getValue());
+            } catch (DateTimeParseException e) {
+                throw new FunctionInputHandlingException("Invalid deadline date format", e);
+            }
+        } else {
+            deadlineDate = Instant.now().plus(1, ChronoUnit.HOURS);
         }
 
+        Header callIDHeader = req.getFirstHeader("fn_call_id");
+
+        String callID = "";
+        if (callIDHeader != null) {
+            callID = callIDHeader.getValue();
+        }
         Map<String, String> headers = new HashMap<>();
         for (Header h : req.getAllHeaders()) {
             headers.put(h.getName(), h.getValue());
         }
 
         return Optional.of(new ReadOnceInputEvent(
-           bodyStream, Headers.fromMap(headers), callID, deadlineDate));
+          bodyStream, Headers.fromMap(headers), callID, deadlineDate));
 
     }
 
@@ -125,9 +139,9 @@ public class HttpEventCodec implements EventCodec {
             BasicHttpResponse response;
 
             if (evt.isSuccess()) {
-                response = new BasicHttpResponse(new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), evt.getStatus().getCode(), "INVOKED"));
+                response = new BasicHttpResponse(new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), evt.getStatus().getCode(), evt.getStatus().name()));
             } else {
-                response = new BasicHttpResponse(new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), evt.getStatus().getCode(), "INVOKE FAILED"));
+                response = new BasicHttpResponse(new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), evt.getStatus().getCode(), evt.getStatus().name()));
             }
 
             evt.getHeaders().asMap().forEach((k, vs) -> {

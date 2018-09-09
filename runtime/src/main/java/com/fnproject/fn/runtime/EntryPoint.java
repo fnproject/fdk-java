@@ -10,8 +10,6 @@ import com.fnproject.fn.runtime.exception.InternalFunctionInvocationException;
 import com.fnproject.fn.runtime.exception.InvalidEntryPointException;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -27,12 +25,26 @@ public class EntryPoint {
         // Override stdout while the function is running, so that the function result can be serialized to stdout
         // without interference from the user printing stuff to what they believe is stdout.
         System.setOut(System.err);
+
+
+        String format = System.getenv("FN_FORMAT");
+        EventCodec codec;
+        if (format != null && format.equalsIgnoreCase("http")) {
+            codec = new HttpEventCodec(System.getenv(), System.in, originalSystemOut);
+        } else if (format == null || format.equalsIgnoreCase("default")) {
+            codec = new DefaultEventCodec(System.getenv(), System.in, originalSystemOut);
+        } else if (format.equals("httpstream")) {
+            codec = new HTTPStreamCodec(System.getenv());
+        } else {
+            throw new FunctionInputHandlingException("Unsupported function format:" + format);
+        }
+
+
         int exitCode = new EntryPoint().run(
-           System.getenv(),
-           System.in,
-           originalSystemOut,
-           System.err,
-           args);
+          System.getenv(),
+          codec,
+          System.err,
+          args);
         System.setOut(originalSystemOut);
         System.exit(exitCode);
     }
@@ -42,7 +54,7 @@ public class EntryPoint {
      *
      * @return the desired process exit status
      */
-    public int run(Map<String, String> env, InputStream functionInput, OutputStream functionOutput, PrintStream loggingOutput, String... args) {
+    public int run(Map<String, String> env, EventCodec codec, PrintStream loggingOutput, String... args) {
         if (args.length != 1) {
             throw new InvalidEntryPointException("Expected one argument, of the form com.company.project.MyFunctionClass::myFunctionMethod");
         }
@@ -65,17 +77,6 @@ public class EntryPoint {
 
             FunctionConfigurer functionConfigurer = new FunctionConfigurer();
             functionConfigurer.configure(runtimeContext);
-
-            String format = env.get("FN_FORMAT");
-            EventCodec codec;
-
-            if (format != null && format.equalsIgnoreCase("http")) {
-                codec = new HttpEventCodec(env, functionInput, functionOutput);
-            } else if (format == null || format.equalsIgnoreCase("default")) {
-                codec = new DefaultEventCodec(env, functionInput, functionOutput);
-            } else {
-                throw new FunctionInputHandlingException("Unsupported function format:" + format);
-            }
 
 
             codec.runCodec((evt) -> {
@@ -177,7 +178,7 @@ public class EntryPoint {
      */
     private Map<String, String> excludeInternalConfigAndHeaders(Map<String, String> env) {
         Set<String> nonConfigEnvKeys = new HashSet<>(Arrays.asList("fn_app_name", "fn_path", "fn_method", "fn_request_url",
-           "fn_format", "content-length", "fn_call_id"));
+          "fn_format", "content-length", "fn_call_id"));
         Map<String, String> config = new HashMap<>();
         for (Map.Entry<String, String> entry : env.entrySet()) {
             String lowerCaseKey = entry.getKey().toLowerCase();

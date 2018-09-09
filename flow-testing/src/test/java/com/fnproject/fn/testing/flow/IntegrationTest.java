@@ -1,4 +1,4 @@
-package junit.com.fnproject.fn.testing;
+package com.fnproject.fn.testing.flow;
 
 import com.fnproject.fn.testing.FnTestingRule;
 import com.fnproject.fn.testing.FunctionError;

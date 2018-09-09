@@ -109,49 +109,6 @@ public class HttpEventCodecTest {
     }
 
 
-    @Test
-    public void shouldRejectMissingHttpHeaders() {
-
-        Map<String, String> requiredHeaders = new HashMap<>();
-        requiredHeaders.put("fn_request_url", "request_url");
-        requiredHeaders.put("fn_method", "GET");
-
-        for (String key : requiredHeaders.keySet()) {
-            Map<String, String> newMap = new HashMap<>(requiredHeaders);
-            newMap.remove(key);
-            String req = "GET / HTTP/1.1\n" + newMap.entrySet().stream().map(e -> e.getKey() + ": " + e.getValue()).collect(Collectors.joining("\n")) + "\n\n";
-
-            try {
-                HttpEventCodec httpEventCodec = new HttpEventCodec(env(), asStream(req), nullOut);
-                httpEventCodec.readEvent();
-                fail("Should fail with header missing:" + key);
-            } catch (FunctionInputHandlingException e) {
-                assertThat(e).hasMessageMatching("Incoming HTTP frame is missing required header: " + key);
-            }
-        }
-    }
-
-    @Test
-    public void shouldRejectMissingEnv() {
-        Map<String, String> requiredEnv = new HashMap<>();
-
-        requiredEnv.put("FN_PATH", "/route");
-        requiredEnv.put("FN_APP_NAME", "app_name");
-
-        for (String key : requiredEnv.keySet()) {
-            Map<String, String> newMap = new HashMap<>(requiredEnv);
-            newMap.remove(key);
-
-            try {
-                ByteArrayInputStream bis = new ByteArrayInputStream(postReq.getBytes());
-                HttpEventCodec httpEventCodec = new HttpEventCodec(newMap, bis, nullOut);
-                httpEventCodec.readEvent();
-                fail("Should fail with header missing:" + key);
-            } catch (FunctionInputHandlingException e) {
-                assertThat(e).hasMessageMatching("Required environment variable " + key + " is not set - are you running a function outside of fn run\\?");
-            }
-        }
-    }
 
     @Test
     public void shouldSerializeSimpleSuccessfulEvent() throws Exception {
@@ -163,7 +120,7 @@ public class HttpEventCodecTest {
         httpEventCodec.writeEvent(outEvent);
         String httpResponse = new String(bos.toByteArray());
 
-        assertThat(statusLine(httpResponse)).isEqualTo("HTTP/1.1 200 INVOKED");
+        assertThat(statusLine(httpResponse)).isEqualTo("HTTP/1.1 200 Success");
         assertThat(headers(httpResponse)).containsOnly(entry("content-type", "text/plain"), entry("content-length", "5"));
         assertThat(body(httpResponse)).isEqualTo("Hello");
 
@@ -208,7 +165,7 @@ public class HttpEventCodecTest {
         httpEventCodec.writeEvent(outEvent);
         String httpResponse = new String(bos.toByteArray());
 
-        assertThat(statusLine(httpResponse)).isEqualTo("HTTP/1.1 200 INVOKED");
+        assertThat(statusLine(httpResponse)).isEqualTo("HTTP/1.1 200 Success");
         assertThat(headers(httpResponse)).containsOnly(entry("foo", "bar"),
            entry("content-type", "text/plain"),
            entry("content-length", "5"));
@@ -226,7 +183,7 @@ public class HttpEventCodecTest {
         httpEventCodec.writeEvent(outEvent);
         String httpResponse = new String(bos.toByteArray());
 
-        assertThat(statusLine(httpResponse)).isEqualTo("HTTP/1.1 500 INVOKE FAILED");
+        assertThat(statusLine(httpResponse)).isEqualTo("HTTP/1.1 502 FunctionError");
         assertThat(headers(httpResponse)).containsOnly(entry("content-type", "text/plain"),
            entry("content-length", "5"));
         assertThat(body(httpResponse)).isEqualTo("Hello");
@@ -247,7 +204,7 @@ public class HttpEventCodecTest {
         httpEventCodec.writeEvent(outEvent);
         String httpResponse = new String(bos.toByteArray());
 
-        assertThat(statusLine(httpResponse)).isEqualTo("HTTP/1.1 500 FunctionError");
+        assertThat(statusLine(httpResponse)).isEqualTo("HTTP/1.1 502 FunctionError");
         assertThat(headers(httpResponse)).containsOnly(entry("foo", "bar"),
            entry("content-type", "text/plain"),
            entry("content-length", "5"));

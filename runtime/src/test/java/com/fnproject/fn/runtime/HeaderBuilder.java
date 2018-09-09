@@ -7,6 +7,6 @@ import java.util.Map;
 
 class HeaderBuilder {
     static Map.Entry<String, List<String>> headerEntry(String key, String value) {
-        return new AbstractMap.SimpleEntry<>(key, Collections.singletonList(value));
+        return new AbstractMap.SimpleEntry<>(key.toLowerCase(), Collections.singletonList(value));
     }
 }

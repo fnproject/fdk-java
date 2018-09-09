@@ -16,6 +16,18 @@ public interface RuntimeContext {
 
 
     /**
+     * The application ID of the application associated with this function
+     * @return an application ID
+     */
+    String getAppID();
+
+    /**
+     * THe function ID of the function
+     * @return a function ID
+     */
+    String getFunctionID();
+
+    /**
      * Create an instance of the user specified class on which the target function to invoke is declared.
      *
      * @return new instance of class containing the target function

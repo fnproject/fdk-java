@@ -52,15 +52,23 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
     private final AtomicBoolean stopped = new AtomicBoolean(false);
     private final UnixServerSocketChannel channel;
     private final File socketFile;
-    private static final Set<String> stripHeaders;
+    private static final Set<String> stripInputHeaders;
+    private static final Set<String> stripOutputHeaders;
 
     static {
-        Set<String> h = new HashSet<>();
-        h.add("content-length");
-        h.add("host");
-        h.add("accept-encoding");
-        h.add("user-agent");
-        stripHeaders = Collections.unmodifiableSet(h);
+        Set<String> hin = new HashSet<>();
+        hin.add("content-length");
+        hin.add("host");
+        hin.add("accept-encoding");
+        hin.add("transfer-encoding");
+        hin.add("user-agent");
+        stripInputHeaders = Collections.unmodifiableSet(hin);
+
+        Set<String> hout = new HashSet<>();
+        hin.add("content-length");
+        hin.add("transfer-encoding");
+        hin.add("connection");
+        stripOutputHeaders = Collections.unmodifiableSet(hin);
     }
 
     @Override
@@ -200,9 +208,9 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
         String callID = getRequiredHeader(request, "Fn-Call-Id");
 
 
-        Date deadlineDate;
+        Instant deadlineDate;
         try {
-            deadlineDate = Date.from(Instant.parse(deadline));
+            deadlineDate = Instant.parse(deadline);
         } catch (DateTimeParseException e) {
             throw new FunctionInputHandlingException("Invalid deadline date format", e);
         }
@@ -211,7 +219,7 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
 
 
         for (Header h : request.getAllHeaders()) {
-            if(stripHeaders.contains(h.getName().toLowerCase())){
+            if (stripInputHeaders.contains(h.getName().toLowerCase())) {
                 continue;
             }
             headersIn = headersIn.addHeader(h.getName(), h.getValue());
@@ -224,10 +232,11 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
     private void writeEvent(OutputEvent evt, HttpResponse response) {
 
         evt.getHeaders().asMap()
-           .entrySet()
-           .stream()
-           .flatMap(e -> e.getValue().stream().map((v) -> new BasicHeader(e.getKey(), v)))
-           .forEachOrdered(response::addHeader);
+          .entrySet()
+          .stream()
+          .filter(e -> !stripOutputHeaders.contains(e.getKey()))
+          .flatMap(e -> e.getValue().stream().map((v) -> new BasicHeader(e.getKey(), v)))
+          .forEachOrdered(response::addHeader);
 
         ContentType contentType = evt.getContentType().map(c -> {
             try {

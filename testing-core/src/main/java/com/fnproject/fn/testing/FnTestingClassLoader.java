@@ -1,11 +1,11 @@
 package com.fnproject.fn.testing;
 
 import com.fnproject.fn.runtime.EntryPoint;
+import com.fnproject.fn.runtime.EventCodec;
 import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -66,8 +66,7 @@ public class FnTestingClassLoader extends ClassLoader {
     }
 
 
-
-    public int run(Map<String, String> mutableEnv, InputStream is, PrintStream functionOut, PrintStream functionErr, String... s) {
+    public int run(Map<String, String> mutableEnv, EventCodec codec, PrintStream functionErr, String... s) {
         ClassLoader currentClassLoader = Thread.currentThread().getContextClassLoader();
         try {
 
@@ -77,11 +76,11 @@ public class FnTestingClassLoader extends ClassLoader {
             Class<?> entryPoint_class = loadClass(EntryPoint.class.getName());
             Object entryPoint = entryPoint_class.newInstance();
 
-            return (int) getMethodInClassLoader(entryPoint, "run", Map.class, InputStream.class, OutputStream.class, PrintStream.class, String[].class)
-                    .invoke(entryPoint, mutableEnv, is, functionOut, functionErr, s);
+            return (int) getMethodInClassLoader(entryPoint, "run", Map.class, EventCodec.class, PrintStream.class, String[].class)
+              .invoke(entryPoint, mutableEnv, codec, functionErr, s);
         } catch (ClassNotFoundException | IllegalAccessException | InstantiationException | NoSuchMethodException | InvocationTargetException | IllegalArgumentException e) {
             throw new RuntimeException("Something broke in the reflective classloader", e);
-        }finally {
+        } finally {
             Thread.currentThread().setContextClassLoader(currentClassLoader);
         }
     }

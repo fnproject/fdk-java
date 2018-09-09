@@ -1,5 +1,6 @@
 package com.fnproject.fn.testing;
 
+import java.io.IOException;
 import java.io.InputStream;
 
 /**
@@ -22,10 +23,9 @@ public interface FnEventBuilder<T> {
      * Note - setting the body to an input stream means that only one event can be enqueued using this builder.
      *
      * @param body          the bytes of the body
-     * @param contentLength how long the body is supposed to be
      * @return an event builder
      */
-    FnEventBuilder<T> withBody(InputStream body, int contentLength);
+    FnEventBuilder<T> withBody(InputStream body) throws IOException;
 
     /**
      * Set the body of the request as a byte array
@@ -42,47 +42,6 @@ public interface FnEventBuilder<T> {
      * @return an event builder
      */
     FnEventBuilder<T> withBody(String body);
-
-    /**
-     * Set the app name associated with the call
-     *
-     * @param appName the app name
-     * @return an event builder
-     */
-    FnEventBuilder<T> withAppName(String appName);
-
-    /**
-     * Set the fn route associated with the call
-     *
-     * @param route the route
-     * @return an event builder
-     */
-    FnEventBuilder<T> withRoute(String route);
-
-    /**
-     * Set the HTTP method of the incoming request
-     *
-     * @param method an HTTP method
-     * @return an event builder
-     */
-    FnEventBuilder<T> withMethod(String method);
-
-    /**
-     * Set the request URL of the incoming event
-     *
-     * @param requestUrl the request URL
-     * @return an event builder
-     */
-    FnEventBuilder<T> withRequestUrl(String requestUrl);
-
-    /**
-     * Add a query parameter to the request URL
-     *
-     * @param key   - non URL encoded key
-     * @param value - non URL encoded value
-     * @return an event builder
-     */
-    FnEventBuilder<T> withQueryParameter(String key, String value);
 
     /**
      * Consume the builder and enqueue this event to be passed into the function when it is run

@@ -1,8 +1,8 @@
-package com.fnproject.fn.runtime.flowtestfns;
+package com.fnproject.fn.testing.flowtestfns;
 
 import com.fnproject.fn.runtime.FnTestHarness;
 import com.fnproject.fn.runtime.flow.*;
-import com.fnproject.fn.runtime.flowtestfns.FnFlowsFunction;
+import com.fnproject.fn.testing.flowtestfns.flowtestfns.FnFlowsFunction;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -49,7 +49,7 @@ public class FlowsTest {
     }
 
     private FnTestHarness.EventBuilder eventToTestFN() {
-        return fnTestHarness.givenDefaultEvent().withAppName("app").withRoute("/testfn");
+        return fnTestHarness.givenEvent().withAppName("app").withRoute("/testfn");
     }
 
     private FnTestHarness.EventBuilder httpEventToTestFN() {

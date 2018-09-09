@@ -1,6 +1,7 @@
 package com.fnproject.fn.runtime;
 
 import com.fnproject.fn.api.QueryParameters;
+import com.fnproject.fn.runtime.httpgateway.QueryParametersParser;
 import org.junit.Test;
 
 import java.util.Collections;
