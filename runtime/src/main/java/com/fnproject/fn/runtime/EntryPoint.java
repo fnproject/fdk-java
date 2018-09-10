@@ -1,11 +1,11 @@
 package com.fnproject.fn.runtime;
 
 
-import com.fnproject.fn.api.InputEvent;
-import com.fnproject.fn.api.OutputEvent;
+import com.fnproject.fn.api.*;
 import com.fnproject.fn.api.exception.FunctionInputHandlingException;
 import com.fnproject.fn.api.exception.FunctionLoadException;
 import com.fnproject.fn.api.exception.FunctionOutputHandlingException;
+import com.fnproject.fn.runtime.exception.FunctionInitializationException;
 import com.fnproject.fn.runtime.exception.InternalFunctionInvocationException;
 import com.fnproject.fn.runtime.exception.InvalidEntryPointException;
 
@@ -73,7 +73,29 @@ public class EntryPoint {
             final Map<String, String> configFromEnvVars = Collections.unmodifiableMap(excludeInternalConfigAndHeaders(env));
 
             FunctionLoader functionLoader = new FunctionLoader();
-            FunctionRuntimeContext runtimeContext = new FunctionRuntimeContext(functionLoader.loadClass(cls, mth), configFromEnvVars);
+
+
+            MethodWrapper method = functionLoader.loadClass(cls, mth);
+            FunctionRuntimeContext runtimeContext = new FunctionRuntimeContext(method, configFromEnvVars);
+
+            FnFeature[] features = method.getTargetClass().getAnnotationsByType(FnFeature.class);
+            for (FnFeature f : features){
+                RuntimeFeature rf;
+                try{
+                    Class<? extends RuntimeFeature> featureClass = f.value();
+                    rf = featureClass.newInstance();
+                }catch (Exception e){
+                    throw new FunctionInitializationException("Could not load feature class " + f.value().toString() ,e);
+                }
+
+                try{
+                    rf.initialize(runtimeContext);
+                }catch (Exception e){
+                    throw new FunctionInitializationException("Exception while calling initialization on runtime feature " +  f.value() ,e);
+                }
+            }
+
+
 
             FunctionConfigurer functionConfigurer = new FunctionConfigurer();
             functionConfigurer.configure(runtimeContext);

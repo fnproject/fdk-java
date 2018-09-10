@@ -1,10 +1,13 @@
 package com.fnproject.fn.api;
 
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 /**
  * Represents a set of String-String[] header attributes, per HTTP headers.
+ * <p>
+ * Internally header keys are always canonicalized using HTTP header conventions
  * <p>
  * <p>
  * Headers are immutable
@@ -19,6 +22,32 @@ public final class Headers {
         this.headers = headersIn;
     }
 
+    private static Pattern headerName = Pattern.compile("[A-Za-z0-9!#%&'*+-.^_`|~]+");
+
+
+    /**
+     * Calculates the canonical key  (cf RFC 7230) for a header
+     * <p>
+     * <p>
+     * If the header contains invalid characters it returns the original header
+     *
+     * @param key the header key to canonicalise
+     * @return a canonical key or the original key if the input contains invalid character
+     */
+    public static String canonicalKey(String key) {
+        if (!headerName.matcher(key).matches()) {
+            return key;
+        }
+        String parts[] = key.split("-", -1);
+        for (int i = 0; i < parts.length; i++) {
+            String p = parts[i];
+            if (p.length() > 0) {
+                parts[i] = p.substring(0, 1).toUpperCase() + p.substring(1).toLowerCase();
+            }
+        }
+        return String.join("-", parts);
+
+    }
 
     /**
      * Build a headers object from a map composed of (name, value) entries, we take a copy of the map and
@@ -30,7 +59,7 @@ public final class Headers {
     public static Headers fromMap(Map<String, String> headers) {
         Objects.requireNonNull(headers, "headersIn");
         Map<String, List<String>> h = new HashMap<>();
-        headers.forEach((k, v) -> h.put(k.toLowerCase(), Collections.singletonList(v)));
+        headers.forEach((k, v) -> h.put(canonicalKey(k), Collections.singletonList(v)));
         return new Headers(Collections.unmodifiableMap(new HashMap<>(h)));
     }
 
@@ -44,9 +73,7 @@ public final class Headers {
     public static Headers fromMultiHeaderMap(Map<String, List<String>> headers) {
         Map<String, List<String>> hm = new HashMap<>();
 
-        headers.forEach((k, vs) -> {
-            hm.put(k.toLowerCase(), new ArrayList<>(vs));
-        });
+        headers.forEach((k, vs) -> hm.put(canonicalKey(k), new ArrayList<>(vs)));
         return new Headers(Collections.unmodifiableMap(new HashMap<>(Objects.requireNonNull(headers))));
     }
 
@@ -74,7 +101,7 @@ public final class Headers {
         Objects.requireNonNull(key, "key");
         Objects.requireNonNull(key, "value");
 
-        String canonKey = key.toLowerCase();
+        String canonKey = canonicalKey(key);
 
         Map<String, List<String>> nm = new HashMap<>(headers);
         List<String> current = nm.get(canonKey);
@@ -114,7 +141,7 @@ public final class Headers {
         List<String> s = new ArrayList<>();
         s.add(v1);
         s.addAll(Arrays.asList(vs));
-        nm.put(key.toLowerCase(), Collections.unmodifiableList(s));
+        nm.put(canonicalKey(key), Collections.unmodifiableList(s));
         return new Headers(Collections.unmodifiableMap(nm));
     }
 
@@ -137,7 +164,7 @@ public final class Headers {
         vs.forEach((v) -> Objects.requireNonNull(v, "vs"));
 
         Map<String, List<String>> nm = new HashMap<>(headers);
-        nm.put(key.toLowerCase(), Collections.unmodifiableList(new ArrayList<>(vs)));
+        nm.put(canonicalKey(key), Collections.unmodifiableList(new ArrayList<>(vs)));
         return new Headers(Collections.unmodifiableMap(nm));
 
     }
@@ -153,12 +180,13 @@ public final class Headers {
     public Headers removeHeader(String key) {
         Objects.requireNonNull(key, "key");
 
-        if (!headers.containsKey(key.toLowerCase())) {
+        String canonKey = canonicalKey(key);
+        if (!headers.containsKey(canonKey)) {
             return this;
         }
 
         Map<String, List<String>> nm = new HashMap<>(headers);
-        nm.remove(key.toLowerCase());
+        nm.remove(canonKey);
         return new Headers(Collections.unmodifiableMap(nm));
 
     }
@@ -176,14 +204,14 @@ public final class Headers {
      */
     public Optional<String> get(String key) {
         Objects.requireNonNull(key, "Key cannot be null");
-        String canonKey = key.toLowerCase();
+        String canonKey = canonicalKey(key);
 
         return headers.entrySet().stream()
-           .filter((e) -> e.getKey()
-              .equals(canonKey))
-           .map(Map.Entry::getValue)
-           .map((v) -> v.get(0))
-           .findFirst();
+          .filter((e) -> e.getKey()
+            .equals(canonKey))
+          .map(Map.Entry::getValue)
+          .map((v) -> v.get(0))
+          .findFirst();
     }
 
     /**

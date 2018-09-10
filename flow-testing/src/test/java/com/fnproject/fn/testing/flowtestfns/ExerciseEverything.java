@@ -1,8 +1,8 @@
-package com.fnproject.fn.testing.flow;
+package com.fnproject.fn.testing.flowtestfns;
 
-import com.fnproject.fn.api.Headers;
-import com.fnproject.fn.api.InputEvent;
+import com.fnproject.fn.api.*;
 import com.fnproject.fn.api.flow.*;
+import com.fnproject.fn.runtime.flow.FlowContinuationInvoker;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.TeeOutputStream;
 
@@ -18,7 +18,9 @@ import java.lang.reflect.Method;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@FnFeature(FlowFeature.class)
 public class ExerciseEverything {
+
 
     private boolean okay = true;
     private ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -135,19 +137,17 @@ public class ExerciseEverything {
 
     @Test(12)
     @Test.Expect("okay")
-    public FlowFuture<String> checkPassingExternalInvocation(Flow fl) {
-        return fl.invokeFunction(inputEvent.getAppName() + inputEvent.getRoute(), HttpMethod.POST, Headers.emptyHeaders(), "PASS".getBytes())
-                .thenApply((resp) -> {
-                    return resp.getStatusCode() != 200 ? "failure" : new String(resp.getBodyAsBytes());
-                });
+    public FlowFuture<String> checkPassingExternalSelfInvocation(Flow fl) {
+        return fl.invokeFunction(runtimeContext.getFunctionID(), HttpMethod.POST, Headers.emptyHeaders(), "PASS".getBytes())
+                .thenApply((resp) -> resp.getStatusCode() != 200 ? "failure" : new String(resp.getBodyAsBytes()));
     }
 
     // There is currently no way for a hot function to signal failure in the Fn platform.
     // This test will only work in default mode.
     @Test(13)
     @Test.Catch({FlowCompletionException.class, FunctionInvocationException.class})
-    public FlowFuture<HttpResponse> checkFailingExternalInvocation(Flow fl) {
-        return fl.invokeFunction(inputEvent.getAppName() + inputEvent.getRoute(), HttpMethod.POST, Headers.emptyHeaders(), "FAIL".getBytes());
+    public FlowFuture<HttpResponse> checkFailingExternalSelfInvocation(Flow fl) {
+        return fl.invokeFunction(runtimeContext.getFunctionID(), HttpMethod.POST, Headers.emptyHeaders(), "FAIL".getBytes());
     }
 
     // This original version captures the RT, which captures the factory, which is not serializable
@@ -366,6 +366,11 @@ public class ExerciseEverything {
 
     private int id;
 
+    private final RuntimeContext runtimeContext;
+
+    public ExerciseEverything(RuntimeContext rtc){
+        this.runtimeContext = rtc;
+    }
     void fail() {
         if (!failures.contains(id)) {
             failures.add(id);

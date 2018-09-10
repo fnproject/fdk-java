@@ -1,8 +1,8 @@
 package com.fnproject.fn.testing.flow;
 
-import com.fnproject.fn.api.Headers;
-import com.fnproject.fn.api.RuntimeContext;
+import com.fnproject.fn.api.*;
 import com.fnproject.fn.api.flow.*;
+import com.fnproject.fn.runtime.flow.FlowContinuationInvoker;
 import com.fnproject.fn.testing.FnTestingRule;
 import org.assertj.core.api.Assertions;
 import org.junit.Assert;
@@ -18,11 +18,13 @@ import java.util.concurrent.CompletableFuture;
 
 
 public class FnTestingRuleFlowsTest {
-    private static final int HTTP_OK = 200;
 
     @Rule
     public FnTestingRule fn = FnTestingRule.createDefault();
 
+    private FlowTest flow =  FlowTest.create(fn);
+
+    @FnFeature(FlowFeature.class)
     public static class Loop {
 
         public static int COUNT = 5;
@@ -79,10 +81,9 @@ public class FnTestingRuleFlowsTest {
     @Test
     public void completedValue() {
         fn.givenEvent().enqueue();
-
         fn.thenRun(TestFn.class, "completedValue");
 
-        Assertions.assertThat(fn.getOnlyResult().getStatus()).isEqualTo(200);
+        Assertions.assertThat(fn.getOnlyResult().getStatus()).isEqualTo(OutputEvent.Status.Success);
         Assertions.assertThat(result).isEqualTo(Result.CompletedValue);
     }
 
@@ -92,7 +93,7 @@ public class FnTestingRuleFlowsTest {
 
         fn.thenRun(TestFn.class, "supply");
 
-        Assertions.assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
+        Assertions.assertThat(fn.getOnlyResult().getStatus()).isEqualTo(OutputEvent.Status.Success);
         Assertions.assertThat(result).isEqualTo(Result.Supply);
     }
 
@@ -102,7 +103,7 @@ public class FnTestingRuleFlowsTest {
 
         fn.thenRun(TestFn.class, "allOf");
 
-        Assertions.assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
+        Assertions.assertThat(fn.getOnlyResult().getStatus()).isEqualTo(OutputEvent.Status.Success);
         Assertions.assertThat(result).isEqualTo(Result.AllOf);
     }
 
@@ -113,7 +114,7 @@ public class FnTestingRuleFlowsTest {
 
         fn.thenRun(TestFn.class, "anyOf");
 
-        Assertions.assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
+        Assertions.assertThat(fn.getOnlyResult().getStatus()).isEqualTo(OutputEvent.Status.Success);
         Assertions.assertThat(result).isEqualTo(Result.AnyOf);
     }
 
@@ -125,7 +126,7 @@ public class FnTestingRuleFlowsTest {
 
         fn.thenRun(Loop.class, "repeat");
 
-        Assertions.assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
+        Assertions.assertThat(fn.getOnlyResult().getStatus()).isEqualTo(OutputEvent.Status.Success);
         Assertions.assertThat(fn.getOnlyResult().getBodyAsString())
                   .isEqualTo(String.join("", Collections.nCopies(Loop.COUNT, "hello world")));
     }
@@ -133,12 +134,12 @@ public class FnTestingRuleFlowsTest {
     @Test
     public void invokeFunctionWithResult() {
         fn.givenEvent().enqueue();
-        fn.givenFn("user/echo")
+        flow.givenFn("user/echo")
                 .withResult(Result.InvokeFunctionFixed.name().getBytes());
 
         fn.thenRun(TestFn.class, "invokeFunctionEcho");
 
-        Assertions.assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
+        Assertions.assertThat(fn.getOnlyResult().getStatus()).isEqualTo(OutputEvent.Status.Success);
         Assertions.assertThat(result).isEqualTo(Result.InvokeFunctionFixed);
     }
 
@@ -146,7 +147,7 @@ public class FnTestingRuleFlowsTest {
     @Test
     public void invokeJsonFunction() {
         fn.givenEvent().enqueue();
-        fn.givenFn("user/json")
+        flow.givenFn("user/json")
                 .withAction((ign) -> {
                     if (new String(ign).equals("{\"foo\":\"bar\"}")) {
                         return "{\"foo\":\"baz\"}".getBytes();
@@ -157,19 +158,19 @@ public class FnTestingRuleFlowsTest {
 
         fn.thenRun(TestFn.class, "invokeJsonFunction");
 
-        Assertions.assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
+        Assertions.assertThat(fn.getOnlyResult().getStatus()).isEqualTo(OutputEvent.Status.Success);
         Assertions.assertThat(count).isEqualTo(1);
     }
 
     @Test
     public void invokeFunctionWithFunctionError() {
         fn.givenEvent().enqueue();
-        fn.givenFn("user/error")
+        flow.givenFn("user/error")
                 .withFunctionError();
 
         fn.thenRun(TestFn.class, "invokeFunctionError");
 
-        Assertions.assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
+        Assertions.assertThat(fn.getOnlyResult().getStatus()).isEqualTo(OutputEvent.Status.Success);
         Assertions.assertThat(result).isEqualTo(Result.Exceptionally);
         isInstanceOfAny(exception, FunctionInvocationException.class);
     }
@@ -180,7 +181,7 @@ public class FnTestingRuleFlowsTest {
 
         fn.thenRun(TestFn.class, "failedFuture");
 
-        Assertions.assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
+        Assertions.assertThat(fn.getOnlyResult().getStatus()).isEqualTo(OutputEvent.Status.Success);
         Assertions.assertThat(result).isEqualTo(Result.Exceptionally);
         Assertions.assertThat(exception).isInstanceOf(RuntimeException.class);
         Assertions.assertThat(exception).hasMessage("failedFuture");
@@ -189,12 +190,12 @@ public class FnTestingRuleFlowsTest {
     @Test
     public void invokeFunctionWithPlatformError() {
         fn.givenEvent().enqueue();
-        fn.givenFn("user/error")
+        flow.givenFn("user/error")
                 .withPlatformError();
 
         fn.thenRun(TestFn.class, "invokeFunctionError");
 
-        Assertions.assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
+        Assertions.assertThat(fn.getOnlyResult().getStatus()).isEqualTo(OutputEvent.Status.Success);
         Assertions.assertThat(result).isEqualTo(Result.Exceptionally);
         isInstanceOfAny(exception, PlatformException.class);
     }
@@ -202,12 +203,12 @@ public class FnTestingRuleFlowsTest {
     @Test
     public void invokeFunctionWithAction() {
         fn.givenEvent().enqueue();
-        fn.givenFn("user/echo")
+        flow.givenFn("user/echo")
                 .withAction((p) -> p);
 
         fn.thenRun(TestFn.class, "invokeFunctionEcho");
 
-        Assertions.assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
+        Assertions.assertThat(fn.getOnlyResult().getStatus()).isEqualTo(OutputEvent.Status.Success);
         Assertions.assertThat(result).isEqualTo(Result.InvokeFunctionEcho);
     }
 
@@ -217,7 +218,7 @@ public class FnTestingRuleFlowsTest {
 
         fn.thenRun(TestFn.class, "completeExceptionally");
 
-        Assertions.assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
+        Assertions.assertThat(fn.getOnlyResult().getStatus()).isEqualTo(OutputEvent.Status.Success);
         Assertions.assertThat(result).isEqualTo(Result.Exceptionally);
     }
 
@@ -227,7 +228,7 @@ public class FnTestingRuleFlowsTest {
 
         fn.thenRun(TestFn.class, "completeExceptionallyEarly");
 
-        Assertions.assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
+        Assertions.assertThat(fn.getOnlyResult().getStatus()).isEqualTo(OutputEvent.Status.Success);
         Assertions.assertThat(result).isEqualTo(Result.Exceptionally);
     }
 
@@ -237,7 +238,7 @@ public class FnTestingRuleFlowsTest {
 
         fn.thenRun(TestFn.class, "cancelFuture");
 
-        Assertions.assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
+        Assertions.assertThat(fn.getOnlyResult().getStatus()).isEqualTo(OutputEvent.Status.Success);
         Assertions.assertThat(result).isEqualTo(Result.Exceptionally);
         Assertions.assertThat(exception).isInstanceOf(CancellationException.class);
     }
@@ -248,7 +249,7 @@ public class FnTestingRuleFlowsTest {
 
         fn.thenRun(TestFn.class, "completeFutureExceptionally");
 
-        Assertions.assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
+        Assertions.assertThat(fn.getOnlyResult().getStatus()).isEqualTo(OutputEvent.Status.Success);
         Assertions.assertThat(result).isEqualTo(Result.Exceptionally);
         Assertions.assertThat(exception).isInstanceOf(RuntimeException.class);
         Assertions.assertThat(exception.getMessage()).isEqualTo("Custom exception");
@@ -260,7 +261,7 @@ public class FnTestingRuleFlowsTest {
 
         fn.thenRun(TestFn.class, "completeFuture");
 
-        Assertions.assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
+        Assertions.assertThat(fn.getOnlyResult().getStatus()).isEqualTo(OutputEvent.Status.Success);
         Assertions.assertThat(result).isEqualTo(Result.CompletedValue);
     }
 
@@ -270,7 +271,7 @@ public class FnTestingRuleFlowsTest {
 
         fn.thenRun(TestFn.class, "createFlowFuture");
 
-        Assertions.assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
+        Assertions.assertThat(fn.getOnlyResult().getStatus()).isEqualTo(OutputEvent.Status.Success);
         Assertions.assertThat(result).isEqualTo(Result.CompletedValue);
     }
 
@@ -281,7 +282,7 @@ public class FnTestingRuleFlowsTest {
 
         fn.thenRun(TestFn.class, "logToStdErrInContinuation");
 
-        Assertions.assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
+        Assertions.assertThat(fn.getOnlyResult().getStatus()).isEqualTo(OutputEvent.Status.Success);
         Assertions.assertThat(fn.getStdErrAsString()).contains("TestFn logging: 1");
     }
 
@@ -292,7 +293,7 @@ public class FnTestingRuleFlowsTest {
 
         fn.thenRun(TestFn.class, "logToStdOutInContinuation");
 
-        Assertions.assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
+        Assertions.assertThat(fn.getOnlyResult().getStatus()).isEqualTo(OutputEvent.Status.Success);
         Assertions.assertThat(fn.getStdErrAsString()).contains("TestFn logging: 1");
     }
 
@@ -303,8 +304,8 @@ public class FnTestingRuleFlowsTest {
 
         fn.thenRun(TestFn.class, "anyOf");
 
-        Assertions.assertThat(fn.getResults().get(0).getStatus()).isEqualTo(HTTP_OK);
-        Assertions.assertThat(fn.getResults().get(1).getStatus()).isEqualTo(HTTP_OK);
+        Assertions.assertThat(fn.getResults().get(0).getStatus()).isEqualTo(OutputEvent.Status.Success);
+        Assertions.assertThat(fn.getResults().get(1).getStatus()).isEqualTo(OutputEvent.Status.Success);
         Assertions.assertThat(result).isEqualTo(Result.AnyOf);
     }
 
@@ -314,7 +315,7 @@ public class FnTestingRuleFlowsTest {
 
         fn.thenRun(TestFn.class, "exceptionallyComposeHandle");
 
-        Assertions.assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
+        Assertions.assertThat(fn.getOnlyResult().getStatus()).isEqualTo(OutputEvent.Status.Success);
         Assertions.assertThat(count).isEqualTo(2);
 
     }
@@ -325,7 +326,7 @@ public class FnTestingRuleFlowsTest {
         fn.givenEvent().enqueue();
 
         fn.thenRun(TestFn.class, "exceptionallyComposePassThru");
-        Assertions.assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
+        Assertions.assertThat(fn.getOnlyResult().getStatus()).isEqualTo(OutputEvent.Status.Success);
         Assertions.assertThat(count).isEqualTo(1);
 
     }
@@ -335,7 +336,7 @@ public class FnTestingRuleFlowsTest {
         fn.givenEvent().enqueue();
 
         fn.thenRun(TestFn.class, "exceptionallyComposeThrowsError");
-        Assertions.assertThat(fn.getOnlyResult().getStatus()).isEqualTo(HTTP_OK);
+        Assertions.assertThat(fn.getOnlyResult().getStatus()).isEqualTo(OutputEvent.Status.Success);
         Assertions.assertThat(count).isEqualTo(1);
 
     }
@@ -360,7 +361,7 @@ public class FnTestingRuleFlowsTest {
         fn.givenEvent().enqueue();
 
         fn.thenRun(TestFn.class, "terminationHooks");
-        Assertions.assertThat(fn.getOnlyResult().getStatus()).isEqualTo(200);
+        Assertions.assertThat(fn.getOnlyResult().getStatus()).isEqualTo(OutputEvent.Status.Success);
 
         Assertions.assertThat(result).isEqualTo(Result.TerminationHookRun);
 
@@ -381,12 +382,14 @@ public class FnTestingRuleFlowsTest {
         Assert.fail("Object " + o + "is not an instance of any of " + Arrays.toString(cs));
     }
 
+    @FnFeature(FlowFeature.class)
     public static class TestFn {
         static Integer TO_ADD = null;
 
         public TestFn(RuntimeContext ctx) {
             TO_ADD = Integer.parseInt(ctx.getConfigurationByKey("ADD").orElse("-1"));
         }
+
 
         public void completedValue() {
             Flows.currentFlow()

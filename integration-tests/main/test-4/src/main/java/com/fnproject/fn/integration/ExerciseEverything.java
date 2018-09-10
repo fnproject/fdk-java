@@ -1,7 +1,9 @@
 package com.fnproject.fn.integration;
 
+import com.fnproject.fn.api.FnFeature;
 import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.InputEvent;
+import com.fnproject.fn.api.RuntimeContext;
 import com.fnproject.fn.api.flow.*;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.TeeOutputStream;
@@ -16,6 +18,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @SuppressWarnings("unused")
+@FnFeature(FlowFeature.class)
 public class ExerciseEverything {
 
     private boolean               okay         = true;
@@ -24,6 +27,11 @@ public class ExerciseEverything {
     private String                testSelector = null;
     private InputEvent            inputEvent;
     private List<Integer>         failures     = new ArrayList<>();
+    private final RuntimeContext runtimeContext;
+
+    public ExerciseEverything(RuntimeContext runtimeContext) {
+        this.runtimeContext = runtimeContext;
+    }
 
     @Test(1)
     @Test.Expect("completed value")
@@ -134,7 +142,7 @@ public class ExerciseEverything {
     @Test(12)
     @Test.Expect("okay")
     public FlowFuture<String> checkPassingExternalInvocation(Flow fl) {
-        return fl.invokeFunction(inputEvent.getAppName() + inputEvent.getRoute(), HttpMethod.POST, Headers.emptyHeaders(), "PASS".getBytes())
+        return fl.invokeFunction(runtimeContext.getFunctionID(), HttpMethod.POST, Headers.emptyHeaders(), "PASS".getBytes())
            .thenApply((resp) -> resp.getStatusCode() != 200 ? "failure" : new String(resp.getBodyAsBytes()));
     }
 
@@ -143,7 +151,7 @@ public class ExerciseEverything {
     @Test(13)
     @Test.Catch({FlowCompletionException.class, FunctionInvocationException.class})
     public FlowFuture<HttpResponse> checkFailingExternalInvocation(Flow fl) {
-        return fl.invokeFunction(inputEvent.getAppName() + inputEvent.getRoute(), HttpMethod.POST, Headers.emptyHeaders(), "FAIL".getBytes());
+        return fl.invokeFunction(runtimeContext.getFunctionID(), HttpMethod.POST, Headers.emptyHeaders(), "FAIL".getBytes());
     }
 
     @Test(14)

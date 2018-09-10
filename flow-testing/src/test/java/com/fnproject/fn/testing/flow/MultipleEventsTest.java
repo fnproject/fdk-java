@@ -14,7 +14,7 @@ public class MultipleEventsTest {
     @Rule
     public FnTestingRule fn = FnTestingRule.createDefault();
 
-    public FlowTest flow = new FlowTest(fn);
+    public FlowTest flow =  FlowTest.create(fn);
 
     public static Semaphore oneGo = null;
     public static Semaphore twoGo = null;

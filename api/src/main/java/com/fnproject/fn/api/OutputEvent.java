@@ -21,10 +21,6 @@ public interface OutputEvent {
          */
         Success(200),
         /**
-         * The event contained invalid input that the FDK was unable to handle
-         */
-        InvalidInput(400),
-        /**
          * The Function code raised unhandled exception
          */
         FunctionError(502),

@@ -1,5 +1,6 @@
 package com.fnproject.fn.api.flow;
 
+
 import java.io.Serializable;
 import java.util.Objects;
 import java.util.concurrent.Callable;
@@ -19,7 +20,7 @@ public final class Flows {
      *
      * @return the current supplier of the flow runtime
      */
-    public static FlowSource getCurrentFlowSource() {
+    public static synchronized FlowSource getCurrentFlowSource() {
         return flowSource;
     }
 

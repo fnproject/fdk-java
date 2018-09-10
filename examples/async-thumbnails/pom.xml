@@ -23,6 +23,11 @@
             <version>${fnproject.version}</version>
         </dependency>
         <dependency>
+            <groupId>com.fnproject.fn</groupId>
+            <artifactId>flow-runtime</artifactId>
+            <version>${fnproject.version}</version>
+        </dependency>
+        <dependency>
             <groupId>commons-net</groupId>
             <artifactId>commons-net</artifactId>
             <version>3.6</version>
@@ -35,6 +40,12 @@
         <dependency>
             <groupId>com.fnproject.fn</groupId>
             <artifactId>testing-core</artifactId>
+            <version>${fnproject.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.fnproject.fn</groupId>
+            <artifactId>flow-testing</artifactId>
             <version>${fnproject.version}</version>
             <scope>test</scope>
         </dependency>

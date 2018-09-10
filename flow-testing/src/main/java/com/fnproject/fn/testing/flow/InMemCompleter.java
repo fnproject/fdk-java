@@ -570,37 +570,44 @@ class InMemCompleter implements CompleterClient, BlobStoreClient, CompleterClien
 
         private Stage addInvokeFunction(String functionId, HttpMethod method, Headers headers, byte[] data) {
             return addStage(new Stage(CompletableFuture.completedFuture(Collections.emptyList()),
-               (n, in) -> in.thenComposeAsync((ignored) -> {
+               (n, in) -> {
+                   return in.thenComposeAsync((ignored) -> {
 
-                   CompletionStage<HttpResponse> respFuture = fnInvokeClient.invokeFunction(functionId, method, headers, data);
-                   return respFuture.thenApply((res) -> {
-                       APIModel.HTTPResp apiResp = new APIModel.HTTPResp();
-                       apiResp.headers = res.getHeaders().getAll().entrySet()
-                          .stream().map(e -> APIModel.HTTPHeader.create(e.getKey(), e.getValue())).collect(Collectors.toList());
+                       CompletionStage<HttpResponse> respFuture = fnInvokeClient.invokeFunction(functionId, method, headers, data);
+                       return respFuture.thenApply((res) -> {
+                           APIModel.HTTPResp apiResp = new APIModel.HTTPResp();
+                           List<APIModel.HTTPHeader> callHeaders = new ArrayList<>();
 
-                       BlobResponse blobResponse = writeBlob(flowId.getId(), res.getBodyAsBytes(), res.getHeaders().get("Content-type").orElse("application/octet-stream"));
+                           for (Map.Entry<String, List<String>> e : res.getHeaders().asMap().entrySet()) {
+                               for (String v : e.getValue()) {
+                                   callHeaders.add(APIModel.HTTPHeader.create(e.getKey(), v));
+                               }
+                           }
+                           apiResp.headers = callHeaders;
+                           BlobResponse blobResponse = writeBlob(flowId.getId(), res.getBodyAsBytes(), res.getHeaders().get("Content-type").orElse("application/octet-stream"));
 
-                       apiResp.body = APIModel.Blob.fromBlobResponse(blobResponse);
-                       apiResp.statusCode = res.getStatusCode();
+                           apiResp.body = APIModel.Blob.fromBlobResponse(blobResponse);
+                           apiResp.statusCode = res.getStatusCode();
 
-                       APIModel.HTTPRespDatum datum = APIModel.HTTPRespDatum.create(apiResp);
+                           APIModel.HTTPRespDatum datum = APIModel.HTTPRespDatum.create(apiResp);
 
-                       if (apiResp.statusCode >= 200 && apiResp.statusCode < 400) {
-                           return APIModel.CompletionResult.success(datum);
-                       } else {
-                           throw new ResultException(datum);
-                       }
+                           if (apiResp.statusCode >= 200 && apiResp.statusCode < 400) {
+                               return APIModel.CompletionResult.success(datum);
+                           } else {
+                               throw new ResultException(datum);
+                           }
 
-                   }).exceptionally(e->{
-                       if (e.getCause() instanceof ResultException){
-                           throw (ResultException)e.getCause();
-                       }else{
-                           throw new ResultException(APIModel.ErrorDatum.newError(APIModel.ErrorType.FunctionInvokeFailed,e.getMessage()));
-                       }
-                   });
+                       }).exceptionally(e -> {
+                           if (e.getCause() instanceof ResultException) {
+                               throw (ResultException) e.getCause();
+                           } else {
+                               throw new ResultException(APIModel.ErrorDatum.newError(APIModel.ErrorType.FunctionInvokeFailed, e.getMessage()));
+                           }
+                       });
 
 
-               }, faasExecutor)
+                   }, faasExecutor);
+               }
 
             ));
         }

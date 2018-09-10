@@ -169,11 +169,19 @@ public class FunctionRuntimeContext implements RuntimeContext {
 
     public OutputEvent tryInvoke(InputEvent evt, InvocationContext entryPoint) {
         OutputEvent output = null;
+        for (FunctionInvoker invoker : preCallHandlers) {
+            Optional<OutputEvent> result = invoker.tryInvoke(entryPoint, evt);
+            if (result.isPresent()) {
+                output = result.get();
+                return output;
+            }
+        }
+
         for (FunctionInvoker invoker : configuredInvokers) {
             Optional<OutputEvent> result = invoker.tryInvoke(entryPoint, evt);
             if (result.isPresent()) {
                 output = result.get();
-                break;
+                return output;
             }
         }
         return output;

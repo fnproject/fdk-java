@@ -5,15 +5,7 @@ import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.InputEvent;
 import com.fnproject.fn.api.OutputEvent;
 import com.fnproject.fn.runtime.EventCodec;
-import com.fnproject.fn.runtime.ReadOnceInputEvent;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.TeeOutputStream;
-import org.apache.http.HttpResponse;
-import org.apache.http.NoHttpResponseException;
-import org.apache.http.impl.io.ContentLengthInputStream;
-import org.apache.http.impl.io.DefaultHttpResponseParser;
-import org.apache.http.impl.io.HttpTransportMetricsImpl;
-import org.apache.http.impl.io.SessionInputBufferImpl;
 import org.junit.Rule;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
@@ -42,10 +34,6 @@ import java.util.*;
  *     public void myTest() {
  *         // Create an event to invoke MyFunction and put it into the event queue
  *         fn.givenEvent()
- *            .withAppName("alpha")
- *            .withRoute("/bravo")
- *            .withRequestUrl("http://charlie/alpha/bravo")
- *            .withMethod("POST")
  *            .addHeader("FOO", "BAR")
  *            .withBody("Body")
  *            .enqueue();
@@ -238,11 +226,11 @@ public final class FnTestingRule implements TestRule {
     }
 
 
-    static class TestCodec implements EventCodec {
+    public static class TestCodec implements EventCodec {
         private final List<InputEvent> input;
         private final List<FnResult> output;
 
-        TestCodec(List<InputEvent> input, List<FnResult> output) {
+        public TestCodec(List<InputEvent> input, List<FnResult> output) {
             this.input = input;
             this.output = output;
         }
@@ -298,7 +286,8 @@ public final class FnTestingRule implements TestRule {
 
             mutableEnv.putAll(config);
             mutableEnv.putAll(eventEnv);
-            mutableEnv.put("FN_FORMAT", "http");
+            mutableEnv.put("FN_FORMAT", "httpstream");
+            mutableEnv.put("FN_ID","myFn");
 
             FnTestingClassLoader forked = new FnTestingClassLoader(functionClassLoader, sharedPrefixes);
             if (forked.isShared(cls)) {
@@ -385,7 +374,6 @@ public final class FnTestingRule implements TestRule {
     }
 
 
-
     public List<String> getSharedPrefixes() {
         return Collections.unmodifiableList(sharedPrefixes);
     }
@@ -414,7 +402,7 @@ public final class FnTestingRule implements TestRule {
         }
 
         @Override
-        public FnEventBuilder withBody(InputStream body) throws IOException{
+        public FnEventBuilder withBody(InputStream body) throws IOException {
             builder.withBody(body);
             return this;
         }

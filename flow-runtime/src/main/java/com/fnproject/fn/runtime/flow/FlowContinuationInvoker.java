@@ -31,6 +31,10 @@ public final class FlowContinuationInvoker implements FunctionInvoker {
     public static final String FLOW_ID_HEADER = "Fnproject-FlowId";
 
 
+    public   FlowContinuationInvoker(){
+
+    }
+
     private static class URLCompleterClientFactory implements CompleterClientFactory {
         private final String completerBaseUrl;
         private transient CompleterClient completerClient;

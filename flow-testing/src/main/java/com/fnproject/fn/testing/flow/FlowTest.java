@@ -3,24 +3,19 @@ package com.fnproject.fn.testing.flow;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fnproject.fn.api.Headers;
+import com.fnproject.fn.api.InputEvent;
 import com.fnproject.fn.api.flow.*;
 import com.fnproject.fn.runtime.flow.*;
 import com.fnproject.fn.testing.*;
-import org.apache.commons.io.IOUtils;
-import org.apache.http.impl.io.DefaultHttpResponseParser;
-import org.apache.http.impl.io.HttpTransportMetricsImpl;
-import org.apache.http.impl.io.IdentityInputStream;
-import org.apache.http.impl.io.SessionInputBufferImpl;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
 import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 /**
+ * FlowTest allows you to test Fn Flow functions by emulating the Fn Flow completer in a testing environment.
+ * <p>
  * * Created on 07/09/2018.
  * <p>
  * (c) 2018 Oracle Corporation
@@ -31,13 +26,14 @@ public class FlowTest implements FnTestingRuleFeature {
     FnTestingRule rule;
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
-    public FlowTest(FnTestingRule rule) {
+    private FlowTest(FnTestingRule rule) {
 
         this.rule = rule;
         rule.addSharedClass(InMemCompleter.CompleterInvokeClient.class);
         rule.addSharedClass(BlobStoreClient.class);
         rule.addSharedClass(BlobResponse.class);
         rule.addSharedClass(CompleterClientFactory.class);
+        rule.addSharedClass(CompleterClient.class);
         rule.addSharedClass(CompletionId.class);
         rule.addSharedClass(FlowId.class);
         rule.addSharedClass(Flow.FlowState.class);
@@ -49,6 +45,17 @@ public class FlowTest implements FnTestingRuleFeature {
         rule.addSharedClass(FunctionInvocationException.class);
         rule.addSharedClass(PlatformException.class);
         rule.addFeature(this);
+    }
+
+    /**
+     * Create a Flow
+     *
+     * @param rule
+     * @return
+     */
+    public static FlowTest create(FnTestingRule rule) {
+        Objects.requireNonNull(rule, "rule");
+        return new FlowTest(rule);
     }
 
     @Override
@@ -63,7 +70,7 @@ public class FlowTest implements FnTestingRuleFeature {
 
     @Override
     public void prepareFunctionClassLoader(FnTestingClassLoader cl) {
-
+        setCompleterClient(cl, completer);
     }
 
     @Override
@@ -80,7 +87,7 @@ public class FlowTest implements FnTestingRuleFeature {
         private final Set<FnTestingClassLoader> pool = new HashSet<>();
 
 
-        public TestRuleCompleterInvokeClient(ClassLoader functionClassLoader, PrintStream oldSystemErr, String cls, String method) {
+        private TestRuleCompleterInvokeClient(ClassLoader functionClassLoader, PrintStream oldSystemErr, String cls, String method) {
             this.functionClassLoader = functionClassLoader;
             this.oldSystemErr = oldSystemErr;
             this.cls = cls;
@@ -113,17 +120,12 @@ public class FlowTest implements FnTestingRuleFeature {
 
             // oldSystemErr.println("Body\n" + new String(inputBody));
 
-            InputStream is = new FnHttpEventBuilder()
+            InputEvent inputEvent = new FnHttpEventBuilder()
               .withBody(inputBody)
-              .withAppName("appName")
-              .withRoute("/route").withRequestUrl("http://some/url")
-              .withMethod("POST")
               .withHeader("Content-Type", "application/json")
-              .withHeader(FlowContinuationInvoker.FLOW_ID_HEADER, flowId.getId()).currentEventInputStream();
+              .withHeader(FlowContinuationInvoker.FLOW_ID_HEADER, flowId.getId()).buildEvent();
 
-            ByteArrayOutputStream output = new ByteArrayOutputStream();
             Map<String, String> mutableEnv = new HashMap<>();
-            PrintStream functionOut = new PrintStream(output);
             PrintStream functionErr = new PrintStream(oldSystemErr);
 
             // Do we want to capture IO from continuations on the main log stream?
@@ -132,29 +134,22 @@ public class FlowTest implements FnTestingRuleFeature {
 
             mutableEnv.putAll(rule.getConfig());
             mutableEnv.putAll(rule.getEventEnv());
-            mutableEnv.put("FN_FORMAT", "http");
+            mutableEnv.put("FN_FORMAT", "httpstream");
+            List<FnResult> output = new ArrayList<>();
 
 
             fcl.run(
               mutableEnv,
-              is,
-              functionOut,
+              new FnTestingRule.TestCodec(Collections.singletonList(inputEvent), output),
               functionErr,
               cls + "::" + method);
 
+            FnResult out = output.get(0);
 
-            SessionInputBufferImpl sib = new SessionInputBufferImpl(new HttpTransportMetricsImpl(), 65535);
-            ByteArrayInputStream parseStream = new ByteArrayInputStream(output.toByteArray());
-            sib.bind(parseStream);
-            DefaultHttpResponseParser parser = new DefaultHttpResponseParser(sib);
             APIModel.CompletionResult r;
             try {
-                // Read wrapping result, and throw it away
-                parser.parse();
-                IdentityInputStream iis = new IdentityInputStream(sib);
-                byte[] responseBody = IOUtils.toByteArray(iis);
 
-                APIModel.InvokeStageResponse response = objectMapper.readValue(responseBody, APIModel.InvokeStageResponse.class);
+                APIModel.InvokeStageResponse response = objectMapper.readValue(out.getBodyAsBytes(), APIModel.InvokeStageResponse.class);
                 r = response.result;
 
             } catch (Exception e) {
@@ -225,8 +220,7 @@ public class FlowTest implements FnTestingRuleFeature {
     private class TestRuleFnInvokeClient implements InMemCompleter.FnInvokeClient {
         @Override
         public CompletableFuture<HttpResponse> invokeFunction(String fnId, HttpMethod method, Headers headers, byte[] data) {
-            FnFunctionStub stub = functionStubs
-              .computeIfAbsent(fnId, (k) -> {
+            FnFunctionStub stub = functionStubs.computeIfAbsent(fnId, (k) -> {
                   throw new IllegalStateException("Function was invoked that had no definition: " + k);
               });
 

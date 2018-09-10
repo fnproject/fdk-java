@@ -1,6 +1,8 @@
 package com.fnproject.fn.runtime;
 
+import com.fnproject.fn.api.FnFeature;
 import com.fnproject.fn.api.MethodWrapper;
+import com.fnproject.fn.api.RuntimeContext;
 import com.fnproject.fn.runtime.exception.InvalidFunctionDefinitionException;
 
 import java.lang.reflect.Method;
@@ -20,6 +22,8 @@ public class FunctionLoader {
      */
     public MethodWrapper loadClass(String className, String fnName) {
         Class<?> targetClass = loadClass(className);
+
+
         return new DefaultMethodWrapper(targetClass, getTargetMethod(targetClass, fnName));
     }
 
