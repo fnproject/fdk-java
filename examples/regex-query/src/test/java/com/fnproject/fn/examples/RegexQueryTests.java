@@ -15,7 +15,6 @@ public class RegexQueryTests {
         String text = "a";
         String regex = ".";
         fn.givenEvent()
-                .withMethod("POST")
                 .withBody(String.format("{\"text\": \"%s\", \"regex\": \"%s\"}", text, regex))
                 .enqueue();
 
@@ -34,7 +33,6 @@ public class RegexQueryTests {
         String text = "abc";
         String regex = ".";
         fn.givenEvent()
-                .withMethod("POST")
                 .withBody(String.format("{\"text\": \"%s\", \"regex\": \"%s\"}", text, regex))
                 .enqueue();
 

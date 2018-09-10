@@ -1,5 +1,6 @@
 package com.fnproject.fn.testing;
 
+import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.InputEvent;
 import com.fnproject.fn.api.OutputEvent;
 import com.fnproject.fn.api.RuntimeContext;
@@ -203,7 +204,7 @@ public class FnTestingRuleTest {
     public void shouldEnqueueMultipleIdenticalEvents() {
         fn.givenEvent()
           .withHeader("FOO", "BAR")
-          .withHeader("Content-Type","application/octet-stream")
+          .withHeader("Content-Type", "application/octet-stream")
           .withBody("Body") // body as string
           .enqueue(10);
 
@@ -220,9 +221,8 @@ public class FnTestingRuleTest {
     }
 
 
-
     @Test
-    public void shouldEnqueuIndependentEventsWithInputStreams() throws IOException{
+    public void shouldEnqueuIndependentEventsWithInputStreams() throws IOException {
         fn.givenEvent()
           .withBody(new ByteArrayInputStream("Body".getBytes())) // body as string
           .enqueue();
@@ -334,7 +334,7 @@ public class FnTestingRuleTest {
 //        Assertions.assertThat(inEvent.getRequestUrl()).isEqualTo(baseUrl + "?var=%26");
 //    }
 
-    private static Map.Entry<String, List<String>> headerEntry(String key, String value) {
-        return new AbstractMap.SimpleEntry<>(key.toLowerCase(), Collections.singletonList(value));
+    private static Map.Entry<String, List<String>> headerEntry(String key, String... values) {
+        return new AbstractMap.SimpleEntry<>(Headers.canonicalKey(key), Arrays.asList(values));
     }
 }

@@ -57,22 +57,22 @@
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
-                <groupId>org.netbeans.tools</groupId>
-                <artifactId>sigtest-maven-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>check</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <sigfile>src/main/api/snapshot.sigfile</sigfile>
-                    <action>strictcheck</action>
-                    <packages>com.fnproject.fn.api.flow</packages>
-                </configuration>
-            </plugin>
+            <!--<plugin>-->
+                <!--<groupId>org.netbeans.tools</groupId>-->
+                <!--<artifactId>sigtest-maven-plugin</artifactId>-->
+                <!--<executions>-->
+                    <!--<execution>-->
+                        <!--<goals>-->
+                            <!--<goal>check</goal>-->
+                        <!--</goals>-->
+                    <!--</execution>-->
+                <!--</executions>-->
+                <!--<configuration>-->
+                    <!--<sigfile>src/main/api/snapshot.sigfile</sigfile>-->
+                    <!--<action>strictcheck</action>-->
+                    <!--<packages>com.fnproject.fn.testing.flow</packages>-->
+                <!--</configuration>-->
+            <!--</plugin>-->
         </plugins>
     </build>
 </project>

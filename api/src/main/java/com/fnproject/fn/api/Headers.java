@@ -28,7 +28,6 @@ public final class Headers {
     /**
      * Calculates the canonical key  (cf RFC 7230) for a header
      * <p>
-     * <p>
      * If the header contains invalid characters it returns the original header
      *
      * @param key the header key to canonicalise
@@ -226,7 +225,7 @@ public final class Headers {
     /**
      * Returns the headers as a  map
      *
-     * @return a map of key->values
+     * @return a map of key-values
      */
     public Map<String, List<String>> asMap() {
         return headers;
