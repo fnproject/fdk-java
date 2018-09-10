@@ -1,7 +1,7 @@
 package com.fnproject.fn.examples;
 
 import com.fnproject.fn.testing.FnTestingRule;
-import com.fnproject.fn.testing.flow.FlowTest;
+import com.fnproject.fn.testing.flow.FlowTesting;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import org.junit.Rule;
@@ -13,7 +13,7 @@ public class ThumbnailsFunctionTest {
 
     @Rule
     public final FnTestingRule fn = FnTestingRule.createDefault();
-    private final FlowTest flow = FlowTest.create(fn);
+    private final FlowTesting flow = FlowTesting.create(fn);
 
     @Rule
     public final WireMockRule mockServer = new WireMockRule(0);

@@ -31,6 +31,7 @@ import java.nio.channels.Selector;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -49,26 +50,30 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
 
     private static final String FN_LISTENER = "FN_LISTENER";
     private final Map<String, String> env;
-    private final AtomicBoolean stopped = new AtomicBoolean(false);
+    private final AtomicBoolean stopping = new AtomicBoolean(false);
     private final UnixServerSocketChannel channel;
     private final File socketFile;
     private static final Set<String> stripInputHeaders;
     private static final Set<String> stripOutputHeaders;
+    private static final CompletableFuture<Boolean> stopped = new CompletableFuture<>();
 
     static {
         Set<String> hin = new HashSet<>();
-        hin.add("content-length");
-        hin.add("host");
-        hin.add("accept-encoding");
-        hin.add("transfer-encoding");
-        hin.add("user-agent");
+        hin.add("Content-Length");
+        hin.add("Host");
+        hin.add("Accept-Encoding");
+        hin.add("Transfer-Encoding");
+        hin.add("User-Agent");
+        hin.add("Connection");
+        hin.add("TE");
+
         stripInputHeaders = Collections.unmodifiableSet(hin);
 
         Set<String> hout = new HashSet<>();
-        hin.add("content-length");
-        hin.add("transfer-encoding");
-        hin.add("connection");
-        stripOutputHeaders = Collections.unmodifiableSet(hin);
+        hout.add("Content-Length");
+        hout.add("Transfer-Encoding");
+        hout.add("Connection");
+        stripOutputHeaders = Collections.unmodifiableSet(hout);
     }
 
     @Override
@@ -112,7 +117,7 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
             Selector sel = NativeSelectorProvider.getInstance().openSelector();
             channel.register(sel, SelectionKey.OP_ACCEPT, new Object());
 
-            while (!stopped.get()) {
+            while (!stopping.get()) {
                 UnixSocket sock;
                 try {
                     if (sel.select(100) == 0) {
@@ -145,6 +150,8 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
             }
         } catch (IOException e) {
             throw new FunctionIOException("Error handling FDK codec data", e);
+        } finally {
+            stopped.complete(true);
         }
 
 
@@ -219,7 +226,7 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
 
 
         for (Header h : request.getAllHeaders()) {
-            if (stripInputHeaders.contains(h.getName().toLowerCase())) {
+            if (stripInputHeaders.contains(Headers.canonicalKey(h.getName()))) {
                 continue;
             }
             headersIn = headersIn.addHeader(h.getName(), h.getValue());
@@ -263,7 +270,12 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
 
     @Override
     public void close() {
-        stopped.set(false);
-        socketFile.delete();
+        stopping.set(true);
+
+        try {
+            stopped.get();
+        } catch (Exception ignored) {
+
+        }
     }
 }

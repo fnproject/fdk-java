@@ -4,6 +4,7 @@ package com.fnproject.fn.runtime;
 import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.InputEvent;
 import com.fnproject.fn.api.OutputEvent;
+import org.apache.commons.io.IOUtils;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.api.Request;
@@ -15,11 +16,15 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -52,13 +57,13 @@ public class HTTPStreamCodecTest {
 
     private Request defaultRequest() {
         return httpClient.newRequest("http://localhost/call")
-           .method("POST")
-           .header("Fn-Call-Id", "callID")
-           .header("Fn-Deadline", "2002-10-02T10:00:00.992Z")
-           .header("Custom-header", "v1")
-           .header("Custom-header", "v2")
-           .header("Content-Type", "text/plain")
-           .content(new StringContentProvider("hello "));
+          .method("POST")
+          .header("Fn-Call-Id", "callID")
+          .header("Fn-Deadline", "2002-10-02T10:00:00.992Z")
+          .header("Custom-header", "v1")
+          .header("Custom-header", "v2")
+          .header("Content-Type", "text/plain")
+          .content(new StringContentProvider("hello "));
 
     }
 
@@ -79,6 +84,7 @@ public class HTTPStreamCodecTest {
         listener.delete();
         if (codec != null) {
             codec.close();
+            codec = null;
         }
 
     }
@@ -100,13 +106,13 @@ public class HTTPStreamCodecTest {
         });
 
         ContentResponse resp = httpClient.newRequest("http://localhost/call")
-           .method("POST")
-           .header("Fn-Call-Id", "callID")
-           .header("Fn-Deadline", "2002-10-02T10:00:00.992Z")
-           .header("Custom-header", "v1")
-           .header("Custom-header", "v2")
-           .header("Content-Type", "text/plain")
-           .content(new StringContentProvider("hello ")).send();
+          .method("POST")
+          .header("Fn-Call-Id", "callID")
+          .header("Fn-Deadline", "2002-10-02T10:00:00.992Z")
+          .header("Custom-header", "v1")
+          .header("Custom-header", "v2")
+          .header("Content-Type", "text/plain")
+          .content(new StringContentProvider("hello ")).send();
 
         assertThat(resp.getStatus()).isEqualTo(200);
         assertThat(resp.getContent()).isEqualTo("hello".getBytes());
@@ -117,6 +123,41 @@ public class HTTPStreamCodecTest {
         assertThat(evt.getDeadline().toEpochMilli()).isEqualTo(1033552800992L);
         assertThat(evt.getHeaders()).isEqualTo(Headers.emptyHeaders().addHeader("Fn-Call-Id", "callID").addHeader("Fn-Deadline", "2002-10-02T10:00:00.992Z").addHeader("Custom-header", "v1", "v2").addHeader("Content-Type", "text/plain"));
 
+
+    }
+
+
+    @Test
+    public void shouldHandleMultipleRequests() throws Exception {
+        AtomicReference<String> lastInput = new AtomicReference<>();
+        AtomicInteger count = new AtomicInteger(0);
+
+        startCodec(defaultEnv, (in) -> {
+            lastInput.set(in.consumeBody((is) -> {
+                try {
+                    return IOUtils.toString(is, StandardCharsets.UTF_8);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }));
+            return OutputEvent.fromBytes(String.format("%d", count.getAndIncrement()).getBytes(), OutputEvent.Status.Success, "text/plain", Headers.emptyHeaders());
+        });
+
+        for (int i = 0; i < 5; i++) {
+            ContentResponse resp = httpClient.newRequest("http://localhost/call")
+              .method("POST")
+              .header("Fn-Call-Id", "callID")
+              .header("Fn-Deadline", "2002-10-02T10:00:00.992Z")
+              .header("Custom-header", "v1")
+              .header("Custom-header", "v2")
+              .header("Content-Type", "text/plain")
+              .content(new StringContentProvider(String.format("%d", i))).send();
+
+            assertThat(resp.getStatus()).isEqualTo(200);
+            assertThat(resp.getContent()).isEqualTo(String.format("%d", i).getBytes());
+            assertThat(lastInput).isNotNull();
+            assertThat(lastInput.get()).isEqualTo(String.format("%d", i));
+        }
 
     }
 
@@ -141,23 +182,25 @@ public class HTTPStreamCodecTest {
     }
 
     @Test
-    public void shouldStripHopToHopHeadersFromFunction() throws Exception {
+    public void shouldStripHopToHopHeadersFromFunctionInput() throws Exception {
 
-        for (String header : new String[]{"Content-Length","Transfer-encoding","Connection"}){
+        for (String header[] : new String[][]{
+          {"Content-Length", "0"},
+          {"Transfer-encoding", "chunked"},
+          {"Connection", "close"},
+        }) {
             CompletableFuture<InputEvent> lastEvent = new CompletableFuture<>();
 
             startCodec(defaultEnv, (in) -> {
                 lastEvent.complete(in);
-                return OutputEvent.fromBytes("hello".getBytes(), OutputEvent.Status.Success, "text/plain", Headers.emptyHeaders().addHeader(header,"foo"));
+                return OutputEvent.fromBytes("hello".getBytes(), OutputEvent.Status.Success, "text/plain", Headers.emptyHeaders().addHeader(header[0], header[1]));
             });
 
             ContentResponse resp = defaultRequest().send();
 
-            assertThat(resp.getHeaders().get(header)).isNull();
+            assertThat(resp.getHeaders().get(header[0])).isNull();
 
             cleanup();
         }
-
-
     }
 }

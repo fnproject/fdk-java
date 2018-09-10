@@ -38,7 +38,7 @@ public final class Flows {
      * @return the current flow runtime
      */
     public synchronized static Flow currentFlow() {
-        Objects.requireNonNull(flowSource, "Flows.flowSource is not set  - Flows.currentFlow() should only be called from within a FaaS function invocation");
+        Objects.requireNonNull(flowSource, "Flows.flowSource is not set  - Flows.currentFlow() is the @FnFeature(FlowFeature.class) annotation set on your function?");
         return flowSource.currentFlow();
     }
 

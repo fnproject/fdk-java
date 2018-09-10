@@ -1,10 +1,13 @@
 package com.fnproject.fn.testing.flowtestfns;
 
+import com.fnproject.fn.api.FnFeature;
 import com.fnproject.fn.api.flow.Flow;
 import com.fnproject.fn.api.flow.Flows;
+import com.fnproject.fn.runtime.flow.FlowFeature;
 
 import java.io.Serializable;
 
+@FnFeature(FlowFeature.class)
 public class FnFlowsFunction implements Serializable {
 
     public static void usingFlows() {

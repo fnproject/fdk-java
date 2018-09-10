@@ -12,15 +12,15 @@ public class IntegrationTest {
     @Rule
     public FnTestingRule fn = FnTestingRule.createDefault();
 
-    public FlowTest flow = FlowTest.create(fn);
+    public FlowTesting flow = FlowTesting.create(fn);
 
     @Test
     public void runIntegrationTests() {
 
-        flow.givenFn("nonexistent/nonexistent")
+        flow.givenFn("testFunctionNonExistant")
           .withFunctionError()
 
-          .givenFn("appName/route")
+          .givenFn("testFunction")
           .withAction((body) -> {
               if (new String(body).equals("PASS")) {
                   return "okay".getBytes();

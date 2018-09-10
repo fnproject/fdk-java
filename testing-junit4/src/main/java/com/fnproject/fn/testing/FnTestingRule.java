@@ -54,7 +54,6 @@ public final class FnTestingRule implements TestRule {
     private boolean hasEvents = false;
     private List<InputEvent> pendingInput = Collections.synchronizedList(new ArrayList<>());
     private List<FnResult> output = Collections.synchronizedList(new ArrayList<>());
-
     private ByteArrayOutputStream stdErr = new ByteArrayOutputStream();
 
     private static final ObjectMapper objectMapper = new ObjectMapper();

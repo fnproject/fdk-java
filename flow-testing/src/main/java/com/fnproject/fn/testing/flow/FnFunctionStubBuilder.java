@@ -11,7 +11,7 @@ public interface FnFunctionStubBuilder<T> {
      * Consume the builder and stub the function to return the provided byte array
      *
      * @param result A byte array returned by the function
-     * @return The original testing rule (usually {@link FlowTest}. The builder is consumed.
+     * @return The original testing rule (usually {@link FlowTesting}. The builder is consumed.
      */
     T withResult(byte[] result);
 
@@ -19,7 +19,7 @@ public interface FnFunctionStubBuilder<T> {
      * Consume the builder and stub the function to throw an error when it is invoked: this simulates a failure of the
      * called function, e.g. if the external function threw an exception.
      *
-     * @return The original testing rule (usually {@link FlowTest}. The builder is consumed.
+     * @return The original testing rule (usually {@link FlowTesting}. The builder is consumed.
      */
     T withFunctionError();
 
@@ -27,7 +27,7 @@ public interface FnFunctionStubBuilder<T> {
      * Consume the builder and stub the function to throw a platform error, this simulates a failure of the Fn Flow
      * completions platform, and not any error of the user code.
      *
-     * @return The original testing rule (usually {@link FlowTest}. The builder is consumed.
+     * @return The original testing rule (usually {@link FlowTesting}. The builder is consumed.
      */
     T withPlatformError();
 
@@ -40,7 +40,7 @@ public interface FnFunctionStubBuilder<T> {
      * external state is accessed, a synchronization mechanism should be used.
      *
      * @param f an action to apply when this function is invoked
-     * @return The original testing rule (usually {@link FlowTest}. The builder is consumed.
+     * @return The original testing rule (usually {@link FlowTesting}. The builder is consumed.
      */
     T withAction(ExternalFunctionAction f);
 

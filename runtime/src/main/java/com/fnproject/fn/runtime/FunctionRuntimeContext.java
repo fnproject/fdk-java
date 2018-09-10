@@ -153,6 +153,7 @@ public class FunctionRuntimeContext implements RuntimeContext {
                 break;
             case Call:
                 configuredInvokers.add(0, invoker);
+                break;
             default:
                 throw new IllegalArgumentException("Unsupported phase " + phase);
         }

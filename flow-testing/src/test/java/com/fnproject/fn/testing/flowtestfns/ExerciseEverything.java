@@ -132,13 +132,13 @@ public class ExerciseEverything {
     @Test(11)
     @Test.Catch({FlowCompletionException.class, FunctionInvocationException.class})
     public FlowFuture<HttpResponse> nonexistentExternalEvaluation(Flow fl) {
-        return fl.invokeFunction("nonexistent/nonexistent", HttpMethod.POST, Headers.emptyHeaders(), new byte[0]);
+        return fl.invokeFunction("testFunctionNonExistant", HttpMethod.POST, Headers.emptyHeaders(), new byte[0]);
     }
 
     @Test(12)
     @Test.Expect("okay")
-    public FlowFuture<String> checkPassingExternalSelfInvocation(Flow fl) {
-        return fl.invokeFunction(runtimeContext.getFunctionID(), HttpMethod.POST, Headers.emptyHeaders(), "PASS".getBytes())
+    public FlowFuture<String> checkPassingInvocation(Flow fl) {
+        return fl.invokeFunction("testFunction", HttpMethod.POST, Headers.emptyHeaders(), "PASS".getBytes())
                 .thenApply((resp) -> resp.getStatusCode() != 200 ? "failure" : new String(resp.getBodyAsBytes()));
     }
 
@@ -146,8 +146,8 @@ public class ExerciseEverything {
     // This test will only work in default mode.
     @Test(13)
     @Test.Catch({FlowCompletionException.class, FunctionInvocationException.class})
-    public FlowFuture<HttpResponse> checkFailingExternalSelfInvocation(Flow fl) {
-        return fl.invokeFunction(runtimeContext.getFunctionID(), HttpMethod.POST, Headers.emptyHeaders(), "FAIL".getBytes());
+    public FlowFuture<HttpResponse> checkFailingInvocation(Flow fl) {
+        return fl.invokeFunction("testFunction", HttpMethod.POST, Headers.emptyHeaders(), "FAIL".getBytes());
     }
 
     // This original version captures the RT, which captures the factory, which is not serializable

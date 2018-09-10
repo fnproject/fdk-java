@@ -22,7 +22,7 @@ public class FnTestingRuleFlowsTest {
     @Rule
     public FnTestingRule fn = FnTestingRule.createDefault();
 
-    private FlowTest flow =  FlowTest.create(fn);
+    private FlowTesting flow =  FlowTesting.create(fn);
 
     @FnFeature(FlowFeature.class)
     public static class Loop {

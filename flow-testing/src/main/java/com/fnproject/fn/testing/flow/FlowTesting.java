@@ -14,19 +14,20 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * FlowTest allows you to test Fn Flow functions by emulating the Fn Flow completer in a testing environment.
+ * FlowTesting allows you to test Fn Flow functions by emulating the Fn Flow completer in a testing environment.
+ *
  * <p>
  * * Created on 07/09/2018.
  * <p>
  * (c) 2018 Oracle Corporation
  */
-public class FlowTest implements FnTestingRuleFeature {
+public class FlowTesting implements FnTestingRuleFeature {
     private Map<String, FnFunctionStub> functionStubs = new HashMap<>();
-    public static InMemCompleter completer = null;
-    FnTestingRule rule;
+    private static InMemCompleter completer = null;
+    private final FnTestingRule rule;
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
-    private FlowTest(FnTestingRule rule) {
+    private FlowTesting(FnTestingRule rule) {
 
         this.rule = rule;
         rule.addSharedClass(InMemCompleter.CompleterInvokeClient.class);
@@ -53,9 +54,9 @@ public class FlowTest implements FnTestingRuleFeature {
      * @param rule
      * @return
      */
-    public static FlowTest create(FnTestingRule rule) {
+    public static FlowTesting create(FnTestingRule rule) {
         Objects.requireNonNull(rule, "rule");
-        return new FlowTest(rule);
+        return new FlowTesting(rule);
     }
 
     @Override
@@ -180,29 +181,29 @@ public class FlowTest implements FnTestingRuleFeature {
     }
 
 
-    public FnFunctionStubBuilder<FlowTest> givenFn(String id) {
-        return new FnFunctionStubBuilder<FlowTest>() {
+    public FnFunctionStubBuilder<FlowTesting> givenFn(String id) {
+        return new FnFunctionStubBuilder<FlowTesting>() {
             @Override
-            public FlowTest withResult(byte[] result) {
+            public FlowTesting withResult(byte[] result) {
                 return withAction((body) -> result);
             }
 
             @Override
-            public FlowTest withFunctionError() {
+            public FlowTesting withFunctionError() {
                 return withAction((body) -> {
                     throw new FunctionError("simulated by testing platform");
                 });
             }
 
             @Override
-            public FlowTest withPlatformError() {
+            public FlowTesting withPlatformError() {
                 return withAction((body) -> {
                     throw new PlatformError("simulated by testing platform");
                 });
             }
 
             @Override
-            public FlowTest withAction(ExternalFunctionAction f) {
+            public FlowTesting withAction(ExternalFunctionAction f) {
                 functionStubs.put(id, (HttpMethod method, Headers headers, byte[] body) -> {
                     try {
                         return new DefaultHttpResponse(200, Headers.emptyHeaders(), f.apply(body));
@@ -212,7 +213,7 @@ public class FlowTest implements FnTestingRuleFeature {
                         throw new RuntimeException("Platform Error");
                     }
                 });
-                return FlowTest.this;
+                return FlowTesting.this;
             }
         };
     }
@@ -221,7 +222,7 @@ public class FlowTest implements FnTestingRuleFeature {
         @Override
         public CompletableFuture<HttpResponse> invokeFunction(String fnId, HttpMethod method, Headers headers, byte[] data) {
             FnFunctionStub stub = functionStubs.computeIfAbsent(fnId, (k) -> {
-                  throw new IllegalStateException("Function was invoked that had no definition: " + k);
+                  throw new IllegalStateException("Function was invoked that had no definition: " + k + " defined functions are " + String.join(",",functionStubs.keySet()));
               });
 
             try {

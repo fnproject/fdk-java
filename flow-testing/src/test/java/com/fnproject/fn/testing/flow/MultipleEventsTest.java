@@ -1,9 +1,10 @@
 package com.fnproject.fn.testing.flow;
 
+import com.fnproject.fn.api.FnFeature;
 import com.fnproject.fn.api.flow.Flow;
 import com.fnproject.fn.api.flow.Flows;
+import com.fnproject.fn.runtime.flow.FlowFeature;
 import com.fnproject.fn.testing.FnTestingRule;
-import com.fnproject.fn.testing.flow.FlowTest;
 import org.assertj.core.api.Assertions;
 import org.junit.Rule;
 import org.junit.Test;
@@ -14,12 +15,13 @@ public class MultipleEventsTest {
     @Rule
     public FnTestingRule fn = FnTestingRule.createDefault();
 
-    public FlowTest flow =  FlowTest.create(fn);
+    public FlowTesting flow =  FlowTesting.create(fn);
 
     public static Semaphore oneGo = null;
     public static Semaphore twoGo = null;
     public static boolean success = false;
 
+    @FnFeature(FlowFeature.class)
     public static class TestFn {
         public void handleRequest(String s) {
             switch (s) {

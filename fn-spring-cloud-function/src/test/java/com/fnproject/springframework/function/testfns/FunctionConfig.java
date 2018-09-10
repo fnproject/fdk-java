@@ -1,7 +1,9 @@
 package com.fnproject.springframework.function.testfns;
 
 import com.fnproject.fn.api.FnConfiguration;
+import com.fnproject.fn.api.FnFeature;
 import com.fnproject.fn.api.RuntimeContext;
+import com.fnproject.springframework.function.SpringCloudFunctionFeature;
 import com.fnproject.springframework.function.SpringCloudFunctionInvoker;
 import org.springframework.cloud.function.context.config.ContextFunctionCatalogAutoConfiguration;
 import org.springframework.context.annotation.Bean;
@@ -14,12 +16,8 @@ import java.util.function.Supplier;
 
 @Configuration
 @Import(ContextFunctionCatalogAutoConfiguration.class)
+@FnFeature(SpringCloudFunctionFeature.class)
 public class FunctionConfig {
-
-    @FnConfiguration
-    public static void configure(RuntimeContext ctx) {
-        ctx.setInvoker(new SpringCloudFunctionInvoker(FunctionConfig.class));
-    }
 
     public void handleRequest() {
     }

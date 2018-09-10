@@ -1,6 +1,8 @@
 package com.fnproject.fn.testing.flow;
 
+import com.fnproject.fn.api.FnFeature;
 import com.fnproject.fn.api.flow.Flows;
+import com.fnproject.fn.runtime.flow.FlowFeature;
 import com.fnproject.fn.testing.FnTestingRule;
 import org.assertj.core.api.Assertions;
 import org.junit.Rule;
@@ -11,10 +13,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class WhenCompleteTest {
     @Rule
     public FnTestingRule fn = FnTestingRule.createDefault();
-
+    private FlowTesting flow = FlowTesting.create(fn);
 
     public static AtomicInteger cas = new AtomicInteger(0);
 
+
+    @FnFeature(FlowFeature.class)
     public static class TestFn {
         public void handleRequest() {
             Flows.currentFlow().completedValue(1)

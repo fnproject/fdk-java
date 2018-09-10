@@ -61,6 +61,7 @@ An important consideration is that, if your lambda captures fields from your
 function class, then that class must also be Serializable:
 
 ```java
+@FnFeature(FlowFeature.class)
 public class MyFunction{
    private String config  = "foo";
 
@@ -82,6 +83,7 @@ E.g. making `MyFunction` serializable will work as the function instance object
 will be captured alongside the lambda:
 
 ```java
+@FnFeature(FlowFeature.class)
 public class MyFunction implements Serializable{
    private String config  = "foo";
 
@@ -104,6 +106,7 @@ prior to passing them, removing the need to make the function class
 serializable. For example:
 
 ```java
+@FnFeature(FlowFeature.class)
 public class MyFunction{
    private final Database db; // non-serializable object
    private final String config  = "foo";
@@ -128,6 +131,7 @@ Alternatively, you can make non-serializable fields `transient` and construct
 them on the fly:
 
 ```java
+@FnFeature(FlowFeature.class)
 public class MyFunction implements Serialiable{
    private final transient Database db; // non-serializable object
    private final String config  = "foo";
@@ -298,6 +302,7 @@ exception.
 E.g.:
 
 ```java
+@FnFeature(FlowFeature.class)
 public class MyFunction{
    public static class MyException extends RuntimeException{
       public MyException(String message){
