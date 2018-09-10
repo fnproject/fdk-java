@@ -2,7 +2,7 @@ package com.fnproject.fn.testing.flow;
 
 import com.fnproject.fn.api.*;
 import com.fnproject.fn.api.flow.*;
-import com.fnproject.fn.runtime.flow.FlowContinuationInvoker;
+import com.fnproject.fn.runtime.flow.FlowFeature;
 import com.fnproject.fn.testing.FnTestingRule;
 import org.assertj.core.api.Assertions;
 import org.junit.Assert;

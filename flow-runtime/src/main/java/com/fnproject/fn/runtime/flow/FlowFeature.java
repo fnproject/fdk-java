@@ -1,4 +1,4 @@
-package com.fnproject.fn.api.flow;
+package com.fnproject.fn.runtime.flow;
 
 import com.fnproject.fn.api.FunctionInvoker;
 import com.fnproject.fn.api.RuntimeContext;
@@ -29,9 +29,8 @@ import com.fnproject.fn.api.RuntimeFeature;
  */
 public class FlowFeature implements RuntimeFeature {
     @Override
-    public void initialize(RuntimeContext context) throws Exception {
-        Class<?> continuationInvoker = Class.forName("com.fnproject.fn.runtime.flow.FlowContinuationInvoker");
-        FunctionInvoker invoker = (FunctionInvoker)continuationInvoker.newInstance();
+    public void initialize(RuntimeContext context){
+        FunctionInvoker invoker = new FlowContinuationInvoker();
         context.addInvoker(invoker,FunctionInvoker.Phase.PreCall);
     }
 }

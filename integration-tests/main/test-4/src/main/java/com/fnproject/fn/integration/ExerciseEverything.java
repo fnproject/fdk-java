@@ -5,6 +5,7 @@ import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.InputEvent;
 import com.fnproject.fn.api.RuntimeContext;
 import com.fnproject.fn.api.flow.*;
+import com.fnproject.fn.runtime.flow.FlowFeature;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.TeeOutputStream;
 

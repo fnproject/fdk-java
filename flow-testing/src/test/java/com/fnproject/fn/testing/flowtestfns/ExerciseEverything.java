@@ -2,7 +2,7 @@ package com.fnproject.fn.testing.flowtestfns;
 
 import com.fnproject.fn.api.*;
 import com.fnproject.fn.api.flow.*;
-import com.fnproject.fn.runtime.flow.FlowContinuationInvoker;
+import com.fnproject.fn.runtime.flow.FlowFeature;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.TeeOutputStream;
 
