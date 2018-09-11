@@ -1,3 +1,4 @@
+schema_version: 20180708
 version: 0.0.13
 runtime: java
 cmd: com.fnproject.fn.integration.ExerciseEverything::handleRequest

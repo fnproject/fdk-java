@@ -286,7 +286,8 @@ public final class FnTestingRule implements TestRule {
             mutableEnv.putAll(config);
             mutableEnv.putAll(eventEnv);
             mutableEnv.put("FN_FORMAT", "httpstream");
-            mutableEnv.put("FN_ID","myFn");
+            mutableEnv.put("FN_FN_ID","myFnID");
+            mutableEnv.put("FN_APP_ID","myAppID");
 
             FnTestingClassLoader forked = new FnTestingClassLoader(functionClassLoader, sharedPrefixes);
             if (forked.isShared(cls)) {

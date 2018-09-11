@@ -63,7 +63,7 @@ if [[ -x run-test.sh ]]
 then
     ./run-test.sh
 else
-    curl -v "$FN_API_URL/r/$TESTNAME/$TESTNAME" -d @input > actual
+    cat @input | fn call $TESTNAME $TESTNAME  > actual
 fi
 
 if [[ -x expected.sh ]]

@@ -16,7 +16,7 @@ To import the testing library add the following dependency to your Maven project
 <dependency>
     <groupId>com.fnproject.fn</groupId>
     <artifactId>testing</artifactId>
-    <version>${fdk.version}T</version>
+    <version>${fdk.version}</version>
     <scope>test</scope>
 </dependency>
 ```
