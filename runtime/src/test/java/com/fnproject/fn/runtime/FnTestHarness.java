@@ -228,7 +228,7 @@ public class FnTestHarness implements TestRule {
 
             Map<String,String> fnConfig = new HashMap<>(config);
             fnConfig.put("FN_APP_ID","appID");
-            fnConfig.put("FN_FORMAT","httpstream");
+            fnConfig.put("FN_FORMAT","http-stream");
             fnConfig.put("FN_FN_ID","fnID");
 
 

@@ -135,7 +135,7 @@ public class FlowTesting implements FnTestingRuleFeature {
 
             mutableEnv.putAll(rule.getConfig());
             mutableEnv.putAll(rule.getEventEnv());
-            mutableEnv.put("FN_FORMAT", "httpstream");
+            mutableEnv.put("FN_FORMAT", "http-stream");
             List<FnResult> output = new ArrayList<>();
 
 

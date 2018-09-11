@@ -285,7 +285,7 @@ public final class FnTestingRule implements TestRule {
 
             mutableEnv.putAll(config);
             mutableEnv.putAll(eventEnv);
-            mutableEnv.put("FN_FORMAT", "httpstream");
+            mutableEnv.put("FN_FORMAT", "http-stream");
             mutableEnv.put("FN_FN_ID","myFnID");
             mutableEnv.put("FN_APP_ID","myAppID");
 
