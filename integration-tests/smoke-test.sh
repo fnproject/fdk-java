@@ -1,6 +1,7 @@
 #!/bin/bash
 
-. "$LIBFUNS"
+
+. $(dirname $0)/lib.sh
 
 # Run an individual smoketest
 
@@ -57,7 +58,7 @@ fi
 [[ -n "$POST_CONFIGURE_HOOK" ]] && $POST_CONFIGURE_HOOK
 
 fn inspect app "$TESTNAME"
-[[ -x route-create.sh ]] || fn inspect route "$TESTNAME" "$TESTNAME"
+[[ -x route-create.sh ]] || fn inspect fn "$TESTNAME" "$TESTNAME"
 
 if [[ -x run-test.sh ]]
 then
