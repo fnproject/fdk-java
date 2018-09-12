@@ -16,7 +16,7 @@ set -ex
 : ${COMPLETER_DOCKER_IMAGE:=fnproject/flow}
 
 # ----------------------------------------------------------------------
-# Stand up a local staging maven directory, if needed
+# Stand up a local staging maven directory, if neededex
 # ----------------------------------------------------------------------
 
 if [[ -n "$REPOSITORY_LOCATION" ]]; then

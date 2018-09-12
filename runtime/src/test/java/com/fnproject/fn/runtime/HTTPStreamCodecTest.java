@@ -34,16 +34,19 @@ import static org.assertj.core.api.Assertions.assertThat;
  * (c) 2018 Oracle Corporation
  */
 public class HTTPStreamCodecTest {
-    private static final String FN_LISTENER = "/tmp/fn.sock";
+    private static final String fileName = "/tmp/fn.sock";
+
+    private static final String FN_LISTENER = "unix:" + fileName;
 
     private static final Map<String, String> defaultEnv;
 
     private HTTPStreamCodec codec;
 
     static {
+        System.setProperty("jnr.ffi.asm.enabled","false");
         System.setProperty("org.eclipse.jetty.util.log.class", "org.eclipse.jetty.util.log.StdErrLog");
         System.setProperty("org.eclipse.jetty.LEVEL", "WARN");
-        httpClient = new HttpClient(new HttpClientTransportOverUnixSockets(FN_LISTENER), null);
+        httpClient = new HttpClient(new HttpClientTransportOverUnixSockets(fileName), null);
 
         Map<String, String> env = new HashMap<>();
         env.put("FN_APP_NAME", "myapp");
@@ -80,7 +83,7 @@ public class HTTPStreamCodecTest {
 
     @After
     public void cleanup() {
-        File listener = new File(FN_LISTENER);
+        File listener = new File(fileName);
         listener.delete();
         if (codec != null) {
             codec.close();

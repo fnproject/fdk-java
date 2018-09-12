@@ -22,6 +22,10 @@ jobs:
            name: Determine the release version
            command: ./.circleci/update-versions.sh
       - run:
+          name: Build FDK native library
+          command: |
+              runtime/src/main/c/rebuild_so.sh
+      - run:
           name: Build and deploy locally
           command: |
             rm -rf $STAGING_DIR

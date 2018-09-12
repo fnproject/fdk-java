@@ -42,6 +42,7 @@ fn -v build --no-cache >build-output 2>&1 || {
     exit 1
 }
 
+fn delete app $TESTNAME
 if [ -f config ]; then
     fn create app "$TESTNAME" $(echo $(prefix_lines --config config))
 else
@@ -64,7 +65,7 @@ if [[ -x run-test.sh ]]
 then
     ./run-test.sh
 else
-    cat @input | fn call $TESTNAME $TESTNAME  > actual
+    cat @input | fn invoke $TESTNAME $TESTNAME  > actual
 fi
 
 if [[ -x expected.sh ]]

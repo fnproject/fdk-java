@@ -17,4 +17,7 @@ public final class FunctionInitializationException extends RuntimeException {
     }
 
 
+    public FunctionInitializationException(String message) {
+        super(message);
+    }
 }

@@ -8,10 +8,8 @@ import com.fnproject.fn.api.exception.FunctionInputHandlingException;
 import com.fnproject.fn.api.exception.FunctionOutputHandlingException;
 import com.fnproject.fn.runtime.exception.FunctionIOException;
 import com.fnproject.fn.runtime.exception.FunctionInitializationException;
-import jnr.enxio.channels.NativeSelectorProvider;
-import jnr.unixsocket.UnixServerSocketChannel;
-import jnr.unixsocket.UnixSocket;
-import jnr.unixsocket.UnixSocketAddress;
+import com.fnproject.fn.runtime.ntv.UnixServerSocket;
+import com.fnproject.fn.runtime.ntv.UnixSocket;
 import org.apache.http.*;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
@@ -26,8 +24,6 @@ import org.apache.http.protocol.ImmutableHttpProcessor;
 import org.apache.http.protocol.UriHttpRequestHandlerMapper;
 
 import java.io.*;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.*;
@@ -47,11 +43,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * (c) 2018 Oracle Corporation
  */
 public final class HTTPStreamCodec implements EventCodec, Closeable {
-
+    static {
+        System.setProperty("jnr.ffi.asm.enabled","false");
+    }
     private static final String FN_LISTENER = "FN_LISTENER";
     private final Map<String, String> env;
     private final AtomicBoolean stopping = new AtomicBoolean(false);
-    private final UnixServerSocketChannel channel;
     private final File socketFile;
     private static final Set<String> stripInputHeaders;
     private static final Set<String> stripOutputHeaders;
@@ -114,16 +111,12 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
         HttpService svc = new HttpService(requestProcess, mapper);
 
         try {
-            Selector sel = NativeSelectorProvider.getInstance().openSelector();
-            channel.register(sel, SelectionKey.OP_ACCEPT, new Object());
+            UnixServerSocket uss = UnixServerSocket.listen(socketFile.getAbsolutePath(),1);
 
             while (!stopping.get()) {
                 UnixSocket sock;
                 try {
-                    if (sel.select(100) == 0) {
-                        continue;
-                    }
-                    sock = new UnixSocket(channel.accept());
+                    sock = uss.accept(100);
 
                 } catch (IOException e) {
                     throw new FunctionIOException("failed to accept connection from platform, terminating", e);
@@ -164,7 +157,14 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
      */
     public HTTPStreamCodec(Map<String, String> env) {
         this.env = Objects.requireNonNull(env, "env");
-        socketFile = new File(getRequiredEnv("FN_LISTENER"));
+        String listenerAddress =getRequiredEnv("FN_LISTENER");
+
+        if(!listenerAddress.startsWith("unix:/")){
+            throw new FunctionInitializationException("Invalid listener address - it should start with unix:/" + listenerAddress);
+        }
+        String listenerFile = listenerAddress.substring("unix:".length());
+
+        socketFile = new File(listenerFile);
 
 
         try {
