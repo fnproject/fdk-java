@@ -1,6 +1,8 @@
 package com.fnproject.fn.runtime.ntv;
 
-import java.util.Locale;
+
+import java.io.IOException;
+import java.net.SocketTimeoutException;
 
 /**
  * Created on 12/09/2018.
@@ -23,21 +25,33 @@ class UnixSocketNative {
         System.load(lib);
     }
 
-    public static native int socket() throws UnixSocketException;
+    public static native int socket() throws IOException;
 
     public static native void bind(int socket, String path) throws UnixSocketException;
 
-    public static native void connect(int socket, String path) throws UnixSocketException;
+    public static native void connect(int socket, String path) throws IOException;
 
     public static native void listen(int socket, int backlog) throws UnixSocketException;
 
-    public static native int accept(int socket, long timeoutMs) throws UnixSocketException;
+    public static native int accept(int socket, long timeoutMs) throws IOException;
 
-    public static native int recv(int socket, byte[] buffer, int offset, int length) throws UnixSocketException;
+    public static native int recv(int socket, byte[] buffer, int offset, int length) throws IOException;
 
-    public static native int send(int socket, byte[] buffer, int offset, int length) throws UnixSocketException;
+    public static native int send(int socket, byte[] buffer, int offset, int length) throws IOException;
 
     public static native void close(int socket) throws UnixSocketException;
 
+    public static native void setSendTimeout(int socket, int timeout) throws UnixSocketException;
 
+    public static native int getSendTimeout(int socket) throws IOException;
+
+    public static native void setRecvTimeout(int socket, int timeout) throws UnixSocketException;
+
+    public static native int getRecvTimeout(int socket) throws UnixSocketException;
+
+    public static native void setSendBufSize(int socket, int bufSize) throws UnixSocketException;
+
+    public static native void setRecvBufSize(int socket, int bufSize) throws UnixSocketException;
+
+    public static native void shutdown(int socket, boolean input, boolean output) throws UnixSocketException;
 }

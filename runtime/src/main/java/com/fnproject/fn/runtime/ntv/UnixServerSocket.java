@@ -2,6 +2,7 @@ package com.fnproject.fn.runtime.ntv;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.net.SocketException;
 
 /**
  * Created on 12/09/2018.
@@ -13,11 +14,12 @@ public class UnixServerSocket implements Closeable {
     boolean closed;
 
 
-    private UnixServerSocket(int fd) throws UnixSocketException {
+    private UnixServerSocket(int fd)  {
         this.fd = fd;
     }
 
-    public static UnixServerSocket listen(String fileName, int backlog) throws UnixSocketException {
+
+    public static UnixServerSocket listen(String fileName, int backlog) throws IOException {
         int fd = UnixSocketNative.socket();
 
         try {
@@ -46,7 +48,7 @@ public class UnixServerSocket implements Closeable {
         }
     }
 
-    public UnixSocket accept(long timeoutMillis) throws UnixSocketException {
+    public UnixSocket accept(long timeoutMillis) throws IOException {
         int newFd = UnixSocketNative.accept(fd, timeoutMillis);
         if (newFd == 0) {
             return null;

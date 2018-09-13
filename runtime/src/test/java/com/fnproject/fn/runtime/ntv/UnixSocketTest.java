@@ -41,10 +41,11 @@ public class UnixSocketTest {
                 try {
                     cdl.await();
                     try (UnixSocket us = UnixSocket.connect(f.getPath())) {
+                        us.setReceiveBufferSize(65535);
+                        us.setSendBufferSize(65535);
                         byte[] buf = new byte[data.length];
-                        us.outputStream().write(data);
-                        System.err.println("Wrote "  + data.length + " bytes");
-                        DataInputStream dis = new DataInputStream(us.inputStream());
+                        us.getOutputStream().write(data);
+                        DataInputStream dis = new DataInputStream(us.getInputStream());
                         dis.readFully(buf);
                         result.complete(buf);
                     }
@@ -57,8 +58,10 @@ public class UnixSocketTest {
             cdl.countDown();
             UnixSocket in = ss.accept(1000);
             byte[] sbuf = new byte[data.length];
-            new DataInputStream(in.inputStream()).readFully(sbuf);
-            in.outputStream().write(sbuf);
+            in.setReceiveBufferSize(65535);
+            in.setSendBufferSize(65535);
+            new DataInputStream(in.getInputStream()).readFully(sbuf);
+            in.getOutputStream().write(sbuf);
             in.close();
             return result.get();
         }
@@ -75,8 +78,14 @@ public class UnixSocketTest {
     @Test
     public void shouldHandleBigData() throws Exception {
         Random r = new Random();
+        byte[] dataPart = new byte[2048];
+
+        r.nextBytes(dataPart);
+
         byte[] data = new byte[1024 * 1024 * 10];
-        r.nextBytes(data);
+        for (int i = 0 ; i < data.length ;i += dataPart.length){
+            System.arraycopy(dataPart,0,data,i,dataPart.length);
+        }
 
         Assertions.assertThat(roundTripViaEcho(data)).isEqualTo(data);
 

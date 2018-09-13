@@ -1,0 +1,4 @@
+build/
+libfnunixsocket.so
+libfnunixsocket.dylib
+cmake-build-debug

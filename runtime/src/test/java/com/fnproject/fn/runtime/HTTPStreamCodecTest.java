@@ -34,19 +34,36 @@ import static org.assertj.core.api.Assertions.assertThat;
  * (c) 2018 Oracle Corporation
  */
 public class HTTPStreamCodecTest {
-    private static final String fileName = "/tmp/fn.sock";
+    private static final String fileName;
 
-    private static final String FN_LISTENER = "unix:" + fileName;
+    private static final String FN_LISTENER;
 
     private static final Map<String, String> defaultEnv;
 
     private HTTPStreamCodec codec;
 
+    static File createSocketFile() {
+        File f = null;
+        try {
+
+            f = File.createTempFile("socket", "sock");
+            f.delete();
+            f.deleteOnExit();
+        } catch (IOException e) {
+        }
+
+        return f;
+    }
+
     static {
-        System.setProperty("jnr.ffi.asm.enabled","false");
+        System.setProperty("com.fnproject.java.native.libdir", new File("src/main/c/").getAbsolutePath());
+
         System.setProperty("org.eclipse.jetty.util.log.class", "org.eclipse.jetty.util.log.StdErrLog");
         System.setProperty("org.eclipse.jetty.LEVEL", "WARN");
+        fileName = createSocketFile().getAbsolutePath();
+        FN_LISTENER = "unix:" + fileName;
         httpClient = new HttpClient(new HttpClientTransportOverUnixSockets(fileName), null);
+
 
         Map<String, String> env = new HashMap<>();
         env.put("FN_APP_NAME", "myapp");
@@ -82,7 +99,7 @@ public class HTTPStreamCodecTest {
     }
 
     @After
-    public void cleanup() {
+    public void cleanup() throws Exception{
         File listener = new File(fileName);
         listener.delete();
         if (codec != null) {

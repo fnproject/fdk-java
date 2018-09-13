@@ -44,8 +44,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public final class HTTPStreamCodec implements EventCodec, Closeable {
     static {
-        System.setProperty("jnr.ffi.asm.enabled","false");
+        System.setProperty("jnr.ffi.asm.enabled", "false");
     }
+
     private static final String FN_LISTENER = "FN_LISTENER";
     private final Map<String, String> env;
     private final AtomicBoolean stopping = new AtomicBoolean(false);
@@ -53,6 +54,7 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
     private static final Set<String> stripInputHeaders;
     private static final Set<String> stripOutputHeaders;
     private static final CompletableFuture<Boolean> stopped = new CompletableFuture<>();
+    private final UnixServerSocket socket;
 
     static {
         Set<String> hin = new HashSet<>();
@@ -71,6 +73,33 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
         hout.add("Transfer-Encoding");
         hout.add("Connection");
         stripOutputHeaders = Collections.unmodifiableSet(hout);
+    }
+
+
+    /**
+     * Construct a new HTTPStreamCodec based on the environment
+     *
+     * @param env an env map
+     */
+    public HTTPStreamCodec(Map<String, String> env) {
+        this.env = Objects.requireNonNull(env, "env");
+        String listenerAddress = getRequiredEnv("FN_LISTENER");
+
+        if (!listenerAddress.startsWith("unix:/")) {
+            throw new FunctionInitializationException("Invalid listener address - it should start with unix:/" + listenerAddress);
+        }
+        String listenerFile = listenerAddress.substring("unix:".length());
+
+        socketFile = new File(listenerFile);
+
+
+        try {
+            socket = UnixServerSocket.listen(socketFile.getAbsolutePath(), 1);
+        } catch (IOException e) {
+            throw new FunctionInitializationException("Unable to bind to unix socket in " + socketFile, e);
+        }
+
+
     }
 
     @Override
@@ -111,14 +140,23 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
         HttpService svc = new HttpService(requestProcess, mapper);
 
         try {
-            UnixServerSocket uss = UnixServerSocket.listen(socketFile.getAbsolutePath(),1);
 
             while (!stopping.get()) {
                 UnixSocket sock;
                 try {
-                    sock = uss.accept(100);
+                    sock = socket.accept(100);
+                    if (sock == null) {
+                        continue;
+                    }
+                    // TODO tweak these properly
+                    sock.setSendBufferSize(65535);
+                    sock.setReceiveBufferSize(65535);
 
                 } catch (IOException e) {
+                    if(stopping.get()) {
+                        // ignore IO errors on stop
+                        return ;
+                    }
                     throw new FunctionIOException("failed to accept connection from platform, terminating", e);
                 }
                 try {
@@ -141,8 +179,6 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
                 }
 
             }
-        } catch (IOException e) {
-            throw new FunctionIOException("Error handling FDK codec data", e);
         } finally {
             stopped.complete(true);
         }
@@ -150,35 +186,6 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
 
     }
 
-    /**
-     * Construct a new HTTPStreamCodec based on the environment
-     *
-     * @param env an env map
-     */
-    public HTTPStreamCodec(Map<String, String> env) {
-        this.env = Objects.requireNonNull(env, "env");
-        String listenerAddress =getRequiredEnv("FN_LISTENER");
-
-        if(!listenerAddress.startsWith("unix:/")){
-            throw new FunctionInitializationException("Invalid listener address - it should start with unix:/" + listenerAddress);
-        }
-        String listenerFile = listenerAddress.substring("unix:".length());
-
-        socketFile = new File(listenerFile);
-
-
-        try {
-            channel = UnixServerSocketChannel.open();
-            UnixSocketAddress address = new UnixSocketAddress(socketFile);
-            channel.configureBlocking(false);
-            // todo correct backlog here?
-            channel.socket().bind(address, 100);
-        } catch (IOException e) {
-            throw new FunctionInitializationException("Unable to bind to unix socket in " + socketFile, e);
-        }
-
-
-    }
 
     private String getRequiredEnv(String name) {
         String val = env.get(name);
@@ -269,13 +276,16 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
 
 
     @Override
-    public void close() {
-        stopping.set(true);
+    public void close() throws IOException {
+        if (stopping.compareAndSet(false, true)) {
+            socket.close();
 
-        try {
-            stopped.get();
-        } catch (Exception ignored) {
-
+            try {
+                stopped.get();
+            } catch (Exception ignored) {
+            }
+            socketFile.delete();
         }
+
     }
 }

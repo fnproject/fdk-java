@@ -5,6 +5,8 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.SocketTimeoutException;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 
@@ -20,62 +22,7 @@ public class UnixSocketNativeTest {
 
     @BeforeClass
     public static void init() {
-        System.load("/Users/OCliffe/ws/jfaas/runtime-native/src/main/c/libfnunixsocket.dylib");
-    }
-
-    @Test
-    public void shouldHandleBasicSocketOperations() throws Exception {
-
-
-        try {
-            UnixSocketNative.bind(-1, "/tmp/foo");
-            fail("should have thrown ");
-        } catch (UnixSocketException ignored) {
-        }
-
-        try {
-            UnixSocketNative.close(2345);
-            fail("should have thrown ");
-        } catch (UnixSocketException ignored) {
-        }
-
-        int socket = UnixSocketNative.socket();
-        assertThat(socket).isGreaterThan(0);
-        File testSock = createSocketFile();
-        UnixSocketNative.bind(socket, testSock.getPath());
-        UnixSocketNative.close(socket);
-
-        socket = UnixSocketNative.socket();
-
-        try {
-            // send to unconnected
-            UnixSocketNative.send(socket, new byte[0], 0, 0);
-            fail("should have failed");
-        } catch (UnixSocketException ignored) {
-        }
-
-
-        int serverSock = 0;
-        int clientSock = 0;
-        File sockFile = createSocketFile();
-        try {
-            serverSock = UnixSocketNative.socket();
-            UnixSocketNative.listen(serverSock, 1);
-            clientSock = UnixSocketNative.accept(serverSock, 0);
-            UnixSocketNative.send(socket, new byte[0], 0, 0);
-            fail("should have failed");
-        } catch (UnixSocketException ignored) {
-
-        } finally {
-            if (serverSock > 0) {
-                UnixSocketNative.close(serverSock);
-            }
-            if (clientSock > 0) {
-                UnixSocketNative.close(clientSock);
-            }
-            sockFile.delete();
-        }
-
+        System.setProperty("com.fnproject.java.native.libdir", new File("src/main/c/").getAbsolutePath());
     }
 
     File createSocketFile() throws IOException {
@@ -86,76 +33,424 @@ public class UnixSocketNativeTest {
     }
 
     @Test
-    public void shouldDoEndToEnd() throws Exception {
+    public void shouldHandleBind() throws Exception {
 
-        CountDownLatch ready = new CountDownLatch(1);
 
-        CompletableFuture<String> result = new CompletableFuture<>();
+        try { // invalid socket
+            UnixSocketNative.bind(-1, createSocketFile().getAbsolutePath());
+            fail("should have thrown an invalid argument");
+        } catch (UnixSocketException ignored) {
+        }
 
-        File serverSock = createSocketFile();
+        int socket = UnixSocketNative.socket();
+        try { // invalid file location
+            UnixSocketNative.bind(socket, "/tmp/foodir/socket");
+            fail("should have thrown an invalid argument");
+        } catch (UnixSocketException ignored) {
+        } finally {
+            UnixSocketNative.close(socket);
+        }
 
+
+        socket = UnixSocketNative.socket();
+        File socketFile = createSocketFile();
+        try { // valid bind
+            UnixSocketNative.bind(socket, socketFile.getAbsolutePath());
+        } finally {
+            UnixSocketNative.close(socket);
+        }
+    }
+
+    public <T> CompletableFuture<T> runServerLoop(Callable<T> loop) {
+        CompletableFuture<T> result = new CompletableFuture<>();
         Thread t = new Thread(() -> {
             try {
-                ready.await();
-                System.err.println("client ready");
-                int clientSocket = UnixSocketNative.socket();
-                UnixSocketNative.connect(clientSocket, serverSock.getPath());
-                System.err.println("client connecteds");
-
-                UnixSocketNative.send(clientSocket, "hello world".getBytes(), 0, "hello world".length());
-                System.err.println("data sent");
-
-
-                byte[] buf = new byte[10000];
-
-                int len = UnixSocketNative.recv(clientSocket, buf, 0, buf.length);
-                System.err.println("got result");
-
-                String v = new String(buf, 0, len);
-                UnixSocketNative.close(clientSocket);
-                result.complete(v);
+                result.complete(loop.call());
             } catch (Exception e) {
                 result.completeExceptionally(e);
             }
         });
         t.start();
+        return result;
+    }
 
-        int serverSocket = UnixSocketNative.socket();
-        assertThat(serverSocket).isGreaterThan(0);
-        UnixSocketNative.bind(serverSocket, serverSock.getPath());
-        UnixSocketNative.listen(serverSocket, 1);
+    @Test
+    public void shouldHandleConnectAccept() throws Exception {
 
-        ready.countDown();
-        int cs = UnixSocketNative.accept(serverSocket, 0);
-        System.err.println("got server ready" + cs);
-
-        try {// bad offset
-            UnixSocketNative.send(cs, new byte[10], -1, 1);
-            fail("shoudl reject bad offset");
-        } catch (IllegalArgumentException ignored) {
-        }
-
-        try {// bad offset
-            UnixSocketNative.send(cs, new byte[10], 10, 1);
-            fail("shoudl reject bad offset");
-        } catch (IllegalArgumentException ignored) {
-        }
-
-        try {// bad offset
-            UnixSocketNative.send(cs, new byte[10], 0, -1);
-            fail("should reject bad length");
-        } catch (IllegalArgumentException ignored) {
+        // invalid socket
+        {
+            try {
+                UnixSocketNative.connect(-1, "/tmp/nonexistant_path.sock");
+                fail("should have failed");
+            } catch (UnixSocketException ignored) {
+            }
         }
 
 
-        byte[] buf = new byte[10000];
-        int read = UnixSocketNative.recv(cs, buf, 0, buf.length);
+        // unknown path
+        {
+            int socket = UnixSocketNative.socket();
+            try {
+                UnixSocketNative.connect(socket, "/tmp/nonexistant_path.sock");
+                fail("should have failed");
+            } catch (UnixSocketException ignored) {
+            } finally {
+                UnixSocketNative.close(socket);
+            }
+        }
 
-        assertThat(new String(buf, 0, read)).isEqualTo("hello world");
+        // accept honors timeout
+        {
+            File serverSocket = createSocketFile();
+            int ss = UnixSocketNative.socket();
+            long startTime = System.currentTimeMillis();
+            try {
+                UnixSocketNative.bind(ss, serverSocket.getAbsolutePath());
+                UnixSocketNative.listen(ss, 1);
+                int cs = UnixSocketNative.accept(ss, 100);
+            } catch (UnixSocketException ignored) {
+            } finally {
+                UnixSocketNative.close(ss);
+            }
+            assertThat(System.currentTimeMillis() - startTime).isGreaterThanOrEqualTo(100);
+        }
 
-        UnixSocketNative.send(cs, "OK".getBytes(), 0, 2);
-        UnixSocketNative.close(cs);
 
+        // valid connect
+        {
+            CountDownLatch ready = new CountDownLatch(1);
+            File serverSocket = createSocketFile();
+
+            CompletableFuture<Boolean> sresult = runServerLoop(() -> {
+                int ss = UnixSocketNative.socket();
+                try {
+                    UnixSocketNative.bind(ss, serverSocket.getAbsolutePath());
+                    UnixSocketNative.listen(ss, 1);
+                    ready.countDown();
+                    int cs = UnixSocketNative.accept(ss, 0);
+                    if (cs > 0) {
+                        return true;
+                    }
+                    return false;
+                } finally {
+                    UnixSocketNative.close(ss);
+                }
+
+            });
+            ready.await();
+            int cs;
+            cs = UnixSocketNative.socket();
+            UnixSocketNative.connect(cs, serverSocket.getAbsolutePath());
+
+            assertThat(sresult.get()).isTrue();
+        }
 
     }
+
+    @Test
+    public void shouldHonorWrites() throws Exception {
+
+        CountDownLatch ready = new CountDownLatch(1);
+        File serverSocket = createSocketFile();
+
+        CompletableFuture<byte[]> result = runServerLoop(() -> {
+            int ss = UnixSocketNative.socket();
+            try {
+                UnixSocketNative.bind(ss, serverSocket.getAbsolutePath());
+                UnixSocketNative.listen(ss, 1);
+                ready.countDown();
+                int cs = UnixSocketNative.accept(ss, 0);
+                byte[] buf = new byte[100];
+                int read = UnixSocketNative.recv(cs, buf, 0, buf.length);
+                byte[] newBuf = new byte[read];
+                System.arraycopy(buf, 0, newBuf, 0, read);
+
+                return newBuf;
+            } finally {
+                UnixSocketNative.close(ss);
+            }
+        });
+
+
+        {// zero byte write is a noop
+            ready.await();
+            int cs = UnixSocketNative.socket();
+            UnixSocketNative.connect(cs, serverSocket.getAbsolutePath());
+
+            // must NPE  on buff
+            try {
+                UnixSocketNative.send(cs, null, 0, 10);
+                fail("should have NPEd");
+            } catch (NullPointerException ignored) {
+
+            }
+
+
+            // invalid offset
+            try {
+                UnixSocketNative.send(cs, "hello".getBytes(), 100, 10);
+                fail("should have IAEd");
+            } catch (IllegalArgumentException ignored) {
+
+            }
+
+            // invalid offset
+            try {
+                UnixSocketNative.send(cs, "hello".getBytes(), -1, 10);
+                fail("should have IAEd");
+            } catch (IllegalArgumentException ignored) {
+
+            }
+
+            // invalid offset
+            try {
+                UnixSocketNative.send(cs, "hello".getBytes(), 0, 10);
+                fail("should have IAEd");
+            } catch (IllegalArgumentException ignored) {
+
+            }
+
+            try {
+                // Must nop on write
+                UnixSocketNative.send(cs, new byte[0], 0, 0);
+                fail("should have IAEd");
+            } catch (IllegalArgumentException ignored) {
+
+            }
+
+            // validate a real write to be sure
+            UnixSocketNative.send(cs, "hello".getBytes(), 0, 5);
+            byte[] got = result.get();
+
+            assertThat(got).isEqualTo("hello".getBytes());
+        }
+    }
+
+
+    @Test
+    public void shouldHonorReads() throws Exception {
+
+        CountDownLatch ready = new CountDownLatch(1);
+        File serverSocket = createSocketFile();
+
+        CompletableFuture<Boolean> result = runServerLoop(() -> {
+            int ss = UnixSocketNative.socket();
+            try {
+                UnixSocketNative.bind(ss, serverSocket.getAbsolutePath());
+                UnixSocketNative.listen(ss, 1);
+                ready.countDown();
+                int cs = UnixSocketNative.accept(ss, 0);
+                int read = UnixSocketNative.send(cs, "hello".getBytes(), 0, 5);
+                UnixSocketNative.close(cs);
+                return true;
+            } finally {
+                UnixSocketNative.close(ss);
+            }
+        });
+
+
+        {// zero byte write is a noop
+            ready.await();
+            int cs = UnixSocketNative.socket();
+            UnixSocketNative.connect(cs, serverSocket.getAbsolutePath());
+
+            // must NPE  on buff
+            try {
+                UnixSocketNative.recv(cs, null, 0, 10);
+                fail("should have NPEd");
+            } catch (NullPointerException ignored) {
+
+            }
+
+            // invalid offset
+            try {
+                UnixSocketNative.recv(cs, new byte[5], -1, 1);
+                fail("should have IAEd");
+            } catch (IllegalArgumentException ignored) {
+
+            }
+            // invalid length
+            try {
+                UnixSocketNative.recv(cs, new byte[5], 0, -1);
+                fail("should have IAEd");
+            } catch (IllegalArgumentException ignored) {
+
+            }
+
+            // invalid length
+            try {
+                UnixSocketNative.recv(cs, new byte[5], 0, 0);
+                fail("should have IAEd");
+            } catch (IllegalArgumentException ignored) {
+
+            }
+
+            // invalid offset beyond buffer
+            try {
+                UnixSocketNative.recv(cs, new byte[5], 100, 10);
+                fail("should have IAEd");
+            } catch (IllegalArgumentException ignored) {
+
+            }
+
+            // invalid offset
+            try {
+                UnixSocketNative.recv(cs, "hello".getBytes(), -1, 10);
+                fail("should have IAEd");
+            } catch (IllegalArgumentException ignored) {
+
+            }
+
+            // validate a real write to be sure
+            byte[] buf = new byte[5];
+
+            int count = UnixSocketNative.recv(cs, buf, 0, 5);
+            assertThat(count).isEqualTo(5);
+
+            assertThat(buf).isEqualTo("hello".getBytes());
+        }
+    }
+
+    @Test
+    public void shouldSetSocketOpts() throws Exception {
+
+        int sock = UnixSocketNative.socket();
+        try {
+            try {
+                UnixSocketNative.setSendBufSize(-1, 1);
+                fail("should have failed");
+            } catch (UnixSocketException ignored) {
+            }
+
+            try {
+                UnixSocketNative.setSendBufSize(sock, -1);
+                fail("should have IAEd");
+            } catch (IllegalArgumentException ignored) {
+            }
+
+            UnixSocketNative.setSendBufSize(sock, 65535);
+
+
+            try {
+                UnixSocketNative.setRecvBufSize(-1, 1);
+                fail("should have failed");
+            } catch (UnixSocketException ignored) {
+            }
+
+            try {
+                UnixSocketNative.setRecvBufSize(sock, -1);
+                fail("should have IAEd");
+            } catch (IllegalArgumentException ignored) {
+            }
+
+            UnixSocketNative.setRecvBufSize(sock, 65535);
+
+
+            try {
+                UnixSocketNative.setSendTimeout(-1, 1);
+                fail("should have failed");
+            } catch (UnixSocketException ignored) {
+            }
+
+            try {
+                UnixSocketNative.setSendTimeout(sock, -1);
+                fail("should have IAEd");
+            } catch (IllegalArgumentException ignored) {
+            }
+
+            UnixSocketNative.setSendTimeout(sock, 2000);
+            assertThat(UnixSocketNative.getSendTimeout(sock)).isEqualTo(2000);
+
+
+            try {
+                UnixSocketNative.setRecvTimeout(-1, 1);
+                fail("should have failed");
+            } catch (UnixSocketException ignored) {
+            }
+
+            try {
+                UnixSocketNative.setRecvTimeout(sock, -1);
+                fail("should have IAEd");
+            } catch (IllegalArgumentException ignored) {
+            }
+
+            UnixSocketNative.setRecvTimeout(sock, 3000);
+            assertThat(UnixSocketNative.getRecvTimeout(sock)).isEqualTo(3000);
+
+
+        } finally {
+            UnixSocketNative.close(sock);
+        }
+
+    }
+
+
+    @Test
+    public void shouldHandleReadTimeouts() throws Exception {
+
+        CountDownLatch ready = new CountDownLatch(1);
+        File serverSocket = createSocketFile();
+
+        CompletableFuture<Boolean> result = runServerLoop(() -> {
+            int ss = UnixSocketNative.socket();
+            try {
+                UnixSocketNative.bind(ss, serverSocket.getAbsolutePath());
+                UnixSocketNative.listen(ss, 1);
+                ready.countDown();
+                int cs = UnixSocketNative.accept(ss, 0);
+                Thread.sleep(100);
+                int read = UnixSocketNative.send(cs, "hello".getBytes(), 0, 5);
+                UnixSocketNative.close(cs);
+                return true;
+            } finally {
+                UnixSocketNative.close(ss);
+            }
+        });
+
+        int clientFd = UnixSocketNative.socket();
+        UnixSocketNative.setRecvTimeout(clientFd,50);
+
+        ready.await();
+        UnixSocketNative.connect(clientFd,serverSocket.getAbsolutePath());
+        byte[] buf = new byte[100];
+        try {
+            UnixSocketNative.recv(clientFd, buf, 0, buf.length);
+            fail("should have timed out");
+        }catch (SocketTimeoutException ignored){
+        }
+
+    }
+
+
+    @Test
+    public void shouldHandleConnectTimeouts() throws Exception {
+
+        CountDownLatch ready = new CountDownLatch(1);
+        File serverSocket = createSocketFile();
+
+        CompletableFuture<Boolean> result = runServerLoop(() -> {
+            int ss = UnixSocketNative.socket();
+            try {
+                UnixSocketNative.bind(ss, serverSocket.getAbsolutePath());
+                UnixSocketNative.listen(ss, 1);
+                ready.countDown();
+                Thread.sleep(1000);
+
+                return true;
+            } finally {
+                UnixSocketNative.close(ss);
+            }
+        });
+
+        int clientFd = UnixSocketNative.socket();
+        UnixSocketNative.setSendTimeout(clientFd,50);
+        ready.await();
+        try {
+            UnixSocketNative.connect(clientFd,serverSocket.getAbsolutePath());
+
+        }catch (SocketTimeoutException ignored){
+        }
+
+    }
+
 }
