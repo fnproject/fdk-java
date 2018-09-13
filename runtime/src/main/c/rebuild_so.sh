@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 
 
-mydir=$(realpath $(dirname $0))
-
+mydir="$(cd "$(dirname "$0")"; pwd)
 cd $mydir
 
 set -e
