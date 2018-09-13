@@ -1,7 +1,6 @@
 #!/bin/bash
 
-
-. $(dirname $0)/lib.sh
+. "$LIBFUNS"
 
 # Run an individual smoketest
 
@@ -42,7 +41,7 @@ fn -v build --no-cache >build-output 2>&1 || {
     exit 1
 }
 
-fn delete app $TESTNAME
+fn delete app $TESTNAME || true
 if [ -f config ]; then
     fn create app "$TESTNAME" $(echo $(prefix_lines --config config))
 else

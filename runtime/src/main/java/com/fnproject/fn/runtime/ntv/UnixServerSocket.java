@@ -3,6 +3,7 @@ package com.fnproject.fn.runtime.ntv;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.SocketException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Created on 12/09/2018.
@@ -11,8 +12,7 @@ import java.net.SocketException;
  */
 public class UnixServerSocket implements Closeable {
     private final int fd;
-    boolean closed;
-
+    AtomicBoolean closed = new AtomicBoolean();
 
     private UnixServerSocket(int fd)  {
         this.fd = fd;
@@ -42,13 +42,15 @@ public class UnixServerSocket implements Closeable {
 
     @Override
     public void close() throws IOException {
-        if (!closed) {
+        if (closed.compareAndSet(false,true)) {
             UnixSocketNative.close(fd);
-            closed = true;
         }
     }
 
     public UnixSocket accept(long timeoutMillis) throws IOException {
+        if (closed.get()) {
+            throw new SocketException("acceot on closed socket");
+        }
         int newFd = UnixSocketNative.accept(fd, timeoutMillis);
         if (newFd == 0) {
             return null;

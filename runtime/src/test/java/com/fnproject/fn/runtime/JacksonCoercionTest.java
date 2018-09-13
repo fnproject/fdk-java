@@ -10,7 +10,10 @@ import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.time.Instant;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 public class JacksonCoercionTest {
 

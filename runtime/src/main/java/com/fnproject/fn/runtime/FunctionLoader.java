@@ -1,8 +1,6 @@
 package com.fnproject.fn.runtime;
 
-import com.fnproject.fn.api.FnFeature;
 import com.fnproject.fn.api.MethodWrapper;
-import com.fnproject.fn.api.RuntimeContext;
 import com.fnproject.fn.runtime.exception.InvalidFunctionDefinitionException;
 
 import java.lang.reflect.Method;

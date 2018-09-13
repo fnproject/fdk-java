@@ -14,7 +14,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import static com.fnproject.fn.runtime.HeaderBuilder.headerEntry;
 import static org.assertj.core.api.Assertions.assertThat;

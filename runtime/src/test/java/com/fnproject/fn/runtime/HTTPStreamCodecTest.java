@@ -18,6 +18,9 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -42,11 +45,11 @@ public class HTTPStreamCodecTest {
 
     private HTTPStreamCodec codec;
 
-    static File createSocketFile() {
+    private static File createSocketFile() {
         File f = null;
         try {
 
-            f = File.createTempFile("socket", "sock");
+            f = File.createTempFile("socket", ".sock");
             f.delete();
             f.deleteOnExit();
         } catch (IOException e) {
@@ -99,7 +102,7 @@ public class HTTPStreamCodecTest {
     }
 
     @After
-    public void cleanup() throws Exception{
+    public void cleanup() throws Exception {
         File listener = new File(fileName);
         listener.delete();
         if (codec != null) {
@@ -222,5 +225,15 @@ public class HTTPStreamCodecTest {
 
             cleanup();
         }
+    }
+
+    @Test
+    public void socketShouldHaveCorrectPermissions() throws Exception {
+        startCodec(defaultEnv, (in) -> OutputEvent.fromBytes("hello".getBytes(), OutputEvent.Status.Success, "text/plain", Headers.emptyHeaders()));
+        File listener = new File(fileName);
+
+        assertThat(Files.getPosixFilePermissions(listener.toPath(),LinkOption.NOFOLLOW_LINKS)).isEqualTo(PosixFilePermissions.fromString("rwxrwxrwx"));
+
+        cleanup();
     }
 }

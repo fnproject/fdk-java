@@ -2,7 +2,6 @@ package com.fnproject.fn.runtime;
 
 import com.fnproject.fn.api.InputEvent;
 import com.fnproject.fn.api.OutputEvent;
-import com.fnproject.fn.api.exception.FunctionInputHandlingException;
 import org.apache.commons.io.input.NullInputStream;
 import org.apache.commons.io.output.NullOutputStream;
 import org.junit.Test;
@@ -16,7 +15,6 @@ import java.util.Map;
 
 import static com.fnproject.fn.runtime.HeaderBuilder.headerEntry;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
 
 public class DefaultEventCodecTest {
 

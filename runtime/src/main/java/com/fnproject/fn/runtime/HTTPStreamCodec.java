@@ -24,6 +24,8 @@ import org.apache.http.protocol.ImmutableHttpProcessor;
 import org.apache.http.protocol.UriHttpRequestHandlerMapper;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.*;
@@ -76,6 +78,20 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
     }
 
 
+    private String randomString() {
+        int leftLimit = 97;
+        int rightLimit = 122;
+        int targetStringLength = 10;
+        Random random = new Random();
+        StringBuilder buffer = new StringBuilder(targetStringLength);
+        for (int i = 0; i < targetStringLength; i++) {
+            int randomLimitedInt = leftLimit + (int)
+              (random.nextFloat() * (rightLimit - leftLimit + 1));
+            buffer.append((char) randomLimitedInt);
+        }
+        return buffer.toString();
+    }
+
     /**
      * Construct a new HTTPStreamCodec based on the environment
      *
@@ -93,9 +109,25 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
         socketFile = new File(listenerFile);
 
 
+        UnixServerSocket serverSocket = null;
+        File listenerDir = socketFile.getParentFile();
+        File tempFile = new File(listenerDir, randomString() + ".sock");
         try {
-            socket = UnixServerSocket.listen(socketFile.getAbsolutePath(), 1);
+
+            serverSocket = UnixServerSocket.listen(tempFile.getAbsolutePath(), 1);
+            // Adjust socket permissions and move file
+            Files.setPosixFilePermissions(tempFile.toPath(), PosixFilePermissions.fromString("rwxrwxrwx"));
+            Files.move(tempFile.toPath(), socketFile.toPath());
+
+            this.socket = serverSocket;
         } catch (IOException e) {
+            if (serverSocket != null) {
+                try {
+                    serverSocket.close();
+                } catch (IOException ignored) {
+                }
+
+            }
             throw new FunctionInitializationException("Unable to bind to unix socket in " + socketFile, e);
         }
 
@@ -153,9 +185,9 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
                     sock.setReceiveBufferSize(65535);
 
                 } catch (IOException e) {
-                    if(stopping.get()) {
+                    if (stopping.get()) {
                         // ignore IO errors on stop
-                        return ;
+                        return;
                     }
                     throw new FunctionIOException("failed to accept connection from platform, terminating", e);
                 }

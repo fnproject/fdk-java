@@ -2,7 +2,6 @@ package com.fnproject.fn.runtime.ntv;
 
 
 import java.io.IOException;
-import java.net.SocketTimeoutException;
 
 /**
  * Created on 12/09/2018.
