@@ -12,7 +12,15 @@ import java.util.stream.Stream;
  * <p>
  * Headers are immutable
  * <p>
- * keys are are stored  and compared in a case-insensitive way
+ * Keys are are stored and compared in a case-insensitive way and are canonicalised according to  RFC 7230 conventions such that  :
+ *
+ * <ul>
+ *    <li>a-header</li>
+ *    <li>A-Header</li>
+ *    <li>A-HeaDer</li>
+ * </ul>
+ *  are all equivalent - keys are returned in the canonical form (lower cased except for leading characters)
+ *  Where keys do not comply with HTTP header naming they are left as is.
  */
 public final class Headers {
     private static final Headers emptyHeaders = new Headers(Collections.emptyMap());

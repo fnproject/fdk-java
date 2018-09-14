@@ -1,6 +1,0 @@
-schema_version: 20180708
-name: test-2
-version: 0.0.3
-runtime: java9
-cmd: com.fnproject.fn.integration.test2.PlainFunction::handleRequest
-format: http

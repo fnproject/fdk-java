@@ -2,9 +2,7 @@ version: 2
 jobs:
   build:
     working_directory: ~/fn-java-fdk
-    machine:
-      java:
-        version: oraclejdk8
+    machine: true
     environment:
       # store_artifacts doesn't shell substitute so the variable
       # definitions are duplicated in those steps too.
@@ -86,23 +84,10 @@ jobs:
 
       - run:
           name: Run integration tests
-          command: REPOSITORY_LOCATION="$STAGING_DIR" FN_JAVA_FDK_VERSION=$(cat release.version) ./integration-tests/run-local.sh
+          command: REPOSITORY_LOCATION="$STAGING_DIR" FN_JAVA_FDK_VERSION=$(cat release.version) ./integration-tests/run_tests_ci.sh
           timeout: 1200
-
-      - run:
-          name: Copy integration test results to test artifact dir
-          command: |
-            mkdir -p "$TEST_ARTIFACT_DIR"
-            for test_dir in ./integration-tests/main/test-*; do
-              test_name="$(basename "$test_dir")"
-              mkdir "${TEST_ARTIFACT_DIR}/${test_name}"
-              cp -a $(find "$test_dir" -maxdepth 1 -type f) "${TEST_ARTIFACT_DIR}/${test_name}"
-            done
-            find "${TEST_ARTIFACT_DIR}"
-          when: always
-      - store_artifacts:
-          name: Upload integration test results to artifacts
-          path: /tmp/artifacts/tests
+       - store_test_results:
+                path: integration-tests/target/surefire-reports
       - deploy:
           name: Release new version
           command: |

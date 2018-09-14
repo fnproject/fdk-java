@@ -19,7 +19,6 @@
         <module>flow-api</module>
         <module>flow-runtime</module>
         <module>flow-testing</module>
-        <module>integration-tests</module>
         <module>fn-spring-cloud-function</module>
         <module>examples</module>
 
