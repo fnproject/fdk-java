@@ -20,6 +20,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Wrapper around fn cli to invoke function integration tests.
@@ -158,7 +159,15 @@ public class IntegrationTestRule implements TestRule {
             System.err.println("Running '" + String.join(" ", cmd) + "'");
             ProcessBuilder pb = new ProcessBuilder(cmd);
             pb.directory(baseDir);
+
+            if(System.getenv("FN_JAVA_FDK_VERSION") == null){
+                // this means that FN init will pick up the local version not the latest.
+                pb.environment().put("FN_JAVA_FDK_VERSION","1.0.0-SNAPSHOT");
+            }
+
             Process p = pb.start();
+
+
 
             p.getOutputStream().write(input.getBytes());
             p.getOutputStream().close();
@@ -175,7 +184,7 @@ public class IntegrationTestRule implements TestRule {
                     StringBuilder output = new StringBuilder();
                     String line;
                     while ((line = bri.readLine()) != null) {
-                        System.err.println("TO (ERR): " + line);
+                        System.err.println("FN ERR: " + line);
                         output.append(line);
                     }
                     stderr.complete(output.toString());
@@ -190,10 +199,10 @@ public class IntegrationTestRule implements TestRule {
             StringBuilder output = new StringBuilder();
             String line;
             while ((line = bri.readLine()) != null) {
-                System.err.println("TO (OUT): " + line);
+                System.err.println("FN OUT: " + line);
                 output.append(line);
             }
-            p.waitFor();
+            p.waitFor(600,TimeUnit.SECONDS);
             System.err.println("Command '" + String.join(" ", cmd) + "' with code " + p.exitValue());
 
             return new CmdResult(String.join(" ", cmd), p.exitValue() == 0, output.toString(), stderr.get());
@@ -273,7 +282,7 @@ public class IntegrationTestRule implements TestRule {
                     fnTailer = Tailer.create(new File(getFnLogFile()), new TailerListenerAdapter() {
                         @Override
                         public void handle(final String line) {
-                            System.err.println("FN:" + line);
+                            System.err.println("FNSRV:" + line);
                             fnOutput.append(line);
                         }
                     }, 10, true);

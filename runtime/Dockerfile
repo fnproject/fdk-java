@@ -16,4 +16,4 @@ RUN ["/usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java", "-Xshare:dump"]
 #
 # The max memory value obtained with these args seem to be okay for most memory limits. The exception is when the
 # memory limit is set to 128MiB, in which case maxMemory returns roughly half.
-ENTRYPOINT [ "/usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java", "-XX:+UnlockExperimentalVMOptions", "-XX:+UseCGroupMemoryLimitForHeap", "-XX:MaxRAMFraction=2", "-XX:+UseSerialGC", "-Xshare:on", "-Djava.library.path=/function/runtime/lib", "-cp", "/function/app/*:/function/runtime/*", "com.fnproject.fn.runtime.EntryPoint" ]
+ENTRYPOINT [ "/usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java", "-XX:+UnlockExperimentalVMOptions", "-XX:+UseCGroupMemoryLimitForHeap", "-XX:-UsePerfData", "-XX:MaxRAMFraction=2", "-XX:+UseSerialGC", "-Xshare:on", "-Djava.library.path=/function/runtime/lib", "-cp", "/function/app/*:/function/runtime/*", "com.fnproject.fn.runtime.EntryPoint" ]

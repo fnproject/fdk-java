@@ -232,7 +232,7 @@ public class HTTPStreamCodecTest {
         startCodec(defaultEnv, (in) -> OutputEvent.fromBytes("hello".getBytes(), OutputEvent.Status.Success, "text/plain", Headers.emptyHeaders()));
         File listener = new File(fileName);
 
-        assertThat(Files.getPosixFilePermissions(listener.toPath(),LinkOption.NOFOLLOW_LINKS)).isEqualTo(PosixFilePermissions.fromString("rwxrwxrwx"));
+        assertThat(Files.getPosixFilePermissions(listener.toPath())).isEqualTo(PosixFilePermissions.fromString("rw-rw-rw-"));
 
         cleanup();
     }

@@ -12,11 +12,7 @@ The FDK is comprised of:
    - a build-time Docker image for repeatable builds. 
 
 ### Is the FDK required in order to run Java on Fn?
-No. You can still write Java functions on Fn without using the FDK. However using the FDK will make several things easier for you:
-   1. A curated base image for Java 8 and Java 9 means that you don't have to build and maintain your own image. These images contain optimizations for quick JVM startup times.
-   1. Accessing configuration from Fn is easy through FDK APIs.
-   1. Input and output type coercion reduces the amount of serialization and formatting boilerplate that you have to write.
-   1. A JUnit rule provides a realistic test harness for you to test your function in isolation.
+Yes - The FDK implements the IO/contract with the FN service and is required to receive events from the platform
 
 ### What is Fn Flow?
 Fn Flow is a [Java API](https://github.com/fnproject/fn-java-fdk/blob/master/docs/FnFlowsUserGuide.md) and [corresponding service](https://github.com/fnproject/flow) that helps you create complex, long-running, fault-tolerant functions using a promises-style asynchronous API. Check out the [Fn Flow docs](https://github.com/fnproject/fn-java-fdk/blob/master/docs/FnFlowsUserGuide.md) for more information.

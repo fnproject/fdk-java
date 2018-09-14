@@ -29,7 +29,7 @@ public interface OutputEvent {
          */
         FunctionTimeout(504),
         /**
-         * An internal error occurred int he FDK
+         * An internal error occurred in the FDK
          */
         InternalError(500);
 
@@ -48,7 +48,7 @@ public interface OutputEvent {
 
 
     /**
-     * Report the outcome tatus code of this event.
+     * Report the outcome status code of this event.
      *
      * @return the status associated with this event
      */

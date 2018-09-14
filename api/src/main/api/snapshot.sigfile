@@ -25,6 +25,7 @@ meth public static com.fnproject.fn.api.FunctionInvoker$Phase[] values()
 supr java.lang.Enum<com.fnproject.fn.api.FunctionInvoker$Phase>
 
 CLSS public final com.fnproject.fn.api.Headers
+intf java.io.Serializable
 meth public !varargs com.fnproject.fn.api.Headers addHeader(java.lang.String,java.lang.String,java.lang.String[])
 meth public !varargs com.fnproject.fn.api.Headers setHeader(java.lang.String,java.lang.String,java.lang.String[])
 meth public boolean equals(java.lang.Object)

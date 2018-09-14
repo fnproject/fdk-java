@@ -7,7 +7,7 @@ import java.util.Optional;
 /**
  * Wrapper for query parameters map parsed from the URL of a function invocation.
  */
-public interface QueryParameters {
+public interface QueryParameters  {
     /**
      * Find the first entry for {@code key} if it exists otherwise returns {@code Optional.empty}
      *

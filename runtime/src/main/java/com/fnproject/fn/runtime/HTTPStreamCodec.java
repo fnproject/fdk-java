@@ -28,6 +28,7 @@ import java.nio.file.Files;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -116,8 +117,8 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
 
             serverSocket = UnixServerSocket.listen(tempFile.getAbsolutePath(), 1);
             // Adjust socket permissions and move file
-            Files.setPosixFilePermissions(tempFile.toPath(), PosixFilePermissions.fromString("rwxrwxrwx"));
-            Files.move(tempFile.toPath(), socketFile.toPath());
+            Files.setPosixFilePermissions(tempFile.toPath(), PosixFilePermissions.fromString("rw-rw-rw-"));
+            Files.createSymbolicLink(socketFile.toPath(), tempFile.toPath().getFileName());
 
             this.socket = serverSocket;
         } catch (IOException e) {
@@ -144,7 +145,7 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
                 evt = readEvent(request);
             } catch (FunctionInputHandlingException e) {
                 response.setStatusCode(500);
-                response.setEntity(new StringEntity("{\"message\":\"Invalid input from function\"}", ContentType.APPLICATION_JSON));
+                response.setEntity(new StringEntity("{\"message\":\"Invalid input from function\",\"detail\":\"" + e.getMessage() + "\"}", ContentType.APPLICATION_JSON));
                 return;
             }
 
@@ -227,10 +228,10 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
         return val;
     }
 
-    private static String getRequiredHeader(HttpRequest request, String headerName) {
+    private static String getHeader(HttpRequest request, String headerName) {
         Header header = request.getFirstHeader(headerName);
         if (header == null) {
-            throw new FunctionInputHandlingException("Invalid call, No header \"" + headerName + "\" in request");
+           return null;
         }
         return header.getValue();
     }
@@ -250,17 +251,21 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
         }
 
 
-        String deadline = getRequiredHeader(request, "Fn-Deadline");
-        String callID = getRequiredHeader(request, "Fn-Call-Id");
+        // TODO these should really be mandatory
+        String deadline = getHeader(request, "Fn-Deadline");
+        String callID = getHeader(request, "Fn-Call-Id");
 
-
-        Instant deadlineDate;
-        try {
-            deadlineDate = Instant.parse(deadline);
-        } catch (DateTimeParseException e) {
-            throw new FunctionInputHandlingException("Invalid deadline date format", e);
+        if (callID == null){
+            callID = "";
         }
-
+        Instant deadlineDate = Instant.now().plus(1,ChronoUnit.HOURS);
+        if(deadline!=null) {
+            try {
+                deadlineDate = Instant.parse(deadline);
+            } catch (DateTimeParseException e) {
+                throw new FunctionInputHandlingException("Invalid deadline date format", e);
+            }
+        }
         Headers headersIn = Headers.emptyHeaders();
 
 

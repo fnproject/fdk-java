@@ -2,9 +2,10 @@ package com.fnproject.fn.runtime.httpgateway;
 
 import com.fnproject.fn.api.QueryParameters;
 
+import java.io.Serializable;
 import java.util.*;
 
-public class QueryParametersImpl implements QueryParameters {
+public class QueryParametersImpl implements QueryParameters, Serializable {
     private final Map<String, List<String>> params;
 
     public QueryParametersImpl() {
@@ -18,8 +19,8 @@ public class QueryParametersImpl implements QueryParameters {
     public Optional<String> get(String key) {
         Objects.requireNonNull(key);
         return Optional.of(getValues(key))
-                .filter((values) -> values.size() > 0)
-                .flatMap((values) -> Optional.ofNullable(values.get(0)));
+          .filter((values) -> values.size() > 0)
+          .flatMap((values) -> Optional.ofNullable(values.get(0)));
     }
 
     public List<String> getValues(String key) {

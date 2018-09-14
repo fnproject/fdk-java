@@ -3,6 +3,8 @@ set -e
 set -x
 
 
+cd $(dirname $0)
+
 if [ -z ${REPOSITORY_LOCATION} ]; then
    echo no REPOSITORY_LOCATION is specified in env - you need to deploy fn jars to a local dir
    exit 1
@@ -41,7 +43,7 @@ docker run --rm -d \
 export FLOW_LOG_FILE=/tmp/flow.log
 
 docker logs -f flowserver >& ${FLOW_LOG_FILE} &
-
+set +e
 mvn test
 
 

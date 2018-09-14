@@ -29,7 +29,7 @@ public interface InputEvent extends Closeable {
 
 
     /**
-     * return the deadline by which this event should be processed - this is information an is intended  to help you determine how long you should spend processing your event - if you exceed this deadline Fn will terminate your container ¬
+     * The deadline by which this event should be processed - this is information and is intended to help you determine how long you should spend processing your event - if you exceed this deadline Fn will terminate your container.
      *
      * @return a deadline relative to the current system clock that the event must be processed by
      */

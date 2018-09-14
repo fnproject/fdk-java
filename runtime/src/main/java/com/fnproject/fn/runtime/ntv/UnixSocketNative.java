@@ -20,8 +20,10 @@ class UnixSocketNative {
                 libLocation = libLocation + "/";
             }
             lib = libLocation + lib;
+            System.load(lib);
+        }else{
+            System.loadLibrary("fnunixsocket");
         }
-        System.load(lib);
     }
 
     public static native int socket() throws IOException;

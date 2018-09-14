@@ -1,5 +1,6 @@
 package com.fnproject.fn.api;
 
+import java.io.Serializable;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -9,8 +10,7 @@ import java.util.stream.Stream;
  * <p>
  * Internally header keys are always canonicalized using HTTP header conventions
  * <p>
- * <p>
- * Headers are immutable
+ * Headers objects are immutable
  * <p>
  * Keys are are stored and compared in a case-insensitive way and are canonicalised according to  RFC 7230 conventions such that  :
  *
@@ -22,7 +22,7 @@ import java.util.stream.Stream;
  *  are all equivalent - keys are returned in the canonical form (lower cased except for leading characters)
  *  Where keys do not comply with HTTP header naming they are left as is.
  */
-public final class Headers {
+public final class Headers implements Serializable {
     private static final Headers emptyHeaders = new Headers(Collections.emptyMap());
     private Map<String, List<String>> headers;
 

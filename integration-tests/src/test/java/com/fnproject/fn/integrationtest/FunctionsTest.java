@@ -25,9 +25,7 @@ public class FunctionsTest {
         tc.runFn("--verbose", "deploy", "--app", tc.appName(), "--local");
         tc.runFn("config", "app", tc.appName(), "GREETING", "Salutations");
 
-        for (String format : new String[]{"http", "default"
-          // ,"http-stream"
-        }) {
+        for (String format : new String[]{"http", "default", "http-stream"}) {
 
             tc.runFn("update", "function", tc.appName(), "test", "--format", format).assertNoError();
 
@@ -40,12 +38,23 @@ public class FunctionsTest {
         }
     }
 
-    @Test
+    @Test()
     public void checkBoilerPlate() throws Exception {
-        IntegrationTestRule.TestContext tc = testRule.newTest();
-        tc.runFn("init", "--runtime", "java", "--name","test","--trigger","none").assertNoError();
-        tc.runFn("--verbose", "deploy", "--app", tc.appName(), "--local").assertNoError();
-        tc.runFnWithInput("", "invoke", tc.appName(), "test").assertNoError();
+
+        for (String runtime : new String[]{"java9"
+          //  , "java8"
+        }) {
+            for (String format : new String[]{"http-stream"
+//              , "http", "default"
+            }) {
+                IntegrationTestRule.TestContext tc = testRule.newTest();
+                tc.runFn("init", "--runtime", runtime, "--name", "test", "--trigger", "none", "--format", format).assertNoError();
+                tc.rewritePom();
+                tc.runFn("--verbose", "deploy", "--app", tc.appName(), "--local").assertNoError();
+                CmdResult rs = tc.runFnWithInput("hello", "invoke", tc.appName(), "test").assertNoError();
+                assertThat(rs.getStdout()).contains("Hello world!");
+            }
+        }
 
     }
 
