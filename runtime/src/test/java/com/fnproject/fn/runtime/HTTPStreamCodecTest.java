@@ -190,10 +190,15 @@ public class HTTPStreamCodecTest {
     @Test
     public void shouldHandleLargeBodies() throws Exception {
         // Round trips 10 meg of data through the codec and validates it got the right stuff back
-        SecureRandom sr = new SecureRandom();
+        Random sr = new Random();
+        byte[] part = new byte[1024];
+        sr.nextBytes(part);
+
         int size = 1024 * 1024 * 10;
         byte[] randomString = new byte[size];
-        sr.nextBytes(randomString);
+        for(int i =0 ; i < randomString.length; i += part.length){
+            System.arraycopy(part,0,randomString,i,part.length);
+        }
         byte[] inDigest = MessageDigest.getInstance("SHA-256").digest(randomString);
 
 
