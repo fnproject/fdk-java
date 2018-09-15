@@ -12,7 +12,7 @@ export REPOSITORY_LOCATION=${REPOSITORY_LOCATION:-/tmp/staging_repo}
     runtime/src/main/c/rebuild_so.sh
 )
 
-mvn -B  deploy -DaltDeploymentRepository=localStagingDir::default::file://${REPOSITORY_LOCATION}
+mvn  -B  deploy -DaltDeploymentRepository=localStagingDir::default::file://${REPOSITORY_LOCATION}
 
 (
   cd build-image

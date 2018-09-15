@@ -58,7 +58,7 @@ jobs:
            name: Gather test results
            when: always
            command:  |
-              junit-merge $(find . -wholename "*/target/surefire-reports/*.xml") -c -o test_results/merged_results.xml
+              junit-merge $(find . -wholename "*/target/surefire-reports/*.xml") --createDir -o test_results/merged_results.xml
       - store_test_results:
           when: always
           path: test_results

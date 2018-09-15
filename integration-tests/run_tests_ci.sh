@@ -44,7 +44,7 @@ docker logs -f flowserver >& ${FLOW_LOG_FILE} &
 set +e
 
 
-mvn -B  test
+mvn --quiet -B  test
 result=$?
 
 
