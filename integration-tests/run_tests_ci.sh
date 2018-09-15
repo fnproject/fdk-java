@@ -25,13 +25,11 @@ fn stop || true
 fn start  --log-level=debug -d
 echo $?;
 
-
 export FN_LOG_FILE=/tmp/fn.log
-
 docker logs -f fnserver >& ${FN_LOG_FILE} &
-
 DOCKER_LOCALHOST=$(docker inspect --type container -f '{{.NetworkSettings.IPAddress}}' fnserver)
 
+export DOCKER_LOCALHOST
 docker rm -f flowserver || true
 docker run --rm -d \
       -p 8081:8081 \
