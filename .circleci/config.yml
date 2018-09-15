@@ -8,7 +8,7 @@ jobs:
       # definitions are duplicated in those steps too.
       FDK_ARTIFACT_DIR: /tmp/artifacts/fdk
       TEST_ARTIFACT_DIR: /tmp/artifacts/tests
-      REPOSISTORY_LOCATION: /tmp/staging_repo
+      REPOSITORY_LOCATION: /tmp/staging_repo
     steps:
       - checkout
       - run:
