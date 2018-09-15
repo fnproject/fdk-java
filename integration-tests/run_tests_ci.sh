@@ -44,10 +44,15 @@ export FLOW_LOG_FILE=/tmp/flow.log
 
 docker logs -f flowserver >& ${FLOW_LOG_FILE} &
 set +e
-mvn test
+
+
+mvn -B  test
+result=$?
 
 
 
 docker rm -f flowserver
 docker rm -f fnserver
 docker rm -rf fn_mvn_repo
+
+exit $result
