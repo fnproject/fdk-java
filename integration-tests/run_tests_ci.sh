@@ -14,17 +14,25 @@ fi
 docker rm -f fn_mvn_repo || true
 docker run -d \
             -v "$REPOSITORY_LOCATION":/repo:ro \
-            -w /repo \
-	    -p18080:18080 \
+            -w /repo -p18080:18080 \
             --name fn_mvn_repo \
             python:2.7 \
             python -mSimpleHTTPServer 18080
 
+until $(curl --output /dev/null --silent --head --fail http://localhost:18080); do
+    printf '.'
+    sleep 1
+done
 
 # Start Fn
 fn stop || true
 fn start  --log-level=debug -d
-echo $?;
+
+until $(curl --output /dev/null --silent --head --fail http://localhost:8080); do
+    printf '.'
+    sleep 1
+done
+
 
 export FN_LOG_FILE=/tmp/fn.log
 docker logs -f fnserver >& ${FN_LOG_FILE} &
@@ -39,6 +47,10 @@ docker run --rm -d \
       --name flowserver \
       fnproject/flow:latest
 
+until $(curl --output /dev/null --silent --head --fail http://localhost:8081); do
+    printf '.'
+    sleep 1
+done
 export FLOW_LOG_FILE=/tmp/flow.log
 
 docker logs -f flowserver >& ${FLOW_LOG_FILE} &
