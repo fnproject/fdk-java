@@ -32,7 +32,8 @@ public class IntegrationTestRule implements TestRule {
 
 
     private static final String repoPlaceholder = "<url>https://dl.bintray.com/fnproject/fnproject</url>";
-
+    private static final String versionPlaceholder = "<fdk.version>1.0.0-SNAPSHOT</fdk.version>";
+    private static final String snapshotPlaceholderRegex = "<snapshots>.*</snapshots>";
     private int appCount = 0;
     private String testName;
 
@@ -70,6 +71,16 @@ public class IntegrationTestRule implements TestRule {
             envRepo = "http://" + getDockerLocalhost() + ":18080";
         }
         return envRepo;
+    }
+
+
+    private String getProjectVersion() {
+        String version = System.getenv("FN_JAVA_FDK_VERSION");
+
+        if (version == null) {
+            version = "1.0.0-SNAPSHOT";
+        }
+        return version;
     }
 
     private String getFnLogFile() {
@@ -115,15 +126,12 @@ public class IntegrationTestRule implements TestRule {
             return stderr;
         }
 
-        public CmdResult assertNoError() {
-            Assertions.assertThat(success).withFailMessage("Expected command '" + cmd + "' to return 0").isTrue();
-            return this;
-        }
+
     }
 
     public class TestContext {
 
-        private  File baseDir;
+        private File baseDir;
         private final String testName;
 
         public TestContext(File baseDir, String testName) {
@@ -143,6 +151,13 @@ public class IntegrationTestRule implements TestRule {
             return this;
         }
 
+        public CmdResult runFnWithInput(String input, String... args) throws Exception {
+            CmdResult res =  runFnWithInputAllowError(input,args);
+
+            Assertions.assertThat(res.isSuccess()).withFailMessage("Expected command '" + res.cmd + "' to return 0").isTrue();
+            return res;
+        }
+
         /**
          * Runs the configured Fn command with input  returning a process result
          *
@@ -151,7 +166,7 @@ public class IntegrationTestRule implements TestRule {
          * @return a command result to get the result of a command
          * @throws Exception
          */
-        public CmdResult runFnWithInput(String input, String... args) throws Exception {
+        public CmdResult runFnWithInputAllowError(String input, String... args) throws Exception {
             List<String> cmd = new ArrayList<>();
             cmd.add(getFnCmd());
             cmd.addAll(Arrays.asList(args));
@@ -160,13 +175,14 @@ public class IntegrationTestRule implements TestRule {
             ProcessBuilder pb = new ProcessBuilder(cmd);
             pb.directory(baseDir);
 
-            if(System.getenv("FN_JAVA_FDK_VERSION") == null){
+            if (System.getenv("FN_JAVA_FDK_VERSION") == null) {
                 // this means that FN init will pick up the local version not the latest.
-                pb.environment().put("FN_JAVA_FDK_VERSION","1.0.0-SNAPSHOT");
+                pb.environment().put("FN_JAVA_FDK_VERSION", "1.0.0-SNAPSHOT");
             }
+            pb.environment().put("no_proxy", getDockerLocalhost());
+            pb.environment().put("NO_PROXY", getDockerLocalhost());
 
             Process p = pb.start();
-
 
 
             p.getOutputStream().write(input.getBytes());
@@ -202,14 +218,14 @@ public class IntegrationTestRule implements TestRule {
                 System.err.println("FN OUT: " + line);
                 output.append(line);
             }
-            p.waitFor(600,TimeUnit.SECONDS);
+            p.waitFor(600, TimeUnit.SECONDS);
             System.err.println("Command '" + String.join(" ", cmd) + "' with code " + p.exitValue());
 
             return new CmdResult(String.join(" ", cmd), p.exitValue() == 0, output.toString(), stderr.get());
         }
 
         /**
-         * Runs the configure `fn` command with given arguments
+         * Runs the configure `fn` command with given arguments fails if the command returns without  succes
          *
          * @param args
          * @return a command result capturinng the output of fn
@@ -219,15 +235,23 @@ public class IntegrationTestRule implements TestRule {
             return runFnWithInput("", args);
         }
 
+
         /**
          * Rewrites the POM to reflect the correct target repo
          */
-        public TestContext rewritePom() throws Exception {
+        public TestContext rewritePOM() throws Exception {
             File pomFile = new File(baseDir, "pom.xml");
+
             String pomFileContent = FileUtils.readFileToString(pomFile, StandardCharsets.UTF_8);
             String newPomContent = pomFileContent.replace(repoPlaceholder, "<url>" + getLocalFnRepo() + "</url>");
             Assertions.assertThat(newPomContent).withFailMessage("No placeholder found in POM").isNotEqualTo(pomFileContent);
-            FileUtils.writeStringToFile(pomFile, newPomContent, StandardCharsets.UTF_8);
+
+            String versionPomContent = newPomContent.replace(versionPlaceholder, "<fdk.version>" + getProjectVersion() + "</fdk.version>");
+
+            versionPomContent = versionPomContent.replaceFirst(snapshotPlaceholderRegex, "<snapshots><enabled>true</enabled></snapshots>");
+
+            System.err.println(versionPomContent);
+            FileUtils.writeStringToFile(pomFile, versionPomContent, StandardCharsets.UTF_8);
             return this;
         }
 
@@ -240,13 +264,14 @@ public class IntegrationTestRule implements TestRule {
         public String appName() {
             return this.testName;
         }
-        public TestContext mkdir(String name){
-            new File(baseDir,name).mkdir();
+
+        public TestContext mkdir(String name) {
+            new File(baseDir, name).mkdir();
             return this;
         }
 
-        public TestContext cd(String dir){
-            baseDir = new File(baseDir,dir);
+        public TestContext cd(String dir) {
+            baseDir = new File(baseDir, dir);
             return this;
         }
     }

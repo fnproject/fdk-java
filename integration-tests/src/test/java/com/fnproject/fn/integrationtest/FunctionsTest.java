@@ -18,45 +18,35 @@ public class FunctionsTest {
 
 
     @Test
-    public void shouldCallFnAllFormats() throws Exception {
+    public void shouldCallExistingFn() throws Exception {
         IntegrationTestRule.TestContext tc = testRule.newTest();
-        tc.withDirFrom("funcs/simpleFunc").rewritePom();
+        tc.withDirFrom("funcs/simpleFunc").rewritePOM();
 
         tc.runFn("--verbose", "deploy", "--app", tc.appName(), "--local");
         tc.runFn("config", "app", tc.appName(), "GREETING", "Salutations");
 
-        for (String format : new String[]{"http", "default", "http-stream"}) {
 
-            tc.runFn("update", "function", tc.appName(), "test", "--format", format).assertNoError();
-
-            CmdResult r1 = tc.runFnWithInput("", "invoke", tc.appName(), "test").assertNoError();
-            assertThat(r1.getStdout()).isEqualTo("Salutations, world!");
+        CmdResult r1 = tc.runFnWithInput("", "invoke", tc.appName(), "test");
+        assertThat(r1.getStdout()).isEqualTo("Salutations, world!");
 
 
-            CmdResult r2 = tc.runFnWithInput("tests", "invoke", tc.appName(), "test").assertNoError();
-            assertThat(r2.getStdout()).isEqualTo("Salutations, tests!");
-        }
+        CmdResult r2 = tc.runFnWithInput("tests", "invoke", tc.appName(), "test");
+        assertThat(r2.getStdout()).isEqualTo("Salutations, tests!");
+
     }
 
     @Test()
     public void checkBoilerPlate() throws Exception {
-
-        for (String runtime : new String[]{"java9"
-          //  , "java8"
-        }) {
-            for (String format : new String[]{"http-stream"
-//              , "http", "default"
-            }) {
+        for (String format : new String[]{"default", "http", "http-stream"}) {
+            for (String runtime : new String[]{"java9", "java8"}) {
                 IntegrationTestRule.TestContext tc = testRule.newTest();
-                tc.runFn("init", "--runtime", runtime, "--name", "test", "--trigger", "none", "--format", format).assertNoError();
-                tc.rewritePom();
-                tc.runFn("--verbose", "deploy", "--app", tc.appName(), "--local").assertNoError();
-                CmdResult rs = tc.runFnWithInput("wibble", "invoke", tc.appName(), "test").assertNoError();
+                tc.runFn("init", "--runtime", runtime, "--name", "test", "--trigger", "none", "--format", format);
+                tc.rewritePOM();
+                tc.runFn("--verbose", "deploy", "--app", tc.appName(), "--local");
+                CmdResult rs = tc.runFnWithInput("wibble", "invoke", tc.appName(), "test");
                 assertThat(rs.getStdout()).contains("Hello, wibble!");
             }
         }
-
     }
-
 
 }

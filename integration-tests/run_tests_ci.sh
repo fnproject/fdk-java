@@ -15,6 +15,7 @@ docker rm -f fn_mvn_repo || true
 docker run -d \
             -v "$REPOSITORY_LOCATION":/repo:ro \
             -w /repo \
+	    -p18080:18080 \
             --name fn_mvn_repo \
             python:2.7 \
             python -mSimpleHTTPServer 18080

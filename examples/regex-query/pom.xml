@@ -8,7 +8,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-        <fnproject.version>1.0.0-SNAPSHOT</fnproject.version>
+        <fdk.version>1.0.0-SNAPSHOT</fdk.version>
         <jackson.version>2.9.6</jackson.version>
     </properties>
 
@@ -36,13 +36,13 @@
         <dependency>
             <groupId>com.fnproject.fn</groupId>
             <artifactId>testing-core</artifactId>
-            <version>${fnproject.version}</version>
+            <version>${fdk.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.fnproject.fn</groupId>
             <artifactId>testing-junit4</artifactId>
-            <version>${fnproject.version}</version>
+            <version>${fdk.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>

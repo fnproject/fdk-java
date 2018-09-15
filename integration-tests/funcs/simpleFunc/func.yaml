@@ -3,4 +3,4 @@ name: test
 version: 0.0.3
 runtime: java9
 cmd: com.fnproject.fn.integration.test2.PlainFunction::handleRequest
-format: http
+format: http-stream

@@ -7,7 +7,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <fnproject.version>1.0.0-SNAPSHOT</fnproject.version>
+        <fdk.version>1.0.0-SNAPSHOT</fdk.version>
     </properties>
 
     <groupId>com.fnproject.fn.examples</groupId>
@@ -24,7 +24,7 @@
         <dependency>
             <groupId>com.fnproject.fn</groupId>
             <artifactId>api</artifactId>
-            <version>${fnproject.version}</version>
+            <version>${fdk.version}</version>
         </dependency>
 
         <dependency>
@@ -36,7 +36,7 @@
         <dependency>
             <groupId>com.fnproject.fn</groupId>
             <artifactId>testing</artifactId>
-            <version>${fnproject.version}</version>
+            <version>${fdk.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
