@@ -107,7 +107,7 @@ In your `pom.xml` add a depdendency on `flow-runtime` :
         <dependency>
             <groupId>com.fnproject.fn</groupId>
             <artifactId>flow-runtime</artifactId>
-            <version>${fnproject.version}</version>
+            <version>${fdk.version}</version>
         </dependency>
 
 ``` 

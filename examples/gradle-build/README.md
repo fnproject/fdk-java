@@ -4,7 +4,7 @@ Fn uses Maven by default for  builds. This is an example that uses Fn's `docker`
 
 The example consists of a `Dockerfile` that builds the function using gradle and copies the function's dependencies to `build/deps` and a func.yaml that uses that `Dockerfile` to build the function.
 
-Note that FDK versions are hard-coded in this example, you may need to update them manually to more recent version. 
+Note that fdk.versions are hard-coded in this example, you may need to update them manually to more recent version. 
 
 Key points:
 
