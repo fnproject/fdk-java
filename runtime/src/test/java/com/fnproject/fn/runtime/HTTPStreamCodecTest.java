@@ -139,6 +139,7 @@ public class HTTPStreamCodecTest {
 
         assertThat(resp.getStatus()).isEqualTo(200);
         assertThat(resp.getContent()).isEqualTo("hello".getBytes());
+        System.err.println("headers" + resp.getHeaders());
         assertThat(resp.getHeaders().get("x-test")).isEqualTo("bar");
 
         InputEvent evt = lastEvent.get(1, TimeUnit.MILLISECONDS);
@@ -177,7 +178,7 @@ public class HTTPStreamCodecTest {
               .content(new StringContentProvider(String.format("%d", i))).send();
 
             assertThat(resp.getStatus()).isEqualTo(200);
-            assertThat(resp.getContent()).isEqualTo(String.format("%d", i).getBytes());
+            assertThat(new String(resp.getContent())).isEqualTo(String.format("%d", i));
             assertThat(lastInput).isNotNull();
             assertThat(lastInput.get()).isEqualTo(String.format("%d", i));
         }
