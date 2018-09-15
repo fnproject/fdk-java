@@ -51,8 +51,8 @@ public class FunctionsTest {
                 tc.runFn("init", "--runtime", runtime, "--name", "test", "--trigger", "none", "--format", format).assertNoError();
                 tc.rewritePom();
                 tc.runFn("--verbose", "deploy", "--app", tc.appName(), "--local").assertNoError();
-                CmdResult rs = tc.runFnWithInput("hello", "invoke", tc.appName(), "test").assertNoError();
-                assertThat(rs.getStdout()).contains("Hello world!");
+                CmdResult rs = tc.runFnWithInput("wibble", "invoke", tc.appName(), "test").assertNoError();
+                assertThat(rs.getStdout()).contains("Hello, wibble!");
             }
         }
 
