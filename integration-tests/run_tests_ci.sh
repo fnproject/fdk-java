@@ -19,7 +19,7 @@ docker run -d \
             python:2.7 \
             python -mSimpleHTTPServer 18080
 
-until $(curl --output /dev/null --silent --head --fail http://localhost:18080); do
+until $(curl --output /dev/null --silent  --fail http://localhost:18080); do
     printf '.'
     sleep 1
 done
@@ -28,7 +28,7 @@ done
 fn stop || true
 fn start  --log-level=debug -d
 
-until $(curl --output /dev/null --silent --head --fail http://localhost:8080); do
+until $(curl --output /dev/null --silent --fail http://localhost:8080/); do
     printf '.'
     sleep 1
 done
@@ -47,7 +47,7 @@ docker run --rm -d \
       --name flowserver \
       fnproject/flow:latest
 
-until $(curl --output /dev/null --silent --head --fail http://localhost:8081); do
+until $(curl --output /dev/null --silent --fail http://localhost:8081/ping); do
     printf '.'
     sleep 1
 done
