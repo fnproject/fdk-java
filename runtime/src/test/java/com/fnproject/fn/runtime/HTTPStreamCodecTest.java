@@ -13,7 +13,9 @@ import org.eclipse.jetty.client.util.BytesContentProvider;
 import org.eclipse.jetty.client.util.StringContentProvider;
 import org.eclipse.jetty.unixsocket.client.HttpClientTransportOverUnixSockets;
 import org.junit.After;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 
 import java.io.File;
 import java.io.IOException;
@@ -39,6 +41,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 public class HTTPStreamCodecTest {
 
+
+    @Rule
+    public final Timeout to = new Timeout(60,TimeUnit.SECONDS);
 
     private static final Map<String, String> defaultEnv;
     private final List<Runnable> cleanups = new ArrayList<>();
