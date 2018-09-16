@@ -8,7 +8,6 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- *
  * This approximates a Java.net.socket for many operations but not by any means all
  * Created on 12/09/2018.
  * <p>
@@ -77,7 +76,6 @@ public final class UnixSocket extends Socket {
         @Override
         protected void close() throws IOException {
             throw new UnsupportedOperationException();
-
         }
 
         @Override
@@ -119,7 +117,6 @@ public final class UnixSocket extends Socket {
     }
 
     private class UsInput extends InputStream {
-        long counter = 0;
 
         @Override
         public int read() throws IOException {
@@ -143,14 +140,12 @@ public final class UnixSocket extends Socket {
                 throw new UnixSocketException("Read on closed stream");
             }
 
-            int read = UnixSocketNative.recv(fd, b, off, len);
-            counter += read;
-            return read;
+            return UnixSocketNative.recv(fd, b, off, len);
         }
 
         @Override
         public void close() throws IOException {
-            inputClosed.set(true);
+            shutdownInput();
         }
     }
 
@@ -180,8 +175,7 @@ public final class UnixSocket extends Socket {
 
         @Override
         public void close() throws IOException {
-            outputClosed.set(true);
-
+            shutdownOutput();
         }
     }
 
@@ -302,7 +296,7 @@ public final class UnixSocket extends Socket {
     public void shutdownInput() throws IOException {
         if (inputClosed.compareAndSet(false, true)) {
             UnixSocketNative.shutdown(fd, true, false);
-        }else{
+        } else {
             throw new SocketException("Input already shut down");
         }
     }
@@ -311,7 +305,7 @@ public final class UnixSocket extends Socket {
     public void shutdownOutput() throws IOException {
         if (outputClosed.compareAndSet(false, true)) {
             UnixSocketNative.shutdown(fd, false, true);
-        }else{
+        } else {
             throw new SocketException("Output already shut down");
         }
     }

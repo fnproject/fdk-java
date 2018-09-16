@@ -23,7 +23,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.security.MessageDigest;
-import java.security.SecureRandom;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -33,7 +32,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- *
  * This uses the Jetty client largely as witness of "good HTTP behaviour"
  * Created on 24/08/2018.
  * <p>
@@ -43,7 +41,7 @@ public class HTTPStreamCodecTest {
 
 
     @Rule
-    public final Timeout to = new Timeout(60,TimeUnit.SECONDS);
+    public final Timeout to = new Timeout(60, TimeUnit.SECONDS);
 
     private static final Map<String, String> defaultEnv;
     private final List<Runnable> cleanups = new ArrayList<>();
@@ -158,23 +156,26 @@ public class HTTPStreamCodecTest {
 
     @Test
     public void shouldHandleMultipleRequests() throws Exception {
-        AtomicReference<String> lastInput = new AtomicReference<>();
+        AtomicReference<byte[]> lastInput = new AtomicReference<>();
         AtomicInteger count = new AtomicInteger(0);
 
         File socket = startCodec(defaultEnv, (in) -> {
-            lastInput.set(in.consumeBody((is) -> {
+            byte[] body  = in.consumeBody((is) -> {
                 try {
-                    return IOUtils.toString(is, StandardCharsets.UTF_8);
+                    return IOUtils.toByteArray(is);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            }));
-            return OutputEvent.fromBytes(String.format("%d", count.getAndIncrement()).getBytes(), OutputEvent.Status.Success, "text/plain", Headers.emptyHeaders());
+            });
+
+            lastInput.set(body);
+            return OutputEvent.fromBytes(body, OutputEvent.Status.Success, "application/octet-stream", Headers.emptyHeaders());
         });
 
         HttpClient httpClient = createClient(socket);
 
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 200; i++) {
+            byte[] body = randomBytes(i  * 1997);
             ContentResponse resp = httpClient.newRequest("http://localhost/call")
               .method("POST")
               .header("Fn-Call-Id", "callID")
@@ -182,12 +183,12 @@ public class HTTPStreamCodecTest {
               .header("Custom-header", "v1")
               .header("Custom-header", "v2")
               .header("Content-Type", "text/plain")
-              .content(new StringContentProvider(String.format("%d", i))).send();
+              .content(new BytesContentProvider(body)).send();
 
             assertThat(resp.getStatus()).isEqualTo(200);
-            assertThat(new String(resp.getContent())).isEqualTo(String.format("%d", i));
+            assertThat(resp.getContent()).isEqualTo(body);
             assertThat(lastInput).isNotNull();
-            assertThat(lastInput.get()).isEqualTo(String.format("%d", i));
+            assertThat(lastInput.get()).isEqualTo(body);
         }
 
     }
@@ -195,15 +196,7 @@ public class HTTPStreamCodecTest {
     @Test
     public void shouldHandleLargeBodies() throws Exception {
         // Round trips 10 meg of data through the codec and validates it got the right stuff back
-        Random sr = new Random();
-        byte[] part = new byte[1024];
-        sr.nextBytes(part);
-
-        int size = 1024 * 1024 * 10;
-        byte[] randomString = new byte[size];
-        for(int i =0 ; i < randomString.length; i += part.length){
-            System.arraycopy(part,0,randomString,i,part.length);
-        }
+        byte[] randomString = randomBytes(1024 * 1024 * 10);
         byte[] inDigest = MessageDigest.getInstance("SHA-256").digest(randomString);
 
 
@@ -232,6 +225,22 @@ public class HTTPStreamCodecTest {
         Result r = cdl.get();
         assertThat(r.getResponse().getStatus()).isEqualTo(200);
         assertThat(readDigest.digest()).isEqualTo(inDigest);
+    }
+
+    private byte[] randomBytes(int sz) {
+        Random sr = new Random();
+        byte[] part = new byte[1024];
+        sr.nextBytes(part);
+
+        byte[] randomString = new byte[sz];
+        int left = sz;
+        for (int i = 0; i < randomString.length; i += part.length) {
+            int copy = Math.min(left, part.length);
+
+            System.arraycopy(part, 0, randomString, i, copy);
+            left -= part.length;
+        }
+        return randomString;
     }
 
     @Test
