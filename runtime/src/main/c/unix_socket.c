@@ -119,6 +119,7 @@ Java_com_fnproject_fn_runtime_ntv_UnixSocketNative_bind(JNIEnv *jenv, jclass jCl
     if (strlen(nativePath) >= sizeof(addr.sun_path)) {
         (*jenv)->ReleaseStringUTFChars(jenv, jpath, nativePath);
         throwIllegalArgumentException(jenv, "Path too long");
+        return;
     }
 
     strncpy(addr.sun_path, nativePath, sizeof(addr.sun_path));
@@ -148,6 +149,7 @@ Java_com_fnproject_fn_runtime_ntv_UnixSocketNative_connect(JNIEnv *jenv, jclass 
     if (strlen(nativePath) >= sizeof(addr.sun_path)) {
         (*jenv)->ReleaseStringUTFChars(jenv, jpath, nativePath);
         throwIllegalArgumentException(jenv, "Path too long");
+        return;
     }
 
     strncpy(addr.sun_path, nativePath, sizeof(addr.sun_path));
@@ -257,7 +259,7 @@ Java_com_fnproject_fn_runtime_ntv_UnixSocketNative_recv(JNIEnv *jenv, jclass jCl
         return -1;
     } else if (rcount < 0) {
         if (errno == EAGAIN) {
-            throwSocketTimeoutException(jenv, "Timeout writing to socket");
+            throwSocketTimeoutException(jenv, "Timeout reading from socket");
             return -1;
         }
         throwIOException(jenv, "Error reading from socket");
