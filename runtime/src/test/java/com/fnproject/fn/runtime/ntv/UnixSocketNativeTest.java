@@ -98,6 +98,21 @@ public class UnixSocketNativeTest {
                 UnixSocketNative.close(socket);
             }
         }
+        // accept rejects <zero timeout
+        {
+            File serverSocket = createSocketFile();
+            int ss = UnixSocketNative.socket();
+            long startTime = System.currentTimeMillis();
+            try {
+                UnixSocketNative.bind(ss, serverSocket.getAbsolutePath());
+                UnixSocketNative.listen(ss, 1);
+                int cs = UnixSocketNative.accept(ss, -1);
+            } catch (IllegalArgumentException ignored) {
+            } finally {
+                UnixSocketNative.close(ss);
+            }
+        }
+
 
         // accept honors timeout
         {
@@ -229,10 +244,8 @@ public class UnixSocketNativeTest {
 
     @Test
     public void shouldHonorReads() throws Exception {
-
         CountDownLatch ready = new CountDownLatch(1);
         File serverSocket = createSocketFile();
-
         CompletableFuture<Boolean> result = runServerLoop(() -> {
             int ss = UnixSocketNative.socket();
             try {

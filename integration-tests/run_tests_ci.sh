@@ -19,10 +19,14 @@ docker run -d \
             python:2.7 \
             python -mSimpleHTTPServer 18080
 
+
 until $(curl --output /dev/null --silent  --fail http://localhost:18080); do
     printf '.'
     sleep 1
 done
+
+MAVEN_REPOSITORY="http://$(docker inspect --type container -f '{{.NetworkSettings.IPAddress}}' fn_mvn_repo):18080"
+export MAVEN_REPOSITORY
 
 # Start Fn
 fn stop || true
@@ -36,7 +40,6 @@ done
 
 export FN_LOG_FILE=/tmp/fn.log
 docker logs -f fnserver >& ${FN_LOG_FILE} &
-DOCKER_LOCALHOST=$(docker inspect --type container -f '{{.NetworkSettings.IPAddress}}' fnserver)
 
 export DOCKER_LOCALHOST
 docker rm -f flowserver || true
@@ -56,8 +59,10 @@ export FLOW_LOG_FILE=/tmp/flow.log
 docker logs -f flowserver >& ${FLOW_LOG_FILE} &
 set +e
 
-
-mvn --quiet -B  test
+echo "ENV: "
+env
+echo "Running tests"
+mvn   test
 result=$?
 
 

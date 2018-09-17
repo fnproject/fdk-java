@@ -3,6 +3,7 @@
 #include <sys/types.h>
 #include <sys/errno.h>
 #include <sys/un.h>
+#include <sys/time.h>
 #include <unistd.h>
 #include <jni.h>
 #include <strings.h>
@@ -184,32 +185,66 @@ JNIEXPORT jint JNICALL
 Java_com_fnproject_fn_runtime_ntv_UnixSocketNative_accept(JNIEnv *jenv, jclass jClass, jint jsocket, jlong timeoutMs) {
     errno = 0;
 
-    struct sockaddr_un addr;
-    bzero(&addr, sizeof(struct sockaddr_un));
-    socklen_t rlen;
-
-    fd_set set;
-    struct timeval timeout;
-
-    struct timeval *to_ptr = NULL;
-    if (timeoutMs > 0) {
-        timeout.tv_sec = timeoutMs / 1000;
-        timeout.tv_usec = (int) (timeoutMs % 1000) * 1000;
-        to_ptr = &timeout;
+    if (timeoutMs < 0) {
+        throwIllegalArgumentException(jenv, "Invalid timeout");
+        return -1;
     }
 
-    FD_ZERO(&set); /* clear the set */
-    FD_SET(jsocket, &set); /* add our file descriptor to the set */
+    struct timeval startTime;
+
+    if (gettimeofday(&startTime, NULL) < 0) {
+        throwIOException(jenv, "Failed to get time");
+        return -1;
+    }
+
+    struct timeval timeoutAbs;
+    timeoutAbs.tv_sec = timeoutMs / 1000;
+    timeoutAbs.tv_usec = (int) (timeoutMs % 1000) * 1000;
+
 
     int rv;
-    rv = select(jsocket + 1, &set, NULL, NULL, to_ptr);
+
+    struct timeval *toPtr = NULL;
+    struct timeval actualTo;
+
+
+
+    do {
+
+        if (timeoutMs > 0) {
+            struct timeval nowTime, used;
+            if (gettimeofday(&nowTime, NULL) < 0) {
+                throwIOException(jenv, "Failed to get time");
+                return -1;
+            }
+
+            timersub(&nowTime, &startTime, &used);
+            timersub(&timeoutAbs, &used, &actualTo);
+            toPtr = &actualTo;
+        }
+
+        fd_set set;
+        FD_ZERO(&set); /* clear the set */
+        FD_SET(jsocket, &set); /* add our file descriptor to the set */
+
+        rv = select(jsocket + 1, &set, NULL, NULL, toPtr);
+    } while (rv == -1 && errno == EINTR);
+
     if (rv < 0) {
         throwIOException(jenv, "error in select");
         return -1;
     } else if (rv == 0) {
         return 0; // timeout
     }
-    int result = accept(jsocket, (struct sockaddr *) &addr, &rlen);
+
+    struct sockaddr_un addr;
+    bzero(&addr, sizeof(struct sockaddr_un));
+    socklen_t rlen;
+    int result;
+    do {
+        result = accept(jsocket, (struct sockaddr *) &addr, &rlen);
+    } while (rv == -1 && errno == EINTR);
+
     if (result < 0) {
         throwIOException(jenv, "error in accept");
     }
@@ -251,7 +286,12 @@ Java_com_fnproject_fn_runtime_ntv_UnixSocketNative_recv(JNIEnv *jenv, jclass jCl
     }
 
 
-    ssize_t rcount = read(jsocket, &(buf[offset]), (size_t) length);
+    ssize_t rcount;
+
+    do {
+        rcount = read(jsocket, &(buf[offset]), (size_t) length);
+    } while (rcount == -1 && errno == EINTR);
+
     (*jenv)->ReleaseByteArrayElements(jenv, jbuf, buf, 0);
 
 
@@ -299,9 +339,12 @@ Java_com_fnproject_fn_runtime_ntv_UnixSocketNative_send(JNIEnv *jenv, jclass jCl
     if (buf == NULL) { // JVM OOM
         return -1;
     }
+    ssize_t wcount;
+    do {
+        wcount = write(jsocket, &(buf[offset]), (size_t) length);
+    } while (wcount == -1 && errno == EINTR);
 
 
-    ssize_t wcount = write(jsocket, &(buf[offset]), (size_t) length);
     (*jenv)->ReleaseByteArrayElements(jenv, jbuf, buf, 0);
 
     if (wcount < 0) {
