@@ -39,12 +39,15 @@ done
 export FN_LOG_FILE=/tmp/fn.log
 docker logs -f fnserver >& ${FN_LOG_FILE} &
 
+FNSERVER_IP=$(docker inspect --type container -f '{{.NetworkSettings.IPAddress}}' fnserver)
+
+
 
 docker rm -f flowserver || true
 docker run --rm -d \
       -p 8081:8081 \
-      -e API_URL="http://${DOCKER_LOCALHOST}:8080/invoke" \
-      -e no_proxy=${DOCKER_LOCALHOST} \
+      -e API_URL="http://${FNSERVER_IP}:8080/invoke" \
+      -e no_proxy=${FNSERVER_IP} \
       --name flowserver \
       fnproject/flow:latest
 
@@ -78,8 +81,6 @@ export no_proxy="${no_proxy},${DOCKER_LOCALHOST},${COMPLETER_IP},${REPO_IP}"
 
 
 
-echo "ENV: "
-env
 echo "Running tests"
 mvn   test
 result=$?
