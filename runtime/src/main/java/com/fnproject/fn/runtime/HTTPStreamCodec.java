@@ -251,7 +251,6 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
         }
 
 
-        // TODO these should really be mandatory
         String deadline = getRequiredHeader(request, "Fn-Deadline");
         String callID = getRequiredHeader(request, "Fn-Call-Id");
 
