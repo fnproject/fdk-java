@@ -58,7 +58,12 @@ docker logs -f flowserver >& ${FLOW_LOG_FILE} &
 set +e
 
 
-DOCKER_LOCALHOST= docker.for.mac.host.internal # $(docker inspect --type container -f '{{.NetworkSettings.IPAddress}}' fnserver)
+if [ $(uname -s) == "Darwin" ] ; then
+   DOCKER_LOCALHOST=docker.for.mac.host.internal
+else
+   DOCKER_LOCALHOST=$(ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1')
+fi
+
 export DOCKER_LOCALHOST
 
 REPO_IP=$(docker inspect --type container -f '{{.NetworkSettings.IPAddress}}' fn_mvn_repo)
