@@ -92,7 +92,7 @@ Java_com_fnproject_fn_runtime_ntv_UnixSocketNative_socket(JNIEnv *jenv, jclass j
     errno = 0;
     int rv = socket(PF_UNIX, SOCK_STREAM, 0);
 
-    if (!rv) {
+    if (rv == -1 ) {
         throwIOException(jenv, "Could not create socket");
         return -1;
     }
@@ -171,7 +171,7 @@ JNIEXPORT void JNICALL
 Java_com_fnproject_fn_runtime_ntv_UnixSocketNative_listen(JNIEnv *jenv, jclass jClass, jint jsocket, jint jbacklog) {
     errno = 0;
 
-    if (listen(jsocket, jbacklog) < 0) {
+    if (listen(jsocket, jbacklog) < 0 ) {
         throwIOException(jenv, "error in listen");
         return;
     }
@@ -413,7 +413,7 @@ Java_com_fnproject_fn_runtime_ntv_UnixSocketNative_setSendTimeout(JNIEnv *jenv, 
                                                                   jint timeout) {
     errno = 0;
     if (timeout < 0) {
-        throwIllegalArgumentException(jenv, "invalid buffer size");
+        throwIllegalArgumentException(jenv, "invalid timeout");
         return;
     }
 
@@ -455,7 +455,7 @@ Java_com_fnproject_fn_runtime_ntv_UnixSocketNative_setRecvTimeout(JNIEnv *jenv, 
                                                                   jint timeout) {
     errno = 0;
     if (timeout < 0) {
-        throwIllegalArgumentException(jenv, "invalid buffer size");
+        throwIllegalArgumentException(jenv, "invalid timeout");
         return;
     }
 
@@ -511,7 +511,7 @@ Java_com_fnproject_fn_runtime_ntv_UnixSocketNative_shutdown(JNIEnv *jenv, jclass
 
     int rv = shutdown(socket, how);
     if (rv < 0) {
-        throwIOException(jenv, "faield to shut down socket ");
+        throwIOException(jenv, "failed to shut down socket ");
         return;
     }
 }
