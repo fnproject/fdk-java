@@ -9,7 +9,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * End-to-end tests for function configuration methods
  */
-public class FunctionConstructionTests {
+public class FunctionConstructionTest {
 
     @Rule
     public final FnTestHarness fn = new FnTestHarness();

@@ -228,10 +228,10 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
         return val;
     }
 
-    private static String getHeader(HttpRequest request, String headerName) {
+    private static String getRequiredHeader(HttpRequest request, String headerName) {
         Header header = request.getFirstHeader(headerName);
         if (header == null) {
-            return null;
+            throw new FunctionInputHandlingException("Required FDK header variable " + headerName + " is not set, check you are using the latest functinos and FDK versions");
         }
         return header.getValue();
     }
@@ -252,8 +252,8 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
 
 
         // TODO these should really be mandatory
-        String deadline = getHeader(request, "Fn-Deadline");
-        String callID = getHeader(request, "Fn-Call-Id");
+        String deadline = getRequiredHeader(request, "Fn-Deadline");
+        String callID = getRequiredHeader(request, "Fn-Call-Id");
 
         if (callID == null) {
             callID = "";

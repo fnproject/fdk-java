@@ -19,7 +19,6 @@ import org.junit.rules.Timeout;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.security.MessageDigest;
@@ -153,6 +152,38 @@ public class HTTPStreamCodecTest {
 
     }
 
+    @Test
+    public void shouldRejectFnMissingHeaders() throws Exception {
+
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Fn-Call-Id", "callID");
+        headers.put("Fn-Deadline", "2002-10-02T10:00:00.992Z");
+
+
+        File socket = startCodec(defaultEnv, (in) -> OutputEvent.emptyResult(OutputEvent.Status.Success));
+
+        HttpClient client = createClient(socket);
+
+        Request positive = client.newRequest("http://localhost/call")
+          .method("POST");
+        headers.forEach(positive::header);
+        assertThat(positive.send().getStatus()).withFailMessage("Expecting req with mandatory headers to pass").isEqualTo(200);
+
+        for (String h : headers.keySet()) {
+            Request r = client.newRequest("http://localhost/call")
+              .method("POST");
+            headers.forEach((k, v) -> {
+                if (!k.equals(h)) {
+                    r.header(k, v);
+                }
+            });
+
+
+            ContentResponse resp = r.send();
+            assertThat(resp.getStatus()).withFailMessage("Expected failure error code for missing header " + h).isEqualTo(500);
+
+        }
+    }
 
     @Test
     public void shouldHandleMultipleRequests() throws Exception {
@@ -160,7 +191,7 @@ public class HTTPStreamCodecTest {
         AtomicInteger count = new AtomicInteger(0);
 
         File socket = startCodec(defaultEnv, (in) -> {
-            byte[] body  = in.consumeBody((is) -> {
+            byte[] body = in.consumeBody((is) -> {
                 try {
                     return IOUtils.toByteArray(is);
                 } catch (IOException e) {
@@ -175,7 +206,7 @@ public class HTTPStreamCodecTest {
         HttpClient httpClient = createClient(socket);
 
         for (int i = 0; i < 200; i++) {
-            byte[] body = randomBytes(i  * 1997);
+            byte[] body = randomBytes(i * 1997);
             ContentResponse resp = httpClient.newRequest("http://localhost/call")
               .method("POST")
               .header("Fn-Call-Id", "callID")
@@ -294,4 +325,6 @@ public class HTTPStreamCodecTest {
 
         cleanup();
     }
+
+
 }
