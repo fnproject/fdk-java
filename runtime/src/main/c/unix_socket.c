@@ -11,7 +11,7 @@
 #include <sys/stat.h>
 
 /**
- * Throws an IO exception adding via UnixSocketException , adding strerr(errno) if that is set
+ * Throws com.fnproject.fn.runtime.ntv.UnixSocetException, adding strerr(errno) as the second arg if that is set
  * @param jenv  java env
  * @param message message to send
  */
@@ -92,7 +92,7 @@ Java_com_fnproject_fn_runtime_ntv_UnixSocketNative_socket(JNIEnv *jenv, jclass j
     errno = 0;
     int rv = socket(PF_UNIX, SOCK_STREAM, 0);
 
-    if (rv == -1 ) {
+    if (rv == -1) {
         throwIOException(jenv, "Could not create socket");
         return -1;
     }
@@ -127,7 +127,7 @@ Java_com_fnproject_fn_runtime_ntv_UnixSocketNative_bind(JNIEnv *jenv, jclass jCl
     (*jenv)->ReleaseStringUTFChars(jenv, jpath, nativePath);
 
     if (bind(jsocket, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
-        throwIOException(jenv, "error in bind");
+        throwIOException(jenv, "Error in bind");
         return;
     }
 }
@@ -161,7 +161,7 @@ Java_com_fnproject_fn_runtime_ntv_UnixSocketNative_connect(JNIEnv *jenv, jclass 
             throwSocketTimeoutException(jenv, "Socket connect timed out");
             return;
         }
-        throwIOException(jenv, "error in bind");
+        throwIOException(jenv, "Error in bind");
         return;
     }
 }
@@ -171,8 +171,8 @@ JNIEXPORT void JNICALL
 Java_com_fnproject_fn_runtime_ntv_UnixSocketNative_listen(JNIEnv *jenv, jclass jClass, jint jsocket, jint jbacklog) {
     errno = 0;
 
-    if (listen(jsocket, jbacklog) < 0 ) {
-        throwIOException(jenv, "error in listen");
+    if (listen(jsocket, jbacklog) < 0) {
+        throwIOException(jenv, "Error in listen");
         return;
     }
 }
@@ -208,7 +208,6 @@ Java_com_fnproject_fn_runtime_ntv_UnixSocketNative_accept(JNIEnv *jenv, jclass j
     struct timeval actualTo;
 
 
-
     do {
 
         if (timeoutMs > 0) {
@@ -220,6 +219,11 @@ Java_com_fnproject_fn_runtime_ntv_UnixSocketNative_accept(JNIEnv *jenv, jclass j
 
             timersub(&nowTime, &startTime, &used);
             timersub(&timeoutAbs, &used, &actualTo);
+            if (actualTo.tv_sec < 0 || (actualTo.tv_sec == 0 && actualTo.tv_usec ==0) ) {
+                // hit end of poll in loop
+                return 0;
+
+            }
             toPtr = &actualTo;
         }
 
@@ -231,7 +235,7 @@ Java_com_fnproject_fn_runtime_ntv_UnixSocketNative_accept(JNIEnv *jenv, jclass j
     } while (rv == -1 && errno == EINTR);
 
     if (rv < 0) {
-        throwIOException(jenv, "error in select");
+        throwIOException(jenv, "Error in select");
         return -1;
     } else if (rv == 0) {
         return 0; // timeout
@@ -243,10 +247,10 @@ Java_com_fnproject_fn_runtime_ntv_UnixSocketNative_accept(JNIEnv *jenv, jclass j
     int result;
     do {
         result = accept(jsocket, (struct sockaddr *) &addr, &rlen);
-    } while (rv == -1 && errno == EINTR);
+    } while (result == -1 && errno == EINTR);
 
     if (result < 0) {
-        throwIOException(jenv, "error in accept");
+        throwIOException(jenv, "Error in accept");
     }
     return result;
 }
@@ -272,7 +276,7 @@ Java_com_fnproject_fn_runtime_ntv_UnixSocketNative_recv(JNIEnv *jenv, jclass jCl
     jint bufLen = (*jenv)->GetArrayLength(jenv, jbuf);
 
     if (offset >= bufLen) {
-        throwIllegalArgumentException(jenv, "Invalid offset , beyond end of buffer");
+        throwIllegalArgumentException(jenv, "Invalid offset, beyond end of buffer");
         return -1;
     }
     if (length > (bufLen - offset)) {
@@ -317,7 +321,7 @@ Java_com_fnproject_fn_runtime_ntv_UnixSocketNative_send(JNIEnv *jenv, jclass jCl
     errno = 0;
 
     if (offset < 0 || length <= 0) {
-        throwIllegalArgumentException(jenv, "Invalid offset,  length or timeout");
+        throwIllegalArgumentException(jenv, "Invalid offset, length or timeout");
         return -1;
     }
 
@@ -381,7 +385,7 @@ Java_com_fnproject_fn_runtime_ntv_UnixSocketNative_setSendBufSize(JNIEnv *jenv, 
                                                                   jint bufsize) {
     errno = 0;
     if (bufsize <= 0) {
-        throwIllegalArgumentException(jenv, "invalid buffer size");
+        throwIllegalArgumentException(jenv, "Invalid buffer size");
         return;
     }
 
@@ -455,7 +459,7 @@ Java_com_fnproject_fn_runtime_ntv_UnixSocketNative_setRecvTimeout(JNIEnv *jenv, 
                                                                   jint timeout) {
     errno = 0;
     if (timeout < 0) {
-        throwIllegalArgumentException(jenv, "invalid timeout");
+        throwIllegalArgumentException(jenv, "Invalid timeout");
         return;
     }
 
@@ -511,7 +515,7 @@ Java_com_fnproject_fn_runtime_ntv_UnixSocketNative_shutdown(JNIEnv *jenv, jclass
 
     int rv = shutdown(socket, how);
     if (rv < 0) {
-        throwIOException(jenv, "failed to shut down socket ");
+        throwIOException(jenv, "Failed to shut down socket ");
         return;
     }
 }
