@@ -59,7 +59,6 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
 
     static {
         Set<String> hin = new HashSet<>();
-        hin.add("Content-Length");
         hin.add("Host");
         hin.add("Accept-Encoding");
         hin.add("Transfer-Encoding");

@@ -299,7 +299,6 @@ public class HTTPStreamCodecTest {
     public void shouldStripHopToHopHeadersFromFunctionInput() throws Exception {
 
         for (String header[] : new String[][]{
-          {"Content-Length", "0"},
           {"Transfer-encoding", "chunked"},
           {"Connection", "close"},
         }) {
