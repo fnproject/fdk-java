@@ -177,7 +177,7 @@ public class IntegrationTestRule implements TestRule {
                 pb.environment().put("FN_JAVA_FDK_VERSION", "1.0.0-SNAPSHOT");
             }
 
-            // Sort of a hack for local mac running  with a prioxy
+            // Sort of a hack for local mac running  with a proxy
             String noProxy = Optional.ofNullable(System.getenv("no_proxy")).map((f) -> f + ",").orElse("") + getDockerLocalhost();
             System.err.printf("setting no_proxy '%s'\n",noProxy);
             pb.environment().put("no_proxy", noProxy);
