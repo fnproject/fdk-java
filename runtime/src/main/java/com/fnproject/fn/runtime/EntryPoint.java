@@ -33,7 +33,7 @@ public class EntryPoint {
             codec = new HttpEventCodec(System.getenv(), System.in, originalSystemOut);
         } else if (format == null || format.equalsIgnoreCase("default")) {
             codec = new DefaultEventCodec(System.getenv(), System.in, originalSystemOut);
-        } else if (format.equals("http-stream")) {
+        } else if (format.equals(HTTPStreamCodec.HTTP_STREAM_FORMAT)) {
             codec = new HTTPStreamCodec(System.getenv());
         } else {
             throw new FunctionInputHandlingException("Unsupported function format:" + format);

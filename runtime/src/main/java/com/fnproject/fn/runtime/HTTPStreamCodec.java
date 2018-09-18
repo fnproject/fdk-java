@@ -46,17 +46,15 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * (c) 2018 Oracle Corporation
  */
 public final class HTTPStreamCodec implements EventCodec, Closeable {
-    static {
-        System.setProperty("jnr.ffi.asm.enabled", "false");
-    }
 
+    public static final String HTTP_STREAM_FORMAT = "http-stream";
     private static final String FN_LISTENER = "FN_LISTENER";
     private final Map<String, String> env;
     private final AtomicBoolean stopping = new AtomicBoolean(false);
     private final File socketFile;
     private static final Set<String> stripInputHeaders;
     private static final Set<String> stripOutputHeaders;
-    private static final CompletableFuture<Boolean> stopped = new CompletableFuture<>();
+    private final CompletableFuture<Boolean> stopped = new CompletableFuture<>();
     private final UnixServerSocket socket;
 
     static {
@@ -77,6 +75,8 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
         hout.add("Connection");
         stripOutputHeaders = Collections.unmodifiableSet(hout);
     }
+
+    private final File tempFile;
 
 
     private String randomString() {
@@ -100,10 +100,10 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
      */
     public HTTPStreamCodec(Map<String, String> env) {
         this.env = Objects.requireNonNull(env, "env");
-        String listenerAddress = getRequiredEnv("FN_LISTENER");
+        String listenerAddress = getRequiredEnv(FN_LISTENER);
 
         if (!listenerAddress.startsWith("unix:/")) {
-            throw new FunctionInitializationException("Invalid listener address - it should start with unix:/ :'" + listenerAddress +"'");
+            throw new FunctionInitializationException("Invalid listener address - it should start with unix:/ :'" + listenerAddress + "'");
         }
         String listenerFile = listenerAddress.substring("unix:".length());
 
@@ -112,7 +112,7 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
 
         UnixServerSocket serverSocket = null;
         File listenerDir = socketFile.getParentFile();
-        File tempFile = new File(listenerDir, randomString() + ".sock");
+        tempFile = new File(listenerDir, randomString() + ".sock");
         try {
 
             serverSocket = UnixServerSocket.listen(tempFile.getAbsolutePath(), 1);
@@ -231,7 +231,7 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
     private static String getHeader(HttpRequest request, String headerName) {
         Header header = request.getFirstHeader(headerName);
         if (header == null) {
-           return null;
+            return null;
         }
         return header.getValue();
     }
@@ -255,11 +255,11 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
         String deadline = getHeader(request, "Fn-Deadline");
         String callID = getHeader(request, "Fn-Call-Id");
 
-        if (callID == null){
+        if (callID == null) {
             callID = "";
         }
-        Instant deadlineDate = Instant.now().plus(1,ChronoUnit.HOURS);
-        if(deadline!=null) {
+        Instant deadlineDate = Instant.now().plus(1, ChronoUnit.HOURS);
+        if (deadline != null) {
             try {
                 deadlineDate = Instant.parse(deadline);
             } catch (DateTimeParseException e) {
@@ -322,6 +322,7 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
             } catch (Exception ignored) {
             }
             socketFile.delete();
+            tempFile.delete();
         }
 
     }
