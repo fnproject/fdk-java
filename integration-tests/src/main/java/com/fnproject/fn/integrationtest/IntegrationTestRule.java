@@ -15,10 +15,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -58,7 +55,7 @@ public class IntegrationTestRule implements TestRule {
             String osName = System.getProperty("os.name", "generic").toLowerCase(Locale.ENGLISH);
 
             if (osName.contains("darwin") || osName.contains("mac")) {
-                return "docker.for.mac.localhost";
+                return "docker.for.mac.host.internal";
             } else
                 throw new RuntimeException("Unable to determine docker localhost address - set 'DOCKER_LOCALHOST' env variable to the docker host network address ");
         }
@@ -152,7 +149,7 @@ public class IntegrationTestRule implements TestRule {
         }
 
         public CmdResult runFnWithInput(String input, String... args) throws Exception {
-            CmdResult res =  runFnWithInputAllowError(input,args);
+            CmdResult res = runFnWithInputAllowError(input, args);
 
             Assertions.assertThat(res.isSuccess()).withFailMessage("Expected command '" + res.cmd + "' to return 0").isTrue();
             return res;
@@ -179,8 +176,10 @@ public class IntegrationTestRule implements TestRule {
                 // this means that FN init will pick up the local version not the latest.
                 pb.environment().put("FN_JAVA_FDK_VERSION", "1.0.0-SNAPSHOT");
             }
-            pb.environment().put("no_proxy", getDockerLocalhost());
-            pb.environment().put("NO_PROXY", getDockerLocalhost());
+
+            // Sort of a hack for local mac running  with a prioxy
+            String noProxy = Optional.ofNullable(System.getenv("no_proxy")).map((f) -> f + ",").orElse("") + getDockerLocalhost();
+            pb.environment().put("no_proxy", noProxy);
 
             Process p = pb.start();
 

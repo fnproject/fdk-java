@@ -19,7 +19,7 @@ They should _not_ be used for:
 ```bash
 export REPOSITORY_LOCATION=/tmp/staging-repository
 # on OSX: 
-export DOCKER_LOCALHOST=docker.for.mac.localhost 
+export DOCKER_LOCALHOST=docker.for.mac.host.internal
 
 mvn deploy -DaltDeploymentRepository=localStagingDir::default::file://"$REPOSITORY_LOCATION"
 ```

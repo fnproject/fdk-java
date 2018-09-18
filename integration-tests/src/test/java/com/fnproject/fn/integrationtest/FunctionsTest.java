@@ -26,11 +26,11 @@ public class FunctionsTest {
         tc.runFn("config", "app", tc.appName(), "GREETING", "Salutations");
 
 
-        CmdResult r1 = tc.runFnWithInput("", "invoke", tc.appName(), "test");
+        CmdResult r1 = tc.runFnWithInput("", "invoke", tc.appName(), "simplefunc");
         assertThat(r1.getStdout()).isEqualTo("Salutations, world!");
 
 
-        CmdResult r2 = tc.runFnWithInput("tests", "invoke", tc.appName(), "test");
+        CmdResult r2 = tc.runFnWithInput("tests", "invoke", tc.appName(), "simplefunc");
         assertThat(r2.getStdout()).isEqualTo("Salutations, tests!");
 
     }
@@ -40,10 +40,12 @@ public class FunctionsTest {
         for (String format : new String[]{"default", "http", "http-stream"}) {
             for (String runtime : new String[]{"java9", "java8"}) {
                 IntegrationTestRule.TestContext tc = testRule.newTest();
-                tc.runFn("init", "--runtime", runtime, "--name", "test", "--trigger", "none", "--format", format);
+                String fnName = "bp" + format + runtime;
+
+                tc.runFn("init", "--runtime", runtime, "--name", fnName,"--format", format);
                 tc.rewritePOM();
                 tc.runFn("--verbose", "deploy", "--app", tc.appName(), "--local");
-                CmdResult rs = tc.runFnWithInput("wibble", "invoke", tc.appName(), "test");
+                CmdResult rs = tc.runFnWithInput("wibble", "invoke", tc.appName(), fnName);
                 assertThat(rs.getStdout()).contains("Hello, wibble!");
             }
         }

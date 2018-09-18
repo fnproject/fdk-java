@@ -25,8 +25,6 @@ until $(curl --output /dev/null --silent  --fail http://localhost:18080); do
     sleep 1
 done
 
-MAVEN_REPOSITORY="http://$(docker inspect --type container -f '{{.NetworkSettings.IPAddress}}' fn_mvn_repo):18080"
-export MAVEN_REPOSITORY
 
 # Start Fn
 fn stop || true
@@ -41,8 +39,6 @@ done
 export FN_LOG_FILE=/tmp/fn.log
 docker logs -f fnserver >& ${FN_LOG_FILE} &
 
-DOCKER_LOCALHOST=$(docker inspect --type container -f '{{.NetworkSettings.IPAddress}}' fnserver)
-export DOCKER_LOCALHOST
 
 docker rm -f flowserver || true
 docker run --rm -d \
@@ -60,6 +56,21 @@ export FLOW_LOG_FILE=/tmp/flow.log
 
 docker logs -f flowserver >& ${FLOW_LOG_FILE} &
 set +e
+
+
+DOCKER_LOCALHOST= docker.for.mac.host.internal # $(docker inspect --type container -f '{{.NetworkSettings.IPAddress}}' fnserver)
+export DOCKER_LOCALHOST
+
+REPO_IP=$(docker inspect --type container -f '{{.NetworkSettings.IPAddress}}' fn_mvn_repo)
+MAVEN_REPOSITORY="http://${REPO_IP}:18080"
+export MAVEN_REPOSITORY
+COMPLETER_IP=$(docker inspect --type container -f '{{.NetworkSettings.IPAddress}}' flowserver)
+COMPLETER_BASE_URL="http://${COMPLETER_IP}:8081"
+export COMPLETER_BASE_URL
+
+export no_proxy=$no_proxy,$DOCKER_LOCALHOST,$COMPLETER_IP,$REPO_IP
+
+
 
 echo "ENV: "
 env

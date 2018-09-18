@@ -1,5 +1,5 @@
 schema_version: 20180708
-name: test
+name: flowallfeatures
 version: 0.0.15
 runtime: java
 cmd: com.fnproject.fn.integration.ExerciseEverything::handleRequest

@@ -103,7 +103,7 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
         String listenerAddress = getRequiredEnv("FN_LISTENER");
 
         if (!listenerAddress.startsWith("unix:/")) {
-            throw new FunctionInitializationException("Invalid listener address - it should start with unix:/" + listenerAddress);
+            throw new FunctionInitializationException("Invalid listener address - it should start with unix:/ :'" + listenerAddress +"'");
         }
         String listenerFile = listenerAddress.substring("unix:".length());
 
