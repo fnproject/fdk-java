@@ -179,6 +179,7 @@ public class IntegrationTestRule implements TestRule {
 
             // Sort of a hack for local mac running  with a prioxy
             String noProxy = Optional.ofNullable(System.getenv("no_proxy")).map((f) -> f + ",").orElse("") + getDockerLocalhost();
+            System.err.printf("setting no_proxy '%s'\n",noProxy);
             pb.environment().put("no_proxy", noProxy);
 
             Process p = pb.start();

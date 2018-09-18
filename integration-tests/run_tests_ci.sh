@@ -61,7 +61,7 @@ set +e
 if [ $(uname -s) == "Darwin" ] ; then
    DOCKER_LOCALHOST=docker.for.mac.host.internal
 else
-   DOCKER_LOCALHOST=$(ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1')
+   DOCKER_LOCALHOST=$(ifconfig eth0| grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1')
 fi
 
 export DOCKER_LOCALHOST
@@ -73,7 +73,8 @@ COMPLETER_IP=$(docker inspect --type container -f '{{.NetworkSettings.IPAddress}
 COMPLETER_BASE_URL="http://${COMPLETER_IP}:8081"
 export COMPLETER_BASE_URL
 
-export no_proxy=$no_proxy,$DOCKER_LOCALHOST,$COMPLETER_IP,$REPO_IP
+export no_proxy="${no_proxy},${DOCKER_LOCALHOST},${COMPLETER_IP},${REPO_IP}"
+
 
 
 
