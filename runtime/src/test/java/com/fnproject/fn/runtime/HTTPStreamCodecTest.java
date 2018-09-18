@@ -148,7 +148,7 @@ public class HTTPStreamCodecTest {
         InputEvent evt = lastEvent.get(1, TimeUnit.MILLISECONDS);
         assertThat(evt.getCallID()).isEqualTo("callID");
         assertThat(evt.getDeadline().toEpochMilli()).isEqualTo(1033552800992L);
-        assertThat(evt.getHeaders()).isEqualTo(Headers.emptyHeaders().addHeader("Fn-Call-Id", "callID").addHeader("Fn-Deadline", "2002-10-02T10:00:00.992Z").addHeader("Custom-header", "v1", "v2").addHeader("Content-Type", "text/plain"));
+        assertThat(evt.getHeaders()).isEqualTo(Headers.emptyHeaders().addHeader("Fn-Call-Id", "callID").addHeader("Fn-Deadline", "2002-10-02T10:00:00.992Z").addHeader("Custom-header", "v1", "v2").addHeader("Content-Type", "text/plain").addHeader("Content-Length","6"));
 
     }
 
