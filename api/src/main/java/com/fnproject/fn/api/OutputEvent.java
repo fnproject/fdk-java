@@ -46,7 +46,6 @@ public interface OutputEvent {
     }
 
 
-
     /**
      * Report the outcome status code of this event.
      *
@@ -90,6 +89,39 @@ public interface OutputEvent {
      */
     void writeToOutput(OutputStream out) throws IOException;
 
+
+    /**
+     * Creates a new output event based on this one with the headers overriding
+     * @param headers
+     * @return a new output event with these set
+     */
+    default OutputEvent withHeaders(Headers headers) {
+        Objects.requireNonNull(headers, "headers");
+
+        OutputEvent a = this;
+        return new OutputEvent() {
+
+            @Override
+            public Status getStatus() {
+                return a.getStatus();
+            }
+
+            @Override
+            public Optional<String> getContentType() {
+                return a.getContentType();
+            }
+
+            @Override
+            public Headers getHeaders() {
+                return headers;
+            }
+
+            @Override
+            public void writeToOutput(OutputStream out) throws IOException {
+                a.writeToOutput(out);
+            }
+        };
+    }
 
     /**
      * Create an output event from a byte array
@@ -141,6 +173,11 @@ public interface OutputEvent {
         };
     }
 
+    /**
+     * Returns an output event with an empty body and a given status
+     * @param status the status of the event
+     * @return a new output event
+     */
     static OutputEvent emptyResult(final Status status) {
         Objects.requireNonNull(status, "status");
 

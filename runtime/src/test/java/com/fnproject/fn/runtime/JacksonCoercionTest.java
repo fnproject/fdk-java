@@ -5,6 +5,7 @@ import com.fnproject.fn.api.InputEvent;
 import com.fnproject.fn.api.MethodWrapper;
 import com.fnproject.fn.runtime.coercion.jackson.JacksonCoercion;
 import com.fnproject.fn.runtime.testfns.Animal;
+import jdk.internal.util.xml.impl.Input;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -28,7 +29,7 @@ public class JacksonCoercionTest {
 
         MethodWrapper method = new DefaultMethodWrapper(JacksonCoercionTest.class, "testMethod");
         FunctionRuntimeContext frc = new FunctionRuntimeContext(method, new HashMap<>());
-        FunctionInvocationContext invocationContext = new FunctionInvocationContext(frc);
+        FunctionInvocationContext invocationContext = new FunctionInvocationContext(frc,new ReadOnceInputEvent(new ByteArrayInputStream(new byte[0]),Headers.emptyHeaders(),"callID",Instant.now()));
 
         Map<String, String> headers = new HashMap<>();
         headers.put("content-type", "application/json");
@@ -50,7 +51,7 @@ public class JacksonCoercionTest {
 
         MethodWrapper method = new DefaultMethodWrapper(JacksonCoercionTest.class, "testMethod");
         FunctionRuntimeContext frc = new FunctionRuntimeContext(method, new HashMap<>());
-        FunctionInvocationContext invocationContext = new FunctionInvocationContext(frc);
+        FunctionInvocationContext invocationContext = new FunctionInvocationContext(frc,new ReadOnceInputEvent(new ByteArrayInputStream(new byte[0]),Headers.emptyHeaders(),"callID",Instant.now()));
 
         Map<String, String> headers = new HashMap<>();
         headers.put("content-type", "application/json");

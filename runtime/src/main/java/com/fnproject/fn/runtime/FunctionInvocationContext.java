@@ -1,9 +1,12 @@
 package com.fnproject.fn.runtime;
 
+import com.fnproject.fn.api.Headers;
+import com.fnproject.fn.api.InputEvent;
 import com.fnproject.fn.api.InvocationContext;
 import com.fnproject.fn.api.InvocationListener;
 
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -14,8 +17,12 @@ public class FunctionInvocationContext implements InvocationContext, FunctionInv
     private final FunctionRuntimeContext runtimeContext;
     private List<InvocationListener> invocationListeners = new CopyOnWriteArrayList<>();
 
-    public FunctionInvocationContext(FunctionRuntimeContext ctx) {
+    private final InputEvent event;
+    private Map<String, List<String>> additionalResponseHeaders = new ConcurrentHashMap<>();
+
+    FunctionInvocationContext(FunctionRuntimeContext ctx, InputEvent event) {
         this.runtimeContext = ctx;
+        this.event = event;
     }
 
     @Override
@@ -29,11 +36,49 @@ public class FunctionInvocationContext implements InvocationContext, FunctionInv
     }
 
     @Override
+    public Headers getRequestHeaders() {
+        return event.getHeaders();
+    }
+
+    @Override
+    public void addResponseHeader(String key, String value) {
+        Objects.requireNonNull(key, "key");
+        Objects.requireNonNull(value, "value");
+
+        additionalResponseHeaders.merge(key, Collections.singletonList(value), (a, b) -> {
+            List<String> l = new ArrayList<>(a);
+            l.addAll(b);
+            return l;
+        });
+    }
+
+    /**
+     * returns the internal map of added response headers
+     *
+     * @return mutable map of internal response headers
+     */
+    Map<String, List<String>> getAdditionalResponseHeaders() {
+        return additionalResponseHeaders;
+    }
+
+    @Override
+    public void setResponseHeader(String key, String value) {
+        Objects.requireNonNull(key, "key");
+
+        String cKey = Headers.canonicalKey(key);
+        if (value == null) {
+            additionalResponseHeaders.remove(cKey);
+            return;
+        }
+        additionalResponseHeaders.put(cKey, Collections.singletonList(value));
+    }
+
+    @Override
     public void fireOnSuccessfulInvocation() {
         for (InvocationListener listener : invocationListeners) {
             try {
                 listener.onSuccess();
-            } catch (Exception e) {
+            } catch (Exception ignored) {
             }
         }
     }
@@ -43,7 +88,7 @@ public class FunctionInvocationContext implements InvocationContext, FunctionInv
         for (InvocationListener listener : invocationListeners) {
             try {
                 listener.onFailure();
-            } catch (Exception e) {
+            } catch (Exception ignored) {
             }
         }
     }

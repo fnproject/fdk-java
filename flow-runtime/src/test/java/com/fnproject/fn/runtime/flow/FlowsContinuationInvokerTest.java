@@ -654,5 +654,22 @@ public class FlowsContinuationInvokerTest {
         public void addListener(InvocationListener listener) {
         }
 
+        @Override
+        public Headers getRequestHeaders() {
+            return Headers.emptyHeaders();
+        }
+
+
+
+        @Override
+        public void addResponseHeader(String key, String value) {
+
+        }
+
+        @Override
+        public void setResponseHeader(String key, String value) {
+
+        }
+
     }
 }

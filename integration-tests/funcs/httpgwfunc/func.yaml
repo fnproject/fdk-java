@@ -1,0 +1,12 @@
+schema_version: 20180708
+name: httpgwfunc
+version: 0.0.1
+runtime: java
+build_image: fnproject/fn-java-fdk-build:jdk9-1.0.64
+run_image: fnproject/fn-java-fdk:jdk9-1.0.64
+cmd: com.example.fn.TriggerFunction::handleRequest
+format: http
+triggers:
+- name: httpgwfunc-trigger
+  type: http
+  source: /httpgwfunc-trigger

@@ -15,12 +15,12 @@ import java.util.stream.Stream;
  * Keys are are stored and compared in a case-insensitive way and are canonicalised according to  RFC 7230 conventions such that  :
  *
  * <ul>
- *    <li>a-header</li>
- *    <li>A-Header</li>
- *    <li>A-HeaDer</li>
+ * <li>a-header</li>
+ * <li>A-Header</li>
+ * <li>A-HeaDer</li>
  * </ul>
- *  are all equivalent - keys are returned in the canonical form (lower cased except for leading characters)
- *  Where keys do not comply with HTTP header naming they are left as is.
+ * are all equivalent - keys are returned in the canonical form (lower cased except for leading characters)
+ * Where keys do not comply with HTTP header naming they are left as is.
  */
 public final class Headers implements Serializable {
     private static final Headers emptyHeaders = new Headers(Collections.emptyMap());
@@ -93,6 +93,22 @@ public final class Headers implements Serializable {
         return emptyHeaders;
     }
 
+
+    /**
+     * Sets a map of headers, overwriting any headers in the current headers with the respective values
+     *
+     * @param vals a map of headers
+     * @return a new headers object with thos headers set
+     */
+    public Headers setHeaders(Map<String, List<String>> vals) {
+        Objects.requireNonNull(vals, "vals");
+        Map<String, List<String>> nm = new HashMap<>(headers);
+        vals.forEach((k, vs) -> {
+            vs.forEach(v -> Objects.requireNonNull(v, "header list contains null entries"));
+            nm.put(canonicalKey(k), vs);
+        });
+        return new Headers(nm);
+    }
 
     /**
      * Creates a new headers object with the specified header added - if a  header with the same key existed it the new value is appended
