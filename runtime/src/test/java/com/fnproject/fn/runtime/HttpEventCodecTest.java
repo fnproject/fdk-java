@@ -14,7 +14,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import static com.fnproject.fn.runtime.HeaderBuilder.headerEntry;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -26,30 +25,31 @@ public class HttpEventCodecTest {
     private final InputStream nullIn = new NullInputStream(0);
 
     private final String postReq = "GET /test HTTP/1.1\n" +
-            "Accept-Encoding: gzip\n" +
-            "User-Agent: useragent\n" +
-            "Accept: text/html, text/plain;q=0.9\n" +
-            "Fn_Request_url: http//localhost:8080/r/testapp/test\n" +
-            "Fn_Path: /test\n" +
-            "Fn_Method: POST\n" +
-            "Content-Length: 11\n" +
-            "Fn_App_name: testapp\n" +
-            "Fn_Call_id: task-id\n" +
-            "Myconfig: fooconfig\n" +
-            "Content-Type: text/plain\n\n" +
-            "Hello World";
+       "Accept-Encoding: gzip\n" +
+       "User-Agent: useragent\n" +
+       "Accept: text/html, text/plain;q=0.9\n" +
+       "Fn_Request_url: http//localhost:8080/r/testapp/test\n" +
+       "Fn_Path: /test\n" +
+       "Fn_Method: POST\n" +
+       "Content-Length: 11\n" +
+       "Fn_App_name: testapp\n" +
+       "Fn_Call_id: task-id\n" +
+       "Myconfig: fooconfig\n" +
+       "Content-Type: text/plain\n\n" +
+       "Hello World";
 
 
     private final String getReq = "GET /test HTTP/1.1\n" +
-            "Accept-Encoding: gzip\n" +
-            "User-Agent: useragent\n" +
-            "Fn_Request_url: http//localhost:8080/r/testapp/test\n" +
-            "Fn_Method: GET\n" +
-            "Content-Length: 0\n" +
-            "Fn_Call_Id: task-id2\n" +
-            "Myconfig: fooconfig\n\n";
+       "Accept-Encoding: gzip\n" +
+       "User-Agent: useragent\n" +
+       "Fn_Request_url: http//localhost:8080/r/testapp/test\n" +
+       "Fn_Method: GET\n" +
+       "Content-Length: 0\n" +
+       "Fn_Call_Id: task-id2\n" +
+       "Myconfig: fooconfig\n\n";
 
     private final Map<String, String> emptyConfig = new HashMap<>();
+
     private final Map<String, String> env() {
         HashMap<String, String> env = new HashMap<>();
         env.put("FN_APP_NAME", "testapp");
@@ -108,61 +108,18 @@ public class HttpEventCodecTest {
     }
 
 
-    @Test
-    public void shouldRejectMissingHttpHeaders() {
-
-        Map<String, String> requiredHeaders = new HashMap<>();
-        requiredHeaders.put("fn_request_url", "request_url");
-        requiredHeaders.put("fn_method", "GET");
-
-        for (String key : requiredHeaders.keySet()) {
-            Map<String, String> newMap = new HashMap<>(requiredHeaders);
-            newMap.remove(key);
-            String req = "GET / HTTP/1.1\n" + newMap.entrySet().stream().map(e -> e.getKey() + ": " + e.getValue()).collect(Collectors.joining("\n")) + "\n\n";
-
-            try {
-                HttpEventCodec httpEventCodec = new HttpEventCodec(env(), asStream(req), nullOut);
-                httpEventCodec.readEvent();
-                fail("Should fail with header missing:" + key);
-            } catch (FunctionInputHandlingException e) {
-                assertThat(e).hasMessageMatching("Incoming HTTP frame is missing required header: " + key);
-            }
-        }
-    }
 
     @Test
-    public void shouldRejectMissingEnv() {
-        Map<String, String> requiredEnv = new HashMap<>();
-
-        requiredEnv.put("FN_PATH", "/route");
-        requiredEnv.put("FN_APP_NAME", "app_name");
-
-        for (String key : requiredEnv.keySet()) {
-            Map<String, String> newMap = new HashMap<>(requiredEnv);
-            newMap.remove(key);
-
-            try {
-                ByteArrayInputStream bis = new ByteArrayInputStream(postReq.getBytes());
-                HttpEventCodec httpEventCodec = new HttpEventCodec(newMap, bis, nullOut);
-                httpEventCodec.readEvent();
-                fail("Should fail with header missing:" + key);
-            } catch (FunctionInputHandlingException e) {
-                assertThat(e).hasMessageMatching("Required environment variable " + key + " is not set - are you running a function outside of fn run\\?");
-            }
-        }
-    }
-
-    @Test
-    public void shouldSerializeSimpleSuccessfulEvent() throws Exception{
+    public void shouldSerializeSimpleSuccessfulEvent() throws Exception {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
 
         HttpEventCodec httpEventCodec = new HttpEventCodec(env(), nullIn, bos);
-        OutputEvent outEvent = OutputEvent.fromBytes("Hello".getBytes(),OutputEvent.SUCCESS,"text/plain");
+        OutputEvent outEvent = OutputEvent.fromBytes("Hello".getBytes(), OutputEvent.Status.Success, "text/plain");
 
         httpEventCodec.writeEvent(outEvent);
         String httpResponse = new String(bos.toByteArray());
 
-        assertThat(statusLine(httpResponse)).isEqualTo("HTTP/1.1 200 INVOKED");
+        assertThat(statusLine(httpResponse)).isEqualTo("HTTP/1.1 200 Success");
         assertThat(headers(httpResponse)).containsOnly(entry("content-type", "text/plain"), entry("content-length", "5"));
         assertThat(body(httpResponse)).isEqualTo("Hello");
 
@@ -175,8 +132,10 @@ public class HttpEventCodecTest {
     private static Map<String, String> headers(String httpResponse) {
         Map<String, String> hs = new HashMap<>();
         boolean firstLine = true;
-        for (String line: httpResponse.split("\\\r\\\n")) {
-            if (line.equals("")) { break; }
+        for (String line : httpResponse.split("\\\r\\\n")) {
+            if (line.equals("")) {
+                break;
+            }
             if (firstLine) {
                 firstLine = false;
                 continue;
@@ -192,7 +151,7 @@ public class HttpEventCodecTest {
     }
 
     @Test
-    public void shouldSerializeSuccessfulEventWithHeaders() throws Exception{
+    public void shouldSerializeSuccessfulEventWithHeaders() throws Exception {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
 
         HttpEventCodec httpEventCodec = new HttpEventCodec(env(), nullIn, bos);
@@ -200,54 +159,54 @@ public class HttpEventCodecTest {
         hs.put("foo", "bar");
         hs.put("Content-Type", "application/octet-stream"); // ignored
         hs.put("Content-length", "99");  // ignored
-        OutputEvent outEvent = OutputEvent.fromBytes("Hello".getBytes(),OutputEvent.SUCCESS,"text/plain", Headers.fromMap(hs));
+        OutputEvent outEvent = OutputEvent.fromBytes("Hello".getBytes(), OutputEvent.Status.Success, "text/plain", Headers.fromMap(hs));
 
         httpEventCodec.writeEvent(outEvent);
         String httpResponse = new String(bos.toByteArray());
 
-        assertThat(statusLine(httpResponse)).isEqualTo("HTTP/1.1 200 INVOKED");
+        assertThat(statusLine(httpResponse)).isEqualTo("HTTP/1.1 200 Success");
         assertThat(headers(httpResponse)).containsOnly(entry("foo", "bar"),
-                                                       entry("content-type", "text/plain"),
-                                                       entry("content-length", "5"));
+           entry("content-type", "text/plain"),
+           entry("content-length", "5"));
         assertThat(body(httpResponse)).isEqualTo("Hello");
     }
 
 
     @Test
-    public void shouldSerializeSimpleFailedEvent() throws Exception{
+    public void shouldSerializeSimpleFailedEvent() throws Exception {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
 
         HttpEventCodec httpEventCodec = new HttpEventCodec(env(), nullIn, bos);
-        OutputEvent outEvent = OutputEvent.fromBytes("Hello".getBytes(), OutputEvent.FAILURE,"text/plain");
+        OutputEvent outEvent = OutputEvent.fromBytes("Hello".getBytes(), OutputEvent.Status.FunctionError, "text/plain");
 
         httpEventCodec.writeEvent(outEvent);
         String httpResponse = new String(bos.toByteArray());
 
-        assertThat(statusLine(httpResponse)).isEqualTo("HTTP/1.1 500 INVOKE FAILED");
+        assertThat(statusLine(httpResponse)).isEqualTo("HTTP/1.1 502 FunctionError");
         assertThat(headers(httpResponse)).containsOnly(entry("content-type", "text/plain"),
-                                                       entry("content-length", "5"));
+           entry("content-length", "5"));
         assertThat(body(httpResponse)).isEqualTo("Hello");
     }
 
 
     @Test
-    public void shouldSerializeFailedEventWithHeaders() throws Exception{
+    public void shouldSerializeFailedEventWithHeaders() throws Exception {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
 
-        HttpEventCodec httpEventCodec = new HttpEventCodec(env(), nullIn,bos);
+        HttpEventCodec httpEventCodec = new HttpEventCodec(env(), nullIn, bos);
         Map<String, String> hs = new HashMap<>();
         hs.put("foo", "bar");
         hs.put("Content-Type", "application/octet-stream"); // ignored
         hs.put("Content-length", "99");  // ignored
-        OutputEvent outEvent = OutputEvent.fromBytes("Hello".getBytes(), OutputEvent.FAILURE,"text/plain", Headers.fromMap(hs));
+        OutputEvent outEvent = OutputEvent.fromBytes("Hello".getBytes(), OutputEvent.Status.FunctionError, "text/plain", Headers.fromMap(hs));
 
         httpEventCodec.writeEvent(outEvent);
         String httpResponse = new String(bos.toByteArray());
 
-        assertThat(statusLine(httpResponse)).isEqualTo("HTTP/1.1 500 INVOKE FAILED");
+        assertThat(statusLine(httpResponse)).isEqualTo("HTTP/1.1 502 FunctionError");
         assertThat(headers(httpResponse)).containsOnly(entry("foo", "bar"),
-                                                       entry("content-type", "text/plain"),
-                                                       entry("content-length", "5"));
+           entry("content-type", "text/plain"),
+           entry("content-length", "5"));
         assertThat(body(httpResponse)).isEqualTo("Hello");
     }
 
@@ -257,31 +216,32 @@ public class HttpEventCodecTest {
     }
 
     private void isExpectedGetEvent(InputEvent getEvent) {
-        assertThat(getEvent.getAppName()).isEqualTo("testapp");
-        assertThat(getEvent.getMethod()).isEqualTo("GET");
-        assertThat(getEvent.getRoute()).isEqualTo("/test");
+        //assertThat(getEvent.getAppName()).isEqualTo("testapp");
+//        assertThat(getEvent.getMethod()).isEqualTo("GET");
+//        assertThat(getEvent.getRoute()).isEqualTo("/test");
 
-        assertThat(getEvent.getHeaders().getAll())
-                .contains(headerEntry("Accept-Encoding", "gzip"),
-                        headerEntry("User-Agent", "useragent"));
+        assertThat(getEvent.getHeaders().asMap())
+           .contains(headerEntry("Accept-Encoding", "gzip"),
+              headerEntry("User-Agent", "useragent"));
 
 
         getEvent.consumeBody((is) -> assertThat(is).hasSameContentAs(asStream("")));
     }
 
+
     private void isExpectedPostEvent(InputEvent postEvent) {
-        assertThat(postEvent.getAppName()).isEqualTo("testapp");
-        assertThat(postEvent.getMethod()).isEqualTo("POST");
-        assertThat(postEvent.getRoute()).isEqualTo("/test");
-        assertThat(postEvent.getHeaders().getAll().size()).isEqualTo(11);
-        assertThat(postEvent.getHeaders().getAll())
-                .contains(headerEntry("Accept", "text/html, text/plain;q=0.9"),
-                          headerEntry("Accept-Encoding", "gzip"),
-                          headerEntry("User-Agent", "useragent"),
-                          headerEntry("Content-Type", "text/plain"));
+        //assertThat(postEvent.getAppName()).isEqualTo("testapp");
+//        assertThat(postEvent.getMethod()).isEqualTo("POST");
+//        assertThat(postEvent.getRoute()).isEqualTo("/test");
+        assertThat(postEvent.getHeaders().asMap().size()).isEqualTo(11);
+        assertThat(postEvent.getHeaders().asMap())
+           .contains(headerEntry("Accept", "text/html, text/plain;q=0.9"),
+              headerEntry("Accept-Encoding", "gzip"),
+              headerEntry("User-Agent", "useragent"),
+              headerEntry("Content-Type", "text/plain"));
 
         postEvent.consumeBody((is) -> assertThat(is).hasSameContentAs(asStream("Hello World")));
     }
-
+//
 
 }

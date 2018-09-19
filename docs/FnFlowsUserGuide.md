@@ -99,6 +99,19 @@ func.yaml created
 
 ```
 
+### Add the Flow runtime to your function 
+
+In your `pom.xml` add a depdendency on `flow-runtime` : 
+
+```$ml
+        <dependency>
+            <groupId>com.fnproject.fn</groupId>
+            <artifactId>flow-runtime</artifactId>
+            <version>${fdk.version}</version>
+        </dependency>
+
+``` 
+
 ### Create a Flow within your Function
 
 You will create a function that produces the nth prime number and then returns
@@ -117,7 +130,10 @@ package com.example.fn;
 
 import com.fnproject.fn.api.flow.Flow;
 import com.fnproject.fn.api.flow.Flows;
+import com.fnproject.fn.runtime.flow.FlowFeature;
+import com.fnproject.fn.api.FnFeature;
 
+@FnFeature(FlowFeature.class)
 public class PrimeFunction {
 
     public String handleRequest(int nth) {

@@ -9,14 +9,18 @@ import com.fnproject.fn.api.exception.FunctionOutputHandlingException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.time.Instant;
+import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 /**
  * DefaultEventCodec handles plain docker invocations on functions
  * <p>
  * This parses inputs from environment variables and reads and writes raw body and responses to the specified input and output streams
+ *
+ * @deprecated all new functions should use {@link HTTPStreamCodec}
  */
 class DefaultEventCodec implements EventCodec {
 
@@ -39,12 +43,20 @@ class DefaultEventCodec implements EventCodec {
         return val;
     }
 
-    @Override
-    public Optional<InputEvent> readEvent() {
-        String method = getRequiredEnv("FN_METHOD");
-        String appName = getRequiredEnv("FN_APP_NAME");
-        String route = getRequiredEnv("FN_PATH");
-        String requestUrl = getRequiredEnv("FN_REQUEST_URL");
+    protected InputEvent readEvent() {
+        String callId = env.getOrDefault("FN_CALL_ID", "");
+        String deadline = env.get("FN_DEADLINE");
+        Instant deadlineDate;
+
+        if (deadline != null) {
+            try {
+                deadlineDate = Instant.parse(deadline);
+            } catch (DateTimeParseException e) {
+                throw new FunctionInputHandlingException("Invalid deadline date format", e);
+            }
+        } else {
+            deadlineDate = Instant.now().plus(1, ChronoUnit.HOURS);
+        }
 
         Map<String, String> headers = new HashMap<>();
         for (Map.Entry<String, String> entry : env.entrySet()) {
@@ -54,20 +66,22 @@ class DefaultEventCodec implements EventCodec {
             }
         }
 
-        return Optional.of(new ReadOnceInputEvent(appName, route, requestUrl, method, in, Headers.fromMap(headers), QueryParametersParser.getParams(requestUrl)));
+        return new ReadOnceInputEvent(in, Headers.fromMap(headers), callId, deadlineDate);
     }
 
-    @Override
-    public boolean shouldContinue() {
-        return false;
-    }
 
-    @Override
-    public void writeEvent(OutputEvent evt) {
+    protected void writeEvent(OutputEvent evt) {
         try {
             evt.writeToOutput(out);
-        }catch(IOException e){
-            throw new FunctionOutputHandlingException("error writing event",e);
+        } catch (IOException e) {
+            throw new FunctionOutputHandlingException("error writing event", e);
         }
+    }
+
+    @Override
+    public void runCodec(Handler h) {
+        InputEvent event = readEvent();
+        OutputEvent out = h.handle(event);
+        writeEvent(out);
     }
 }

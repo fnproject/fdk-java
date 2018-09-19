@@ -1,8 +1,10 @@
 package com.fnproject.fn.examples;
 
+import com.fnproject.fn.api.FnFeature;
 import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.RuntimeContext;
 import com.fnproject.fn.api.flow.Flow;
+import com.fnproject.fn.runtime.flow.FlowFeature;
 import com.fnproject.fn.api.flow.Flows;
 import com.fnproject.fn.api.flow.HttpMethod;
 import io.minio.MinioClient;
@@ -10,6 +12,7 @@ import io.minio.MinioClient;
 import java.io.ByteArrayInputStream;
 import java.io.Serializable;
 
+@FnFeature(FlowFeature.class)
 public class ThumbnailsFunction implements Serializable {
 
     private final String storageUrl;

@@ -1,0 +1,10 @@
+schema_version: 20180708
+name: flowallfeatures
+version: 0.0.15
+runtime: java
+cmd: com.fnproject.fn.integration.ExerciseEverything::handleRequest
+format: http-stream
+timeout: 120
+build:
+- mvn package dependency:copy-dependencies -DincludeScope=runtime -DskipTests=true
+  -Dmdep.prependGroupId=true -DoutputDirectory=target

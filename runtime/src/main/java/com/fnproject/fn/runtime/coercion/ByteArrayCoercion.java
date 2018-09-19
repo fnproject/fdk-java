@@ -13,7 +13,7 @@ import java.util.Optional;
 public class ByteArrayCoercion implements InputCoercion<byte[]>, OutputCoercion {
     public Optional<OutputEvent> wrapFunctionResult(InvocationContext ctx, MethodWrapper method, Object value) {
         if (method.getReturnType().getParameterClass().equals(byte[].class)) {
-            return Optional.of(OutputEvent.fromBytes(((byte[]) value), OutputEvent.SUCCESS, "application/octet-stream"));
+            return Optional.of(OutputEvent.fromBytes(((byte[]) value), OutputEvent.Status.Success, "application/octet-stream"));
         } else {
             return Optional.empty();
         }

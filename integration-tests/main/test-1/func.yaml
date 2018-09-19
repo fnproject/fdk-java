@@ -1,6 +1,0 @@
-name: test-1
-version: 0.0.5
-runtime: java
-cmd: com.fnproject.fn.integration.test_1.CompleterFunction::handleRequest
-format: http
-timeout: 120

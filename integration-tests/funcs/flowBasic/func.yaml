@@ -1,0 +1,7 @@
+schema_version: 20180708
+name: flowbasic
+version: 0.0.7
+runtime: java
+cmd: com.fnproject.fn.integration.test_1.CompleterFunction::handleRequest
+format: http-stream
+timeout: 120

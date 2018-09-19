@@ -2,17 +2,24 @@ version: 2
 jobs:
   build:
     working_directory: ~/fn-java-fdk
-    machine:
-      java:
-        version: oraclejdk8
+    machine: true
     environment:
       # store_artifacts doesn't shell substitute so the variable
       # definitions are duplicated in those steps too.
       FDK_ARTIFACT_DIR: /tmp/artifacts/fdk
       TEST_ARTIFACT_DIR: /tmp/artifacts/tests
-      STAGING_DIR: /tmp/staging-repository
+      REPOSITORY_LOCATION: /tmp/staging_repo
     steps:
       - checkout
+      - run:
+         name: Update Docker to latest
+         command: ./.circleci/install-docker.sh
+      - run:
+          name: Install fn binary (as it is needed for the integration tests)
+          command: ./.circleci/install-fn.sh
+      - run:
+          name: Install junit-merge
+          command: npm install -g junit-merge
       - run:
            name: Set release to latest branch version
            command: |
@@ -22,83 +29,22 @@ jobs:
            name: Determine the release version
            command: ./.circleci/update-versions.sh
       - run:
-          name: Build and deploy locally
+          name: Build and Test FDK
           command: |
-            rm -rf $STAGING_DIR
-            mkdir -p $STAGING_DIR
-            mvn deploy -DaltDeploymentRepository=localStagingDir::default::file://"$STAGING_DIR"
-      - store_test_results:
-          path: runtime/target/surefire-reports
-      - store_test_results:
-          path: testing/target/surefire-reports
-
+               export FN_FDK_VERSION=$(cat ./release.version)
+               ./build.sh
       - run:
-          name: Copy FDK artifacts to upload folder
+          name: Run integration tests
           command: |
-            mkdir -p "$FDK_ARTIFACT_DIR"
-            cp -a api/target/*.jar "$FDK_ARTIFACT_DIR"
-            cp -a runtime/target/*.jar "$FDK_ARTIFACT_DIR"
-      - store_artifacts:
-          name: Upload FDK artifacts
-          path: /tmp/artifacts/fdk
-
-      - run:
-         name: Update Docker to latest
-         command: ./.circleci/install-docker.sh
-
+              export FN_JAVA_FDK_VERSION=$(cat release.version)
+              ./integration-tests/run_tests_ci.sh
+          timeout: 1200
       - run:
          name: Login to Docker
          command: |
            if [[ "${CIRCLE_BRANCH}" == "master" && -z "${CIRCLE_PR_REPONAME}" ]]; then
                docker login -u $DOCKER_USER -p $DOCKER_PASS
            fi
-
-      - run:
-          name: Build fn-java-fdk Docker build image
-          command: |
-            cd build-image
-            ./docker-build.sh -t fnproject/fn-java-fdk-build:$(cat ../release.version) .
-
-      - run:
-          name: Build fn-java-fdk-jdk9 Docker build image
-          command: |
-            cd build-image
-            ./docker-build.sh -f Dockerfile-jdk9 -t fnproject/fn-java-fdk-build:jdk9-$(cat ../release.version) .
-      - run:
-          name: Build fn-java-fdk Docker runtime image
-          command: |
-            cd runtime
-            docker build -t fnproject/fn-java-fdk:$(cat ../release.version) .
-
-      - run:
-          name: Build fn-java-fdk-jdk9 Docker runtime image
-          command: |
-            cd runtime
-            docker build -f Dockerfile-jdk9 -t fnproject/fn-java-fdk:jdk9-$(cat ../release.version) .
-
-      - run:
-          name: Install fn binary (as it is needed for the integration tests)
-          command: ./.circleci/install-fn.sh
-
-      - run:
-          name: Run integration tests
-          command: REPOSITORY_LOCATION="$STAGING_DIR" FN_JAVA_FDK_VERSION=$(cat release.version) ./integration-tests/run-local.sh
-          timeout: 1200
-
-      - run:
-          name: Copy integration test results to test artifact dir
-          command: |
-            mkdir -p "$TEST_ARTIFACT_DIR"
-            for test_dir in ./integration-tests/main/test-*; do
-              test_name="$(basename "$test_dir")"
-              mkdir "${TEST_ARTIFACT_DIR}/${test_name}"
-              cp -a $(find "$test_dir" -maxdepth 1 -type f) "${TEST_ARTIFACT_DIR}/${test_name}"
-            done
-            find "${TEST_ARTIFACT_DIR}"
-          when: always
-      - store_artifacts:
-          name: Upload integration test results to artifacts
-          path: /tmp/artifacts/tests
       - deploy:
           name: Release new version
           command: |
@@ -108,4 +54,12 @@ jobs:
               git branch --set-upstream-to=origin/${CIRCLE_BRANCH} ${CIRCLE_BRANCH}
               ./.circleci/release.sh
             fi
+      - run:
+           name: Gather test results
+           when: always
+           command:  |
+              junit-merge $(find . -wholename "*/target/surefire-reports/*.xml") --createDir -o test_results/merged_results.xml
+      - store_test_results:
+          when: always
+          path: test_results
 

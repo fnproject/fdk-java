@@ -54,21 +54,21 @@ public class ErrorMessagesTest {
 
     @Test
     public void userFunctionInputCoercionError(){
-        fn.givenDefaultEvent().withBody("This is not a...").enqueue();
+        fn.givenEvent().withBody("This is not a...").enqueue();
         fn.thenRun(ErrorMessages.OtherMethodsClass.class, "takesAnInteger");
         assertIsEntrypointErrorWithStacktrace("An exception was thrown during Input Coercion: Failed to coerce event to user function parameter type class java.lang.Integer");
     }
 
     @Test
     public void objectConstructionThrowsARuntimeException(){
-        fn.givenDefaultEvent().enqueue();
+        fn.givenEvent().enqueue();
         fn.thenRun(StacktraceFilteringTestFunctions.ExceptionInConstructor.class, "invoke");
         assertIsEntrypointErrorWithStacktrace("Whoops");
     }
 
     @Test
     public void objectConstructionThrowsADeepException(){
-        fn.givenDefaultEvent().enqueue();
+        fn.givenEvent().enqueue();
         fn.thenRun(StacktraceFilteringTestFunctions.DeepExceptionInConstructor.class, "invoke");
         assertIsEntrypointErrorWithStacktrace("Inside a method called by the constructor");
         assertThat(fn.getStdErrAsString()).contains("at not.in.com.fnproject.fn.StacktraceFilteringTestFunctions$DeepExceptionInConstructor.naughtyMethod");
@@ -77,7 +77,7 @@ public class ErrorMessagesTest {
 
     @Test
     public void objectConstructionThrowsANestedException(){
-        fn.givenDefaultEvent().enqueue();
+        fn.givenEvent().enqueue();
         fn.thenRun(StacktraceFilteringTestFunctions.NestedExceptionInConstructor.class, "invoke");
         assertIsEntrypointErrorWithStacktrace("Caused by: java.lang.RuntimeException: Oh no!");
         assertThat(fn.getStdErrAsString()).contains("at not.in.com.fnproject.fn.StacktraceFilteringTestFunctions$NestedExceptionInConstructor.naughtyMethod");
@@ -88,14 +88,14 @@ public class ErrorMessagesTest {
 
     @Test
     public void fnConfigurationThrowsARuntimeException(){
-        fn.givenDefaultEvent().enqueue();
+        fn.givenEvent().enqueue();
         fn.thenRun(StacktraceFilteringTestFunctions.ExceptionInConfiguration.class, "invoke");
         assertIsEntrypointErrorWithStacktrace("Caused by: java.lang.RuntimeException: Config fail");
     }
 
     @Test
     public void fnConfigurationThrowsADeepException(){
-        fn.givenDefaultEvent().enqueue();
+        fn.givenEvent().enqueue();
         fn.thenRun(StacktraceFilteringTestFunctions.DeepExceptionInConfiguration.class, "invoke");
         assertIsEntrypointErrorWithStacktrace("Caused by: java.lang.RuntimeException: Deep config fail");
         assertThat(fn.getStdErrAsString()).contains("at not.in.com.fnproject.fn.StacktraceFilteringTestFunctions$DeepExceptionInConfiguration.throwDeep");
@@ -104,7 +104,7 @@ public class ErrorMessagesTest {
 
     @Test
     public void fnConfigurationThrowsANestedException(){
-        fn.givenDefaultEvent().enqueue();
+        fn.givenEvent().enqueue();
         fn.thenRun(StacktraceFilteringTestFunctions.NestedExceptionInConfiguration.class, "invoke");
         assertIsEntrypointErrorWithStacktrace("Error invoking configuration method: config");
         assertThat(fn.getStdErrAsString()).contains("Caused by: java.lang.RuntimeException: nested at 3");
@@ -116,7 +116,7 @@ public class ErrorMessagesTest {
 
     @Test
     public void functionThrowsNestedException(){
-        fn.givenDefaultEvent().enqueue();
+        fn.givenEvent().enqueue();
         fn.thenRun(StacktraceFilteringTestFunctions.CauseStackTraceInResult.class, "invoke");
         assertIsFunctionErrorWithStacktrace("An error occurred in function: Throw two");
         assertThat(fn.getStdErrAsString()).contains("Caused by: java.lang.RuntimeException: Throw two");

@@ -13,6 +13,20 @@ import java.util.Optional;
  * of a function; they will not change between multiple invocations of a hot function.
  */
 public interface RuntimeContext {
+
+
+    /**
+     * The application ID of the application associated with this function
+     * @return an application ID
+     */
+    String getAppID();
+
+    /**
+     * THe function ID of the function
+     * @return a function ID
+     */
+    String getFunctionID();
+
     /**
      * Create an instance of the user specified class on which the target function to invoke is declared.
      *
@@ -77,7 +91,7 @@ public interface RuntimeContext {
      *
      * @param targetMethod The user function method
      * @param param        The index of the parameter
-     * @return  a list of configured input coercions to apply to the given parameter
+     * @return a list of configured input coercions to apply to the given parameter
      */
     List<InputCoercion> getInputCoercions(MethodWrapper targetMethod, int param);
 
@@ -105,7 +119,21 @@ public interface RuntimeContext {
      * Set an {@link FunctionInvoker} for this function. The invoker will override
      * the built in function invoker, although the cloud threads invoker will still
      * have precedence so that cloud threads can be used from functions using custom invokers.
+     *
      * @param invoker The {@link FunctionInvoker} to add.
+     * @deprecated  this is equivalent to {@link #addInvoker(FunctionInvoker, FunctionInvoker.Phase)}  with a phase of {@link FunctionInvoker.Phase#Call}
      */
-    void setInvoker(FunctionInvoker invoker);
+    default void setInvoker(FunctionInvoker invoker) {
+        addInvoker(invoker, FunctionInvoker.Phase.Call);
+    }
+
+
+    /**
+     * Adds an FunctionInvoker handler to the runtime - new FunctionInvokers are added at the head of the specific phase they apply to so ordering may be important
+     *
+     *
+     * @param invoker an invoker to use to handle a given call
+     * @param phase the phase at which to add the invoke
+     */
+    void addInvoker(FunctionInvoker invoker, FunctionInvoker.Phase phase);
 }

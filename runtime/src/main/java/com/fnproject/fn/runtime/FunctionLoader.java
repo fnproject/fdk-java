@@ -20,6 +20,8 @@ public class FunctionLoader {
      */
     public MethodWrapper loadClass(String className, String fnName) {
         Class<?> targetClass = loadClass(className);
+
+
         return new DefaultMethodWrapper(targetClass, getTargetMethod(targetClass, fnName));
     }
 

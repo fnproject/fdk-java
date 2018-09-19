@@ -1,29 +1,25 @@
 package com.fnproject.fn.runtime;
 
 
-import org.apache.commons.io.IOUtils;
+import com.fnproject.fn.api.Headers;
+import com.fnproject.fn.api.InputEvent;
+import com.fnproject.fn.api.OutputEvent;
 import org.apache.commons.io.output.TeeOutputStream;
-import org.apache.http.HttpResponse;
-import org.apache.http.NoHttpResponseException;
-import org.apache.http.impl.io.ContentLengthInputStream;
-import org.apache.http.impl.io.DefaultHttpResponseParser;
-import org.apache.http.impl.io.HttpTransportMetricsImpl;
-import org.apache.http.impl.io.SessionInputBufferImpl;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
 import java.io.*;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 /**
- * Function testing harness - this provides the call-side of iron functions' process contract for both HTTP and default type functions
+ * Function internal testing harness - this provides access the call-side of the functions contract excluding the codec which is mocked
  */
 public class FnTestHarness implements TestRule {
-    private Map<String,String> vars = new HashMap<>();
-    private boolean hasEvents = false;
-    private InputStream pendingInput = new ByteArrayInputStream(new byte[0]);
-    private ByteArrayOutputStream stdOut = new ByteArrayOutputStream();
+    private List<InputEvent> pendingInput = Collections.synchronizedList(new ArrayList<>());
+    private List<TestOutput> output = Collections.synchronizedList(new ArrayList<>());
     private ByteArrayOutputStream stdErr = new ByteArrayOutputStream();
     private int exitStatus = -1;
 
@@ -46,25 +42,28 @@ public class FnTestHarness implements TestRule {
     /**
      * Gets a function config variable by key, or null if absent
      *
-     * @param key   the configuration key
+     * @param key the configuration key
      */
     public String getConfig(String key) {
         return config.get(key.toUpperCase().replaceAll("[- ]", "_"));
     }
 
+    public String getOnlyOutputAsString() {
+        if (output.size() != 1) {
+            throw new IllegalStateException("expecting exactly one result, got " + output.size());
+        }
+        return new String(output.get(0).getBody());
+    }
+
     /**
      * Builds a mocked input event into the function runtime
      */
-    public abstract class EventBuilder {
-        protected String method = "GET";
-        protected String appName = "appName";
-        protected String route = "/route";
-        protected String requestUrl = "http://example.com/r/appName/route";
-        protected InputStream body = new ByteArrayInputStream(new byte[0]);
-        protected int contentLength = 0;
-        protected String contentType = null;
-
-        protected Map<String, String> headers = new HashMap<>();
+    public final class EventBuilder {
+        InputStream body = new ByteArrayInputStream(new byte[0]);
+        String contentType = null;
+        String callID = "callID";
+        Instant deadline = Instant.now().plus(1, ChronoUnit.HOURS);
+        Headers headers = Headers.emptyHeaders();
 
         /**
          * Add a header to the input
@@ -76,14 +75,15 @@ public class FnTestHarness implements TestRule {
         public EventBuilder withHeader(String key, String value) {
             Objects.requireNonNull(key, "key");
             Objects.requireNonNull(value, "value");
-            headers.put(key, value);
+            headers = headers.addHeader(key, value);
             return this;
         }
 
         /**
          * Add a series of headers to the input
          * This may override duplicate headers
-         * @param headers  Map of headers to add
+         *
+         * @param headers Map of headers to add
          */
         public EventBuilder withHeaders(Map<String, String> headers) {
             headers.forEach(this::withHeader);
@@ -94,21 +94,11 @@ public class FnTestHarness implements TestRule {
          * Set the body of the request by providing an InputStream
          *
          * @param body the bytes of the body
-         * @param contentLength how long the body is supposed to be
          */
-        public EventBuilder withBody(InputStream body, int contentLength) {
+        public EventBuilder withBody(InputStream body) {
             Objects.requireNonNull(body, "body");
-            if (contentLength < 0) {
-                throw new IllegalArgumentException("Invalid contentLength");
-            }
-            // This is for safety. Because we concatenate events, an input stream shorter than content length will cause
-            // the implementation to continue reading through to the next http request. We need to avoid a sort of
-            // buffer overrun.
-            // FIXME: Make InputStream handling simpler.
-            SessionInputBufferImpl sib = new SessionInputBufferImpl(new HttpTransportMetricsImpl(), 65535);
-            sib.bind(body);
-            this.body = new ContentLengthInputStream(sib, contentLength);
-            this.contentLength = contentLength;
+
+            this.body = body;
             return this;
         }
 
@@ -119,7 +109,7 @@ public class FnTestHarness implements TestRule {
          */
         public EventBuilder withBody(byte[] body) {
             Objects.requireNonNull(body, "body");
-            return withBody(new ByteArrayInputStream(body), body.length);
+            return withBody(new ByteArrayInputStream(body));
         }
 
         /**
@@ -132,60 +122,6 @@ public class FnTestHarness implements TestRule {
             return withBody(stringAsBytes);
         }
 
-        /**
-         * Set the body of the request from a stream
-         * @param contentStream  the content of the body
-         */
-        public EventBuilder withBody(InputStream contentStream) throws IOException {
-            return withBody(IOUtils.toByteArray(contentStream));
-        }
-
-        /**
-         * Set the fn route associated with the call
-         *
-         * @param route the route
-         */
-        public EventBuilder withRoute(String route) {
-            Objects.requireNonNull(route, "route");
-            this.route = route;
-            return this;
-        }
-
-        /**
-         * Set the HTTP method of the incoming request
-         *
-         * @param method an HTTP method
-         * @return
-         */
-        public EventBuilder withMethod(String method) {
-            Objects.requireNonNull(method, "method");
-            this.method = method.toUpperCase();
-            return this;
-        }
-
-        /**
-         * Set the app name the incoming event
-         *
-         * @param appName the app name
-         * @return
-         */
-        public EventBuilder withAppName(String appName) {
-            Objects.requireNonNull(appName, "appName");
-            this.appName = appName;
-            return this;
-        }
-
-        /**
-         * Set the request URL of the incoming event
-         *
-         * @param requestUrl the request URL
-         * @return
-         */
-        public EventBuilder withRequestUrl(String requestUrl) {
-            Objects.requireNonNull(requestUrl, "requestUrl");
-            this.requestUrl = requestUrl;
-            return this;
-        }
 
         /**
          * Prepare an event for the configured codec - this sets appropriate environment variable in the Env mock and StdIn mocks.
@@ -193,55 +129,54 @@ public class FnTestHarness implements TestRule {
          *
          * @throws IllegalStateException If the the codec only supports one event and an event has already been enqueued.
          */
-        public abstract void enqueue();
+        public void enqueue() {
+            InputEvent event = new ReadOnceInputEvent(body, headers, callID, deadline);
+            pendingInput.add(event);
+
+        }
 
         Map<String, String> commonEnv() {
-            Map<String, String> env = new HashMap<>();
-            env.putAll(config);
-            headers.forEach((k, v) -> {
-                env.put("FN_HEADER_" + k.toUpperCase().replaceAll("-", "_"), v);
-            });
-            env.put("FN_METHOD", method);
-            env.put("FN_APP_NAME", appName);
-            env.put("FN_PATH", route);
-            env.put("FN_REQUEST_URL", requestUrl);
+            Map<String, String> env = new HashMap<>(config);
+            env.put("FN_APP_ID", "appID");
+            env.put("FN_FN_ID", "fnID");
+
             return env;
         }
     }
 
-    private final class HttpEventBuilder extends EventBuilder {
+    static class TestOutput implements OutputEvent {
+        private final OutputEvent from;
+        byte[] body;
+
+        TestOutput(OutputEvent from) throws IOException {
+            this.from = from;
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            from.writeToOutput(bos);
+            body = bos.toByteArray();
+        }
+
         @Override
-        public void enqueue() {
-            StringBuilder inputString = new StringBuilder();
-            // Only set env for first event.
-            if (!hasEvents) {
-                commonEnv().forEach(vars::put);
-                vars.put("FN_FORMAT", "http");
-            }
-            inputString.append(method);
-            inputString.append(" / HTTP/1.1\r\n");
-            inputString.append("Fn_App_name: ").append(appName).append("\r\n");
-            inputString.append("Fn_Method: ").append(method).append("\r\n");
-            inputString.append("Fn_Path: ").append(route).append("\r\n");
-            inputString.append("Fn_Request_url: ").append(requestUrl).append("\r\n");
-            if (contentType != null) {
-                inputString.append("Content-Type: ").append(contentType).append("\r\n");
-            }
+        public Status getStatus() {
+            return from.getStatus();
+        }
 
-            inputString.append("Content-length: ").append(Integer.toString(contentLength)).append("\r\n");
-            headers.forEach((k, v) -> {
-                inputString.append(k).append(": ").append(v).append("\r\n");
-            });
+        @Override
+        public Optional<String> getContentType() {
+            return from.getContentType();
+        }
 
-            // added to the http request as headers to mimic the behaviour of `functions` but should NOT be used as config
-            config.forEach((k, v) -> {
-                inputString.append(k).append(": ").append(v).append("\r\n");
-            });
-            inputString.append("\r\n");
+        @Override
+        public Headers getHeaders() {
+            return from.getHeaders();
+        }
 
-            pendingInput = new SequenceInputStream(pendingInput, new ByteArrayInputStream(inputString.toString().getBytes()));
-            pendingInput = new SequenceInputStream(pendingInput, body);
-            hasEvents = true;
+        @Override
+        public void writeToOutput(OutputStream out) throws IOException {
+            out.write(body);
+        }
+
+        public byte[] getBody() {
+            return body;
         }
     }
 
@@ -255,6 +190,27 @@ public class FnTestHarness implements TestRule {
         thenRun(cls.getName(), method);
     }
 
+    static class TestCodec implements EventCodec {
+        private final List<InputEvent> input;
+        private final List<TestOutput> output;
+
+        TestCodec(List<InputEvent> input, List<TestOutput> output) {
+            this.input = input;
+            this.output = output;
+        }
+
+        @Override
+        public void runCodec(Handler h) {
+            for (InputEvent in : input) {
+                try {
+                    output.add(new TestOutput(h.handle(in)));
+                } catch (IOException e) {
+                    throw new RuntimeException("Unexpected exception in test", e);
+                }
+            }
+        }
+    }
+
     /**
      * Runs the function runtime with the specified  class and method
      *
@@ -266,17 +222,21 @@ public class FnTestHarness implements TestRule {
         PrintStream oldSystemOut = System.out;
         PrintStream oldSystemErr = System.err;
         try {
-            PrintStream functionOut = new PrintStream(stdOut);
             PrintStream functionErr = new PrintStream(new TeeOutputStream(stdErr, oldSystemErr));
             System.setOut(functionErr);
             System.setErr(functionErr);
+
+            Map<String,String> fnConfig = new HashMap<>(config);
+            fnConfig.put("FN_APP_ID","appID");
+            fnConfig.put("FN_FORMAT","http-stream");
+            fnConfig.put("FN_FN_ID","fnID");
+
+
             exitStatus = new EntryPoint().run(
-                    vars,
-                    pendingInput,
-                    functionOut,
-                    functionErr,
-                    cls + "::" + method);
-            stdOut.flush();
+              fnConfig,
+              new TestCodec(pendingInput, output),
+              functionErr,
+              cls + "::" + method);
             stdErr.flush();
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -305,7 +265,7 @@ public class FnTestHarness implements TestRule {
      * @return a new event builder.
      */
     public EventBuilder givenEvent() {
-        return new HttpEventBuilder();
+        return new EventBuilder();
     }
 
 
@@ -334,117 +294,10 @@ public class FnTestHarness implements TestRule {
      *
      * @return the bytes returned by the function runtime;
      */
-    public byte[] getStdOut() {
-        return stdOut.toByteArray();
+    public List<TestOutput> getOutputs() {
+        return output;
     }
 
-    /**
-     * Get the output produced by the runtime as a string.
-     * <p>
-     * For Hot functions this will include the HTTP envelope  with (possibly) multiple messages
-     *
-     * @return a string representation of the function output
-     */
-    public String getStdOutAsString() {
-        return new String(stdOut.toByteArray());
-    }
-
-
-    /**
-     * A simple abstraction for a parsed HTTP response returned by a hot function
-     */
-    public interface ParsedHttpResponse {
-        /**
-         * Return the body of the function result as a byte array
-         *
-         * @return the function response body
-         */
-        byte[] getBodyAsBytes();
-
-        /**
-         * return the body of the function response as a string
-         *
-         * @return a function response body
-         */
-        String getBodyAsString();
-
-        /**
-         * A map of he headers returned by the function
-         * <p>
-         * These are squashed so duplicated headers will be ignored (takes the first header)
-         *
-         * @return a map of headers
-         */
-        Map<String, String> getHeaders();
-
-        /**
-         * @return the HTTP status code returned by the function
-         */
-        int getStatus();
-    }
-
-    /**
-     * Parses any pending HTTP responses on the functions stdout stream
-     *
-     * @return a list of Parsed HTTP responses from the function runtime output;
-     */
-    public List<ParsedHttpResponse> getParsedHttpResponses() {
-        return getParsedHttpResponses(stdOut.toByteArray());
-    }
-
-    public static List<ParsedHttpResponse> getParsedHttpResponses(byte[] streamAsBytes) {
-
-        SessionInputBufferImpl sib = new SessionInputBufferImpl(new HttpTransportMetricsImpl(), 65535);
-        ByteArrayInputStream parseStream = new ByteArrayInputStream(streamAsBytes);
-        sib.bind(parseStream);
-
-        DefaultHttpResponseParser parser = new DefaultHttpResponseParser(sib);
-        List<ParsedHttpResponse> responses = new ArrayList<>();
-
-        while (true) {
-            try {
-                HttpResponse response = parser.parse();
-                ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                ContentLengthInputStream cis = new ContentLengthInputStream(sib, Long.parseLong(response.getFirstHeader("Content-length").getValue()));
-
-                IOUtils.copy(cis, bos);
-                cis.close();
-                byte[] body = bos.toByteArray();
-                ParsedHttpResponse r = new ParsedHttpResponse() {
-                    @Override
-                    public byte[] getBodyAsBytes() {
-                        return body;
-                    }
-
-                    @Override
-                    public String getBodyAsString() {
-                        return new String(body);
-                    }
-
-                    @Override
-                    public Map<String, String> getHeaders() {
-                        Map<String, String> headers = new HashMap<>();
-                        Arrays.stream(response.getAllHeaders()).forEach((h) -> {
-                            headers.put(h.getName(), h.getValue());
-                        });
-                        return headers;
-                    }
-
-                    @Override
-                    public int getStatus() {
-                        return response.getStatusLine().getStatusCode();
-                    }
-                };
-                responses.add(r);
-            } catch (NoHttpResponseException e) {
-                break;
-            } catch (Exception e) {
-                throw new RuntimeException("Invalid HTTP response", e);
-            }
-        }
-        return responses;
-
-    }
 
     @Override
     public Statement apply(Statement base, Description description) {
@@ -452,34 +305,5 @@ public class FnTestHarness implements TestRule {
 
     }
 
-    private final class DefaultEventBuilder extends EventBuilder {
-        boolean sent = false;
-
-        @Override
-        public void enqueue() {
-            if (sent) {
-                throw new IllegalStateException("Cannot enqueue multiple default events ");
-            }
-            pendingInput = body;
-            sent = true;
-            commonEnv().forEach(vars::put);
-        }
-    }
-
-    /**
-     * mock a default event (Input and stdOut encoded as stdin/stdout)
-     *
-     * @return a new event builder.
-     */
-    public EventBuilder givenDefaultEvent() {
-        return new DefaultEventBuilder();
-    }
-
-    /**
-     * mock an http event
-     */
-    public EventBuilder givenHttpEvent() {
-        return new HttpEventBuilder();
-    }
 
 }

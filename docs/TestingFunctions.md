@@ -16,7 +16,7 @@ To import the testing library add the following dependency to your Maven project
 <dependency>
     <groupId>com.fnproject.fn</groupId>
     <artifactId>testing</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>${fdk.version}</version>
     <scope>test</scope>
 </dependency>
 ```
@@ -155,9 +155,33 @@ You can test that this is all handled correctly as follows:
 
 # Testing Fn Flows
 
-You can use `FnTestingRule` to test [Fn Flows](FnFlowsUserGuide.md) within your functions.  If flow stages are started by functions within `thenRun` then the testing rule will execute the stages of those flows locally, returning when all spawned flows are complete. 
+You can use `FlowTesting` to test [Fn Flows](FnFlowsUserGuide.md) within your functions.  If flow stages are started by functions within `thenRun` then the testing rule will execute the stages of those flows locally, returning when all spawned flows are complete. 
 
-`FnTestingRule` supports  mocking  the behaviour of Fn functions invoked by the  `invokeFunction()` API within flows. 
+Start by importing the `flow-testing` library into your functino in `test` scope: 
+
+```xml
+<dependency>
+    <groupId>com.fnproject.fn</groupId>
+    <artifactId>flow-testing</artifactId>
+    <version>${fdk.version}</version>
+    <scope>test</scope>
+</dependency>
+```
+
+Then create a `FlowTesting` field in your test class, passing the `FnTesting` rule as a parameter: 
+
+```java
+import com.fnproject.fn.testing.FnTestingRule; 
+import com.fnproject.fn.testing.flow.FlowTesting; 
+
+public class FunctionTest {
+  @Rule
+  public final FnTestingRule testing = FnTestingRule.createDefault();
+
+  private final FlowTesting flowTesting = FlowTesting.create(testing);
+```
+
+`FlowTesting` supports  mocking  the behaviour of Fn functions invoked by the  `invokeFunction()` API within flows. 
 
 You can specify that the invocation a function returns a valid value (as a byte array):
 
@@ -165,7 +189,7 @@ You can specify that the invocation a function returns a valid value (as a byte 
   @Test
   public void callsRemoteFunctionWhichSucceeds() {
 
-    testing.givenFn("example/other-function").withResult("blah".getBytes());
+    flowTesting.givenFn("example/other-function").withResult("blah".getBytes());
 
     // ...
 
@@ -178,8 +202,8 @@ Or you can specify that the invocation a function will cause a user error or a p
   @Test
   public void callsRemoteFunctionWhichCausesAnError() {
 
-    testing.givenFn("example/other-function").withFunctionError();
-    testing.givenFn("example/other-function-2").withPlatformError();
+    flowTesting.givenFn("example/other-function").withFunctionError();
+    flowTesting.givenFn("example/other-function-2").withPlatformError();
 
     // ...
 
@@ -196,7 +220,7 @@ used to check some behavior:
   @Test
   public void callsRemoteFunction() {
 
-    testing.givenFn("example/other-function").withAction( (data) -> { called.set(true); return data; } );
+    flowTesting.givenFn("example/other-function").withAction( (data) -> { called.set(true); return data; } );
 
     called.set(false);
 
@@ -221,7 +245,7 @@ If you need to share objects or static data between your test classes and your f
 ```java
     testing.addSharedClass(MyClassWithStaticState.class); // Shares only the specific class
     testing.addSharedPrefix("com.example.MyClassWithStaticState"); // Shares the class and anything under it
-    testing.addSharedPrefix("com.example.mysubpackage."); // Shares anyhting under a package
+    testing.addSharedPrefix("com.example.mysubpackage."); // Shares anything under a package
 ```
 
 While it is possible, it is not generally correct to share the function class itself with the test Class Loader - doing so may result in unexpected (not representative of the real fn platform) initialisation of static fields on the class. With Flows sharing the test class may also result in concurrent access to static data (via `@FnConfiguration` methods). 

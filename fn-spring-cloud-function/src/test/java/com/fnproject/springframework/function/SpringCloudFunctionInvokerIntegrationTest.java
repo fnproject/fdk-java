@@ -65,7 +65,7 @@ public class SpringCloudFunctionInvokerIntegrationTest {
 
         int exitCode = fnRule.getLastExitCode();
 
-        assertThat(exitCode).isEqualTo(2);
+        assertThat(exitCode).isEqualTo(1);
         assertThat(fnRule.getResults()).isEmpty(); // fails at init so no results.
         assertThat(fnRule.getStdErrAsString()).contains("No Spring Cloud Function found");
     }
@@ -78,7 +78,7 @@ public class SpringCloudFunctionInvokerIntegrationTest {
 
         int exitCode = fnRule.getLastExitCode();
 
-        assertThat(exitCode).isEqualTo(2);
+        assertThat(exitCode).isEqualTo(1);
         assertThat(fnRule.getResults()).isEmpty(); // fails at init so no results.
         assertThat(fnRule.getStdErrAsString()).contains("No Spring Cloud Function found");
     }

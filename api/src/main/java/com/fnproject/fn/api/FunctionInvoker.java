@@ -7,6 +7,22 @@ import java.util.Optional;
  */
 public interface FunctionInvoker {
     /**
+     * Phase determines a loose ordering for invocation handler processing
+     * this should be used with {@link RuntimeContext#addInvoker(FunctionInvoker, Phase)} to add new invoke handlers to a runtime
+     */
+    enum Phase {
+        /**
+         * The Pre-Call phase runs before the main function call, all {@link FunctionInvoker} handlers added at this phase are tried prior to calling the {@link Phase#Call} phase
+         * This phase is typically used for handlers that /may/ intercept the request based on request attributes
+         */
+        PreCall,
+        /**
+         * The Call Phase indicates invokers that should handle call values - typically a given runtime will only be handled by one of these
+         */
+        Call
+    }
+
+    /**
      * Optionally handles an invocation chain for this function
      * <p>
      * If the invoker returns an empty option then no action has been taken and another invoker may attempt to tryInvoke

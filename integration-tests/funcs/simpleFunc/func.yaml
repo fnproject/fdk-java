@@ -1,0 +1,6 @@
+schema_version: 20180708
+name: simplefunc
+version: 0.0.3
+runtime: java9
+cmd: com.fnproject.fn.integration.test2.PlainFunction::handleRequest
+format: http-stream

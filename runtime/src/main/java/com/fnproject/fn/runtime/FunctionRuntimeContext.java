@@ -6,7 +6,6 @@ import com.fnproject.fn.api.exception.FunctionInputHandlingException;
 import com.fnproject.fn.runtime.coercion.*;
 import com.fnproject.fn.runtime.coercion.jackson.JacksonCoercion;
 import com.fnproject.fn.runtime.exception.FunctionClassInstantiationException;
-import com.fnproject.fn.runtime.flow.FlowContinuationInvoker;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
@@ -20,6 +19,7 @@ public class FunctionRuntimeContext implements RuntimeContext {
     private final Map<String, String> config;
     private final MethodWrapper method;
     private Map<String, Object> attributes = new HashMap<>();
+    private List<FunctionInvoker> preCallHandlers = new ArrayList<>();
     private List<FunctionInvoker> configuredInvokers = new ArrayList<>();
 
     private Object instance;
@@ -32,7 +32,17 @@ public class FunctionRuntimeContext implements RuntimeContext {
     public FunctionRuntimeContext(MethodWrapper method, Map<String, String> config) {
         this.method = method;
         this.config = Objects.requireNonNull(config);
-        configuredInvokers.addAll(Arrays.asList(new FlowContinuationInvoker(), new MethodFunctionInvoker()));
+        configuredInvokers.add(new MethodFunctionInvoker());
+    }
+
+    @Override
+    public String getAppID() {
+        return config.getOrDefault("FN_APP_ID","");
+    }
+
+    @Override
+    public String getFunctionID() {
+        return config.getOrDefault("FN_FN_ID","");
     }
 
     @Override
@@ -49,7 +59,7 @@ public class FunctionRuntimeContext implements RuntimeContext {
                             if (RuntimeContext.class.isAssignableFrom(ctor.getParameterTypes()[0])) {
                                 instance = ctor.newInstance(FunctionRuntimeContext.this);
                             } else {
-                                if ( getMethod().getTargetClass().getEnclosingClass() != null && ! Modifier.isStatic(getMethod().getTargetClass().getModifiers()) ) {
+                                if (getMethod().getTargetClass().getEnclosingClass() != null && !Modifier.isStatic(getMethod().getTargetClass().getModifiers())) {
                                     throw new FunctionClassInstantiationException("The function " + getMethod().getTargetClass() + " cannot be instantiated as it is a non-static inner class");
                                 } else {
                                     throw new FunctionClassInstantiationException("The function " + getMethod().getTargetClass() + " cannot be instantiated as its constructor takes an unrecognized argument of type " + constructors[0].getParameterTypes()[0] + ". Function classes should have a single public constructor that takes either no arguments or a RuntimeContext argument");
@@ -111,8 +121,8 @@ public class FunctionRuntimeContext implements RuntimeContext {
     public List<InputCoercion> getInputCoercions(MethodWrapper targetMethod, int param) {
         Annotation parameterAnnotations[] = targetMethod.getTargetMethod().getParameterAnnotations()[param];
         Optional<Annotation> coercionAnnotation = Arrays.stream(parameterAnnotations)
-                .filter((ann) -> ann.annotationType().equals(InputBinding.class))
-                .findFirst();
+           .filter((ann) -> ann.annotationType().equals(InputBinding.class))
+           .findFirst();
         if (coercionAnnotation.isPresent()) {
             try {
                 List<InputCoercion> coercionList = new ArrayList<InputCoercion>();
@@ -134,9 +144,19 @@ public class FunctionRuntimeContext implements RuntimeContext {
         userOutputCoercions.add(Objects.requireNonNull(oc));
     }
 
+
     @Override
-    public void setInvoker(FunctionInvoker invoker) {
-        configuredInvokers.add(1, invoker);
+    public void addInvoker(FunctionInvoker invoker, FunctionInvoker.Phase phase) {
+        switch (phase) {
+            case PreCall:
+                preCallHandlers.add(0, invoker);
+                break;
+            case Call:
+                configuredInvokers.add(0, invoker);
+                break;
+            default:
+                throw new IllegalArgumentException("Unsupported phase " + phase);
+        }
     }
 
     @Override
@@ -150,11 +170,19 @@ public class FunctionRuntimeContext implements RuntimeContext {
 
     public OutputEvent tryInvoke(InputEvent evt, InvocationContext entryPoint) {
         OutputEvent output = null;
+        for (FunctionInvoker invoker : preCallHandlers) {
+            Optional<OutputEvent> result = invoker.tryInvoke(entryPoint, evt);
+            if (result.isPresent()) {
+                output = result.get();
+                return output;
+            }
+        }
+
         for (FunctionInvoker invoker : configuredInvokers) {
             Optional<OutputEvent> result = invoker.tryInvoke(entryPoint, evt);
             if (result.isPresent()) {
                 output = result.get();
-                break;
+                return output;
             }
         }
         return output;

@@ -1,9 +1,0 @@
-version: 0.0.13
-runtime: java
-cmd: com.fnproject.fn.integration.ExerciseEverything::handleRequest
-build:
-- mvn package dependency:copy-dependencies -DincludeScope=runtime -DskipTests=true
-  -Dmdep.prependGroupId=true -DoutputDirectory=target
-format: http
-timeout: 120
-name: test-4
