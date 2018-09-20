@@ -62,11 +62,11 @@ meth public abstract java.lang.String getCallID()
 meth public abstract java.time.Instant getDeadline()
 
 CLSS public abstract interface com.fnproject.fn.api.InvocationContext
+meth public abstract !varargs void setResponseHeader(java.lang.String,java.lang.String,java.lang.String[])
 meth public abstract com.fnproject.fn.api.Headers getRequestHeaders()
 meth public abstract com.fnproject.fn.api.RuntimeContext getRuntimeContext()
 meth public abstract void addListener(com.fnproject.fn.api.InvocationListener)
 meth public abstract void addResponseHeader(java.lang.String,java.lang.String)
-meth public abstract void setResponseHeader(java.lang.String,java.lang.String)
 meth public void setResponseContentType(java.lang.String)
 
 CLSS public abstract interface com.fnproject.fn.api.InvocationListener

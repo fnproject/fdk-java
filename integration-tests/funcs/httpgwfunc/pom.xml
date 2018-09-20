@@ -15,12 +15,6 @@
         <repository>
             <id>fn-release-repo</id>
             <url>https://dl.bintray.com/fnproject/fnproject</url>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
         </repository>
     </repositories>
 
