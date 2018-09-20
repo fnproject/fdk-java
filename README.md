@@ -61,7 +61,7 @@ runtime: java
 cmd: com.example.fn.HelloFunction::handleRequest
 ```
 
-The `cmd` field determines which method is called when your funciton is
+The `cmd` field determines which method is called when your function is
 invoked. In the generated Function, the `func.yaml` references
 `com.example.fn.HelloFunction::handleRequest`. Your functions will likely live
 in different classes, and this field should always point to the method to
