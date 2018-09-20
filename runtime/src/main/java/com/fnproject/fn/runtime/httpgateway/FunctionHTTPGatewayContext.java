@@ -2,6 +2,7 @@ package com.fnproject.fn.runtime.httpgateway;
 
 import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.InvocationContext;
+import com.fnproject.fn.api.OutputEvent;
 import com.fnproject.fn.api.QueryParameters;
 import com.fnproject.fn.api.httpgateway.HTTPGatewayContext;
 
@@ -86,8 +87,16 @@ public class FunctionHTTPGatewayContext implements HTTPGatewayContext {
     }
 
     @Override
-    public void setResponseHeader(String key, String value) {
-        invocationContext.setResponseHeader("Fn-Http-H-" + key, value);
+    public void setResponseHeader(String key, String value, String... vs) {
+
+        if (Headers.canonicalKey(key).equals(OutputEvent.CONTENT_TYPE_HEADER)) {
+            invocationContext.setResponseContentType(value);
+            invocationContext.setResponseHeader("Fn-Http-H-" + key, value);
+        } else {
+            invocationContext.setResponseHeader("Fn-Http-H-" + key, value, vs);
+
+        }
+
 
     }
 

@@ -31,7 +31,7 @@ public final class FlowContinuationInvoker implements FunctionInvoker {
     public static final String FLOW_ID_HEADER = "Fnproject-FlowId";
 
 
-    public   FlowContinuationInvoker(){
+    FlowContinuationInvoker() {
 
     }
 
@@ -48,7 +48,7 @@ public final class FlowContinuationInvoker implements FunctionInvoker {
         public synchronized CompleterClient getCompleterClient() {
             if (this.completerClient == null) {
                 this.completerClient = new RemoteFlowApiClient(completerBaseUrl + "/v1",
-                   getBlobStoreClient(), new HttpClient());
+                  getBlobStoreClient(), new HttpClient());
             }
             return this.completerClient;
         }
@@ -138,7 +138,7 @@ public final class FlowContinuationInvoker implements FunctionInvoker {
 
                             if (matchingDispatchPattern != null) {
                                 if (matchingDispatchPattern.numArguments() != invokeStageRequest.args.size()) {
-                                    throw new FunctionInputHandlingException("Number of arguments provided ("  + invokeStageRequest.args.size() + ") in .InvokeStageRequest does not match the number required by the function type (" + matchingDispatchPattern.numArguments() + ")");
+                                    throw new FunctionInputHandlingException("Number of arguments provided (" + invokeStageRequest.args.size() + ") in .InvokeStageRequest does not match the number required by the function type (" + matchingDispatchPattern.numArguments() + ")");
                                 }
                             } else {
                                 throw new FunctionInputHandlingException("No functional interface type matches the supplied continuation class");
@@ -207,9 +207,9 @@ public final class FlowContinuationInvoker implements FunctionInvoker {
             APIModel.Datum datum = APIModel.datumFromJava(flowId, ite.getCause(), blobStoreClient);
 
             throw new InternalFunctionInvocationException(
-               "Error invoking flows lambda",
-               ite.getCause(),
-               constructOutputEvent(datum, false)
+              "Error invoking flows lambda",
+              ite.getCause(),
+              constructOutputEvent(datum, false)
             );
         } catch (Exception ex) {
             throw new PlatformException(ex);
@@ -226,6 +226,7 @@ public final class FlowContinuationInvoker implements FunctionInvoker {
      */
     final static class ContinuationOutputEvent implements OutputEvent {
         private final byte[] body;
+        private static final Headers headers = Headers.emptyHeaders().setHeader(OutputEvent.CONTENT_TYPE_HEADER, "application/json");
 
         private ContinuationOutputEvent(boolean success, byte[] body) {
             this.body = body;
@@ -238,18 +239,13 @@ public final class FlowContinuationInvoker implements FunctionInvoker {
 
 
         @Override
-        public Optional<String> getContentType() {
-            return Optional.of("application/json");
-        }
-
-        @Override
         public void writeToOutput(OutputStream out) throws IOException {
             out.write(body);
         }
 
         @Override
         public Headers getHeaders() {
-            return Headers.emptyHeaders();
+            return headers;
         }
     }
 

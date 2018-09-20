@@ -216,7 +216,7 @@ public final class Headers implements Serializable {
 
     /**
      * Returns the header matching the specified key. This matches headers in a case-insensitive way and substitutes
-     * underscore and hyphen characters such that : "CONTENT_TYPE" and "Content-type" are equivalent. If no matching
+     * underscore and hyphen characters such that : "CONTENT_TYPE_HEADER" and "Content-type" are equivalent. If no matching
      * header is found then {@code Optional.empty} is returned.
      * <p>
      * When multiple headers are present then the first value is returned- see { #getAllValues(String key)} to get all values for a header
@@ -229,12 +229,11 @@ public final class Headers implements Serializable {
         Objects.requireNonNull(key, "Key cannot be null");
         String canonKey = canonicalKey(key);
 
-        return headers.entrySet().stream()
-          .filter((e) -> e.getKey()
-            .equals(canonKey))
-          .map(Map.Entry::getValue)
-          .map((v) -> v.get(0))
-          .findFirst();
+        List<String> val = headers.get(canonKey);
+        if (val == null){
+            return Optional.empty();
+        }
+        return Optional.of(val.get(0));
     }
 
     /**
@@ -255,8 +254,13 @@ public final class Headers implements Serializable {
         return headers;
     }
 
+    /**
+     * GetAllValues returns all values for a header or an empty list if the header has no values
+     * @param key the Header key
+     * @return a possibly empty list of values
+     */
     public List<String> getAllValues(String key) {
-        return headers.getOrDefault(key, Collections.emptyList());
+        return headers.getOrDefault(canonicalKey(key), Collections.emptyList());
     }
 
     public int hashCode() {

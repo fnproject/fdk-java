@@ -114,6 +114,7 @@ public class EntryPoint {
 
                         return output.withHeaders(output.getHeaders().setHeaders(fic.getAdditionalResponseHeaders()));
 
+
                     } catch (IOException err) {
                         fic.fireOnFailedInvocation();
                         throw new FunctionInputHandlingException("Error closing function input", err);

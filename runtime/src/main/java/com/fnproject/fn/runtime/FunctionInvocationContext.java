@@ -62,8 +62,10 @@ public class FunctionInvocationContext implements InvocationContext, FunctionInv
     }
 
     @Override
-    public void setResponseHeader(String key, String value) {
+    public void setResponseHeader(String key, String value, String... vs) {
         Objects.requireNonNull(key, "key");
+        Objects.requireNonNull(vs, "vs");
+        Arrays.stream(vs).forEach(v->Objects.requireNonNull(v,"null value in list "));
 
         String cKey = Headers.canonicalKey(key);
         if (value == null) {
