@@ -39,6 +39,12 @@
             <version>${fdk.version}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>com.fnproject.fn</groupId>
+            <artifactId>testing-junit4</artifactId>
+            <version>${fdk.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
     <build>
         <plugins>

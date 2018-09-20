@@ -1,12 +1,11 @@
 package com.fnproject.fn.examples;
 
-import com.fnproject.fn.api.InputEvent;
-import com.fnproject.fn.api.OutputEvent;
 import com.fnproject.fn.api.RuntimeContext;
+import com.fnproject.fn.api.httpgateway.HTTPGatewayContext;
 import net.glxn.qrgen.core.image.ImageType;
 import net.glxn.qrgen.javase.QRCode;
 
-import java.net.MalformedURLException;
+import java.io.ByteArrayOutputStream;
 
 public class QRGen {
     private final String defaultFormat;
@@ -15,19 +14,20 @@ public class QRGen {
         defaultFormat = ctx.getConfigurationByKey("FORMAT").orElse("png");
     }
 
-    public OutputEvent create(InputEvent event) throws MalformedURLException, UnsupportedEncodingException {
-        ImageType type = getFormat(event.getQueryParameters().get("format").orElse(defaultFormat));
+    public byte[] create(HTTPGatewayContext hctx) {
+        ImageType type = getFormat(hctx.getQueryParameters().get("format").orElse(defaultFormat));
         System.err.println("Default format: " + type.toString());
-        String contents = event.getQueryParameters().get("contents").orElseThrow(() -> new RuntimeException("Contents must be provided to the QR code"));
+        String contents = hctx.getQueryParameters().get("contents").orElseThrow(() -> new RuntimeException("Contents must be provided to the QR code"));
 
         ByteArrayOutputStream stream = QRCode.from(contents).to(type).stream();
         System.err.println("Generated QR Code for contents: " + contents);
 
-        return OutputEvent.fromBytes(stream.toByteArray(), OutputEvent.SUCCESS, getMimeType(type));
+        hctx.setResponseHeader("Content-Type", getMimeType(type));
+        return stream.toByteArray();
     }
 
     private ImageType getFormat(String extension) {
-        switch(extension.toLowerCase()) {
+        switch (extension.toLowerCase()) {
             case "png":
                 return ImageType.PNG;
             case "jpg":
@@ -42,8 +42,8 @@ public class QRGen {
         }
     }
 
-   private String getMimeType(ImageType type) {
-        switch(type) {
+    private String getMimeType(ImageType type) {
+        switch (type) {
             case JPG:
                 return "image/jpeg";
             case GIF:
@@ -55,5 +55,5 @@ public class QRGen {
             default:
                 throw new RuntimeException("Invalid ImageType: " + type);
         }
-   }
+    }
 }
