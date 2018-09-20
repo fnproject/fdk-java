@@ -299,6 +299,10 @@ invoked, and to use external configuration variables that you can set up with
 the Fn tool, have a look at the [Function
 Configuration](docs/FunctionConfiguration.md) tutorial.
 
+### Handling HTTP requests 
+
+If your function serves an HTTP trigger you may want to access HTTP details such as request or response headers or the HTTP status , checko ut [Accessing HTTP Information From Functions](docs/HTTPGatewayFunctions.md).
+
 ### Input and output bindings
 
 You have the option of taking more control of how serialization and

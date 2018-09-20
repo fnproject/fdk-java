@@ -5,7 +5,6 @@ import com.fnproject.fn.api.InputEvent;
 import com.fnproject.fn.api.MethodWrapper;
 import com.fnproject.fn.runtime.coercion.jackson.JacksonCoercion;
 import com.fnproject.fn.runtime.testfns.Animal;
-import jdk.internal.util.xml.impl.Input;
 import org.junit.Assert;
 import org.junit.Test;
 
