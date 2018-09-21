@@ -70,12 +70,19 @@ public class FnTestHarness implements TestRule {
          * Duplicate headers will be overwritten
          *
          * @param key   header key
-         * @param value header value
+         * @param v1 header value
+         * @param vs other header values
          */
-        public EventBuilder withHeader(String key, String value) {
+        public EventBuilder withHeader(String key, String v1, String... vs) {
             Objects.requireNonNull(key, "key");
-            Objects.requireNonNull(value, "value");
-            headers = headers.addHeader(key, value);
+            Objects.requireNonNull(v1, "value");
+            Objects.requireNonNull(vs, "vs");
+            Arrays.stream(vs).forEach(v -> Objects.requireNonNull(v, "null value in varags list "));
+            headers = headers.addHeader(key, v1);
+            for (String v : vs) {
+                headers = headers.addHeader(key, v);
+            }
+
             return this;
         }
 
@@ -178,6 +185,24 @@ public class FnTestHarness implements TestRule {
         public byte[] getBody() {
             return body;
         }
+
+        @Override
+        public String toString() {
+            final StringBuffer sb = new StringBuffer("TestOutput{");
+            sb.append("body=");
+            if (body == null) sb.append("null");
+            else {
+                sb.append('[');
+                for (int i = 0; i < body.length; ++i)
+                    sb.append(i == 0 ? "" : ", ").append(body[i]);
+                sb.append(']');
+            }
+            sb.append(", status=").append(getStatus());
+            sb.append(", contentType=").append(getContentType());
+            sb.append(", headers=").append(getHeaders());
+            sb.append('}');
+            return sb.toString();
+        }
     }
 
     /**
@@ -226,10 +251,10 @@ public class FnTestHarness implements TestRule {
             System.setOut(functionErr);
             System.setErr(functionErr);
 
-            Map<String,String> fnConfig = new HashMap<>(config);
-            fnConfig.put("FN_APP_ID","appID");
-            fnConfig.put("FN_FORMAT","http-stream");
-            fnConfig.put("FN_FN_ID","fnID");
+            Map<String, String> fnConfig = new HashMap<>(config);
+            fnConfig.put("FN_APP_ID", "appID");
+            fnConfig.put("FN_FORMAT", "http-stream");
+            fnConfig.put("FN_FN_ID", "fnID");
 
 
             exitStatus = new EntryPoint().run(

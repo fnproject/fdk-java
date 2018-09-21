@@ -11,6 +11,8 @@ import java.util.Optional;
  */
 public interface OutputEvent {
 
+    String CONTENT_TYPE_HEADER = "Content-Type";
+
     /**
      * The outcome status of this function event
      * This determines how the platform will reflect this error to the customer and how it will treat the container after an error
@@ -46,7 +48,6 @@ public interface OutputEvent {
     }
 
 
-
     /**
      * Report the outcome status code of this event.
      *
@@ -71,7 +72,9 @@ public interface OutputEvent {
      *
      * @return The name of the content type.
      */
-    Optional<String> getContentType();
+    default Optional<String> getContentType(){
+        return getHeaders().get(CONTENT_TYPE_HEADER);
+    }
 
     /**
      * Any additional {@link Headers} that should be supplied along with the content
@@ -92,6 +95,34 @@ public interface OutputEvent {
 
 
     /**
+     * Creates a new output event based on this one with the headers overriding
+     * @param headers the headers use in place of this event
+     * @return a new output event with these set
+     */
+    default OutputEvent withHeaders(Headers headers) {
+        Objects.requireNonNull(headers, "headers");
+
+        OutputEvent a = this;
+        return new OutputEvent() {
+
+            @Override
+            public Status getStatus() {
+                return a.getStatus();
+            }
+
+            @Override
+            public Headers getHeaders() {
+                return headers;
+            }
+
+            @Override
+            public void writeToOutput(OutputStream out) throws IOException {
+                a.writeToOutput(out);
+            }
+        };
+    }
+
+    /**
      * Create an output event from a byte array
      *
      * @param bytes       the byte array to write to the output
@@ -108,7 +139,7 @@ public interface OutputEvent {
      *
      * @param bytes       the byte array to write to the output
      * @param status      the status code of this event
-     * @param contentType the content type to present on HTTP responses
+     * @param contentType the content type to present on HTTP responses or null
      * @param headers     any additional headers to supply with HTTP responses
      * @return a new output event
      */
@@ -117,6 +148,7 @@ public interface OutputEvent {
         Objects.requireNonNull(status, "status");
         Objects.requireNonNull(headers, "headers");
 
+        final Headers newHeaders = contentType== null?Headers.emptyHeaders():headers.setHeader("Content-Type",contentType);
         return new OutputEvent() {
 
             @Override
@@ -124,14 +156,10 @@ public interface OutputEvent {
                 return status;
             }
 
-            @Override
-            public Optional<String> getContentType() {
-                return Optional.ofNullable(contentType);
-            }
 
             @Override
             public Headers getHeaders() {
-                return headers;
+                return newHeaders;
             }
 
             @Override
@@ -141,6 +169,11 @@ public interface OutputEvent {
         };
     }
 
+    /**
+     * Returns an output event with an empty body and a given status
+     * @param status the status of the event
+     * @return a new output event
+     */
     static OutputEvent emptyResult(final Status status) {
         Objects.requireNonNull(status, "status");
 
@@ -148,11 +181,6 @@ public interface OutputEvent {
             @Override
             public Status getStatus() {
                 return status;
-            }
-
-            @Override
-            public Optional<String> getContentType() {
-                return Optional.empty();
             }
 
             @Override

@@ -553,7 +553,7 @@ public class FlowsContinuationInvokerTest {
 
 
         public InputEventBuilder withHeader(String name, String value) {
-            this.headers = headers.setHeader(name,value);
+            this.headers = headers.setHeader(name, value);
             return this;
         }
 
@@ -564,7 +564,7 @@ public class FlowsContinuationInvokerTest {
         public InputEvent build() {
             return new ReadOnceInputEvent(
               body,
-              headers, "callID",Instant.now());
+              headers, "callID", Instant.now());
         }
     }
 
@@ -652,6 +652,22 @@ public class FlowsContinuationInvokerTest {
 
         @Override
         public void addListener(InvocationListener listener) {
+        }
+
+        @Override
+        public Headers getRequestHeaders() {
+            return Headers.emptyHeaders();
+        }
+
+
+        @Override
+        public void addResponseHeader(String key, String value) {
+
+        }
+
+        @Override
+        public void setResponseHeader(String key, String value, String... vs) {
+
         }
 
     }

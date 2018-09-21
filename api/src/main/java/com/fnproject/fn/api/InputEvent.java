@@ -3,7 +3,6 @@ package com.fnproject.fn.api;
 import java.io.Closeable;
 import java.io.InputStream;
 import java.time.Instant;
-import java.util.Date;
 import java.util.function.Function;
 
 public interface InputEvent extends Closeable {

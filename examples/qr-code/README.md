@@ -54,21 +54,22 @@ of the example function. The body of the function is shown below:
 
 
 ```java
-public OutputEvent create(InputEvent event) throws MalformedURLException, UnsupportedEncodingException {
-    String decodedUrl = URLDecoder.decode(event.getRequestUrl(), "utf-8");
-    QueryParameters params = getParams(decodedUrl);
-    ImageType type = getFormat(params.getFirst("format").orElse("png"));
-    String contents = params.getFirst("contents").orElse("");
 
-    ByteArrayOutputStream stream = QRCode.from(contents).to(type).stream();
-    System.err.println("Generated QR Code for contents: " + contents);
-    return OutputEvent.fromBytes(stream.toByteArray(), true, getMimeType(type));
-}
+    public byte[] create(HTTPGatewayContext hctx) {
+        ImageType type = getFormat(hctx.getQueryParameters().get("format").orElse(defaultFormat));
+        System.err.println("Default format: " + type.toString());
+        String contents = hctx.getQueryParameters().get("contents").orElseThrow(() -> new RuntimeException("Contents must be provided to the QR code"));
+
+        ByteArrayOutputStream stream = QRCode.from(contents).to(type).stream();
+        System.err.println("Generated QR Code for contents: " + contents);
+
+        hctx.setResponseHeader("Content-Type", getMimeType(type));
+        return stream.toByteArray();
+    }
+
 ```
 
-The fn Java FDK facilitates access to the internal events representing the
-invocation of the function, `InputEvent`, and response of the function,
-`OutputEvent`, for more fine grained control of the platform. See
+The fn Java FDK facilitates access to the HTTP context of events triggered from HTTP gateways via `HTTPGatewayContext` , and response of the function as a bye array, for more fine grained control of the platform. See
 [Data Binding](/docs/DataBinding.md) for further information on the types
 of input that the fn Java FDK provides.
 
@@ -116,17 +117,17 @@ this to handle invocations of functions and retrieving function results
 
 ```java
 ...
-    @Test
-    public void textHelloWorld() throws Exception {
-        fn.givenEvent()
-                .withRequestUrl("http://www.example.com/qr?contents=" + URLEncoder.encode("hello world", "utf-8"))
-                .withMethod("GET")
-                .enqueue();
-        fn.thenRun(QRGen.class, "create");
-
-        assertArrayEquals(readTestFile("qr-code-text-hello-world.png"), fn.getOnlyResult().getBodyAsBytes());
-    }
-...
+  @Test
+     public void textHelloWorld() throws Exception {
+         String content = "hello world";
+         fn.givenEvent()
+           .withHeader("Fn-Http-Request-Url", "http://www.example.com/qr?contents=hello+world&format=png")
+           .withHeader("Fn-Http-Method","GET")
+           .enqueue();
+         fn.thenRun(QRGen.class, "create");
+ 
+         assertEquals(content, decode(fn.getOnlyResult().getBodyAsBytes()));
+     }
 ```
 
 Input events are constructed using `fn.givenEvent()` providing an `FnEventBuilder`

@@ -1,0 +1,10 @@
+schema_version: 20180708
+name: httpgwfunc
+version: 0.0.1
+runtime: java
+cmd: com.example.fn.TriggerFunction::handleRequest
+format: http-stream
+triggers:
+- name: trig
+  type: http
+  source: /httpgwfunc-trigger

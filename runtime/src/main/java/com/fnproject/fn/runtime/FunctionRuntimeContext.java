@@ -24,7 +24,7 @@ public class FunctionRuntimeContext implements RuntimeContext {
 
     private Object instance;
 
-    private final List<InputCoercion> builtinInputCoercions = Arrays.asList(new StringCoercion(), new ByteArrayCoercion(), new InputEventCoercion(), JacksonCoercion.instance());
+    private final List<InputCoercion> builtinInputCoercions = Arrays.asList(new ContextCoercion(), new StringCoercion(), new ByteArrayCoercion(), new InputEventCoercion(), JacksonCoercion.instance());
     private final List<InputCoercion> userInputCoercions = new LinkedList<>();
     private final List<OutputCoercion> builtinOutputCoercions = Arrays.asList(new StringCoercion(), new ByteArrayCoercion(), new VoidCoercion(), new OutputEventCoercion(), JacksonCoercion.instance());
     private final List<OutputCoercion> userOutputCoercions = new LinkedList<>();
@@ -37,12 +37,12 @@ public class FunctionRuntimeContext implements RuntimeContext {
 
     @Override
     public String getAppID() {
-        return config.getOrDefault("FN_APP_ID","");
+        return config.getOrDefault("FN_APP_ID", "");
     }
 
     @Override
     public String getFunctionID() {
-        return config.getOrDefault("FN_FN_ID","");
+        return config.getOrDefault("FN_FN_ID", "");
     }
 
     @Override
@@ -121,8 +121,8 @@ public class FunctionRuntimeContext implements RuntimeContext {
     public List<InputCoercion> getInputCoercions(MethodWrapper targetMethod, int param) {
         Annotation parameterAnnotations[] = targetMethod.getTargetMethod().getParameterAnnotations()[param];
         Optional<Annotation> coercionAnnotation = Arrays.stream(parameterAnnotations)
-           .filter((ann) -> ann.annotationType().equals(InputBinding.class))
-           .findFirst();
+          .filter((ann) -> ann.annotationType().equals(InputBinding.class))
+          .findFirst();
         if (coercionAnnotation.isPresent()) {
             try {
                 List<InputCoercion> coercionList = new ArrayList<InputCoercion>();
@@ -164,8 +164,8 @@ public class FunctionRuntimeContext implements RuntimeContext {
         return method;
     }
 
-    public FunctionInvocationContext newInvocationContext() {
-        return new FunctionInvocationContext(this);
+    public FunctionInvocationContext newInvocationContext(InputEvent inputEvent) {
+        return new FunctionInvocationContext(this, inputEvent);
     }
 
     public OutputEvent tryInvoke(InputEvent evt, InvocationContext entryPoint) {
