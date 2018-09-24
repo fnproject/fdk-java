@@ -52,8 +52,8 @@ public class HTTPStreamCodecTest {
             f = File.createTempFile("socket", ".sock");
             f.delete();
             f.deleteOnExit();
-        } catch (IOException ignored) {
-            throw new RuntimeException("Error creating socket file");
+        } catch (IOException e) {
+            throw new RuntimeException("Error creating socket file",e);
         }
 
         return f;

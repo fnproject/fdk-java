@@ -1,6 +1,7 @@
 package com.fnproject.fn.runtime;
 
 
+import com.fasterxml.jackson.core.io.CharTypes;
 import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.InputEvent;
 import com.fnproject.fn.api.OutputEvent;
@@ -56,6 +57,7 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
     private static final Set<String> stripOutputHeaders;
     private final CompletableFuture<Boolean> stopped = new CompletableFuture<>();
     private final UnixServerSocket socket;
+
 
     static {
         Set<String> hin = new HashSet<>();
@@ -134,6 +136,27 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
 
     }
 
+
+    private String jsonError(String message, String detail) {
+        if (message == null) {
+            message = "";
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("{ \"message\":\"");
+        CharTypes.appendQuoted(sb, message);
+        sb.append("\"");
+
+        if (detail != null) {
+            sb.append(", \"detail\":\"");
+            CharTypes.appendQuoted(sb, detail);
+            sb.append("\"");
+        }
+
+        sb.append("}");
+        return sb.toString();
+    }
+
     @Override
     public void runCodec(Handler h) {
 
@@ -144,7 +167,7 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
                 evt = readEvent(request);
             } catch (FunctionInputHandlingException e) {
                 response.setStatusCode(500);
-                response.setEntity(new StringEntity("{\"message\":\"Invalid input from function\",\"detail\":\"" + e.getMessage() + "\"}", ContentType.APPLICATION_JSON));
+                response.setEntity(new StringEntity(jsonError("Invalid input for function",  e.getMessage()), ContentType.APPLICATION_JSON));
                 return;
             }
 
@@ -154,7 +177,7 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
                 outEvt = h.handle(evt);
             } catch (Exception e) {
                 response.setStatusCode(500);
-                response.setEntity(new StringEntity("{\"message\":\"Unhandled internal error in FDK\"}", ContentType.APPLICATION_JSON));
+                response.setEntity(new StringEntity(jsonError("Unhandled internal error in FDK",e.getMessage()), ContentType.APPLICATION_JSON));
                 return;
             }
 
@@ -163,7 +186,7 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
             } catch (Exception e) {
                 // TODO strange edge cases might appear with headers where the response is half written here
                 response.setStatusCode(500);
-                response.setEntity(new StringEntity("{\"message\":\"Unhandled internal error while generating response FDK\"}", ContentType.APPLICATION_JSON));
+                response.setEntity(new StringEntity(jsonError("Unhandled internal error while writing FDK response",e.getMessage()), ContentType.APPLICATION_JSON));
             }
         }
         ));
