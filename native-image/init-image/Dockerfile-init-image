@@ -1,0 +1,11 @@
+FROM alpine:latest
+LABEL maintainer="tomas.zezula@oracle.com"
+WORKDIR /build
+COPY src src
+COPY pom.xml .
+COPY func.init.yaml .
+COPY Dockerfile .
+RUN tar cf /init.tar src pom.xml func.init.yaml Dockerfile
+WORKDIR /
+RUN rm -rf /build
+CMD ["cat", "/init.tar"]
