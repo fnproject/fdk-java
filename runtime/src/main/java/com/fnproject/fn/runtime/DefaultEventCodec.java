@@ -28,7 +28,7 @@ class DefaultEventCodec implements EventCodec {
     private final InputStream in;
     private final OutputStream out;
 
-    public DefaultEventCodec(Map<String, String> env, InputStream in, OutputStream out) {
+    DefaultEventCodec(Map<String, String> env, InputStream in, OutputStream out) {
         this.env = env;
         this.in = in;
         this.out = out;
@@ -43,7 +43,7 @@ class DefaultEventCodec implements EventCodec {
         return val;
     }
 
-    protected InputEvent readEvent() {
+    InputEvent readEvent() {
         String callId = env.getOrDefault("FN_CALL_ID", "");
         String deadline = env.get("FN_DEADLINE");
         Instant deadlineDate;
@@ -70,7 +70,7 @@ class DefaultEventCodec implements EventCodec {
     }
 
 
-    protected void writeEvent(OutputEvent evt) {
+    void writeEvent(OutputEvent evt) {
         try {
             evt.writeToOutput(out);
         } catch (IOException e) {

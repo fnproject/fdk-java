@@ -84,7 +84,6 @@ public final class UnixSocket extends Socket {
 
         }
 
-        // Thes are overridden specifically
         @Override
         public void setOption(int optID, Object value) throws SocketException {
             throw new UnsupportedOperationException();

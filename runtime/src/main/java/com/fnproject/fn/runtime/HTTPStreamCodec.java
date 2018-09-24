@@ -97,7 +97,7 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
      *
      * @param env an env map
      */
-    public HTTPStreamCodec(Map<String, String> env) {
+    HTTPStreamCodec(Map<String, String> env) {
         this.env = Objects.requireNonNull(env, "env");
         String listenerAddress = getRequiredEnv(FN_LISTENER);
 
@@ -174,40 +174,42 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
         try {
 
             while (!stopping.get()) {
-                UnixSocket sock;
-                try {
-                    sock = socket.accept(100);
+                try (UnixSocket sock = socket.accept(100)) {
                     if (sock == null) {
+                        // timeout during accept, try again
                         continue;
                     }
                     // TODO tweak these properly
                     sock.setSendBufferSize(65535);
                     sock.setReceiveBufferSize(65535);
 
+
+                    if (stopping.get()) {
+                        // ignore IO errors on stop
+                        return;
+                    }
+                    try {
+                        DefaultBHttpServerConnection con = new DefaultBHttpServerConnection(65535);
+                        con.bind(sock);
+                        while (!sock.isClosed()) {
+                            try {
+                                svc.handleRequest(con, new BasicHttpContext());
+                            } catch (HttpException e) {
+                                sock.close();
+                                throw e;
+                            }
+                        }
+                    } catch (HttpException | IOException e) {
+                        System.err.println("FDK Got Exception while handling HTTP request" + e.getMessage());
+                        e.printStackTrace();
+
+                    }
                 } catch (IOException e) {
                     if (stopping.get()) {
                         // ignore IO errors on stop
                         return;
                     }
                     throw new FunctionIOException("failed to accept connection from platform, terminating", e);
-                }
-                try {
-                    DefaultBHttpServerConnection con = new DefaultBHttpServerConnection(65535);
-                    con.bind(sock);
-                    while (!sock.isClosed()) {
-                        try {
-                            svc.handleRequest(con, new BasicHttpContext());
-                        } catch (Exception ignored) {
-                            sock.close();
-                        }
-                    }
-                } catch (IOException ignored) {
-                    // TODO should log here?
-                } finally {
-                    try {
-                        sock.close();
-                    } catch (IOException ignored) {
-                    }
                 }
 
             }
@@ -230,7 +232,7 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
     private static String getRequiredHeader(HttpRequest request, String headerName) {
         Header header = request.getFirstHeader(headerName);
         if (header == null) {
-            throw new FunctionInputHandlingException("Required FDK header variable " + headerName + " is not set, check you are using the latest functinos and FDK versions");
+            throw new FunctionInputHandlingException("Required FDK header variable " + headerName + " is not set, check you are using the latest fn and FDK versions");
         }
         return header.getValue();
     }

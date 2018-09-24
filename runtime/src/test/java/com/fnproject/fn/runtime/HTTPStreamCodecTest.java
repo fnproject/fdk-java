@@ -40,7 +40,7 @@ public class HTTPStreamCodecTest {
 
 
     @Rule
-    public final Timeout to = new Timeout(60, TimeUnit.SECONDS);
+    public final Timeout to = Timeout.builder().withTimeout(60, TimeUnit.SECONDS).withLookingForStuckThread(true).build();
 
     private static final Map<String, String> defaultEnv;
     private final List<Runnable> cleanups = new ArrayList<>();
@@ -52,7 +52,8 @@ public class HTTPStreamCodecTest {
             f = File.createTempFile("socket", ".sock");
             f.delete();
             f.deleteOnExit();
-        } catch (IOException e) {
+        } catch (IOException ignored) {
+            throw new RuntimeException("Error creating socket file");
         }
 
         return f;
@@ -103,7 +104,7 @@ public class HTTPStreamCodecTest {
     }
 
 
-    public File startCodec(Map<String, String> env, EventCodec.Handler h) {
+    File startCodec(Map<String, String> env, EventCodec.Handler h) {
         Map<String, String> newEnv = new HashMap<>(env);
         File socket = generateSocketFile();
         newEnv.put("FN_LISTENER", "unix:" + socket.getAbsolutePath());
@@ -148,7 +149,7 @@ public class HTTPStreamCodecTest {
         InputEvent evt = lastEvent.get(1, TimeUnit.MILLISECONDS);
         assertThat(evt.getCallID()).isEqualTo("callID");
         assertThat(evt.getDeadline().toEpochMilli()).isEqualTo(1033552800992L);
-        assertThat(evt.getHeaders()).isEqualTo(Headers.emptyHeaders().addHeader("Fn-Call-Id", "callID").addHeader("Fn-Deadline", "2002-10-02T10:00:00.992Z").addHeader("Custom-header", "v1", "v2").addHeader("Content-Type", "text/plain").addHeader("Content-Length","6"));
+        assertThat(evt.getHeaders()).isEqualTo(Headers.emptyHeaders().addHeader("Fn-Call-Id", "callID").addHeader("Fn-Deadline", "2002-10-02T10:00:00.992Z").addHeader("Custom-header", "v1", "v2").addHeader("Content-Type", "text/plain").addHeader("Content-Length", "6"));
 
     }
 
@@ -249,9 +250,7 @@ public class HTTPStreamCodecTest {
         MessageDigest readDigest = MessageDigest.getInstance("SHA-256");
         defaultRequest(client)
           .content(new BytesContentProvider(randomString))
-          .onResponseContent((response, byteBuffer) -> {
-              readDigest.update(byteBuffer);
-          })
+          .onResponseContent((response, byteBuffer) -> readDigest.update(byteBuffer))
           .send(cdl::complete);
         Result r = cdl.get();
         assertThat(r.getResponse().getStatus()).isEqualTo(200);

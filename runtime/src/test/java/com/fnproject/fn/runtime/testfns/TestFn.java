@@ -131,7 +131,7 @@ public class TestFn {
      * Reset the internal (static) state
      * Should be called between runs;
      */
-    public static final void reset() {
+    public static  void reset() {
         input = NOTHING;
         output = NOTHING;
         count = 0;

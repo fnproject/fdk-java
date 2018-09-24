@@ -3,7 +3,7 @@ package com.fnproject.fn.runtime.exception;
 import com.fnproject.fn.api.exception.FunctionLoadException;
 
 /**
- * The function entrypoint was malformed.
+ * The function entry point spec  was malformed.
  */
 public class InvalidEntryPointException extends FunctionLoadException {
     public InvalidEntryPointException(String msg) {
