@@ -15,12 +15,12 @@ import java.util.stream.Stream;
  * Keys are are stored and compared in a case-insensitive way and are canonicalised according to  RFC 7230 conventions such that  :
  *
  * <ul>
- *    <li>a-header</li>
- *    <li>A-Header</li>
- *    <li>A-HeaDer</li>
+ * <li>a-header</li>
+ * <li>A-Header</li>
+ * <li>A-HeaDer</li>
  * </ul>
- *  are all equivalent - keys are returned in the canonical form (lower cased except for leading characters)
- *  Where keys do not comply with HTTP header naming they are left as is.
+ * are all equivalent - keys are returned in the canonical form (lower cased except for leading characters)
+ * Where keys do not comply with HTTP header naming they are left as is.
  */
 public final class Headers implements Serializable {
     private static final Headers emptyHeaders = new Headers(Collections.emptyMap());
@@ -93,6 +93,22 @@ public final class Headers implements Serializable {
         return emptyHeaders;
     }
 
+
+    /**
+     * Sets a map of headers, overwriting any headers in the current headers with the respective values
+     *
+     * @param vals a map of headers
+     * @return a new headers object with thos headers set
+     */
+    public Headers setHeaders(Map<String, List<String>> vals) {
+        Objects.requireNonNull(vals, "vals");
+        Map<String, List<String>> nm = new HashMap<>(headers);
+        vals.forEach((k, vs) -> {
+            vs.forEach(v -> Objects.requireNonNull(v, "header list contains null entries"));
+            nm.put(canonicalKey(k), vs);
+        });
+        return new Headers(nm);
+    }
 
     /**
      * Creates a new headers object with the specified header added - if a  header with the same key existed it the new value is appended
@@ -200,7 +216,7 @@ public final class Headers implements Serializable {
 
     /**
      * Returns the header matching the specified key. This matches headers in a case-insensitive way and substitutes
-     * underscore and hyphen characters such that : "CONTENT_TYPE" and "Content-type" are equivalent. If no matching
+     * underscore and hyphen characters such that : "CONTENT_TYPE_HEADER" and "Content-type" are equivalent. If no matching
      * header is found then {@code Optional.empty} is returned.
      * <p>
      * When multiple headers are present then the first value is returned- see { #getAllValues(String key)} to get all values for a header
@@ -213,12 +229,11 @@ public final class Headers implements Serializable {
         Objects.requireNonNull(key, "Key cannot be null");
         String canonKey = canonicalKey(key);
 
-        return headers.entrySet().stream()
-          .filter((e) -> e.getKey()
-            .equals(canonKey))
-          .map(Map.Entry::getValue)
-          .map((v) -> v.get(0))
-          .findFirst();
+        List<String> val = headers.get(canonKey);
+        if (val == null){
+            return Optional.empty();
+        }
+        return Optional.of(val.get(0));
     }
 
     /**
@@ -239,8 +254,13 @@ public final class Headers implements Serializable {
         return headers;
     }
 
+    /**
+     * GetAllValues returns all values for a header or an empty list if the header has no values
+     * @param key the Header key
+     * @return a possibly empty list of values
+     */
     public List<String> getAllValues(String key) {
-        return headers.getOrDefault(key, Collections.emptyList());
+        return headers.getOrDefault(canonicalKey(key), Collections.emptyList());
     }
 
     public int hashCode() {

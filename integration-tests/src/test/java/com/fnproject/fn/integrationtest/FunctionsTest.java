@@ -1,8 +1,16 @@
 package com.fnproject.fn.integrationtest;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fnproject.fn.integrationtest.IntegrationTestRule.CmdResult;
 import org.junit.Rule;
 import org.junit.Test;
+
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -42,13 +50,55 @@ public class FunctionsTest {
                 IntegrationTestRule.TestContext tc = testRule.newTest();
                 String fnName = "bp" + format + runtime;
 
-                tc.runFn("init", "--runtime", runtime, "--name", fnName,"--format", format);
+                tc.runFn("init", "--runtime", runtime, "--name", fnName, "--format", format);
                 tc.rewritePOM();
                 tc.runFn("--verbose", "deploy", "--app", tc.appName(), "--local");
                 CmdResult rs = tc.runFnWithInput("wibble", "invoke", tc.appName(), fnName);
                 assertThat(rs.getStdout()).contains("Hello, wibble!");
             }
         }
+    }
+
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class InspectResponse {
+
+        public Map<String, String> annotations = new HashMap<>();
+    }
+
+    @Test()
+    public void shouldHandleTrigger() throws Exception {
+        IntegrationTestRule.TestContext tc = testRule.newTest();
+        tc.withDirFrom("funcs/httpgwfunc").rewritePOM();
+
+        tc.runFn("--verbose", "deploy", "--app", tc.appName(), "--local");
+
+        // Get me the trigger URL
+        CmdResult output = tc.runFn("inspect", "trigger", tc.appName(), "httpgwfunc", "trig");
+
+        ObjectMapper om = new ObjectMapper();
+        InspectResponse resp = om.readValue(output.getStdout(), InspectResponse.class);
+        String dest = resp.annotations.get("fnproject.io/trigger/httpEndpoint");
+        assertThat(dest).withFailMessage("Missing trigger endpoint annotation").isNotNull();
+
+        String url = dest + "?q1=a&q2=b";
+        URL invokeURL = URI.create(url).toURL();
+
+        System.out.println("calling " + url);
+        HttpURLConnection con = (HttpURLConnection) invokeURL.openConnection();
+
+        con.setRequestMethod("POST");
+        con.addRequestProperty("Foo","bar");
+
+
+        assertThat(con.getResponseCode()).isEqualTo(202);
+        assertThat(con.getHeaderField("GotMethod")).isEqualTo("POST");
+        assertThat(con.getHeaderField("GotURL")).isEqualTo(url);
+        assertThat(con.getHeaderField("GotHeader")).isEqualTo("bar");
+        assertThat(con.getHeaderField("MyHTTPHeader")).isEqualTo("foo");
+
+
+
     }
 
 }

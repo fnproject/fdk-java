@@ -40,11 +40,7 @@ public class EntryPoint {
         }
 
 
-        int exitCode = new EntryPoint().run(
-          System.getenv(),
-          codec,
-          System.err,
-          args);
+        int exitCode = new EntryPoint().run(System.getenv(), codec, System.err, args);
         System.setOut(originalSystemOut);
         System.exit(exitCode);
     }
@@ -79,22 +75,21 @@ public class EntryPoint {
             FunctionRuntimeContext runtimeContext = new FunctionRuntimeContext(method, configFromEnvVars);
 
             FnFeature[] features = method.getTargetClass().getAnnotationsByType(FnFeature.class);
-            for (FnFeature f : features){
+            for (FnFeature f : features) {
                 RuntimeFeature rf;
-                try{
+                try {
                     Class<? extends RuntimeFeature> featureClass = f.value();
                     rf = featureClass.newInstance();
-                }catch (Exception e){
-                    throw new FunctionInitializationException("Could not load feature class " + f.value().toString() ,e);
+                } catch (Exception e) {
+                    throw new FunctionInitializationException("Could not load feature class " + f.value().toString(), e);
                 }
 
-                try{
+                try {
                     rf.initialize(runtimeContext);
-                }catch (Exception e){
-                    throw new FunctionInitializationException("Exception while calling initialization on runtime feature " +  f.value() ,e);
+                } catch (Exception e) {
+                    throw new FunctionInitializationException("Exception while calling initialization on runtime feature " + f.value(), e);
                 }
             }
-
 
 
             FunctionConfigurer functionConfigurer = new FunctionConfigurer();
@@ -103,7 +98,7 @@ public class EntryPoint {
 
             codec.runCodec((evt) -> {
                 try {
-                    FunctionInvocationContext fic = runtimeContext.newInvocationContext();
+                    FunctionInvocationContext fic = runtimeContext.newInvocationContext(evt);
                     try (InputEvent myEvt = evt) {
                         OutputEvent output = runtimeContext.tryInvoke(evt, fic);
                         if (output == null) {
@@ -116,7 +111,9 @@ public class EntryPoint {
                             lastStatus.set(1);
                             fic.fireOnFailedInvocation();
                         }
-                        return output;
+
+                        return output.withHeaders(output.getHeaders().setHeaders(fic.getAdditionalResponseHeaders()));
+
 
                     } catch (IOException err) {
                         fic.fireOnFailedInvocation();

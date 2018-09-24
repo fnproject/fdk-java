@@ -1,7 +1,10 @@
 package com.fnproject.fn.examples;
 
 import com.fnproject.fn.testing.FnTestingRule;
-import com.google.zxing.*;
+import com.google.zxing.BinaryBitmap;
+import com.google.zxing.ChecksumException;
+import com.google.zxing.FormatException;
+import com.google.zxing.NotFoundException;
 import com.google.zxing.client.j2se.BufferedImageLuminanceSource;
 import com.google.zxing.common.HybridBinarizer;
 import com.google.zxing.qrcode.QRCodeReader;
@@ -23,11 +26,9 @@ public class QRGenTest {
     public void textHelloWorld() throws Exception {
         String content = "hello world";
         fn.givenEvent()
-                .withRequestUrl("http://www.example.com/qr")
-                .withQueryParameter("contents", content)
-                .withQueryParameter("format", "png")
-                .withMethod("GET")
-                .enqueue();
+          .withHeader("Fn-Http-Request-Url", "http://www.example.com/qr?contents=hello+world&format=png")
+          .withHeader("Fn-Http-Method","GET")
+          .enqueue();
         fn.thenRun(QRGen.class, "create");
 
         assertEquals(content, decode(fn.getOnlyResult().getBodyAsBytes()));
@@ -37,10 +38,9 @@ public class QRGenTest {
     public void phoneNumber() throws Exception {
         String telephoneNumber = "tel:0-12345-67890";
         fn.givenEvent()
-                .withRequestUrl("http://www.example.com/qr")
-                .withQueryParameter("contents", telephoneNumber)
-                .withMethod("GET")
-                .enqueue();
+          .withHeader("Fn-Http-Request-Url", "http://www.example.com/qr?contents=tel:0-12345-67890")
+          .withHeader("Fn-Http-Method","GET")
+          .enqueue();
         fn.thenRun(QRGen.class, "create");
 
         assertEquals(telephoneNumber, decode(fn.getOnlyResult().getBodyAsBytes()));
@@ -51,14 +51,14 @@ public class QRGenTest {
         String contents = "hello world";
         fn.setConfig("FORMAT", "jpg");
         fn.givenEvent()
-                .withRequestUrl("http://www.example.com/qr")
-                .withQueryParameter("contents", contents)
-                .withMethod("GET")
-                .enqueue();
+          .withHeader("Fn-Http-Request-Url", "http://www.example.com/qr?contents=hello+world")
+          .withHeader("Fn-Http-Method","GET")
+          .enqueue();
         fn.thenRun(QRGen.class, "create");
 
         assertEquals(contents, decode(fn.getOnlyResult().getBodyAsBytes()));
     }
+
     private String decode(byte[] imageBytes) throws IOException, NotFoundException, ChecksumException, FormatException {
         BinaryBitmap bitmap = readToBitmap(imageBytes);
         return new QRCodeReader().decode(bitmap).getText();

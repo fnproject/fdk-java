@@ -28,7 +28,7 @@ public class JacksonCoercionTest {
 
         MethodWrapper method = new DefaultMethodWrapper(JacksonCoercionTest.class, "testMethod");
         FunctionRuntimeContext frc = new FunctionRuntimeContext(method, new HashMap<>());
-        FunctionInvocationContext invocationContext = new FunctionInvocationContext(frc);
+        FunctionInvocationContext invocationContext = new FunctionInvocationContext(frc,new ReadOnceInputEvent(new ByteArrayInputStream(new byte[0]),Headers.emptyHeaders(),"callID",Instant.now()));
 
         Map<String, String> headers = new HashMap<>();
         headers.put("content-type", "application/json");
@@ -50,7 +50,7 @@ public class JacksonCoercionTest {
 
         MethodWrapper method = new DefaultMethodWrapper(JacksonCoercionTest.class, "testMethod");
         FunctionRuntimeContext frc = new FunctionRuntimeContext(method, new HashMap<>());
-        FunctionInvocationContext invocationContext = new FunctionInvocationContext(frc);
+        FunctionInvocationContext invocationContext = new FunctionInvocationContext(frc,new ReadOnceInputEvent(new ByteArrayInputStream(new byte[0]),Headers.emptyHeaders(),"callID",Instant.now()));
 
         Map<String, String> headers = new HashMap<>();
         headers.put("content-type", "application/json");

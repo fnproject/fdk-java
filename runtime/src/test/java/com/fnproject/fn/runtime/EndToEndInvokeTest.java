@@ -1,5 +1,6 @@
 package com.fnproject.fn.runtime;
 
+import com.fnproject.fn.api.InputEvent;
 import com.fnproject.fn.runtime.testfns.BadTestFnDuplicateMethods;
 import com.fnproject.fn.runtime.testfns.TestFn;
 import org.junit.BeforeClass;
@@ -247,4 +248,35 @@ public class EndToEndInvokeTest {
     }
 
 
+    @Test
+    public void shouldReadInputHeaders() throws Exception{
+        fn.givenEvent()
+          .withHeader("myHeader", "Foo")
+          .withHeader("a-n-header", "b0o","b10")
+          .enqueue();
+        fn.thenRun(TestFn.class, "readRawEvent");
+
+        InputEvent iev = (InputEvent)TestFn.getInput();
+        assertThat(iev).isNotNull();
+        assertThat(iev.getHeaders().getAllValues("Myheader")).contains("Foo");
+        assertThat(iev.getHeaders().getAllValues("A-N-Header")).contains("b0o","b10");
+
+
+    }
+
+    @Test
+    public void shouldExposeOutputHeaders() throws Exception{
+        fn.givenEvent()
+          .enqueue();
+        fn.thenRun(TestFn.class, "setsOutputHeaders");
+
+
+        FnTestHarness.TestOutput to = fn.getOutputs().get(0);
+
+        System.err.println("got response" + to );
+        assertThat(to.getContentType()).contains("foo-ct");
+        assertThat(to.getHeaders().get("Header-1")).contains("v1");
+        assertThat(to.getHeaders().getAllValues("A")).contains("b1","b2");
+
+    }
 }
