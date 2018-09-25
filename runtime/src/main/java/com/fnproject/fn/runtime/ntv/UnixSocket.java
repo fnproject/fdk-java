@@ -311,7 +311,7 @@ public final class UnixSocket extends Socket {
 
     @Override
     public void close() throws IOException {
-        if (!closed.compareAndSet(false, true)) {
+        if (closed.compareAndSet(false, true)) {
             UnixSocketNative.close(fd);
         }
     }

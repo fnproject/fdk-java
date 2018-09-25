@@ -171,6 +171,7 @@ public class HTTPStreamCodecTest {
         assertThat(positive.send().getStatus()).withFailMessage("Expecting req with mandatory headers to pass").isEqualTo(200);
 
         for (String h : headers.keySet()) {
+            System.err.println("Checking header " + h );
             Request r = client.newRequest("http://localhost/call")
               .method("POST");
             headers.forEach((k, v) -> {
@@ -260,7 +261,7 @@ public class HTTPStreamCodecTest {
 
     private byte[] randomBytes(int sz) {
         Random sr = new Random();
-        byte[] part = new byte[1024];
+        byte[] part = new byte[997];
         sr.nextBytes(part);
 
         // Make random ascii for convenience in debugging

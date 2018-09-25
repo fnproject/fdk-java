@@ -385,7 +385,7 @@ Java_com_fnproject_fn_runtime_ntv_UnixSocketNative_send(JNIEnv *jenv, jclass jCl
 #ifdef US_DEBUG
         if(wcount > 0){
             char mybuf[65535];
-            size_t count = wcount;
+            ssize_t count = wcount;
             if (count > 65534){
                 count = 65534;
             }
