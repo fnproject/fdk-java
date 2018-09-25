@@ -181,6 +181,7 @@ public class HTTPStreamCodecTest {
 
 
             ContentResponse resp = r.send();
+
             assertThat(resp.getStatus()).withFailMessage("Expected failure error code for missing header " + h).isEqualTo(500);
 
         }
@@ -261,6 +262,11 @@ public class HTTPStreamCodecTest {
         Random sr = new Random();
         byte[] part = new byte[1024];
         sr.nextBytes(part);
+
+        // Make random ascii for convenience in debugging
+        for(int i = 0 ; i < part.length; i++){
+            part[i] = (byte)((part[i]%26) + 65);
+        }
 
         byte[] randomString = new byte[sz];
         int left = sz;

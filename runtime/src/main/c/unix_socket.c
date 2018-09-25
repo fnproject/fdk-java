@@ -10,6 +10,15 @@
 #include <limits.h>
 #include <sys/stat.h>
 
+#define US_DEBUG 1
+
+#ifdef  US_DEBUG
+#define debuglog(...) fprintf (stderr, __VA_ARGS__)
+#else
+#define debuglog(...)
+
+#endif
+
 /**
  * Throws com.fnproject.fn.runtime.ntv.UnixSocetException, adding strerr(errno) as the second arg if that is set
  * @param jenv  java env
@@ -96,6 +105,7 @@ Java_com_fnproject_fn_runtime_ntv_UnixSocketNative_socket(JNIEnv *jenv, jclass j
         throwIOException(jenv, "Could not create socket");
         return -1;
     }
+    debuglog("got result from socket %d",rv);
 
     return rv;
 }
@@ -126,7 +136,9 @@ Java_com_fnproject_fn_runtime_ntv_UnixSocketNative_bind(JNIEnv *jenv, jclass jCl
     strncpy(addr.sun_path, nativePath, sizeof(addr.sun_path));
     (*jenv)->ReleaseStringUTFChars(jenv, jpath, nativePath);
 
-    if (bind(jsocket, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
+    int rv = bind(jsocket, (struct sockaddr *) &addr, sizeof(addr));
+    debuglog("got result from bind %d,%s\n",rv,strerror(errno));
+    if (rv < 0) {
         throwIOException(jenv, "Error in bind");
         return;
     }
@@ -155,13 +167,14 @@ Java_com_fnproject_fn_runtime_ntv_UnixSocketNative_connect(JNIEnv *jenv, jclass 
 
     strncpy(addr.sun_path, nativePath, sizeof(addr.sun_path));
     (*jenv)->ReleaseStringUTFChars(jenv, jpath, nativePath);
-
-    if (connect(jsocket, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
+    int result = connect(jsocket, (struct sockaddr *) &addr, sizeof(addr));
+    debuglog("%d: got result from connect %d %s\n",jsocket,result,strerror(errno));
+    if (result < 0) {
         if (errno == ETIMEDOUT) {
             throwSocketTimeoutException(jenv, "Socket connect timed out");
             return;
         }
-        throwIOException(jenv, "Error in bind");
+        throwIOException(jenv, "Error in connect");
         return;
     }
 }
@@ -171,7 +184,10 @@ JNIEXPORT void JNICALL
 Java_com_fnproject_fn_runtime_ntv_UnixSocketNative_listen(JNIEnv *jenv, jclass jClass, jint jsocket, jint jbacklog) {
     errno = 0;
 
-    if (listen(jsocket, jbacklog) < 0) {
+    int rv = listen(jsocket, jbacklog);
+    debuglog("got result from listen %d,%s\n",rv,strerror(errno));
+
+    if (rv < 0) {
         throwIOException(jenv, "Error in listen");
         return;
     }
@@ -232,6 +248,8 @@ Java_com_fnproject_fn_runtime_ntv_UnixSocketNative_accept(JNIEnv *jenv, jclass j
         FD_SET(jsocket, &set); /* add our file descriptor to the set */
 
         rv = select(jsocket + 1, &set, NULL, NULL, toPtr);
+        debuglog("XXX %d Got result from select %d : %s\n",jsocket,rv,strerror(errno));
+
     } while (rv == -1 && errno == EINTR);
 
     if (rv < 0) {
@@ -247,6 +265,8 @@ Java_com_fnproject_fn_runtime_ntv_UnixSocketNative_accept(JNIEnv *jenv, jclass j
     int result;
     do {
         result = accept(jsocket, (struct sockaddr *) &addr, &rlen);
+        debuglog("XXX %d Got result from accept %d : %s\n",jsocket, result,strerror(errno));
+
     } while (result == -1 && errno == EINTR);
 
     if (result < 0) {
@@ -294,12 +314,27 @@ Java_com_fnproject_fn_runtime_ntv_UnixSocketNative_recv(JNIEnv *jenv, jclass jCl
 
     do {
         rcount = read(jsocket, &(buf[offset]), (size_t) length);
+        debuglog("XXX %d Got result from read %ld : %s\n",jsocket,rcount,strerror(errno));
+#ifdef US_DEBUG
+        if(rcount > 0){
+            char mybuf[65535];
+            size_t count = rcount;
+            if (count > 65534){
+                count = 65534;
+            }
+            memcpy(mybuf, &(buf[offset]),count);
+            mybuf[count] = 0;
+            debuglog("XXX %d recv %ld %s\n",jsocket,rcount,mybuf);
+        }
+#endif
+
     } while (rcount == -1 && errno == EINTR);
 
     (*jenv)->ReleaseByteArrayElements(jenv, jbuf, buf, 0);
 
 
     if (rcount == 0) {
+        // EOF in c is
         return -1;
     } else if (rcount < 0) {
         if (errno == EAGAIN) {
@@ -346,6 +381,19 @@ Java_com_fnproject_fn_runtime_ntv_UnixSocketNative_send(JNIEnv *jenv, jclass jCl
     ssize_t wcount;
     do {
         wcount = write(jsocket, &(buf[offset]), (size_t) length);
+        debuglog("XXX %d Got result from write %ld : %s\n",jsocket,wcount,strerror(errno));
+#ifdef US_DEBUG
+        if(wcount > 0){
+            char mybuf[65535];
+            size_t count = wcount;
+            if (count > 65534){
+                count = 65534;
+            }
+            memcpy(mybuf, &(buf[offset]),count);
+            mybuf[offset+count] = 0;
+            debuglog("XXX write  %ld %s\n",wcount,mybuf);
+        }
+#endif 
     } while (wcount == -1 && errno == EINTR);
 
 
@@ -373,7 +421,9 @@ JNIEXPORT void JNICALL
 Java_com_fnproject_fn_runtime_ntv_UnixSocketNative_close(JNIEnv *jenv, jclass jClass, jint jsocket) {
     errno = 0;
 
-    if (close(jsocket) < 0) {
+    int rv = close(jsocket);
+    debuglog("XXX %d got result from close %d,%s\n",jsocket,rv,strerror(errno));
+    if (rv < 0) {
         throwIOException(jenv, "Error in closing socket");
         return;
     }
@@ -498,7 +548,7 @@ Java_com_fnproject_fn_runtime_ntv_UnixSocketNative_getRecvTimeout(JNIEnv *jenv, 
 
 // public static native void shutdown(int socket, boolean input, boolean output) ;
 JNIEXPORT void JNICALL
-Java_com_fnproject_fn_runtime_ntv_UnixSocketNative_shutdown(JNIEnv *jenv, jclass jClass, jint socket, jboolean input,
+Java_com_fnproject_fn_runtime_ntv_UnixSocketNative_shutdown(JNIEnv *jenv, jclass jClass, jint jsocket, jboolean input,
                                                             jboolean output) {
     errno = 0;
     int how;
@@ -513,7 +563,9 @@ Java_com_fnproject_fn_runtime_ntv_UnixSocketNative_shutdown(JNIEnv *jenv, jclass
         return;
     }
 
-    int rv = shutdown(socket, how);
+
+    int rv = shutdown(jsocket, how);
+    debuglog("XXX %d got result from shutdown %d  %d,%s\n",jsocket,how,rv,strerror(errno));
     if (rv < 0) {
         throwIOException(jenv, "Failed to shut down socket ");
         return;
