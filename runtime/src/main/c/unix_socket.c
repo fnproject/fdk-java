@@ -323,7 +323,14 @@ Java_com_fnproject_fn_runtime_ntv_UnixSocketNative_recv(JNIEnv *jenv, jclass jCl
                 count = 65534;
             }
             memcpy(mybuf, &(buf[offset]),count);
+
             mybuf[count] = 0;
+            int i;
+            for ( i = 0 ; i < count ; i++){
+                if (mybuf[i] < 32){
+                    mybuf[i] = 32;
+                }
+            }
             debuglog("XXX %d recv %ld %s\n",jsocket,rcount,mybuf);
         }
 #endif
@@ -390,6 +397,12 @@ Java_com_fnproject_fn_runtime_ntv_UnixSocketNative_send(JNIEnv *jenv, jclass jCl
                 count = 65534;
             }
             memcpy(mybuf, &(buf[offset]),count);
+            int i ;
+            for (i = 0 ; i < count ; i++){
+                if (mybuf[i] < 32 ){
+                    mybuf[i] = 32;
+                }
+            }
             mybuf[offset+count] = 0;
             debuglog("XXX write  %ld %s\n",wcount,mybuf);
         }

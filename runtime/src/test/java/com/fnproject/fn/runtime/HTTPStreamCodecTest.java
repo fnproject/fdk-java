@@ -46,7 +46,7 @@ public class HTTPStreamCodecTest {
     private final List<Runnable> cleanups = new ArrayList<>();
 
     private static File generateSocketFile() {
-        File f = null;
+        File f ;
         try {
 
             f = File.createTempFile("socket", ".sock");
