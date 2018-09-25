@@ -48,7 +48,6 @@ public class HTTPStreamCodecTest {
     private static File generateSocketFile() {
         File f ;
         try {
-
             f = File.createTempFile("socket", ".sock");
             f.delete();
             f.deleteOnExit();
@@ -171,7 +170,6 @@ public class HTTPStreamCodecTest {
         assertThat(positive.send().getStatus()).withFailMessage("Expecting req with mandatory headers to pass").isEqualTo(200);
 
         for (String h : headers.keySet()) {
-            System.err.println("Checking header " + h );
             Request r = client.newRequest("http://localhost/call")
               .method("POST");
             headers.forEach((k, v) -> {
@@ -296,9 +294,7 @@ public class HTTPStreamCodecTest {
             ContentResponse resp = defaultRequest(client).send();
 
             assertThat(resp.getStatus()).isEqualTo(s.getCode());
-
         }
-
     }
 
     @Test
@@ -325,7 +321,6 @@ public class HTTPStreamCodecTest {
     @Test
     public void socketShouldHaveCorrectPermissions() throws Exception {
         File listener = startCodec(defaultEnv, (in) -> OutputEvent.fromBytes("hello".getBytes(), OutputEvent.Status.Success, "text/plain", Headers.emptyHeaders()));
-
         assertThat(Files.getPosixFilePermissions(listener.toPath())).isEqualTo(PosixFilePermissions.fromString("rw-rw-rw-"));
 
         cleanup();

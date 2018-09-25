@@ -10,8 +10,6 @@
 #include <limits.h>
 #include <sys/stat.h>
 
-#define US_DEBUG 1
-
 #ifdef  US_DEBUG
 #define debuglog(...) fprintf (stderr, __VA_ARGS__)
 #else
@@ -105,7 +103,7 @@ Java_com_fnproject_fn_runtime_ntv_UnixSocketNative_socket(JNIEnv *jenv, jclass j
         throwIOException(jenv, "Could not create socket");
         return -1;
     }
-    debuglog("got result from socket %d",rv);
+    debuglog("got result from socket %d\n",rv);
 
     return rv;
 }
@@ -225,6 +223,7 @@ Java_com_fnproject_fn_runtime_ntv_UnixSocketNative_accept(JNIEnv *jenv, jclass j
 
 
     do {
+        errno = 0;
 
         if (timeoutMs > 0) {
             struct timeval nowTime, used;
@@ -250,6 +249,9 @@ Java_com_fnproject_fn_runtime_ntv_UnixSocketNative_accept(JNIEnv *jenv, jclass j
         rv = select(jsocket + 1, &set, NULL, NULL, toPtr);
         debuglog("XXX %d Got result from select %d : %s\n",jsocket,rv,strerror(errno));
 
+        if(!FD_ISSET(jsocket,&set)){
+            continue;
+        }
     } while (rv == -1 && errno == EINTR);
 
     if (rv < 0) {
@@ -259,11 +261,12 @@ Java_com_fnproject_fn_runtime_ntv_UnixSocketNative_accept(JNIEnv *jenv, jclass j
         return 0; // timeout
     }
 
-    struct sockaddr_un addr;
-    bzero(&addr, sizeof(struct sockaddr_un));
-    socklen_t rlen;
+
     int result;
     do {
+        struct sockaddr_un addr;
+        bzero(&addr, sizeof(struct sockaddr_un));
+        socklen_t rlen = sizeof(struct sockaddr_un);
         result = accept(jsocket, (struct sockaddr *) &addr, &rlen);
         debuglog("XXX %d Got result from accept %d : %s\n",jsocket, result,strerror(errno));
 
@@ -315,25 +318,6 @@ Java_com_fnproject_fn_runtime_ntv_UnixSocketNative_recv(JNIEnv *jenv, jclass jCl
     do {
         rcount = read(jsocket, &(buf[offset]), (size_t) length);
         debuglog("XXX %d Got result from read %ld : %s\n",jsocket,rcount,strerror(errno));
-#ifdef US_DEBUG
-        if(rcount > 0){
-            char mybuf[65535];
-            size_t count = rcount;
-            if (count > 65534){
-                count = 65534;
-            }
-            memcpy(mybuf, &(buf[offset]),count);
-
-            mybuf[count] = 0;
-            int i;
-            for ( i = 0 ; i < count ; i++){
-                if (mybuf[i] < 32){
-                    mybuf[i] = 32;
-                }
-            }
-            debuglog("XXX %d recv %ld %s\n",jsocket,rcount,mybuf);
-        }
-#endif
 
     } while (rcount == -1 && errno == EINTR);
 
@@ -341,7 +325,7 @@ Java_com_fnproject_fn_runtime_ntv_UnixSocketNative_recv(JNIEnv *jenv, jclass jCl
 
 
     if (rcount == 0) {
-        // EOF in c is
+        // EOF in c is -1 in java
         return -1;
     } else if (rcount < 0) {
         if (errno == EAGAIN) {
@@ -389,24 +373,6 @@ Java_com_fnproject_fn_runtime_ntv_UnixSocketNative_send(JNIEnv *jenv, jclass jCl
     do {
         wcount = write(jsocket, &(buf[offset]), (size_t) length);
         debuglog("XXX %d Got result from write %ld : %s\n",jsocket,wcount,strerror(errno));
-#ifdef US_DEBUG
-        if(wcount > 0){
-            char mybuf[65535];
-            ssize_t count = wcount;
-            if (count > 65534){
-                count = 65534;
-            }
-            memcpy(mybuf, &(buf[offset]),count);
-            int i ;
-            for (i = 0 ; i < count ; i++){
-                if (mybuf[i] < 32 ){
-                    mybuf[i] = 32;
-                }
-            }
-            mybuf[offset+count] = 0;
-            debuglog("XXX write  %ld %s\n",wcount,mybuf);
-        }
-#endif 
     } while (wcount == -1 && errno == EINTR);
 
 
@@ -502,9 +468,11 @@ Java_com_fnproject_fn_runtime_ntv_UnixSocketNative_getSendTimeout(JNIEnv *jenv, 
 
     struct timeval tv;
     bzero(&tv, sizeof(struct timeval));
-    socklen_t len;
+    socklen_t len = sizeof(struct timeval);
 
     int rv = getsockopt(socket, SOL_SOCKET, SO_SNDTIMEO, &tv, &len);
+    debuglog("XXX %d getsockopt _getSendTimeout  rv %dz\n",socket,rv);
+
     if (rv < 0) {
         throwIOException(jenv, "Error setting socket options");
         return -1;
@@ -531,6 +499,7 @@ Java_com_fnproject_fn_runtime_ntv_UnixSocketNative_setRecvTimeout(JNIEnv *jenv, 
     tv.tv_usec = (timeout % 1000) * 1000;
 
     int rv = setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(struct timeval));
+    debuglog("XXX %d setsockopt setRecvTimeout rv %dz\n",socket,rv);
     if (rv < 0) {
         throwIOException(jenv, "Error setting socket options");
         return;
@@ -544,13 +513,18 @@ Java_com_fnproject_fn_runtime_ntv_UnixSocketNative_getRecvTimeout(JNIEnv *jenv, 
 
     struct timeval tv;
     bzero(&tv, sizeof(struct timeval));
-    socklen_t len;
+    socklen_t len = sizeof(struct timeval);
 
     int rv = getsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, &tv, &len);
+    debuglog("XXX %d getsockopt rv %dz\n",socket,rv);
+
     if (rv < 0) {
         throwIOException(jenv, "Error setting socket options");
         return -1;
     }
+
+    debuglog("XXX %d getsockopt _getSendTimeout  rv %dz\n",socket,rv);
+
     time_t msecs = tv.tv_sec * 1000 + tv.tv_usec / 1000;
     if (msecs > INT_MAX) {
         return (jint) INT_MAX;

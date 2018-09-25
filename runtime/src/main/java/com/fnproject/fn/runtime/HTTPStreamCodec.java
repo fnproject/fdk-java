@@ -50,13 +50,14 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
 
     public static final String HTTP_STREAM_FORMAT = "http-stream";
     private static final String FN_LISTENER = "FN_LISTENER";
+    private static final Set<String> stripInputHeaders;
+    private static final Set<String> stripOutputHeaders;
     private final Map<String, String> env;
     private final AtomicBoolean stopping = new AtomicBoolean(false);
     private final File socketFile;
-    private static final Set<String> stripInputHeaders;
-    private static final Set<String> stripOutputHeaders;
     private final CompletableFuture<Boolean> stopped = new CompletableFuture<>();
     private final UnixServerSocket socket;
+    private final File tempFile;
 
 
     static {
@@ -77,7 +78,6 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
         stripOutputHeaders = Collections.unmodifiableSet(hout);
     }
 
-    private final File tempFile;
 
 
     private String randomString() {
@@ -225,7 +225,7 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
                     } catch (HttpException | IOException e) {
                         System.err.println("FDK Got Exception while handling HTTP request" + e.getMessage());
                         e.printStackTrace();
-
+                        // we continue here and leave the container hot
                     }
                 } catch (IOException e) {
                     if (stopping.get()) {
