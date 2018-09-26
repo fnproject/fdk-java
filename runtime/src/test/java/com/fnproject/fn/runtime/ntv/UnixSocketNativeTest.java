@@ -143,10 +143,7 @@ public class UnixSocketNativeTest {
                     UnixSocketNative.listen(ss, 1);
                     ready.countDown();
                     int cs = UnixSocketNative.accept(ss, 0);
-                    if (cs > 0) {
-                        return true;
-                    }
-                    return false;
+                    return cs > 0;
                 } finally {
                     UnixSocketNative.close(ss);
                 }

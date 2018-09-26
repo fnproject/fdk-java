@@ -1,6 +1,7 @@
 package com.fnproject.fn.runtime;
 
 
+import com.fasterxml.jackson.core.io.CharTypes;
 import com.fnproject.fn.api.Headers;
 import com.fnproject.fn.api.InputEvent;
 import com.fnproject.fn.api.OutputEvent;
@@ -49,13 +50,15 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
 
     public static final String HTTP_STREAM_FORMAT = "http-stream";
     private static final String FN_LISTENER = "FN_LISTENER";
+    private static final Set<String> stripInputHeaders;
+    private static final Set<String> stripOutputHeaders;
     private final Map<String, String> env;
     private final AtomicBoolean stopping = new AtomicBoolean(false);
     private final File socketFile;
-    private static final Set<String> stripInputHeaders;
-    private static final Set<String> stripOutputHeaders;
     private final CompletableFuture<Boolean> stopped = new CompletableFuture<>();
     private final UnixServerSocket socket;
+    private final File tempFile;
+
 
     static {
         Set<String> hin = new HashSet<>();
@@ -75,7 +78,6 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
         stripOutputHeaders = Collections.unmodifiableSet(hout);
     }
 
-    private final File tempFile;
 
 
     private String randomString() {
@@ -97,7 +99,7 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
      *
      * @param env an env map
      */
-    public HTTPStreamCodec(Map<String, String> env) {
+    HTTPStreamCodec(Map<String, String> env) {
         this.env = Objects.requireNonNull(env, "env");
         String listenerAddress = getRequiredEnv(FN_LISTENER);
 
@@ -134,6 +136,27 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
 
     }
 
+
+    private String jsonError(String message, String detail) {
+        if (message == null) {
+            message = "";
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("{ \"message\":\"");
+        CharTypes.appendQuoted(sb, message);
+        sb.append("\"");
+
+        if (detail != null) {
+            sb.append(", \"detail\":\"");
+            CharTypes.appendQuoted(sb, detail);
+            sb.append("\"");
+        }
+
+        sb.append("}");
+        return sb.toString();
+    }
+
     @Override
     public void runCodec(Handler h) {
 
@@ -144,7 +167,7 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
                 evt = readEvent(request);
             } catch (FunctionInputHandlingException e) {
                 response.setStatusCode(500);
-                response.setEntity(new StringEntity("{\"message\":\"Invalid input from function\",\"detail\":\"" + e.getMessage() + "\"}", ContentType.APPLICATION_JSON));
+                response.setEntity(new StringEntity(jsonError("Invalid input for function",  e.getMessage()), ContentType.APPLICATION_JSON));
                 return;
             }
 
@@ -154,7 +177,7 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
                 outEvt = h.handle(evt);
             } catch (Exception e) {
                 response.setStatusCode(500);
-                response.setEntity(new StringEntity("{\"message\":\"Unhandled internal error in FDK\"}", ContentType.APPLICATION_JSON));
+                response.setEntity(new StringEntity(jsonError("Unhandled internal error in FDK",e.getMessage()), ContentType.APPLICATION_JSON));
                 return;
             }
 
@@ -163,7 +186,7 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
             } catch (Exception e) {
                 // TODO strange edge cases might appear with headers where the response is half written here
                 response.setStatusCode(500);
-                response.setEntity(new StringEntity("{\"message\":\"Unhandled internal error while generating response FDK\"}", ContentType.APPLICATION_JSON));
+                response.setEntity(new StringEntity(jsonError("Unhandled internal error while writing FDK response",e.getMessage()), ContentType.APPLICATION_JSON));
             }
         }
         ));
@@ -174,40 +197,42 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
         try {
 
             while (!stopping.get()) {
-                UnixSocket sock;
-                try {
-                    sock = socket.accept(100);
+                try (UnixSocket sock = socket.accept(100)) {
                     if (sock == null) {
+                        // timeout during accept, try again
                         continue;
                     }
                     // TODO tweak these properly
                     sock.setSendBufferSize(65535);
                     sock.setReceiveBufferSize(65535);
 
+
+                    if (stopping.get()) {
+                        // ignore IO errors on stop
+                        return;
+                    }
+                    try {
+                        DefaultBHttpServerConnection con = new DefaultBHttpServerConnection(65535);
+                        con.bind(sock);
+                        while (!sock.isClosed()) {
+                            try {
+                                svc.handleRequest(con, new BasicHttpContext());
+                            } catch (HttpException e) {
+                                sock.close();
+                                throw e;
+                            }
+                        }
+                    } catch (HttpException | IOException e) {
+                        System.err.println("FDK Got Exception while handling HTTP request" + e.getMessage());
+                        e.printStackTrace();
+                        // we continue here and leave the container hot
+                    }
                 } catch (IOException e) {
                     if (stopping.get()) {
                         // ignore IO errors on stop
                         return;
                     }
                     throw new FunctionIOException("failed to accept connection from platform, terminating", e);
-                }
-                try {
-                    DefaultBHttpServerConnection con = new DefaultBHttpServerConnection(65535);
-                    con.bind(sock);
-                    while (!sock.isClosed()) {
-                        try {
-                            svc.handleRequest(con, new BasicHttpContext());
-                        } catch (Exception ignored) {
-                            sock.close();
-                        }
-                    }
-                } catch (IOException ignored) {
-                    // TODO should log here?
-                } finally {
-                    try {
-                        sock.close();
-                    } catch (IOException ignored) {
-                    }
                 }
 
             }
@@ -230,7 +255,7 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
     private static String getRequiredHeader(HttpRequest request, String headerName) {
         Header header = request.getFirstHeader(headerName);
         if (header == null) {
-            throw new FunctionInputHandlingException("Required FDK header variable " + headerName + " is not set, check you are using the latest functinos and FDK versions");
+            throw new FunctionInputHandlingException("Required FDK header variable " + headerName + " is not set, check you are using the latest fn and FDK versions");
         }
         return header.getValue();
     }

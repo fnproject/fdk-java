@@ -14,7 +14,7 @@ public class StringUpperCaseCoercion implements InputCoercion<String>, OutputCoe
         return Optional.of(
                 input.consumeBody(is -> {
                     try {
-                        return new StringBuffer(IOUtils.toString(is, StandardCharsets.UTF_8)).toString().toUpperCase();
+                        return IOUtils.toString(is, StandardCharsets.UTF_8).toUpperCase();
                     } catch (IOException e) {
                         return null; // Tests will fail if we end up here
                     }
@@ -26,8 +26,8 @@ public class StringUpperCaseCoercion implements InputCoercion<String>, OutputCoe
     public Optional<OutputEvent> wrapFunctionResult(InvocationContext ctx, MethodWrapper method, Object value) {
         if (ctx.getRuntimeContext().getMethod().getTargetMethod().getReturnType().equals(String.class)) {
             try {
-                String capitilisedOutput = new StringBuffer((String) value).toString().toUpperCase();
-                return Optional.of(OutputEvent.fromBytes(capitilisedOutput.getBytes(), OutputEvent.Status.Success, "text/plain"));
+                String capitalizedOutput = ((String) value).toUpperCase();
+                return Optional.of(OutputEvent.fromBytes(capitalizedOutput.getBytes(), OutputEvent.Status.Success, "text/plain"));
             } catch (ClassCastException e) {
                 return Optional.empty();
             }

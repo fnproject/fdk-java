@@ -84,7 +84,7 @@ public class DataBindingTest {
     public void shouldUseBuiltInInputCoercionSpecifiedOnFunctionRuntimeContext() throws Exception {
         fn.givenEvent().withBody("Hello World").enqueue();
 
-        fn.thenRun(CustomDataBindingFnWithNoUserCoersions.class, "echo");
+        fn.thenRun(CustomDataBindingFnWithNoUserCoercions.class, "echo");
 
         assertThat(fn.getOnlyOutputAsString()).isEqualTo("Hello World");
         assertThat(fn.getStdErrAsString()).isEmpty();

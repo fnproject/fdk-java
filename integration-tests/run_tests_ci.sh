@@ -6,14 +6,15 @@ set -x
 cd $(dirname $0)
 
 if [ -z ${REPOSITORY_LOCATION} ]; then
-   echo no REPOSITORY_LOCATION is specified in env - you need to deploy fn jars to a local dir
-   exit 1
+   echo no REPOSITORY_LOCATION is specified in env  using /tmp/staging_repo as default
+
+   REPOSITORY_LOCATION=/tmp/staging_repo
 fi
 
 
 docker rm -f fn_mvn_repo || true
 docker run -d \
-            -v "$REPOSITORY_LOCATION":/repo:ro \
+            -v "${REPOSITORY_LOCATION}":/repo:ro \
             -w /repo -p18080:18080 \
             --name fn_mvn_repo \
             python:2.7 \

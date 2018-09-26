@@ -21,7 +21,6 @@ public class FunctionConfigurer {
      * create a function runtime context for a given class and method name
      *
      * @param runtimeContext    The runtime context encapsulating the function to be run
-     * @return a new runtime context
      */
     public void configure(FunctionRuntimeContext runtimeContext) {
         validateConfigurationMethods(runtimeContext.getMethodWrapper());

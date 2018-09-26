@@ -19,7 +19,7 @@ import java.util.function.Function;
  */
 public class ReadOnceInputEvent implements InputEvent {
     private final BufferedInputStream body;
-    private AtomicBoolean consumed = new AtomicBoolean(false);
+    private final AtomicBoolean consumed = new AtomicBoolean(false);
     private final Headers headers;
     private final Instant deadline;
     private final String callID;

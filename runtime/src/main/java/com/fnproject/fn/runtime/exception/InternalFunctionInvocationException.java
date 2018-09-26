@@ -43,7 +43,7 @@ public final class InternalFunctionInvocationException extends RuntimeException 
 
     /**
      * map this exception to an output event
-     * @return
+     * @return the output event associated with this exception
      */
     public OutputEvent toOutput() {
         return event;

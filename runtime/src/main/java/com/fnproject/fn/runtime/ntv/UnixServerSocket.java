@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class UnixServerSocket implements Closeable {
     private final int fd;
-    AtomicBoolean closed = new AtomicBoolean();
+    private final AtomicBoolean closed = new AtomicBoolean();
 
     private UnixServerSocket(int fd)  {
         this.fd = fd;
@@ -49,7 +49,7 @@ public class UnixServerSocket implements Closeable {
 
     public UnixSocket accept(long timeoutMillis) throws IOException {
         if (closed.get()) {
-            throw new SocketException("acceot on closed socket");
+            throw new SocketException("accept on closed socket");
         }
         int newFd = UnixSocketNative.accept(fd, timeoutMillis);
         if (newFd == 0) {

@@ -15,10 +15,14 @@ import java.util.Optional;
  * This supports marshalling and unmarshalling of event parameters and responses to
  */
 public class JacksonCoercion implements InputCoercion<Object>, OutputCoercion {
-    private static String OM_KEY = JacksonCoercion.class.getCanonicalName() + ".om";
+    private static final String OM_KEY = JacksonCoercion.class.getCanonicalName() + ".om";
 
-    private static JacksonCoercion instance = new JacksonCoercion();
+    private static final JacksonCoercion instance = new JacksonCoercion();
 
+    /**
+     * Return the global instance of this coercion
+     * @return a singleton instance of the JSON coercion for the VM
+     */
     public static JacksonCoercion instance() {
         return instance;
     }
