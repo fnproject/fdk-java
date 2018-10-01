@@ -677,9 +677,9 @@ public class FnTestingRuleFlowsTest {
     // These members are external to the class under test so as to be visible from the unit tests.
     // They must be public, since the TestFn class will be instantiated under a separate ClassLoader;
     // therefore we need broader access than might be anticipated.
-    public static Result result = null;
-    public static Throwable exception = null;
-    public static Integer staticConfig = null;
-    public static Integer count = 0;
+    public static volatile Result result = null;
+    public static volatile Throwable exception = null;
+    public static volatile Integer staticConfig = null;
+    public static volatile Integer count = 0;
 
 }

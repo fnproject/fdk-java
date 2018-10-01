@@ -21,7 +21,7 @@ public class QueryParametersParserTest {
     }
 
     @Test
-    public void gettingNonExistantParameterProducesOptionalEmpty() {
+    public void gettingNonExistentParameterProducesOptionalEmpty() {
         QueryParameters params = QueryParametersParser.getParams("www.example.com");
 
         assertThat(params.getValues("var")).isEmpty();

@@ -36,7 +36,7 @@ import java.util.function.Function;
  *
  * @deprecated all new functions should use {@link HTTPStreamCodec}
  */
-public class HttpEventCodec implements EventCodec {
+public final class HttpEventCodec implements EventCodec {
 
     private static final String CONTENT_TYPE_HEADER = "Content-Type";
     private final SessionInputBuffer sib;
@@ -72,7 +72,7 @@ public class HttpEventCodec implements EventCodec {
         return val;
     }
 
-    protected Optional<InputEvent> readEvent() {
+    Optional<InputEvent> readEvent() {
 
         HttpRequest req;
         try {
@@ -125,7 +125,7 @@ public class HttpEventCodec implements EventCodec {
 
     }
 
-    protected void writeEvent(OutputEvent evt) {
+    void writeEvent(OutputEvent evt) {
         try {
             // TODO: We buffer the whole output here just to get the content-length
             // TODO: functions should support chunked
@@ -144,9 +144,7 @@ public class HttpEventCodec implements EventCodec {
                 response = new BasicHttpResponse(new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), evt.getStatus().getCode(), evt.getStatus().name()));
             }
 
-            evt.getHeaders().asMap().forEach((k, vs) -> {
-                vs.forEach(v -> response.addHeader(k, v));
-            });
+            evt.getHeaders().asMap().forEach((k, vs) -> vs.forEach(v -> response.addHeader(k, v)));
 
             evt.getContentType().ifPresent((ct) -> response.setHeader(CONTENT_TYPE_HEADER, ct));
             response.setHeader("Content-length", String.valueOf(data.length));

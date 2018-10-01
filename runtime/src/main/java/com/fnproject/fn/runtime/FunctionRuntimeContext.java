@@ -18,9 +18,9 @@ public class FunctionRuntimeContext implements RuntimeContext {
 
     private final Map<String, String> config;
     private final MethodWrapper method;
-    private Map<String, Object> attributes = new HashMap<>();
-    private List<FunctionInvoker> preCallHandlers = new ArrayList<>();
-    private List<FunctionInvoker> configuredInvokers = new ArrayList<>();
+    private final Map<String, Object>  attributes = new HashMap<>();
+    private final List<FunctionInvoker> preCallHandlers = new ArrayList<>();
+    private final List<FunctionInvoker> configuredInvokers = new ArrayList<>();
 
     private Object instance;
 
@@ -125,7 +125,7 @@ public class FunctionRuntimeContext implements RuntimeContext {
           .findFirst();
         if (coercionAnnotation.isPresent()) {
             try {
-                List<InputCoercion> coercionList = new ArrayList<InputCoercion>();
+                List<InputCoercion> coercionList = new ArrayList<>();
                 InputBinding inputBindingAnnotation = (InputBinding) coercionAnnotation.get();
                 coercionList.add(inputBindingAnnotation.coercion().getDeclaredConstructor().newInstance());
                 return coercionList;
@@ -169,23 +169,20 @@ public class FunctionRuntimeContext implements RuntimeContext {
     }
 
     public OutputEvent tryInvoke(InputEvent evt, InvocationContext entryPoint) {
-        OutputEvent output = null;
         for (FunctionInvoker invoker : preCallHandlers) {
             Optional<OutputEvent> result = invoker.tryInvoke(entryPoint, evt);
             if (result.isPresent()) {
-                output = result.get();
-                return output;
+                return result.get();
             }
         }
 
         for (FunctionInvoker invoker : configuredInvokers) {
             Optional<OutputEvent> result = invoker.tryInvoke(entryPoint, evt);
             if (result.isPresent()) {
-                output = result.get();
-                return output;
+                return result.get();
             }
         }
-        return output;
+        return null;
     }
 
     @Override
@@ -193,7 +190,7 @@ public class FunctionRuntimeContext implements RuntimeContext {
         OutputBinding coercionAnnotation = method.getAnnotation(OutputBinding.class);
         if (coercionAnnotation != null) {
             try {
-                List<OutputCoercion> coercionList = new ArrayList<OutputCoercion>();
+                List<OutputCoercion> coercionList = new ArrayList<>();
                 coercionList.add(coercionAnnotation.coercion().getDeclaredConstructor().newInstance());
                 return coercionList;
 
@@ -201,7 +198,7 @@ public class FunctionRuntimeContext implements RuntimeContext {
                 throw new FunctionConfigurationException("Unable to instantiate output coercion class for method " + getMethod());
             }
         }
-        List<OutputCoercion> outputList = new ArrayList<OutputCoercion>();
+        List<OutputCoercion> outputList = new ArrayList<>();
         outputList.addAll(userOutputCoercions);
         outputList.addAll(builtinOutputCoercions);
         return outputList;

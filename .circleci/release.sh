@@ -35,7 +35,6 @@ mvn -s ./settings-deploy.xml \
     -DaltDeploymentRepository="fnproject-release-repo::default::$MVN_RELEASE_REPO" \
     -Dfnproject-release-repo.username="$MVN_RELEASE_USER" \
     -Dfnproject-release-repo.password="$MVN_RELEASE_PASSWORD" \
-    -DdeployAtEnd=true \
     clean deploy
 
 

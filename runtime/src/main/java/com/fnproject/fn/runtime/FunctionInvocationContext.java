@@ -15,10 +15,10 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public class FunctionInvocationContext implements InvocationContext, FunctionInvocationCallback {
     private final FunctionRuntimeContext runtimeContext;
-    private List<InvocationListener> invocationListeners = new CopyOnWriteArrayList<>();
+    private final List<InvocationListener> invocationListeners = new CopyOnWriteArrayList<>();
 
     private final InputEvent event;
-    private Map<String, List<String>> additionalResponseHeaders = new ConcurrentHashMap<>();
+    private final Map<String, List<String>> additionalResponseHeaders = new ConcurrentHashMap<>();
 
     FunctionInvocationContext(FunctionRuntimeContext ctx, InputEvent event) {
         this.runtimeContext = ctx;

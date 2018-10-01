@@ -2,7 +2,7 @@
 
 
 mydir=$(cd "$(dirname "$0")"; pwd)
-cd $mydir
+cd ${mydir}
 
 set -e
 docker build -t fdk_c_build -f Dockerfile-buildimage .

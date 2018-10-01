@@ -50,7 +50,7 @@ public class HttpEventCodecTest {
 
     private final Map<String, String> emptyConfig = new HashMap<>();
 
-    private final Map<String, String> env() {
+    private  Map<String, String> env() {
         HashMap<String, String> env = new HashMap<>();
         env.put("FN_APP_NAME", "testapp");
         env.put("FN_PATH", "/test");

@@ -40,19 +40,19 @@ public class HTTPStreamCodecTest {
 
 
     @Rule
-    public final Timeout to = new Timeout(60, TimeUnit.SECONDS);
+    public final Timeout to = Timeout.builder().withTimeout(60, TimeUnit.SECONDS).withLookingForStuckThread(true).build();
 
     private static final Map<String, String> defaultEnv;
     private final List<Runnable> cleanups = new ArrayList<>();
 
     private static File generateSocketFile() {
-        File f = null;
+        File f ;
         try {
-
             f = File.createTempFile("socket", ".sock");
             f.delete();
             f.deleteOnExit();
         } catch (IOException e) {
+            throw new RuntimeException("Error creating socket file",e);
         }
 
         return f;
@@ -103,7 +103,7 @@ public class HTTPStreamCodecTest {
     }
 
 
-    public File startCodec(Map<String, String> env, EventCodec.Handler h) {
+    File startCodec(Map<String, String> env, EventCodec.Handler h) {
         Map<String, String> newEnv = new HashMap<>(env);
         File socket = generateSocketFile();
         newEnv.put("FN_LISTENER", "unix:" + socket.getAbsolutePath());
@@ -148,7 +148,7 @@ public class HTTPStreamCodecTest {
         InputEvent evt = lastEvent.get(1, TimeUnit.MILLISECONDS);
         assertThat(evt.getCallID()).isEqualTo("callID");
         assertThat(evt.getDeadline().toEpochMilli()).isEqualTo(1033552800992L);
-        assertThat(evt.getHeaders()).isEqualTo(Headers.emptyHeaders().addHeader("Fn-Call-Id", "callID").addHeader("Fn-Deadline", "2002-10-02T10:00:00.992Z").addHeader("Custom-header", "v1", "v2").addHeader("Content-Type", "text/plain").addHeader("Content-Length","6"));
+        assertThat(evt.getHeaders()).isEqualTo(Headers.emptyHeaders().addHeader("Fn-Call-Id", "callID").addHeader("Fn-Deadline", "2002-10-02T10:00:00.992Z").addHeader("Custom-header", "v1", "v2").addHeader("Content-Type", "text/plain").addHeader("Content-Length", "6"));
 
     }
 
@@ -180,6 +180,7 @@ public class HTTPStreamCodecTest {
 
 
             ContentResponse resp = r.send();
+
             assertThat(resp.getStatus()).withFailMessage("Expected failure error code for missing header " + h).isEqualTo(500);
 
         }
@@ -249,9 +250,7 @@ public class HTTPStreamCodecTest {
         MessageDigest readDigest = MessageDigest.getInstance("SHA-256");
         defaultRequest(client)
           .content(new BytesContentProvider(randomString))
-          .onResponseContent((response, byteBuffer) -> {
-              readDigest.update(byteBuffer);
-          })
+          .onResponseContent((response, byteBuffer) -> readDigest.update(byteBuffer))
           .send(cdl::complete);
         Result r = cdl.get();
         assertThat(r.getResponse().getStatus()).isEqualTo(200);
@@ -260,8 +259,13 @@ public class HTTPStreamCodecTest {
 
     private byte[] randomBytes(int sz) {
         Random sr = new Random();
-        byte[] part = new byte[1024];
+        byte[] part = new byte[997];
         sr.nextBytes(part);
+
+        // Make random ascii for convenience in debugging
+        for(int i = 0 ; i < part.length; i++){
+            part[i] = (byte)((part[i]%26) + 65);
+        }
 
         byte[] randomString = new byte[sz];
         int left = sz;
@@ -290,9 +294,7 @@ public class HTTPStreamCodecTest {
             ContentResponse resp = defaultRequest(client).send();
 
             assertThat(resp.getStatus()).isEqualTo(s.getCode());
-
         }
-
     }
 
     @Test
@@ -319,7 +321,6 @@ public class HTTPStreamCodecTest {
     @Test
     public void socketShouldHaveCorrectPermissions() throws Exception {
         File listener = startCodec(defaultEnv, (in) -> OutputEvent.fromBytes("hello".getBytes(), OutputEvent.Status.Success, "text/plain", Headers.emptyHeaders()));
-
         assertThat(Files.getPosixFilePermissions(listener.toPath())).isEqualTo(PosixFilePermissions.fromString("rw-rw-rw-"));
 
         cleanup();

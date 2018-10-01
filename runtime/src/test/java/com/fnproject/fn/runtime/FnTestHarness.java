@@ -18,9 +18,9 @@ import java.util.*;
  * Function internal testing harness - this provides access the call-side of the functions contract excluding the codec which is mocked
  */
 public class FnTestHarness implements TestRule {
-    private List<InputEvent> pendingInput = Collections.synchronizedList(new ArrayList<>());
-    private List<TestOutput> output = Collections.synchronizedList(new ArrayList<>());
-    private ByteArrayOutputStream stdErr = new ByteArrayOutputStream();
+    private final List<InputEvent> pendingInput = Collections.synchronizedList(new ArrayList<>());
+    private final List<TestOutput> output = Collections.synchronizedList(new ArrayList<>());
+    private final ByteArrayOutputStream stdErr = new ByteArrayOutputStream();
     private int exitStatus = -1;
 
     private final Map<String, String> config = new HashMap<>();
@@ -188,7 +188,7 @@ public class FnTestHarness implements TestRule {
 
         @Override
         public String toString() {
-            final StringBuffer sb = new StringBuffer("TestOutput{");
+            final StringBuilder sb = new StringBuilder("TestOutput{");
             sb.append("body=");
             if (body == null) sb.append("null");
             else {

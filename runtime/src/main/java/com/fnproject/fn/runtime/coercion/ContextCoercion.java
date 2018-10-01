@@ -7,7 +7,7 @@ import com.fnproject.fn.runtime.httpgateway.FunctionHTTPGatewayContext;
 import java.util.Optional;
 
 /**
- * Handles coercion to build in context objects (RuntiemContext, InvocationContext , HTTTP context)
+ * Handles coercion to build in context objects ({@link RuntimeContext}, {@link InvocationContext} , {@link HTTPGatewayContext})
  */
 public class ContextCoercion implements InputCoercion<Object> {
 
