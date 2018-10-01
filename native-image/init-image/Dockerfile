@@ -14,7 +14,7 @@ COPY --from=build /function/target/*.jar target/
 COPY --from=build /function/src/main/conf/reflection.json reflection.json
 RUN /usr/local/graalvm/bin/native-image \
     --static \
-    -H:Name=fn \
+    -H:Name=func \
     -H:+ReportUnsupportedElementsAtRuntime \
     -H:ReflectionConfigurationFiles=reflection.json \
     -classpath "target/*"\
@@ -24,6 +24,6 @@ RUN /usr/local/graalvm/bin/native-image \
 FROM scratch
 LABEL maintainer="tomas.zezula@oracle.com"
 WORKDIR /function
-COPY --from=build-native-image /function/fn fn
-ENTRYPOINT ["./fn", "-XX:MaximumHeapSizePercent=80"]
+COPY --from=build-native-image /function/func func
+ENTRYPOINT ["./func", "-XX:MaximumHeapSizePercent=80"]
 CMD [ "com.example.fn.HelloFunction::handleRequest" ]
