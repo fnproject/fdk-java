@@ -248,15 +248,7 @@
                 <artifactId>pitest-maven</artifactId>
                 <version>${pitest.version}</version>
             </plugin>
-
         </plugins>
-        <extensions>
-            <extension>
-                <groupId>com.spotify</groupId>
-                <artifactId>dockerfile-maven-extension</artifactId>
-                <version>1.4.3</version>
-            </extension>
-        </extensions>
     </build>
 
 
