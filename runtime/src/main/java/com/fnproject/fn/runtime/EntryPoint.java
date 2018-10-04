@@ -48,10 +48,10 @@ public class EntryPoint {
     /**
      * Entry point runner - this executes the whole lifecycle of the fn Java FDK runtime - including multiple invocations in the function for hot functions
      *
-     * @param  env the map of environment variables to run the function with (typically System.getenv but may be customised for testing)
-     * @param  codec the codec to run the function with
-     * @param  loggingOutput the stream to send function error/logging to - this will be wrapped into System.err within the funciton
-     * @param  args any further args passed to the entry point - specifically the class/method name
+     * @param env           the map of environment variables to run the function with (typically System.getenv but may be customised for testing)
+     * @param codec         the codec to run the function with
+     * @param loggingOutput the stream to send function error/logging to - this will be wrapped into System.err within the funciton
+     * @param args          any further args passed to the entry point - specifically the class/method name
      * @return the desired process exit status
      */
     public int run(Map<String, String> env, EventCodec codec, PrintStream loggingOutput, String... args) {
@@ -74,27 +74,18 @@ public class EntryPoint {
 
             FunctionLoader functionLoader = new FunctionLoader();
 
-
             MethodWrapper method = functionLoader.loadClass(cls, mth);
             FunctionRuntimeContext runtimeContext = new FunctionRuntimeContext(method, configFromEnvVars);
-
-            FnFeature[] features = method.getTargetClass().getAnnotationsByType(FnFeature.class);
-            for (FnFeature f : features) {
-                RuntimeFeature rf;
-                try {
-                    Class<? extends RuntimeFeature> featureClass = f.value();
-                    rf = featureClass.newInstance();
-                } catch (Exception e) {
-                    throw new FunctionInitializationException("Could not load feature class " + f.value().toString(), e);
-                }
-
-                try {
-                    rf.initialize(runtimeContext);
-                } catch (Exception e) {
-                    throw new FunctionInitializationException("Exception while calling initialization on runtime feature " + f.value(), e);
+            FnFeature f = method.getTargetClass().getAnnotation(FnFeature.class);
+            if (f != null) {
+                enableFeature(runtimeContext, f);
+            }
+            FnFeatures fs = method.getTargetClass().getAnnotation(FnFeatures.class);
+            if (fs != null) {
+                for (FnFeature fnFeature : fs.value()) {
+                    enableFeature(runtimeContext,fnFeature);
                 }
             }
-
 
             FunctionConfigurer functionConfigurer = new FunctionConfigurer();
             functionConfigurer.configure(runtimeContext);
@@ -147,6 +138,22 @@ public class EntryPoint {
         }
 
         return lastStatus.get();
+    }
+
+    private void enableFeature(FunctionRuntimeContext runtimeContext, FnFeature f) {
+        RuntimeFeature rf;
+        try {
+            Class<? extends RuntimeFeature> featureClass = f.value();
+            rf = featureClass.newInstance();
+        } catch (Exception e) {
+            throw new FunctionInitializationException("Could not load feature class " + f.value().toString(), e);
+        }
+
+        try {
+            rf.initialize(runtimeContext);
+        } catch (Exception e) {
+            throw new FunctionInitializationException("Exception while calling initialization on runtime feature " + f.value(), e);
+        }
     }
 
 

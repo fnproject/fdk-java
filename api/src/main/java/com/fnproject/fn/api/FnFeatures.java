@@ -1,6 +1,9 @@
 package com.fnproject.fn.api;
 
-import java.lang.annotation.*;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
  * Annotation to be used in user function classes to enable runtime-wide feature.
@@ -9,11 +12,6 @@ import java.lang.annotation.*;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
-@Repeatable(FnFeatures.class)
-public @interface FnFeature {
-    /**
-     * The feature class to load this must have a zero-arg public constructor
-     * @return feature class
-     */
-    Class<? extends  RuntimeFeature> value();
+public @interface FnFeatures {
+   FnFeature[] value();
 }
