@@ -19,7 +19,8 @@ RUN set -x \
     && mx/mx --primary-suite graal-jvmci-8 --vm=server -v unittest \
     && cp -r $(/build/mx/mx --primary-suite graal-jvmci-8 jdkhome) /build/jvmcijdk8
 
-RUN git clone --branch release/graal-vm/1.0 https://github.com/oracle/graal.git
+RUN git clone https://github.com/oracle/graal.git \
+    && git -C graal checkout dca98069dc57c458b8bcb3392cf9e66316dd37b6
 WORKDIR /build/graal/vm
 RUN export JAVA_HOME=/build/jvmcijdk8 \
     && /build/mx/mx --dy /substratevm --force-bash-launchers=true --disable-polyglot --disable-libpolyglot build
