@@ -2,13 +2,13 @@
 set -e
 
 src_dir=$(pwd)
-build_dir=$src_dir/build/$(uname -s| tr '[:upper:]' '[:lower:]')
+build_dir=${src_dir}/build/$(uname -s| tr '[:upper:]' '[:lower:]')
 
-mkdir -p $build_dir
+mkdir -p ${build_dir}
 (
-    cd  $build_dir
-    cmake $src_dir
+    cd  ${build_dir}
+    cmake ${src_dir}
 
     make
 )
-mv $build_dir/libfnunixsocket.* $src_dir
+mv ${build_dir}/libfnunixsocket.* ${src_dir}

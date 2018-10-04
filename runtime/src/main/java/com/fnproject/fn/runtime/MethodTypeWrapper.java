@@ -7,12 +7,10 @@ import net.jodah.typetools.TypeResolver;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 
-public abstract class MethodTypeWrapper implements TypeWrapper {
-    protected final MethodWrapper src;
-    protected Class<?> parameterClass;
+public final class MethodTypeWrapper implements TypeWrapper {
+    private final Class<?> parameterClass;
 
-    public MethodTypeWrapper(MethodWrapper src, Class<?> parameterClass) {
-        this.src = src;
+    private MethodTypeWrapper(Class<?> parameterClass) {
         this.parameterClass = parameterClass;
     }
 
@@ -21,7 +19,7 @@ public abstract class MethodTypeWrapper implements TypeWrapper {
         return parameterClass;
     }
 
-    protected static Class<?> resolveType(Type type, MethodWrapper src) {
+    static Class<?> resolveType(Type type, MethodWrapper src) {
         if (type instanceof Class) {
             return PrimitiveTypeResolver.resolve((Class<?>) type);
         } else if (type instanceof ParameterizedType) {
@@ -34,6 +32,15 @@ public abstract class MethodTypeWrapper implements TypeWrapper {
         } else {
             return resolvedType;
         }
+    }
+
+    public  static TypeWrapper fromParameter(MethodWrapper method, int paramIndex) {
+        return new MethodTypeWrapper(resolveType(method.getTargetMethod().getGenericParameterTypes()[paramIndex], method));
+    }
+
+    public static TypeWrapper fromReturnType(MethodWrapper method) {
+        return new MethodTypeWrapper(resolveType(method.getTargetMethod().getGenericReturnType(), method));
+
     }
 
 }

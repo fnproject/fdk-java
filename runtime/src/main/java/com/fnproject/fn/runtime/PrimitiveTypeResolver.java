@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class PrimitiveTypeResolver {
-    private static Map<Class<?>, Class<?>> boxedTypes = new HashMap<>();
+    private static final Map<Class<?>, Class<?>> boxedTypes = new HashMap<>();
     static {
         boxedTypes.put(void.class, Void.class);
         boxedTypes.put(boolean.class, Boolean.class);

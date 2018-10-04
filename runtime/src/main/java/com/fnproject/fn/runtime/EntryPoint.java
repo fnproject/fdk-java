@@ -46,8 +46,12 @@ public class EntryPoint {
     }
 
     /**
-     * Entrypoint runner - this executes the whole lifecycle of the fn Java FDK runtime - including multiple invocations in the function for hot functions
+     * Entry point runner - this executes the whole lifecycle of the fn Java FDK runtime - including multiple invocations in the function for hot functions
      *
+     * @param  env the map of environment variables to run the function with (typically System.getenv but may be customised for testing)
+     * @param  codec the codec to run the function with
+     * @param  loggingOutput the stream to send function error/logging to - this will be wrapped into System.err within the funciton
+     * @param  args any further args passed to the entry point - specifically the class/method name
      * @return the desired process exit status
      */
     public int run(Map<String, String> env, EventCodec codec, PrintStream loggingOutput, String... args) {

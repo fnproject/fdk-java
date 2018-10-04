@@ -84,7 +84,6 @@ public final class UnixSocket extends Socket {
 
         }
 
-        // Thes are overridden specifically
         @Override
         public void setOption(int optID, Object value) throws SocketException {
             throw new UnsupportedOperationException();
@@ -312,7 +311,7 @@ public final class UnixSocket extends Socket {
 
     @Override
     public void close() throws IOException {
-        if (!closed.compareAndSet(false, true)) {
+        if (closed.compareAndSet(false, true)) {
             UnixSocketNative.close(fd);
         }
     }

@@ -97,8 +97,6 @@ public class FunctionsTest {
         assertThat(con.getHeaderField("GotHeader")).isEqualTo("bar");
         assertThat(con.getHeaderField("MyHTTPHeader")).isEqualTo("foo");
 
-
-
     }
 
 }

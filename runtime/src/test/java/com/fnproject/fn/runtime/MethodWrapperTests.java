@@ -69,20 +69,20 @@ public class MethodWrapperTests {
     }
 
     static class ConcreteTypeExamples {
-        public void voidReturnType() { };
-        public void singleParameter(String s) { };
-        public void singlePrimitiveParameter(boolean i) { };
-        public void singlePrimitiveParameter(byte i) { };
-        public void singlePrimitiveParameter(char i) { };
-        public void singlePrimitiveParameter(short i) { };
-        public void singlePrimitiveParameter(int i) { };
-        public void singlePrimitiveParameter(long i) { };
-        public void singlePrimitiveParameter(float i) { };
-        public void singlePrimitiveParameter(double i) { };
-        public void multipleParameters(String s, double i) { };
-        public String noArgs() { return ""; };
-        public int noArgsWithPrimitiveReturnType() { return 1; };
-        public void singleGenericParameter(List<String> s) { };
+        public void voidReturnType() { }
+        public void singleParameter(String s) { }
+        public void singlePrimitiveParameter(boolean i) { }
+        public void singlePrimitiveParameter(byte i) { }
+        public void singlePrimitiveParameter(char i) { }
+        public void singlePrimitiveParameter(short i) { }
+        public void singlePrimitiveParameter(int i) { }
+        public void singlePrimitiveParameter(long i) { }
+        public void singlePrimitiveParameter(float i) { }
+        public void singlePrimitiveParameter(double i) { }
+        public void multipleParameters(String s, double i) { }
+        public String noArgs() { return ""; }
+        public int noArgsWithPrimitiveReturnType() { return 1; }
+        public void singleGenericParameter(List<String> s) { }
     }
 
     static class ParentClassWithGenericType<T> {
