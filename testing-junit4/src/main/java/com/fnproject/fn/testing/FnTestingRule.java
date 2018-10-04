@@ -1,9 +1,7 @@
 package com.fnproject.fn.testing;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fnproject.fn.api.Headers;
-import com.fnproject.fn.api.InputEvent;
-import com.fnproject.fn.api.OutputEvent;
+import com.fnproject.fn.api.*;
 import com.fnproject.fn.runtime.EventCodec;
 import org.apache.commons.io.output.TeeOutputStream;
 import org.junit.Rule;
@@ -77,6 +75,7 @@ public final class FnTestingRule implements TestRule {
         addSharedClass(TestCodec.class);
         addSharedClass(EventCodec.class);
         addSharedClass(EventCodec.Handler.class);
+
 
 
     }

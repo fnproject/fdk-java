@@ -7,10 +7,17 @@ CLSS public abstract interface !annotation com.fnproject.fn.api.FnConfiguration
 intf java.lang.annotation.Annotation
 
 CLSS public abstract interface !annotation com.fnproject.fn.api.FnFeature
+ anno 0 java.lang.annotation.Repeatable(java.lang.Class<? extends java.lang.annotation.Annotation> value=class com.fnproject.fn.api.FnFeatures)
  anno 0 java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy value=RUNTIME)
  anno 0 java.lang.annotation.Target(java.lang.annotation.ElementType[] value=[TYPE])
 intf java.lang.annotation.Annotation
 meth public abstract java.lang.Class<? extends com.fnproject.fn.api.RuntimeFeature> value()
+
+CLSS public abstract interface !annotation com.fnproject.fn.api.FnFeatures
+ anno 0 java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy value=RUNTIME)
+ anno 0 java.lang.annotation.Target(java.lang.annotation.ElementType[] value=[TYPE])
+intf java.lang.annotation.Annotation
+meth public abstract com.fnproject.fn.api.FnFeature[] value()
 
 CLSS public abstract interface com.fnproject.fn.api.FunctionInvoker
 innr public final static !enum Phase
@@ -259,6 +266,13 @@ CLSS public abstract interface !annotation java.lang.annotation.Documented
  anno 0 java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy value=RUNTIME)
  anno 0 java.lang.annotation.Target(java.lang.annotation.ElementType[] value=[ANNOTATION_TYPE])
 intf java.lang.annotation.Annotation
+
+CLSS public abstract interface !annotation java.lang.annotation.Repeatable
+ anno 0 java.lang.annotation.Documented()
+ anno 0 java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy value=RUNTIME)
+ anno 0 java.lang.annotation.Target(java.lang.annotation.ElementType[] value=[ANNOTATION_TYPE])
+intf java.lang.annotation.Annotation
+meth public abstract java.lang.Class<? extends java.lang.annotation.Annotation> value()
 
 CLSS public abstract interface !annotation java.lang.annotation.Retention
  anno 0 java.lang.annotation.Documented()
