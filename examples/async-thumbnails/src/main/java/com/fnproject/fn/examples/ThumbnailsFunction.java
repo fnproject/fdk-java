@@ -19,6 +19,10 @@ public class ThumbnailsFunction implements Serializable {
     private final String storageAccessKey;
     private final String storageSecretKey;
 
+    private final String resize128ID;
+    private final String resize256ID;
+    private final String resize512ID;
+
     public ThumbnailsFunction(RuntimeContext ctx) {
         storageUrl = ctx.getConfigurationByKey("OBJECT_STORAGE_URL")
                 .orElseThrow(() -> new RuntimeException("Missing configuration: OBJECT_STORAGE_URL"));
@@ -26,6 +30,14 @@ public class ThumbnailsFunction implements Serializable {
                 .orElseThrow(() -> new RuntimeException("Missing configuration: OBJECT_STORAGE_ACCESS"));
         storageSecretKey = ctx.getConfigurationByKey("OBJECT_STORAGE_SECRET")
                 .orElseThrow(() -> new RuntimeException("Missing configuration: OBJECT_STORAGE_SECRET"));
+
+        resize128ID = ctx.getConfigurationByKey("RESIZE_128_FN_ID")
+          .orElseThrow(() -> new RuntimeException("Missing configuration: RESIZE_128_FN_ID"));
+        resize256ID = ctx.getConfigurationByKey("RESIZE_256_FN_ID")
+          .orElseThrow(() -> new RuntimeException("Missing configuration: RESIZE_256_FN_ID"));
+        resize512ID = ctx.getConfigurationByKey("RESIZE_512_FN_ID")
+          .orElseThrow(() -> new RuntimeException("Missing configuration: RESIZE_512_FN_ID"));
+
     }
 
     public class Response {
@@ -38,11 +50,11 @@ public class ThumbnailsFunction implements Serializable {
         Flow runtime = Flows.currentFlow();
 
         runtime.allOf(
-                runtime.invokeFunction("myapp/resize128", HttpMethod.POST, Headers.emptyHeaders(), imageBuffer)
+                runtime.invokeFunction(resize128ID, HttpMethod.POST, Headers.emptyHeaders(), imageBuffer)
                         .thenAccept((img) -> objectUpload(img.getBodyAsBytes(), id + "-128.png")),
-                runtime.invokeFunction("myapp/resize256", HttpMethod.POST, Headers.emptyHeaders(), imageBuffer)
+                runtime.invokeFunction(resize256ID, HttpMethod.POST, Headers.emptyHeaders(), imageBuffer)
                         .thenAccept((img) -> objectUpload(img.getBodyAsBytes(), id + "-256.png")),
-                runtime.invokeFunction("myapp/resize512", HttpMethod.POST, Headers.emptyHeaders(), imageBuffer)
+                runtime.invokeFunction(resize512ID, HttpMethod.POST, Headers.emptyHeaders(), imageBuffer)
                         .thenAccept((img) -> objectUpload(img.getBodyAsBytes(), id + "-512.png")),
                 runtime.supply(() -> objectUpload(imageBuffer, id + ".png"))
         );

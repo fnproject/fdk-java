@@ -51,26 +51,21 @@ fi
 STORAGE_SERVER_IP=`docker inspect --type container -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' example-storage-server`
 
 # Start functions server if not there
-if [[ -z `docker ps | grep "functions"` ]]; then
-    docker run -d --name functions \
-        -e NO_PROXY="$STORAGE_SERVER_IP:$NO_PROXY" \
-        -p 8080:8080 \
-        -v /var/run/docker.sock:/var/run/docker.sock \
-        "$FUNCTIONS_IMAGE"
-    # Give it time to start up
+if [[ -z `docker ps | grep "fnserver"` ]]; then
+    fn start -d
     sleep 3
 else
     echo "Functions server is already up."
 fi
 # Get its IP
-FUNCTIONS_SERVER_IP=`docker inspect --type container -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' functions`
+FUNCTIONS_SERVER_IP=`docker inspect --type container -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' fnserver`
 
 # Start flow service if not there
 if [[ -z `docker ps | grep "flow-service"` ]]; then
     docker run -d --name flow-service \
         -e LOG_LEVEL=debug \
         -e NO_PROXY="$FUNCTIONS_SERVER_IP:$NO_PROXY" \
-        -e API_URL=http://$FUNCTIONS_SERVER_IP:8080/r \
+        -e API_URL=http://$FUNCTIONS_SERVER_IP:8080/invoke \
         -p 8081:8081 \
         "$COMPLETER_IMAGE"
     # Give it time to start up
@@ -86,42 +81,37 @@ if [[ `fn list apps` == *"myapp"* ]]; then
     echo "App myapp is already there."
 else
     fn create app myapp
-    fn config app myapp COMPLETER_BASE_URL http://10.167.103.193:8081
 fi
 
-if [[ `fn list routes myapp` == *"/resize128"* ]]; then
-    echo "Route /resize128 is already there."
-else
-    # This works around proxy issues
-    cd $SCRIPT_DIR/resize128 && \
-        docker build -t example/resize128:0.0.1 \
-            --build-arg http_proxy=$http_proxy \
-            --build-arg https_proxy=$https_proxy \
-            . && \
-        fn create route myapp /resize128
-fi
-if [[ `fn list routes myapp` == *"/resize256"* ]]; then
-    echo "Route /resize256 is already there."
-else
-    # This works around proxy issues
-    cd $SCRIPT_DIR/resize256 && \
-        docker build -t example/resize256:0.0.1 \
-            --build-arg http_proxy=$http_proxy \
-            --build-arg https_proxy=$https_proxy \
-            . && \
-        fn create route myapp /resize256
-fi
-if [[ `fn list routes myapp` == *"/resize512"* ]]; then
-    echo "Route /resize512 is already there."
-else
-    # This works around proxy issues
-    cd $SCRIPT_DIR/resize512 && \
-        docker build -t example/resize512:0.0.1 \
-            --build-arg http_proxy=$http_proxy \
-            --build-arg https_proxy=$https_proxy \
-            . && \
-        fn create route myapp /resize512
-fi
+
+fn config app myapp COMPLETER_BASE_URL http://${COMPLETER_SERVER_IP}:8081
+fn config app myapp OBJECT_STORAGE_URL http://${STORAGE_SERVER_IP}:9000
+fn config app myapp OBJECT_STORAGE_ACCESS alpha
+fn config app myapp OBJECT_STORAGE_SECRET betabetabetabeta
+
+(
+  cd ${SCRIPT_DIR}/resize128
+  fn deploy --app myapp --local
+)
+
+fn config app myapp RESIZE_128_FN_ID $(fn list functions myapp  | grep resize128 | awk '{print $3}')
+
+(
+  cd ${SCRIPT_DIR}/resize256
+  fn deploy --app myapp --local
+)
+
+fn config app myapp RESIZE_256_FN_ID $(fn list functions myapp  | grep resize256 | awk '{print $3}')
+
+
+(
+  cd ${SCRIPT_DIR}/resize512
+  fn deploy --app myapp --local
+)
+
+fn config app myapp RESIZE_512_FN_ID $(fn list functions myapp  | grep resize512 | awk '{print $3}')
+
+
 
 
 if mc config host list | grep example-storage-server &>/dev/null ; then

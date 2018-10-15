@@ -23,7 +23,11 @@ public class ThumbnailsFunctionTest {
         fn
           .setConfig("OBJECT_STORAGE_URL", "http://localhost:" + mockServer.port())
           .setConfig("OBJECT_STORAGE_ACCESS", "alpha")
-          .setConfig("OBJECT_STORAGE_SECRET", "betabetabetabeta");
+          .setConfig("OBJECT_STORAGE_SECRET", "betabetabetabeta")
+          .setConfig("RESIZE_128_FN_ID","myapp/resize128")
+          .setConfig("RESIZE_256_FN_ID","myapp/resize256")
+          .setConfig("RESIZE_512_FN_ID","myapp/resize512");
+
 
         flow
           .givenFn("myapp/resize128")
@@ -56,7 +60,10 @@ public class ThumbnailsFunctionTest {
         fn
           .setConfig("OBJECT_STORAGE_URL", "http://localhost:" + mockServer.port())
           .setConfig("OBJECT_STORAGE_ACCESS", "alpha")
-          .setConfig("OBJECT_STORAGE_SECRET", "betabetabetabeta");
+          .setConfig("OBJECT_STORAGE_SECRET", "betabetabetabeta")
+          .setConfig("RESIZE_128_FN_ID","myapp/resize128")
+          .setConfig("RESIZE_256_FN_ID","myapp/resize256")
+          .setConfig("RESIZE_512_FN_ID","myapp/resize512");;
 
         flow
           .givenFn("myapp/resize128")

@@ -32,9 +32,8 @@ this example. Run:
 ```
 
 This will start a local functions service, a local flow completion
-service, and will set up a `myapp` application and three routes: `/resize128`,
-`/resize256` and `/resize512`. The routes are implemented as Fn functions
-which just invoke `imagemagick` to convert the images to the specified sizes.
+service, and will set up a `myapp` application and three functions: `resize128`,
+`resize256` and `resize512`. These functions just invoke `imagemagick` to convert the images to the specified sizes.
 
 The setup script also starts a docker container with an object storage daemon
 based on `minio` (with access key `alpha` and secret key `betabetabetabeta`).
@@ -48,14 +47,9 @@ docker container, so that you can verify when the thumbnails are uploaded.
 Build the function locally:
 
 ```bash
-$ fn build
+$ fn deploy --local --app myapp 
 ```
 
-Create a route to host the function:
-
-```bash
-$ fn create route myapp /async-thumbnails
-```
 
 Configure the app. In order to do this you must determine the IP address of the
 storage server docker container:
@@ -68,18 +62,18 @@ $ docker inspect --type container -f '{{range .NetworkSettings.Networks}}{{.IPAd
 and then use it as the storage host:
 
 ```bash
-$ fn config route myapp /async-thumbnails OBJECT_STORAGE_URL http://172.17.0.4:9000
+$ fn config app myapp  OBJECT_STORAGE_URL http://172.17.0.4:9000
 myapp /async-thumbnails updated OBJECT_STORAGE_URL with http://172.17.0.4:9000
-$ fn config route myapp /async-thumbnails OBJECT_STORAGE_ACCESS alpha
+$ fn config app myapp  OBJECT_STORAGE_ACCESS alpha
 myapp /async-thumbnails updated OBJECT_STORAGE_ACCESS with alpha
-$ fn config route myapp /async-thumbnails OBJECT_STORAGE_SECRET betabetabetabeta
+$ fn config app myapp OBJECT_STORAGE_SECRET betabetabetabeta
 myapp /async-thumbnails updated OBJECT_STORAGE_SECRET with betabetabetabeta
 ```
 
 Invoke the function by passing the provided test image:
 
 ```bash
-$ curl -X POST --data-binary @test-image.png -H "Content-type: application/octet-stream" "http://localhost:8080/r/myapp/async-thumbnails"
+$ curl -X POST --data-binary @test-image.png -H "Content-type: application/octet-stream" "http://localhost:8080/t/myapp/async-thumbnails"
 {"imageId":"bd74fff4-0388-4c6f-82f2-8cde9ba9b6fc"}
 ```
 
@@ -116,6 +110,13 @@ public class ThumbnailsFunction {
                 .orElseThrow(() -> new RuntimeException("Missing configuration: OBJECT_STORAGE_ACCESS"));
         storageSecretKey = ctx.getConfigurationByKey("OBJECT_STORAGE_SECRET")
                 .orElseThrow(() -> new RuntimeException("Missing configuration: OBJECT_STORAGE_SECRET"));
+        
+        resize128ID = ctx.getConfigurationByKey("RESIZE_128_FN_ID")
+                  .orElseThrow(() -> new RuntimeException("Missing configuration: RESIZE_128_FN_ID"));
+        resize256ID = ctx.getConfigurationByKey("RESIZE_256_FN_ID")
+          .orElseThrow(() -> new RuntimeException("Missing configuration: RESIZE_256_FN_ID"));
+        resize512ID = ctx.getConfigurationByKey("RESIZE_512_FN_ID")
+          .orElseThrow(() -> new RuntimeException("Missing configuration: RESIZE_512_FN_ID"));
     }
 
     // ...
@@ -155,11 +156,11 @@ public class ThumbnailsFunction {
         Flow runtime = Flows.currentFlow();
 
         runtime.allOf(
-                runtime.invokeFunction("myapp/resize128", HttpMethod.POST, Headers.emptyHeaders(), imageBuffer)
+                runtime.invokeFunction(resize128ID, HttpMethod.POST, Headers.emptyHeaders(), imageBuffer)
                         .thenAccept((img) -> objectUpload(img.getBodyAsBytes(), id + "-128.png")),
-                runtime.invokeFunction("myapp/resize256", HttpMethod.POST, Headers.emptyHeaders(), imageBuffer)
+                runtime.invokeFunction(resize256ID, HttpMethod.POST, Headers.emptyHeaders(), imageBuffer)
                         .thenAccept((img) -> objectUpload(img.getBodyAsBytes(), id + "-256.png")),
-                runtime.invokeFunction("myapp/resize512", HttpMethod.POST, Headers.emptyHeaders(), imageBuffer)
+                runtime.invokeFunction(resize512ID, HttpMethod.POST, Headers.emptyHeaders(), imageBuffer)
                         .thenAccept((img) -> objectUpload(img.getBodyAsBytes(), id + "-512.png")),
                 runtime.supply(() -> objectUpload(imageBuffer, id + ".png"))
         );
@@ -218,8 +219,9 @@ in [Testing Functions](../../docs/TestingFunctions.md).
 ```java
 public class ThumbnailsFunctionTest {
 
-    @Rule
-    public final FnTestingRule testing = FnTestingRule.createDefault();
+     @Rule
+     public final FnTestingRule fn = FnTestingRule.createDefault();
+     private final FlowTesting flow = FlowTesting.create(fn);
 
     // ...
 }
@@ -259,20 +261,22 @@ public class ThumbnailsFunctionTest {
 
    @Test
     public void testThumbnail() {
-        testing
 
-                .setConfig("OBJECT_STORAGE_URL", "http://localhost:" + mockServer.port())
-                .setConfig("OBJECT_STORAGE_ACCESS", "alpha")
-                .setConfig("OBJECT_STORAGE_SECRET", "betabetabetabeta")
+                 fn.setConfig("OBJECT_STORAGE_URL", "http://localhost:" + mockServer.port())
+                   .setConfig("OBJECT_STORAGE_ACCESS", "alpha")
+                   .setConfig("OBJECT_STORAGE_SECRET", "betabetabetabeta")
+                   .setConfig("RESIZE_128_FN_ID","myapp/resize128")
+                   .setConfig("RESIZE_256_FN_ID","myapp/resize256")
+                   .setConfig("RESIZE_512_FN_ID","myapp/resize512");
 
-                .givenFn("myapp/resize128")
+                flow.givenFn("myapp/resize128")
                     .withAction((data) -> "128".getBytes())
                 .givenFn("myapp/resize256")
                     .withAction((data) -> "256".getBytes())
                 .givenFn("myapp/resize512")
                     .withAction((data) -> "512".getBytes())
 
-                .givenEvent()
+                fn.givenEvent()
                     .withBody("testing".getBytes())
                     .enqueue();
 
@@ -301,21 +305,23 @@ public class ThumbnailsFunctionTest {
 
     @Test
     public void anExternalFunctionFailure() {
-        testing
-                .setConfig("OBJECT_STORAGE_URL", "http://localhost:" + mockServer.port())
-                .setConfig("OBJECT_STORAGE_ACCESS", "alpha")
-                .setConfig("OBJECT_STORAGE_SECRET", "betabetabetabeta")
-
-                .givenFn("myapp/resize128")
-                    .withResult("128".getBytes())
-                .givenFn("myapp/resize256")
-                    .withResult("256".getBytes())
-                .givenFn("myapp/resize512")
-                    .withFunctionError()
-
-                .givenEvent()
-                    .withBody("testing".getBytes())
-                    .enqueue();
+        fn.setConfig("OBJECT_STORAGE_URL", "http://localhost:" + mockServer.port())
+          .setConfig("OBJECT_STORAGE_ACCESS", "alpha")
+          .setConfig("OBJECT_STORAGE_SECRET", "betabetabetabeta")
+          .setConfig("RESIZE_128_FN_ID","myapp/resize128")
+          .setConfig("RESIZE_256_FN_ID","myapp/resize256")
+          .setConfig("RESIZE_512_FN_ID","myapp/resize512");
+        
+        flow.givenFn("myapp/resize128")
+                .withResult("128".getBytes())
+            .givenFn("myapp/resize256")
+                .withResult("256".getBytes())
+            .givenFn("myapp/resize512")
+                .withFunctionError();
+        
+        fn.givenEvent()
+             .withBody("testing".getBytes())
+             .enqueue();
 
         // Mock the http endpoint
         mockMinio();

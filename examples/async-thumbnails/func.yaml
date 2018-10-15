@@ -1,7 +1,11 @@
-name: fn-example/async-thumbnails
-version: 0.0.1
+schema_version: 20180708
+name: async-thumbnails
+version: 0.0.8
 runtime: java
 cmd: com.fnproject.fn.examples.ThumbnailsFunction::handleRequest
-path: /async-thumbnails
-format: http
-timeout: 30
+format: http-stream
+timeout: 120
+triggers:
+- name: async-thumbnails
+  type: http
+  source: /async-thumbnails
