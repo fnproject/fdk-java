@@ -1,4 +1,4 @@
-FROM maven:3-jdk-9-slim
+FROM maven:3-jdk-11-slim
 ARG FN_REPO_URL
 
 ADD pom.xml /tmp/cache-deps/pom.xml
