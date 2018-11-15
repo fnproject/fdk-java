@@ -11,6 +11,8 @@
 
         <fdk.version>1.0.0-SNAPSHOT</fdk.version>
         <fn.repo.url>http://172.17.0.1:18080</fn.repo.url>
+
+        <surefire.version>2.22.1</surefire.version>
     </properties>
 
     <!-- The artifact is irrelevant, this pom is only used to download dependencies. -->
@@ -53,6 +55,14 @@
                 <configuration>
                     <source>1.8</source>
                     <target>1.8</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${surefire.version}</version>
+                <configuration>
+                    <useSystemClassLoader>false</useSystemClassLoader>
                 </configuration>
             </plugin>
             <plugin>

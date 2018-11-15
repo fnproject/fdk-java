@@ -18,6 +18,9 @@ jobs:
           name: Install fn binary (as it is needed for the integration tests)
           command: ./.circleci/install-fn.sh
       - run:
+          name: Workaround for https://issues.apache.org/jira/browse/SUREFIRE-1588
+          command: ./.circleci/fix-java-for-surefire.sh
+      - run:
           name: Install junit-merge
           command: npm install -g junit-merge
       - run:
