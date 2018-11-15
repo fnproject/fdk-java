@@ -12,3 +12,6 @@ logs/
 *.versionsBackup
 .gradle
 examples/gradle-build/build
+**/*.classpath
+**/*.project
+**/*.settings
