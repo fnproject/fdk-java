@@ -1,0 +1,22 @@
+[
+  {
+    "name" : "com.fnproject.fn.runtime.ntv.UnixSocketNative",
+    "methods" : [
+        { "name" : "socket" },
+        { "name" : "bind" },
+        { "name" : "connect" },
+        { "name" : "listen" },
+        { "name" : "accept" },
+        { "name" : "recv" },
+        { "name" : "send" },
+        { "name" : "close" },
+        { "name" : "setSendTimeout" },
+        { "name" : "getSendTimeout" },
+        { "name" : "setRecvTimeout" },
+        { "name" : "getRecvTimeout" },
+        { "name" : "setSendBufSize" },
+        { "name" : "setRecvBufSize" },
+        { "name" : "shutdown"}
+    ]
+  }
+]
