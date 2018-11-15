@@ -1,4 +1,4 @@
-FROM openjdk:9-slim
+FROM openjdk:11-slim
 COPY target/runtime-*.jar target/dependency/*.jar /function/runtime/
 COPY src/main/c/libfnunixsocket.so /function/runtime/lib/
 
