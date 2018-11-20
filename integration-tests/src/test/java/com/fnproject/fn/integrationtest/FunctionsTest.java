@@ -35,10 +35,8 @@ public class FunctionsTest {
         tc.runFn("--verbose", "deploy", "--app", tc.appName(), "--local");
         tc.runFn("config", "app", tc.appName(), "GREETING", "Salutations");
 
-
         CmdResult r1 = tc.runFnWithInput("", "invoke", tc.appName(), "simplefunc");
         assertThat(r1.getStdout()).isEqualTo("Salutations, world!");
-
 
         CmdResult r2 = tc.runFnWithInput("tests", "invoke", tc.appName(), "simplefunc");
         assertThat(r2.getStdout()).isEqualTo("Salutations, tests!");
@@ -56,10 +54,6 @@ public class FunctionsTest {
                 tc.rewritePOM();
                 tc.runFn("--verbose", "deploy", "--app", tc.appName(), "--local");
                 CmdResult rs = tc.runFnWithInput("wibble", "invoke", tc.appName(), fnName);
-                System.out.println("TEST OUT: " + rs.getStdout());
-                System.out.println("TEST ERR: " + rs.getStderr());
-                Logger.getAnonymousLogger.log(Level.INFO, "TEST OUT: " + rs.getStdout());
-                Logger.getAnonymousLogger.log(Level.INFO, "TEST ERR: " + rs.getStderr());
                 assertThat(rs.getStdout()).contains("Hello, wibble!");
             }
         }

@@ -112,7 +112,6 @@ public class IntegrationTestRule implements TestRule {
 
         boolean isSuccess() {
             return success;
-
         }
 
         public String getStdout() {
@@ -123,7 +122,9 @@ public class IntegrationTestRule implements TestRule {
             return stderr;
         }
 
-
+        public String toString() {
+            return "CmdResult: cmd=" + cmd + ", success=" + success + ", stdout=" + stdout + ", stderr=" + stderr;
+        }
     }
 
     public class TestContext {
@@ -151,6 +152,9 @@ public class IntegrationTestRule implements TestRule {
         public CmdResult runFnWithInput(String input, String... args) throws Exception {
             CmdResult res = runFnWithInputAllowError(input, args);
 
+            if (!res.isSuccess()) {
+                System.err.println(res);
+            }
             Assertions.assertThat(res.isSuccess()).withFailMessage("Expected command '" + res.cmd + "' to return 0").isTrue();
             return res;
         }
