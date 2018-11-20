@@ -3,6 +3,7 @@ package com.fnproject.fn.integrationtest;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fnproject.fn.integrationtest.IntegrationTestRule.CmdResult;
+import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -56,7 +57,7 @@ public class FunctionsTest {
                 tc.rewritePOM();
                 tc.runFn("--verbose", "deploy", "--app", tc.appName(), "--local");
                 CmdResult rs = tc.runFnWithInput("wibble", "invoke", tc.appName(), fnName);
-                assertEquals("BP output=" + rs.getStdout(), "Hello, wibble!", rs.getStdout());
+                Assert.assertEquals("BP output=" + rs.getStdout(), "Hello, wibble!", rs.getStdout());
                 assertThat(rs.getStdout()).contains("Hello, wibble!");
             }
         }
