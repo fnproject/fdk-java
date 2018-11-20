@@ -58,8 +58,8 @@ public class FunctionsTest {
                 CmdResult rs = tc.runFnWithInput("wibble", "invoke", tc.appName(), fnName);
                 System.out.println("TEST OUT: " + rs.getStdout());
                 System.out.println("TEST ERR: " + rs.getStderr());
-                Logger.getAnonymousLogger.log(Level.INFO, "TEST OUT: " + rs.getStdout());
-                Logger.getAnonymousLogger.log(Level.INFO, "TEST ERR: " + rs.getStderr());
+                Logger.getAnonymousLogger().log(Level.INFO, "TEST OUT: " + rs.getStdout());
+                Logger.getAnonymousLogger().log(Level.INFO, "TEST ERR: " + rs.getStderr());
                 assertThat(rs.getStdout()).contains("Hello, wibble!");
             }
         }
