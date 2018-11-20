@@ -132,8 +132,7 @@ public class RemoteFlowApiClientTest {
 
         // When
         Map headersMap = Collections.singletonMap("Content-type", contentType);
-//        Headers headers = Headers.fromMap(headersMap);
-        Headers headers = null;
+        Headers headers = Headers.fromMap(headersMap);
         completerClient.invokeFunction(new FlowId(testFlowId), testFunctionId, invokeBody, HttpMethod.POST, headers, locationFn());
     }
 
