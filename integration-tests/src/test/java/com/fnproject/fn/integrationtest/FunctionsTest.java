@@ -11,6 +11,8 @@ import java.net.URI;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Logger;
+import java.util.logging.Level;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -54,6 +56,10 @@ public class FunctionsTest {
                 tc.rewritePOM();
                 tc.runFn("--verbose", "deploy", "--app", tc.appName(), "--local");
                 CmdResult rs = tc.runFnWithInput("wibble", "invoke", tc.appName(), fnName);
+                System.out.println("TEST OUT: " + rs.getStdout());
+                System.out.println("TEST ERR: " + rs.getStderr());
+                Logger.getAnonymousLogger.log(Level.INFO, "TEST OUT: " + rs.getStdout());
+                Logger.getAnonymousLogger.log(Level.INFO, "TEST ERR: " + rs.getStderr());
                 assertThat(rs.getStdout()).contains("Hello, wibble!");
             }
         }
