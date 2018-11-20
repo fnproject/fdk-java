@@ -45,7 +45,7 @@ public class FunctionsTest {
 
     @Test()
     public void checkBoilerPlate() throws Exception {
-        for (String format : new String[]{"default", "http", "http-stream"}) {
+        for (String format : new String[]{"http-stream"}) {
             for (String runtime : new String[]{"java9", "java8"}) {
                 IntegrationTestRule.TestContext tc = testRule.newTest();
                 String fnName = "bp" + format + runtime;
