@@ -121,6 +121,9 @@ public class RemoteFlowApiClient implements CompleterClient {
             httpReq.headers = new ArrayList<>();
 
             headers.asMap().forEach((k, vs) -> vs.forEach(v -> httpReq.headers.add(APIModel.HTTPHeader.create(k, v))));
+
+            Map<String, List<String>> headersMap = headers.asMap();
+            headersMap.forEach((key, values) -> values.forEach(value -> httpReq.headers.add(APIModel.HTTPHeader.create(key, value))));
         }
 
         httpReq.method = APIModel.HTTPMethod.fromFlow(method);
