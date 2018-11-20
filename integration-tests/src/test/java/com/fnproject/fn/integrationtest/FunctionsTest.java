@@ -57,6 +57,7 @@ public class FunctionsTest {
                 tc.rewritePOM();
                 tc.runFn("--verbose", "deploy", "--app", tc.appName(), "--local");
                 CmdResult rs = tc.runFnWithInput("wibble", "invoke", tc.appName(), fnName);
+                System.err.println("FN OUT: " + rs.getStdout());
                 Assert.assertEquals("BP output=" + rs.getStdout(), "Hello, wibble!", rs.getStdout());
                 assertThat(rs.getStdout()).contains("Hello, wibble!");
             }
