@@ -155,7 +155,7 @@ public class IntegrationTestRule implements TestRule {
             if (res.isSuccess() == false) {
                 System.out.println(res.toString());
             }
-            Assertions.assertThat(res.isSuccess()).withFailMessage("Expected command '" + res.cmd + "' to return 0").isTrue();
+            Assertions.assertThat(res.isSuccess()).withFailMessage("Expected command '" + res.cmd + "' to return 0. " + res).isTrue();
             return res;
         }
 
