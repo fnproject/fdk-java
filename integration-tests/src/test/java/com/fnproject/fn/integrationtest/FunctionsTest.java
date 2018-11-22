@@ -48,8 +48,9 @@ public class FunctionsTest {
         for (String format : new String[]{"http-stream"}) {
             for (String runtime : new String[]{"java9", "java8"}) {
                 IntegrationTestRule.TestContext tc = testRule.newTest();
-                String fnName = "bp" + format + runtime;
+                tc.withDirFrom("funcs/hellofunc");
 
+                String fnName = "bp" + format + runtime;
                 tc.runFn("init", "--runtime", runtime, "--name", fnName, "--format", format);
                 tc.rewritePOM();
                 tc.runFn("--verbose", "deploy", "--app", tc.appName(), "--local");

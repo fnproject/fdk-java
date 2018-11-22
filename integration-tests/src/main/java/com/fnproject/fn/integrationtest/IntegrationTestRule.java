@@ -153,9 +153,10 @@ public class IntegrationTestRule implements TestRule {
             CmdResult res = runFnWithInputAllowError(input, args);
 
             if (res.isSuccess() == false) {
-                System.out.println(res.toString());
+                System.err.println(res.toString());
             }
-            Assertions.assertThat(res.isSuccess()).withFailMessage("Expected command '" + res.cmd + "' to return 0. " + res).isTrue();
+
+            Assertions.assertThat(res.isSuccess()).withFailMessage("Expected command '" + res.cmd + "' to return 0.").isTrue();
             return res;
         }
 
