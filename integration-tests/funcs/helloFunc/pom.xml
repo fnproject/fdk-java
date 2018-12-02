@@ -62,7 +62,7 @@
                  <configuration>
                      <useSystemClassLoader>false</useSystemClassLoader>
                  </configuration>
-             </plugin>
+            </plugin>
         </plugins>
     </build>
 </project>

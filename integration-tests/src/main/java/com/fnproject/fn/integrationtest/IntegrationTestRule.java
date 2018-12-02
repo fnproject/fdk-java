@@ -190,10 +190,8 @@ public class IntegrationTestRule implements TestRule {
 
             Process p = pb.start();
 
-
             p.getOutputStream().write(input.getBytes());
             p.getOutputStream().close();
-
 
             CompletableFuture<String> stderr = new CompletableFuture<>();
 
