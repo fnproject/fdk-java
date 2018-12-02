@@ -1,0 +1,6 @@
+schema_version: 20180708
+name: hellofunc
+version: 0.0.1
+runtime: java8
+cmd: com.fnproject.fn.integration.hello.HelloFunction::handleRequest
+format: http-stream

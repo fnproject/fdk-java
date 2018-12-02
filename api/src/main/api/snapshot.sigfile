@@ -33,6 +33,7 @@ supr java.lang.Enum<com.fnproject.fn.api.FunctionInvoker$Phase>
 
 CLSS public final com.fnproject.fn.api.Headers
 intf java.io.Serializable
+meth public java.util.Map getAll()
 meth public !varargs com.fnproject.fn.api.Headers addHeader(java.lang.String,java.lang.String,java.lang.String[])
 meth public !varargs com.fnproject.fn.api.Headers setHeader(java.lang.String,java.lang.String,java.lang.String[])
 meth public boolean equals(java.lang.Object)
@@ -169,6 +170,17 @@ CLSS public com.fnproject.fn.api.exception.FunctionOutputHandlingException
 cons public init(java.lang.String)
 cons public init(java.lang.String,java.lang.Exception)
 supr java.lang.RuntimeException
+
+
+CLSS public abstract interface com.fnproject.fn.api.httpgateway.HTTPGatewayContext
+meth public abstract InvocationContext getInvocationContext()
+meth public abstract Headers getHeaders()
+meth public abstract String getRequestURL()
+meth public abstract String getMethod()
+meth public abstract QueryParameters getQueryParameters()
+meth public abstract void addResponseHeader(String key, String value)
+meth public abstract void setResponseHeader(String key, String v1, String... vs)
+meth public abstract void setStatusCode(int code)
 
 CLSS public abstract interface java.io.Closeable
 intf java.lang.AutoCloseable

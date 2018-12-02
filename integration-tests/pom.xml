@@ -3,17 +3,17 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
-
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.fnproject</groupId>
     <artifactId>integration-tests</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <properties>
+        <assertj-core.version>3.6.2</assertj-core.version>
+        <commons-io.version>2.5</commons-io.version>
         <jackson.version>2.9.6</jackson.version>
         <junit.version>4.12</junit.version>
-        <commons-io.version>2.5</commons-io.version>
-        <assertj-core.version>3.6.2</assertj-core.version>
+        <surefire.version>2.22.1</surefire.version>
     </properties>
     <packaging>jar</packaging>
 
@@ -28,19 +28,16 @@
             <artifactId>junit</artifactId>
             <version>${junit.version}</version>
         </dependency>
-
         <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
             <version>${assertj-core.version}</version>
         </dependency>
-
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
             <version>${jackson.version}</version>
         </dependency>
-
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-core</artifactId>
@@ -72,7 +69,14 @@
                     <skip>true</skip>
                 </configuration>
             </plugin>
+            <plugin>
+                 <groupId>org.apache.maven.plugins</groupId>
+                 <artifactId>maven-surefire-plugin</artifactId>
+                 <version>${surefire.version}</version>
+                 <configuration>
+                     <useSystemClassLoader>false</useSystemClassLoader>
+                 </configuration>
+             </plugin>
         </plugins>
     </build>
-
 </project>
