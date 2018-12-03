@@ -1,2 +1,2 @@
 runtime: docker
-format: http
+format: http-stream

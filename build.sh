@@ -45,8 +45,9 @@ mvn  -B  deploy -DaltDeploymentRepository=localStagingDir::default::file://${REP
 )
 
 (
+    workdir=$(pwd)/runtime
     cd images/build-native
-    ./docker-build.sh
+    ./docker-build.sh ${workdir}
 )
 
 
