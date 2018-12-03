@@ -112,7 +112,6 @@ public class IntegrationTestRule implements TestRule {
 
         boolean isSuccess() {
             return success;
-
         }
 
         public String getStdout() {
@@ -123,7 +122,9 @@ public class IntegrationTestRule implements TestRule {
             return stderr;
         }
 
-
+        public String toString() {
+            return "CmdResult: cmd=" + cmd + ", success=" + success + ", stdout=" + stdout + ", stderr=" + stderr;
+        }
     }
 
     public class TestContext {
@@ -151,7 +152,12 @@ public class IntegrationTestRule implements TestRule {
         public CmdResult runFnWithInput(String input, String... args) throws Exception {
             CmdResult res = runFnWithInputAllowError(input, args);
 
-            Assertions.assertThat(res.isSuccess()).withFailMessage("Expected command '" + res.cmd + "' to return 0").isTrue();
+            if (res.isSuccess() == false) {
+                System.err.println("FN FAIL!");
+                System.err.println(res.toString());
+            }
+
+            Assertions.assertThat(res.isSuccess()).withFailMessage("Expected command '" + res.cmd + "' to return 0." + "FN FAIL: " + res).isTrue();
             return res;
         }
 
@@ -184,10 +190,8 @@ public class IntegrationTestRule implements TestRule {
 
             Process p = pb.start();
 
-
             p.getOutputStream().write(input.getBytes());
             p.getOutputStream().close();
-
 
             CompletableFuture<String> stderr = new CompletableFuture<>();
 

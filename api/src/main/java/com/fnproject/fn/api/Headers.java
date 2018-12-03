@@ -32,6 +32,9 @@ public final class Headers implements Serializable {
 
     private static Pattern headerName = Pattern.compile("[A-Za-z0-9!#%&'*+-.^_`|~]+");
 
+    public Map getAll() {
+        return headers;
+    }
 
     /**
      * Calculates the canonical key  (cf RFC 7230) for a header

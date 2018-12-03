@@ -21,30 +21,25 @@
         <module>flow-testing</module>
         <module>fn-spring-cloud-function</module>
         <module>examples</module>
-
     </modules>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-        <jetty.version>9.4.12.v20180830</jetty.version>
-        <!--TDD-->
+        <assertj-core.version>3.10.0</assertj-core.version>
+        <commons-io.version>2.6</commons-io.version>
+        <httpcore.version>4.4.10</httpcore.version>
+        <jackson.version>2.9.7</jackson.version>
         <jacoco.version>0.8.1</jacoco.version>
+        <jetty.version>9.4.12.v20180830</jetty.version>
         <junit.version>4.12</junit.version>
         <mockito.version>2.21.0</mockito.version>
-        <assertj-core.version>3.10.0</assertj-core.version>
         <pitest.version>1.4.0</pitest.version>
-
         <slf4j.version>1.7.25</slf4j.version>
-
-        <commons-io.version>2.6</commons-io.version>
-        <jackson.version>2.9.7</jackson.version>
-        <httpcore.version>4.4.10</httpcore.version>
-
+        <surefire.version>2.22.1</surefire.version>
         <system-rules.version>1.16.0</system-rules.version>
     </properties>
-
 
     <dependencyManagement>
         <dependencies>

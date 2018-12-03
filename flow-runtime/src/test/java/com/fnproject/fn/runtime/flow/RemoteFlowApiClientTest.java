@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -130,7 +131,9 @@ public class RemoteFlowApiClientTest {
         thrown.expectMessage("Failed to add stage");
 
         // When
-        completerClient.invokeFunction(new FlowId(testFlowId), testFunctionId, invokeBody, HttpMethod.POST, Headers.fromMap(Collections.singletonMap("Content-type", contentType)), locationFn());
+        Map headersMap = Collections.singletonMap("Content-type", contentType);
+        Headers headers = Headers.fromMap(headersMap);
+        completerClient.invokeFunction(new FlowId(testFlowId), testFunctionId, invokeBody, HttpMethod.POST, headers, locationFn());
     }
 
     @Test

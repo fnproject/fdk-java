@@ -50,7 +50,7 @@
                 <configuration>
                     <sigfile>src/main/api/snapshot.sigfile</sigfile>
                     <action>strictcheck</action>
-                    <packages>com.fnproject.fn.api,com.fnproject.fn.api.exception,com.fnproject.fn.api.flow</packages>
+                    <packages>com.fnproject.fn.api,com.fnproject.fn.api.exception</packages>
                 </configuration>
             </plugin>
         </plugins>

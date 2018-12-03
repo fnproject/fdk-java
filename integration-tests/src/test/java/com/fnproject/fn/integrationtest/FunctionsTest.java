@@ -11,6 +11,8 @@ import java.net.URI;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Logger;
+import java.util.logging.Level;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -33,10 +35,8 @@ public class FunctionsTest {
         tc.runFn("--verbose", "deploy", "--app", tc.appName(), "--local");
         tc.runFn("config", "app", tc.appName(), "GREETING", "Salutations");
 
-
         CmdResult r1 = tc.runFnWithInput("", "invoke", tc.appName(), "simplefunc");
         assertThat(r1.getStdout()).isEqualTo("Salutations, world!");
-
 
         CmdResult r2 = tc.runFnWithInput("tests", "invoke", tc.appName(), "simplefunc");
         assertThat(r2.getStdout()).isEqualTo("Salutations, tests!");
@@ -45,11 +45,11 @@ public class FunctionsTest {
 
     @Test()
     public void checkBoilerPlate() throws Exception {
-        for (String format : new String[]{"default", "http", "http-stream"}) {
+        for (String format : new String[]{"http-stream"}) {
             for (String runtime : new String[]{"java9", "java8"}) {
                 IntegrationTestRule.TestContext tc = testRule.newTest();
-                String fnName = "bp" + format + runtime;
 
+                String fnName = "bp" + format + runtime;
                 tc.runFn("init", "--runtime", runtime, "--name", fnName, "--format", format);
                 tc.rewritePOM();
                 tc.runFn("--verbose", "deploy", "--app", tc.appName(), "--local");

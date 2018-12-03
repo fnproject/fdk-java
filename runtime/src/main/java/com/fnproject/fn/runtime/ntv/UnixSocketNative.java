@@ -10,6 +10,8 @@ import java.io.IOException;
  */
 class UnixSocketNative {
 
+    public UnixSocketNative() {}
+    
     static {
         String lib = System.mapLibraryName("fnunixsocket");
 
