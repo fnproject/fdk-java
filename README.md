@@ -2,7 +2,7 @@
 [![CircleCI](https://circleci.com/gh/fnproject/fdk-java.svg?style=svg&circle-token=348bec5610c34421f6c436ab8f6a18e153cb1c01)](https://circleci.com/gh/fnproject/fdk-java)
 
 This project adds support for writing functions in Java on the [Fn
-platform](https://github.com/fnproject/fn), with full support for Java 9
+platform](https://github.com/fnproject/fn), with full support for Java 11
 as the default out of the box.
 
 # FAQ
@@ -44,7 +44,7 @@ func.yaml created
 ```
 
 This creates the boilerplate for a new Java Function based on Maven and Oracle
-Java 9. The `pom.xml` includes a dependency on the latest version of the Fn
+Java 11. The `pom.xml` includes a dependency on the latest version of the Fn
 Java FDK that is useful for developing your Java functions.
 
 You can now import this project into your favourite IDE as normal.
@@ -101,7 +101,7 @@ You are now ready to run your Function locally using the Fn CLI tool.
 $ fn build
 Building image your_dockerhub_account/hello:0.0.1
 Sending build context to Docker daemon  14.34kB
-Step 1/11 : FROM fnproject/fn-java-fdk-build:jdk9-latest as build-stage
+Step 1/11 : FROM fnproject/fn-java-fdk-build:jdk11-latest as build-stage
  ---> 5435658a63ac
 Step 2/11 : WORKDIR /function
  ---> 37340c5aa451

@@ -34,7 +34,7 @@ and runtime images:
 ```
 cd runtime
 docker build -t fnproject/fn-java-fdk .
-docker build -f Dockerfile-jdk9 -t fnproject/fn-java-fdk:jdk9-latest .
+docker build -f Dockerfile-jdk11 -t fnproject/fn-java-fdk:jdk11-latest .
 ```
 
 Finally you can run the integration tests: 

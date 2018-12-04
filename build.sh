@@ -32,6 +32,7 @@ mvn  -B  deploy -DaltDeploymentRepository=localStagingDir::default::file://${REP
 (
   cd images/build
   ./docker-build.sh -f Dockerfile-jdk9 -t fnproject/fn-java-fdk-build:jdk9-${BUILD_VERSION} .
+  ./docker-build.sh -f Dockerfile-jdk11 -t fnproject/fn-java-fdk-build:jdk11-${BUILD_VERSION} .
 )
 
 (
@@ -42,6 +43,7 @@ mvn  -B  deploy -DaltDeploymentRepository=localStagingDir::default::file://${REP
 (
    cd runtime
    docker build -f ../images/runtime/Dockerfile-jdk9 -t fnproject/fn-java-fdk:jdk9-${BUILD_VERSION} .
+   docker build -f ../images/runtime/Dockerfile-jdk11 -t fnproject/fn-java-fdk:jdk11-${BUILD_VERSION} .
 )
 
 (
@@ -49,7 +51,6 @@ mvn  -B  deploy -DaltDeploymentRepository=localStagingDir::default::file://${REP
     cd images/build-native
     ./docker-build.sh ${workdir}
 )
-
 
 (
     cd images/init-native
