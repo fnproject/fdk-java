@@ -43,7 +43,7 @@ mvn  -B  deploy -DaltDeploymentRepository=localStagingDir::default::file://${REP
 (
    cd runtime
    docker build -f ../images/runtime/Dockerfile-jdk9 -t fnproject/fn-java-fdk:jdk9-${BUILD_VERSION} .
-   docker build -f ../images/runtime/Dockerfile-jdk11 -t fnproject/fn-java-fdk:jdk11-${BUILD_VERSION} .
+   docker build -f ../images/runtime/Dockerfile-jre11 -t fnproject/fn-java-fdk:jre11-${BUILD_VERSION} .
 )
 
 (
