@@ -48,7 +48,7 @@ public class FunctionsTest {
         for (String runtime : new String[]{"java8", "java11"}) {
             IntegrationTestRule.TestContext tc = testRule.newTest();
 
-            String fnName = "bp" + format + runtime;
+            String fnName = "bp" + runtime;
             tc.runFn("init", "--runtime", runtime, "--name", fnName);
             tc.rewritePOM();
             tc.runFn("--verbose", "deploy", "--app", tc.appName(), "--local");
