@@ -45,7 +45,7 @@ public class FunctionsTest {
 
     @Test()
     public void checkBoilerPlate() throws Exception {
-        for (String runtime : new String[]{"java8", "java11"}) {
+        for (String runtime : new String[]{"java8", "java9", "java11"}) {
             IntegrationTestRule.TestContext tc = testRule.newTest();
 
             String fnName = "bp" + runtime;
@@ -56,7 +56,6 @@ public class FunctionsTest {
             assertThat(rs.getStdout()).contains("Hello, wibble!");
         }
     }
-
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class InspectResponse {
