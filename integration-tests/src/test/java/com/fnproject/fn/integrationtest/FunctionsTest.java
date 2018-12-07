@@ -45,17 +45,15 @@ public class FunctionsTest {
 
     @Test()
     public void checkBoilerPlate() throws Exception {
-        for (String format : new String[]{"http-stream"}) {
-            for (String runtime : new String[]{"java9", "java8"}) {
-                IntegrationTestRule.TestContext tc = testRule.newTest();
+        for (String runtime : new String[]{"java8", "java11"}) {
+            IntegrationTestRule.TestContext tc = testRule.newTest();
 
-                String fnName = "bp" + format + runtime;
-                tc.runFn("init", "--runtime", runtime, "--name", fnName, "--format", format);
-                tc.rewritePOM();
-                tc.runFn("--verbose", "deploy", "--app", tc.appName(), "--local");
-                CmdResult rs = tc.runFnWithInput("wibble", "invoke", tc.appName(), fnName);
-                assertThat(rs.getStdout()).contains("Hello, wibble!");
-            }
+            String fnName = "bp" + format + runtime;
+            tc.runFn("init", "--runtime", runtime, "--name", fnName);
+            tc.rewritePOM();
+            tc.runFn("--verbose", "deploy", "--app", tc.appName(), "--local");
+            CmdResult rs = tc.runFnWithInput("wibble", "invoke", tc.appName(), fnName);
+            assertThat(rs.getStdout()).contains("Hello, wibble!");
         }
     }
 
