@@ -72,6 +72,19 @@ mvn -s ./settings-deploy.xml \
   docker push ${USER}/${BUILD_IMAGE}:jdk9-${release_version}
   docker push ${USER}/${BUILD_IMAGE}:jdk9-${moving_version}
 
+  ## jre11 runtime
+  docker tag ${USER}/${RUNTIME_IMAGE}:jre11-${release_version} ${USER}/${RUNTIME_IMAGE}:jre11-latest
+  docker tag ${USER}/${RUNTIME_IMAGE}:jre11-${release_version} ${USER}/${RUNTIME_IMAGE}:jre11-${moving_version}
+  docker push ${USER}/${RUNTIME_IMAGE}:jre11-latest
+  docker push ${USER}/${RUNTIME_IMAGE}:jre11-${release_version}
+  docker push ${USER}/${RUNTIME_IMAGE}:jre11-${moving_version}
+
+  ## jdk11 build
+  docker tag ${USER}/${BUILD_IMAGE}:jdk11-${release_version} ${USER}/${BUILD_IMAGE}:jdk11-latest
+  docker tag ${USER}/${BUILD_IMAGE}:jdk11-${release_version} ${USER}/${BUILD_IMAGE}:jdk11-${moving_version}
+  docker push ${USER}/${BUILD_IMAGE}:jdk11-latest
+  docker push ${USER}/${BUILD_IMAGE}:jdk11-${release_version}
+  docker push ${USER}/${BUILD_IMAGE}:jdk11-${moving_version}
 
   ##  native init image
   docker tag ${USER}/${NATIVE_INIT_IMAGE}:${release_version} ${USER}/${NATIVE_INIT_IMAGE}:latest
