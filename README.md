@@ -72,7 +72,7 @@ cmd: <fully qualified class name>::<method name>
 ```
 
 For more information about the fields in `func.yaml`, refer to the [Fn platform
-documentation](https://github.com/fnproject/fn/blob/master/docs/function-file.md)
+documentation](https://github.com/fnproject/docs/blob/master/fn/develop/func-file.md)
 about it.
 
 Let's also have a brief look at the source:

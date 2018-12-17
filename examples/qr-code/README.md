@@ -136,5 +136,5 @@ The function is finally run by `fn.thenRun(<FunctionClass>.class, "<FunctionMeth
 The results are retrieved by `fn.getOnlyResult().getBodyAsBytes()` to then compare
 with a pregenerated QR code read from disk.
 
-See [Function Testing](/docs/FunctionTesting.md) for further information
+See [Function Testing](/docs/TestingFunctions.md) for further information
 on the features the testing package provides.
