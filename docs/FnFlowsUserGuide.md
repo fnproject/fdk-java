@@ -101,7 +101,7 @@ func.yaml created
 
 ### Add the Flow runtime to your function 
 
-In your `pom.xml` add a depdendency on `flow-runtime` : 
+In your `pom.xml` add a dependency on `flow-runtime` : 
 
 ```$ml
         <dependency>
