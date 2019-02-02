@@ -26,19 +26,13 @@ public class EntryPoint {
         // without interference from the user printing stuff to what they believe is stdout.
         System.setOut(System.err);
 
-
         String format = System.getenv("FN_FORMAT");
         EventCodec codec;
-        if (format != null && format.equalsIgnoreCase("http")) {
-            codec = new HttpEventCodec(System.getenv(), System.in, originalSystemOut);
-        } else if (format == null || format.equalsIgnoreCase("default")) {
-            codec = new DefaultEventCodec(System.getenv(), System.in, originalSystemOut);
-        } else if (format.equals(HTTPStreamCodec.HTTP_STREAM_FORMAT)) {
+        if (format.equals(HTTPStreamCodec.HTTP_STREAM_FORMAT)) {
             codec = new HTTPStreamCodec(System.getenv());
         } else {
             throw new FunctionInputHandlingException("Unsupported function format:" + format);
         }
-
 
         int exitCode = new EntryPoint().run(System.getenv(), codec, System.err, args);
         System.setOut(originalSystemOut);
