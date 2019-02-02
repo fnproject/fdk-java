@@ -1,3 +1,3 @@
-# Fn Java runtime base image 
+# Fn Java runtime base images
 
-This image is used as a base image for functions  - it includes a JDK and the latest version of the runtime 
+These images are used as a base image for functions - they include a JDK and the latest version of the runtime 
