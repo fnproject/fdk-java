@@ -20,7 +20,7 @@ RUN set -x \
     && cp -r $(/build/mx/mx --primary-suite graal-jvmci-8 jdkhome) /build/jvmcijdk8
 
 RUN git clone https://github.com/oracle/graal.git \
-    && git -C graal checkout vm-1.0.0-rc9
+    && git -C graal checkout vm-1.0.0-rc11
 WORKDIR /build/graal/vm
 RUN export JAVA_HOME=/build/jvmcijdk8 \
     && /build/mx/mx --dy /substratevm --force-bash-launchers=true --disable-polyglot --disable-libpolyglot build
