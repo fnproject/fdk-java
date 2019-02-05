@@ -2,8 +2,6 @@ FROM openjdk:11-jre-slim
 COPY target/runtime-*.jar target/dependency/*.jar /function/runtime/
 COPY src/main/c/libfnunixsocket.so /function/runtime/lib/
 
-RUN ["/usr/bin/java", "-Xshare:dump"]
-
 # The UseExeperimentalVMOptions, UseCGroupMemoryLimitForHeap and MaxRAMFraction options that were used in the JDK 9 builds are
 # no longer supported in JDK 11 - so these have been removed. We now rely on the built-in ContainerSupport option that Linux JDKs
 # use to configure themselves when detecting they are running in a container.
@@ -11,5 +9,5 @@ RUN ["/usr/bin/java", "-Xshare:dump"]
 # SerialGC is used here as it's likely that we'll be running many JVMs on the same host machine and it's also likely
 # that the number of JVMs will outnumber the number of available processors.
 #
-ENTRYPOINT [ "/usr/bin/java", "-XX:-UsePerfData", "-XX:+UseSerialGC", "-Xshare:on", \
+ENTRYPOINT [ "/usr/bin/java", "-XX:-UsePerfData", "-XX:+UseSerialGC", \
      "-Djava.library.path=/function/runtime/lib", "-cp", "/function/app/*:/function/runtime/*", "com.fnproject.fn.runtime.EntryPoint" ]
