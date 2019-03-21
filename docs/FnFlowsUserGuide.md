@@ -199,15 +199,23 @@ $ fn config app flows-example COMPLETER_BASE_URL "http://$DOCKER_LOCALHOST:8081"
 
 ### Run your Flow function
 
-You can now run your function using `fn call` or HTTP and curl:
+You can now run your function using `fn invoke` or HTTP and curl:
 
 ```
-$ echo 10 | fn call flows-example /primes
+$ echo 10 | fn invoke flows-example primes
 The 10th prime number is 29
 ```
 
+To invoke your function via HTTP, you need to know its invocation endpoint (or the function needs to have an HTTP trigger defined).
+
 ```
-$ curl -XPOST -d "10" http://localhost:8080/r/flows-example/primes
+$ fn inspect fn flows-examples primes
+```
+
+Take note of the `fnproject.io/fn/invokeEndpoint` URL and invoke it (e.g., using curl).
+
+```
+$ curl -X POST -d "10" http://localhost:8080/invoke/...
 The 10th prime number is 29
 ```
 
@@ -353,6 +361,7 @@ There are several methods for handling errors with FlowFutures:
 ```
 
 `exceptionallyCompose` is similar but allows you to handle an exception by executing one or more other nodes and attaching the subsequent FlowFuture to the result.
+
 ```
 	Flow fl = Flows.currentFlow();
 	FlowFuture<Integer> f1 = fl.supply(() -> {
