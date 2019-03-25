@@ -11,6 +11,9 @@ Some of the Java FDK's features include:
 - Function testing using JUNit rules
 - And more!
 
+## Learn about the Fn Project
+
+New to Fn Project? If you want to learn more about using the Fn Project to power your next project, start with the [official documentation](https://github.com/fnproject/docs).
 
 ## Using the Java FDK
 
@@ -19,5 +22,7 @@ For detailed instructions on using the Java FDK to build and deploy Java functio
 ## Contributing to the Java FDK
 
 Please see [CONTRIBUTING.md](CONTRIBUTING.md).
+
+
 
 
