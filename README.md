@@ -8,7 +8,7 @@ Some of the Java FDK's features include:
 
 - Parsing input and writing output
 - Flexible data binding to Java objects
-- Function testing using JUNit rules
+- Function testing using JUnit rules
 - And more!
 
 ## Learn about the Fn Project
