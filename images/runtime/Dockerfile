@@ -4,6 +4,8 @@ COPY src/main/c/libfnunixsocket.so /function/runtime/lib/
 
 RUN ["/usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java", "-Xshare:dump"]
 
+RUN addgroup -g 1000 -S fn && adduser -S -u 1000 -G fn fn
+
 # UseCGroupMemoryLimitForHeap looks up /sys/fs/cgroup/memory/memory.limit_in_bytes inside the container to determine
 # what the heap should be set to. This is an experimental feature at the moment, thus we need to unlock to use it.
 #

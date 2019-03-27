@@ -4,6 +4,8 @@ COPY src/main/c/libfnunixsocket.so /function/runtime/lib/
 
 RUN ["/usr/bin/java", "-Xshare:dump"]
 
+RUN addgroup -g 1000 -S fn && adduser -S -u 1000 -G fn fn
+
 # The UseExeperimentalVMOptions, UseCGroupMemoryLimitForHeap and MaxRAMFraction options that were used in the JDK 9 builds are
 # no longer supported in JDK 11 - so these have been removed. We now rely on the built-in ContainerSupport option that Linux JDKs
 # use to configure themselves when detecting they are running in a container.
