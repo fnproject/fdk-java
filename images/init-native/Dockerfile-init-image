@@ -22,4 +22,5 @@ fi\n\
 tar c src pom.xml func.init.yaml Dockerfile\n' > build_init_image.sh \
     && chmod 755 build_init_image.sh
 
+RUN addgroup -g 1000 -S fn && adduser -S -u 1000 -G fn fn
 CMD ["./build_init_image.sh"]
