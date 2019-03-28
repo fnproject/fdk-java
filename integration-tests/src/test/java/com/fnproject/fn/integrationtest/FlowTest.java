@@ -26,8 +26,8 @@ public class FlowTest {
     public void shouldInvokeBasicFlow() throws Exception {
         IntegrationTestRule.TestContext tc = testRule.newTest();
         tc.withDirFrom("funcs/flowBasic").rewritePOM();
-        tc.runFn("--verbose", "create", "app", tc.appName());
-        tc.runFn("--verbose", "deploy", "--app", tc.appName(), "--local");
+       // tc.runFn("--verbose", "create", "app", tc.appName());
+        tc.runFn("--verbose", "deploy", "--create-app", "--app", tc.appName(), "--local");
         tc.runFn("config", "app", tc.appName(), "COMPLETER_BASE_URL", testRule.getFlowURL());
         CmdResult r = tc.runFnWithInput("1", "invoke", tc.appName(), "flowbasic");
         assertThat(r.getStdout()).isEqualTo("4");
@@ -38,8 +38,8 @@ public class FlowTest {
     public void shouldInvokeBasicFlowJDK8() throws Exception {
         IntegrationTestRule.TestContext tc = testRule.newTest();
         tc.withDirFrom("funcs/flowBasicJDK8").rewritePOM();
-        tc.runFn("--verbose", "create", "app", tc.appName());
-        tc.runFn("--verbose", "deploy", "--app", tc.appName(), "--local");
+        //tc.runFn("--verbose", "create", "app", tc.appName());
+        tc.runFn("--verbose", "deploy", "--create-app", "--app", tc.appName(), "--local");
         tc.runFn("config", "app", tc.appName(), "COMPLETER_BASE_URL", testRule.getFlowURL());
         CmdResult r = tc.runFnWithInput("1", "invoke", tc.appName(), "flowbasicj8");
         assertThat(r.getStdout()).isEqualTo("4");
@@ -50,8 +50,8 @@ public class FlowTest {
     public void shouldExerciseAllFlow() throws Exception {
         IntegrationTestRule.TestContext tc = testRule.newTest();
         tc.withDirFrom("funcs/flowAllFeatures").rewritePOM();
-        tc.runFn("--verbose", "create", "app", tc.appName());
-        tc.runFn("--verbose", "deploy", "--app", tc.appName(), "--local");
+        //tc.runFn("--verbose", "create", "app", tc.appName());
+        tc.runFn("--verbose", "deploy", "--create-app", "--app", tc.appName(), "--local");
         tc.runFn("config", "app", tc.appName(), "COMPLETER_BASE_URL", testRule.getFlowURL());
         CmdResult r = tc.runFnWithInput("1", "invoke", tc.appName(), "flowallfeatures");
         assertThat(r.getStdout()).contains("Everything worked");
@@ -76,8 +76,8 @@ public class FlowTest {
             IntegrationTestRule.TestContext tc = testRule.newTest();
             tc.withDirFrom("funcs/flowExitHooks").rewritePOM();
             tc.runFn("--verbose", "build", "--no-cache");
-
-            tc.runFn("--verbose", "deploy", "--app", tc.appName(), "--local");
+            //tc.runFn("--verbose", "create", "app", tc.appName());
+            tc.runFn("--verbose", "deploy", "--create-app", "--app", tc.appName(), "--local");
             tc.runFn("config", "app", tc.appName(), "COMPLETER_BASE_URL", testRule.getFlowURL());
             tc.runFn("config", "app", tc.appName(), "TERMINATION_HOOK_URL", "http://" + testRule.getDockerLocalhost() + ":" + 8000 + "/exited");
             CmdResult r = tc.runFnWithInput("1", "invoke", tc.appName(), "flowexithooks");
@@ -95,7 +95,8 @@ public class FlowTest {
     public void shouldHandleTimeouts() throws Exception {
         IntegrationTestRule.TestContext tc = testRule.newTest();
         tc.withDirFrom("funcs/flowTimeouts").rewritePOM();
-        tc.runFn("--verbose", "deploy", "--app", tc.appName(), "--local");
+        //tc.runFn("--verbose", "create", "app", tc.appName());
+        tc.runFn("--verbose", "deploy", "--create-app", "--app", tc.appName(), "--local");
         tc.runFn("config", "app", tc.appName(), "COMPLETER_BASE_URL", testRule.getFlowURL());
         CmdResult r = tc.runFn("invoke", tc.appName(), "flowtimeouts");
         assertThat(r.getStdout()).contains("timeout");
