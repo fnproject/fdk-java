@@ -30,5 +30,5 @@ WORKDIR /function
 COPY --from=build-native-image /function/func func
 COPY --from=build-native-image /function/runtime/lib/* .
 ENTRYPOINT ["./func", "-XX:MaximumHeapSizePercent=80"]
-RUN addgroup -g 1000 -S fn && adduser -S -u 1000 -G fn fn
+RUN addgroup --system --gid 1000 fn && adduser --uid 1000 --group fn fn
 CMD [ "com.example.fn.HelloFunction::handleRequest" ]
