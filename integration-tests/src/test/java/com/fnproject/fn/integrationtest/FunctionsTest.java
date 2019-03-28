@@ -46,10 +46,9 @@ public class FunctionsTest {
 
     @Test()
     public void checkBoilerPlate() throws Exception {
-        tc.runFn("--verbose", "create", "app", tc.appName());
         for (String runtime : new String[]{"java8", "java11"}) {
-            IntegrationTestRule.TestContext tc = testRule.newTest();
-
+	    IntegrationTestRule.TestContext tc = testRule.newTest();
+            tc.runFn("--verbose", "create", "app", tc.appName());
             String fnName = "bp" + runtime;
             tc.runFn("init", "--runtime", runtime, "--name", fnName);
             tc.rewritePOM();
