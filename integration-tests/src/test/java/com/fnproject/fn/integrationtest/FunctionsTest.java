@@ -32,6 +32,7 @@ public class FunctionsTest {
         IntegrationTestRule.TestContext tc = testRule.newTest();
         tc.withDirFrom("funcs/simpleFunc").rewritePOM();
 
+        tc.runFn("--verbose", "create", "app", tc.appName());
         tc.runFn("--verbose", "deploy", "--app", tc.appName(), "--local");
         tc.runFn("config", "app", tc.appName(), "GREETING", "Salutations");
 
@@ -45,6 +46,7 @@ public class FunctionsTest {
 
     @Test()
     public void checkBoilerPlate() throws Exception {
+        tc.runFn("--verbose", "create", "app", tc.appName());
         for (String runtime : new String[]{"java8", "java11"}) {
             IntegrationTestRule.TestContext tc = testRule.newTest();
 
@@ -67,7 +69,7 @@ public class FunctionsTest {
     public void shouldHandleTrigger() throws Exception {
         IntegrationTestRule.TestContext tc = testRule.newTest();
         tc.withDirFrom("funcs/httpgwfunc").rewritePOM();
-
+        tc.runFn("--verbose", "create", "app", tc.appName());
         tc.runFn("--verbose", "deploy", "--app", tc.appName(), "--local");
 
         // Get me the trigger URL
