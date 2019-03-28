@@ -26,7 +26,7 @@ public class FlowTest {
     public void shouldInvokeBasicFlow() throws Exception {
         IntegrationTestRule.TestContext tc = testRule.newTest();
         tc.withDirFrom("funcs/flowBasic").rewritePOM();
-        tc.runFn("--verbose", "create", "app", tc.appName(), "--local");
+        tc.runFn("--verbose", "create", "app", tc.appName());
         tc.runFn("--verbose", "deploy", "--app", tc.appName(), "--local");
         tc.runFn("config", "app", tc.appName(), "COMPLETER_BASE_URL", testRule.getFlowURL());
         CmdResult r = tc.runFnWithInput("1", "invoke", tc.appName(), "flowbasic");
@@ -38,7 +38,7 @@ public class FlowTest {
     public void shouldInvokeBasicFlowJDK8() throws Exception {
         IntegrationTestRule.TestContext tc = testRule.newTest();
         tc.withDirFrom("funcs/flowBasicJDK8").rewritePOM();
-        tc.runFn("--verbose", "create", "app", tc.appName(), "--local");
+        tc.runFn("--verbose", "create", "app", tc.appName());
         tc.runFn("--verbose", "deploy", "--app", tc.appName(), "--local");
         tc.runFn("config", "app", tc.appName(), "COMPLETER_BASE_URL", testRule.getFlowURL());
         CmdResult r = tc.runFnWithInput("1", "invoke", tc.appName(), "flowbasicj8");
@@ -50,7 +50,7 @@ public class FlowTest {
     public void shouldExerciseAllFlow() throws Exception {
         IntegrationTestRule.TestContext tc = testRule.newTest();
         tc.withDirFrom("funcs/flowAllFeatures").rewritePOM();
-        tc.runFn("--verbose", "create", "app", tc.appName(), "--local");
+        tc.runFn("--verbose", "create", "app", tc.appName());
         tc.runFn("--verbose", "deploy", "--app", tc.appName(), "--local");
         tc.runFn("config", "app", tc.appName(), "COMPLETER_BASE_URL", testRule.getFlowURL());
         CmdResult r = tc.runFnWithInput("1", "invoke", tc.appName(), "flowallfeatures");
