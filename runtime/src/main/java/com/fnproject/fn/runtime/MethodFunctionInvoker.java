@@ -22,10 +22,10 @@ public class MethodFunctionInvoker implements FunctionInvoker {
     */
     public void logFramer(FunctionRuntimeContext rctx, InputEvent evt) {
         String framer = rctx.getConfigurationByKey("FN_LOGFRAME_NAME").orElse("");
-        
+
         if (framer != "") {
             String valueSrc = rctx.getConfigurationByKey("FN_LOGFRAME_HDR").orElse("");
-            
+
             if (valueSrc != "") {
                 String id = evt.getHeaders().get(valueSrc).orElse("");
                 if (id != "") {
@@ -34,10 +34,9 @@ public class MethodFunctionInvoker implements FunctionInvoker {
                 }
             }
         }
-    
     }
-    
-    
+
+
     /**
      * Invoke the function wrapped by this loader
      *

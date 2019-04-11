@@ -215,20 +215,12 @@ public class EndToEndInvokeTest {
     public void shouldPrintLogFrame() throws Exception {
         fn.setConfig("FN_LOGFRAME_NAME", "containerID");
         fn.setConfig("FN_LOGFRAME_HDR", "fnID");
-        fn.givenEvent().enqueue();
-        TestFn.setOutput("Hello world");
+        fn.givenEvent().withHeader("fnID", "uhfieuwfhieuwh").withBody( "Hello world!").enqueue();
 
-        fn.thenRun(TestFn.class, "setOutput");
+        fn.thenRun(TestFn.class, "fnEcho");
         assertThat(fn.getOnlyOutputAsString()).isEqualTo("Hello world!");
+        assertThat(fn.getStdErrAsString()).isEqualTo("");
 
-        // fn.getConfig("FN_LOGFRAME_NAME").isE
-        // fn.thenRun(TestFn.class, "echoInput");
-        // assertThat(configuration).containsEntry("FN_LOGFRAME_NAME", "containerID");
-        // assertThat(configuration).containsEntry("FN_LOGFRAME_HDR", "fnID");
-        
-        // FnResult result = fn.getResults().get(0);
-        // Assertions.assertThat(result.getBodyAsString()).isEqualTo("containerID=fnID\nHello World");
-        // assertThat(fn.getOnlyOutputAsString()).isEqualTo("containerID=fnID\nHello World");
     }
 
 
