@@ -250,6 +250,22 @@ public class FnTestingRuleTest {
         Assertions.assertThat(capturedBodies.get(0)).isEqualTo("FOO BAR".getBytes());
     }
 
+    @Test
+    public void shouldPrintLogFrame() throws Exception {
+        fn.setConfig("FN_LOGFRAME_NAME", "containerID");
+        fn.setConfig("FN_LOGFRAME_HDR", "fnID");
+        fn.givenEvent().withBody("Hello World").enqueue();
+
+        fn.thenRun(TestFn.class, "copyConfiguration");
+        Assertions.assertThat(configuration).containsEntry("FN_LOGFRAME_NAME", "containerID");
+        Assertions.assertThat(configuration).containsEntry("FN_LOGFRAME_HDR", "fnID");
+        
+        FnResult result = fn.getOnlyResult();
+        Assertions.assertThat(result.getBodyAsString()).isEqualTo("containerID=fnID\nHello World");
+        // assertThat(fn.getOnlyOutputAsString()).isEqualTo("containerID=fnID\nHello World");
+    }
+
+
     // TODO move this to HTTP gateway
 //    @Test
 //    public void shouldLeaveQueryParamtersOffIfNotSpecified() {

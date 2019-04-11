@@ -17,6 +17,27 @@ import java.util.Optional;
  */
 public class MethodFunctionInvoker implements FunctionInvoker {
 
+    /*
+    * If enabled, print the logging framing content
+    */
+    public void logFramer(FunctionRuntimeContext rctx, InputEvent evt) {
+        String framer = rctx.getConfigurationByKey("FN_LOGFRAME_NAME").orElse("");
+        
+        if (framer != "") {
+            String valueSrc = rctx.getConfigurationByKey("FN_LOGFRAME_HDR").orElse("");
+            
+            if (valueSrc != "") {
+                String id = evt.getHeaders().get(valueSrc).orElse("");
+                if (id != "") {
+                    System.out.println(framer + "=" + id);
+                    System.err.println(framer + "=" + id);
+                }
+            }
+        }
+    
+    }
+    
+    
     /**
      * Invoke the function wrapped by this loader
      *
@@ -32,6 +53,8 @@ public class MethodFunctionInvoker implements FunctionInvoker {
         Object[] userFunctionParams = coerceParameters(ctx, method, evt);
 
         Object rawResult;
+
+        logFramer(runtimeContext, evt);
 
         try {
             rawResult = method.getTargetMethod().invoke(ctx.getRuntimeContext().getInvokeInstance().orElse(null), userFunctionParams);
