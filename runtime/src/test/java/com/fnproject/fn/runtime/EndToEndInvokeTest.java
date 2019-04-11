@@ -215,11 +215,12 @@ public class EndToEndInvokeTest {
     public void shouldPrintLogFrame() throws Exception {
         fn.setConfig("FN_LOGFRAME_NAME", "containerID");
         fn.setConfig("FN_LOGFRAME_HDR", "fnID");
-        fn.givenEvent().withHeader("fnID", "uhfieuwfhieuwh").withBody( "Hello world!").enqueue();
+        fn.givenEvent().withHeader("fnID", "fnIDVal").withBody( "Hello world!").enqueue();
 
         fn.thenRun(TestFn.class, "fnEcho");
         assertThat(fn.getOnlyOutputAsString()).isEqualTo("Hello world!");
-        assertThat(fn.getStdErrAsString()).isEqualTo("");
+        // stdout gets redirected to stderr - hence printing out twice
+        assertThat(fn.getStdErrAsString()).isEqualTo("containerID=fnIDVal\ncontainerID=fnIDVal\n");
 
     }
 
