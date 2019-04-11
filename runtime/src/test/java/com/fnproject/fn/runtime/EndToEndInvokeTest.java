@@ -211,6 +211,26 @@ public class EndToEndInvokeTest {
 
     }
 
+    @Test
+    public void shouldPrintLogFrame() throws Exception {
+        fn.setConfig("FN_LOGFRAME_NAME", "containerID");
+        fn.setConfig("FN_LOGFRAME_HDR", "fnID");
+        fn.givenEvent().enqueue();
+        TestFn.setOutput("Hello world");
+
+        fn.thenRun(TestFn.class, "setOutput");
+        assertThat(fn.getOnlyOutputAsString()).isEqualTo("Hello world!");
+
+        // fn.getConfig("FN_LOGFRAME_NAME").isE
+        // fn.thenRun(TestFn.class, "echoInput");
+        // assertThat(configuration).containsEntry("FN_LOGFRAME_NAME", "containerID");
+        // assertThat(configuration).containsEntry("FN_LOGFRAME_HDR", "fnID");
+        
+        // FnResult result = fn.getResults().get(0);
+        // Assertions.assertThat(result.getBodyAsString()).isEqualTo("containerID=fnID\nHello World");
+        // assertThat(fn.getOnlyOutputAsString()).isEqualTo("containerID=fnID\nHello World");
+    }
+
 
     @Test
     public void shouldWriteBytesOnDefaultCodec() throws Exception {
