@@ -17,7 +17,7 @@ New to Fn Project? If you want to learn more about using the Fn Project to power
 
 ## Using the Java FDK
 
-For detailed instructions on using the Java FDK to build and deploy Java functions to Fn, please see the official Java FDK developer guide in our docs repo here: https://github.com/fnproject/docs/blob/master/fdks/fdk-java/README.md.
+For detailed instructions on using the Java FDK to build and deploy Java functions to Fn, please see the official Java FDK developer guide in our docs repo here: https://fnproject.io/tutorials/JavaFDKIntroduction/.
 
 ## Contributing to the Java FDK
 
