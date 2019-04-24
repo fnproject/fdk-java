@@ -29,8 +29,8 @@ public class MethodFunctionInvoker implements FunctionInvoker {
             if (valueSrc != "") {
                 String id = evt.getHeaders().get(valueSrc).orElse("");
                 if (id != "") {
-                    System.out.println(framer + "=" + id);
-                    System.err.println(framer + "=" + id);
+                    System.out.println("\n" + framer + "=" + id + "\n");
+                    System.err.println("\n" + framer + "=" + id + "\n");
                 }
             }
         }

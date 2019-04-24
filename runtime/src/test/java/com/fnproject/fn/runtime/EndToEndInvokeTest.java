@@ -220,7 +220,7 @@ public class EndToEndInvokeTest {
         fn.thenRun(TestFn.class, "fnEcho");
         assertThat(fn.getOnlyOutputAsString()).isEqualTo("Hello world!");
         // stdout gets redirected to stderr - hence printing out twice
-        assertThat(fn.getStdErrAsString()).isEqualTo("containerID=fnIDVal\ncontainerID=fnIDVal\n");
+        assertThat(fn.getStdErrAsString()).isEqualTo("\ncontainerID=fnIDVal\n\n\ncontainerID=fnIDVal\n\n");
 
     }
 
