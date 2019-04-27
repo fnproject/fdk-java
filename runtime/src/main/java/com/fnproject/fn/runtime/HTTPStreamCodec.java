@@ -321,6 +321,8 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
         }).orElse(ContentType.DEFAULT_BINARY);
 
         response.setHeader("Content-Type", contentType.toString());
+        // TODO(reed): this needs a java expert
+        response.setHeader("User-Agent", "fdk-java/" + com.fnproject.fn.class.getImplementationVersion());
         response.setStatusLine(new BasicStatusLine(HttpVersion.HTTP_1_1, evt.getStatus().getCode(), evt.getStatus().name()));
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         // TODO remove output buffering here - possibly change OutputEvent contract to support providing an InputStream?
