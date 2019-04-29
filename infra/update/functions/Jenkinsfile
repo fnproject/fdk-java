@@ -1,7 +1,7 @@
 pipeline {
     agent any
     parameters {
-        string(name: 'IMAGE', defaultValue: 'registry.oracledx.com/skeppare/functions-service:latest', description: 'Which image to use (full repository:tag, e.g. fnproject/functions:latest)')
+        string(name: 'IMAGE', defaultValue: 'registry.oracledx.com/skeppare/functions-service:latest', description: 'Which image to use (full repository:tag, e.g. fnproject/fnserver:latest)')
         string(name: 'SOURCE_REPO', defaultValue: 'git@github.com:fnproject/fn.git', description: 'Which git repo to use to build the CLI tool')
         string(name: 'SOURCE_BRANCH', defaultValue: 'master', description: 'Which git repo branch to use to build the CLI tool')
     }
