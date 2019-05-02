@@ -32,7 +32,7 @@ public class FunctionsTest {
         IntegrationTestRule.TestContext tc = testRule.newTest();
         tc.withDirFrom("funcs/simpleFunc").rewritePOM();
 
-        tc.runFn("--verbose", "deploy", "--app", tc.appName(), "--local");
+        tc.runFn("--verbose", "deploy", "--create-app", "--app", tc.appName(), "--local");
         tc.runFn("config", "app", tc.appName(), "GREETING", "Salutations");
 
         CmdResult r1 = tc.runFnWithInput("", "invoke", tc.appName(), "simplefunc");
@@ -46,12 +46,11 @@ public class FunctionsTest {
     @Test()
     public void checkBoilerPlate() throws Exception {
         for (String runtime : new String[]{"java8", "java11"}) {
-            IntegrationTestRule.TestContext tc = testRule.newTest();
-
+	    IntegrationTestRule.TestContext tc = testRule.newTest();
             String fnName = "bp" + runtime;
             tc.runFn("init", "--runtime", runtime, "--name", fnName);
             tc.rewritePOM();
-            tc.runFn("--verbose", "deploy", "--app", tc.appName(), "--local");
+            tc.runFn("--verbose", "deploy", "--create-app", "--app", tc.appName(), "--local");
             CmdResult rs = tc.runFnWithInput("wibble", "invoke", tc.appName(), fnName);
             assertThat(rs.getStdout()).contains("Hello, wibble!");
         }
@@ -67,8 +66,7 @@ public class FunctionsTest {
     public void shouldHandleTrigger() throws Exception {
         IntegrationTestRule.TestContext tc = testRule.newTest();
         tc.withDirFrom("funcs/httpgwfunc").rewritePOM();
-
-        tc.runFn("--verbose", "deploy", "--app", tc.appName(), "--local");
+        tc.runFn("--verbose", "deploy", "--create-app", "--app", tc.appName(), "--local");
 
         // Get me the trigger URL
         CmdResult output = tc.runFn("inspect", "trigger", tc.appName(), "httpgwfunc", "trig");

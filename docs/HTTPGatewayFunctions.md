@@ -23,7 +23,7 @@ import com.fnproject.fn.api.httpgateway.HTTPGatewayContext;
 
 public class RedirectFunction {
 
-    public redirect(HTTPGatewayContext hctx) {
+    public void redirect(HTTPGatewayContext hctx) {
         System.err.println("Request URL is:" + hctx.getRequestURL());
         System.err.println("Trace ID" + hctx.getHeaders().get("My-Trace-ID").orElse("N/A"));
 
