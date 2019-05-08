@@ -1,7 +1,11 @@
-name: fn-example/string-reverse
-version: 0.0.1
+schema_version: 20180708
+name: string-reverse
+version: 0.0.2
 runtime: java
-timeout: 30
-format: http
-cmd: com.fnproject.fn.examples.StringReverse::reverse
-path: /reverse
+build_image: fnproject/fn-java-fdk-build:jdk11-1.0.87
+run_image: fnproject/fn-java-fdk:jre11-1.0.87
+cmd: com.example.fn.StringReverse::reverse
+triggers:
+- name: string-reverse
+  type: http
+  source: /string-reverse

@@ -1,71 +1,75 @@
-# Example oFunctions Project: String Reverse
+# Example Java Function: String Reverse
 
-This example provides an HTTP endpoint for reversing strings
+This example provides an HTTP trigger endpoint for reversing strings.
 
 ```bash
-$ curl -d "Hello, World!" "http://localhost:8080/r/string-reverse-app/reverse"
-!dlroW ,olleH
+$ curl -d "Hello World" http://localhost:8080/t/string-reverse-app/string-reverse
+dlroW olleH
 ```
 
 
 ## Demonstrated FDK features
 
-This example uses **no** features of the fn Java FDK; in fact it doesn't have
-a dependency on the fn Java FDK, it just plain old Java code.
+This example uses **none** of the Fn Java FDK features, in fact it doesn't have
+any dependency on the Fn Java FDK.  It is just plain old Java code.
 
 ## Step by step
 
-Ensure you have the functions server running using, this will host your
-function and provide the HTTP endpoints that invoke it:
+Ensure you have the Fn server running to host your
+function and provide the HTTP endpoint that invokes it:
 
-```bash
+(1) Start the server
+
+```sh
 $ fn start
 ```
 
-Build the function locally
+(2) Create an app for the function
 
-```bash
-$ fn build
-```
-
-Create an app and route to host the function
-
-```bash
+```sh
 $ fn create app string-reverse-app
-$ fn create route string-reverse-app /reverse
 ```
 
-Invoke the function to reverse a string
+(3) Deploy the function to your app from the `string-reverse` directory.
+
+```sh
+fn deploy --app string-reverse-app --local
+```
+
+(4) Invoke the function and reverse the string.
+
+```sh
+echo "Hello World" | fn invoke string-reverse-app string-reverse
+dlroW olleH
+```
+
+(5) Invoke the function using curl and  a trigger to reverse a string.
 
 ```bash
-$ curl -d "Hello, World!" "http://localhost:8080/r/string-reverse-app/reverse"
-!dlroW ,olleH
+$ curl -d "Hello World" http://localhost:8080/t/string-reverse-app/string-reverse
+dlroW olleH
 ```
 
 
 ## Code walkthrough
 
 The entrypoint to the function is specified in `func.yaml` in the `cmd` key.
-It is set this to `com.fnproject.fn.examples.StringReverse::reverse`. The whole class
+It is set this to `com.example.fn.StringReverse::reverse`. The whole class
 `StringReverse` is shown below:
 
 
 ```java
-package com.fnproject.fn.examples;
+package com.example.fn;
 
 public class StringReverse {
     public String reverse(String str) {
-        StringBuilder builder = new StringBuilder();
-        for (int i = str.length() - 1; i >= 0; i--) {
-            builder.append(str.charAt(i));
-        }
-        return builder.toString();
+        return new StringBuilder(str).reverse().toString();
     }
 }
 ```
 
-As you can see, this is plain java with no references to the fn API. The
-fn Java FDK handles the marshalling of the HTTP body into the `str`
+As you can see, this is plain java with no references to the Fn API. The
+Fn Java FDK handles the marshalling of the HTTP body into the `str`
 parameter as well as the marshalling of the returned reversed string into the HTTP
 response body (see [Data Binding](/docs/DataBinding.md) for more
 information on how marshalling is performed).
