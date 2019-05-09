@@ -30,14 +30,14 @@ else
    exit 1
 fi
 
+# Push result to git
 
-# Deploy to bintray
-mvn -s ./settings-deploy.xml \
-    -DskipTests \
-    -DaltDeploymentRepository="fnproject-release-repo::default::${MVN_RELEASE_REPO}" \
-    -Dfnproject-release-repo.username="${MVN_RELEASE_USER}" \
-    -Dfnproject-release-repo.password="${MVN_RELEASE_PASSWORD}" \
-    clean deploy
+echo ${new_version} > release.version
+git tag -a "$release_version" -m "version $release_version"
+git add release.version
+git commit -m "$SERVICE: post-$release_version version bump [skip ci]"
+git push
+git push origin "$release_version"
 
 
 # Regenerate runtime and build images and push them
@@ -91,11 +91,10 @@ mvn -s ./settings-deploy.xml \
 )
 
 
-# Push result to git
-
-echo ${new_version} > release.version
-git tag -a "$release_version" -m "version $release_version"
-git add release.version
-git commit -m "$SERVICE: post-$release_version version bump [skip ci]"
-git push
-git push origin "$release_version"
+# Deploy to bintray
+mvn -s ./settings-deploy.xml \
+    -DskipTests \
+    -DaltDeploymentRepository="fnproject-release-repo::default::${MVN_RELEASE_REPO}" \
+    -Dfnproject-release-repo.username="${MVN_RELEASE_USER}" \
+    -Dfnproject-release-repo.password="${MVN_RELEASE_PASSWORD}" \
+    clean deploy
