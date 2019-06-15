@@ -1,6 +1,6 @@
-package com.fnproject.examples;
+package com.example.fn.testing;
 
-import com.fnproject.fn.examples.StringReverse;
+import com.example.fn.StringReverse;
 import org.junit.Test;
 
 import static junit.framework.TestCase.assertEquals;
