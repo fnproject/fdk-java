@@ -2,11 +2,12 @@ FROM openjdk:8-jdk-slim as build
 LABEL maintainer="tomas.zezula@oracle.com"
 
 RUN set -x \
+    && mkdir /usr/share/man/man1 \
     && apt-get -y update \
     && apt-get -y install gcc g++ git make openjdk-8-doc openjdk-8-source python zlib1g-dev \
     && rm -rf /var/lib/apt/lists/*
 
-ENV JVMCI_VERSION 0.49
+ENV JVMCI_VERSION 19-b04
 
 WORKDIR /build
 
@@ -20,7 +21,7 @@ RUN set -x \
     && cp -r $(/build/mx/mx --primary-suite graal-jvmci-8 jdkhome) /build/jvmcijdk8
 
 RUN git clone https://github.com/oracle/graal.git \
-    && git -C graal checkout vm-1.0.0-rc11
+    && git -C graal checkout vm-19.0.2
 WORKDIR /build/graal/vm
 RUN export JAVA_HOME=/build/jvmcijdk8 \
     && /build/mx/mx --dy /substratevm --force-bash-launchers=true --disable-polyglot --disable-libpolyglot build

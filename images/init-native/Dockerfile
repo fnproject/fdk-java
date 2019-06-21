@@ -15,7 +15,9 @@ COPY --from=build /function/src/main/conf/reflection.json reflection.json
 COPY --from=build /function/src/main/conf/jni.json jni.json
 RUN /usr/local/graalvm/bin/native-image \
     --static \
-    --delay-class-initialization-to-runtime=com.fnproject.fn.runtime.ntv.UnixSocketNative \
+    --no-fallback \
+    --initialize-at-build-time= \
+    --initialize-at-run-time=com.fnproject.fn.runtime.ntv.UnixSocketNative \
     -H:Name=func \
     -H:+ReportUnsupportedElementsAtRuntime \
     -H:ReflectionConfigurationFiles=reflection.json \
