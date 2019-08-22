@@ -7,7 +7,7 @@ RUN set -x \
     && apt-get -y install gcc g++ git make openjdk-8-doc openjdk-8-source python zlib1g-dev \
     && rm -rf /var/lib/apt/lists/*
 
-ENV JVMCI_VERSION 19-b04
+ENV JVMCI_VERSION 19.2-b02
 
 WORKDIR /build
 
@@ -21,7 +21,7 @@ RUN set -x \
     && cp -r $(/build/mx/mx --primary-suite graal-jvmci-8 jdkhome) /build/jvmcijdk8
 
 RUN git clone https://github.com/oracle/graal.git \
-    && git -C graal checkout vm-19.0.2
+    && git -C graal checkout vm-19.2.0
 WORKDIR /build/graal/vm
 RUN export JAVA_HOME=/build/jvmcijdk8 \
     && /build/mx/mx --dy /substratevm --force-bash-launchers=true --disable-polyglot --disable-libpolyglot build

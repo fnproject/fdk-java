@@ -3,7 +3,7 @@ LABEL maintainer="tomas.zezula@oracle.com"
 WORKDIR /function
 ENV MAVEN_OPTS=-Dmaven.repo.local=/usr/share/maven/ref/repository
 ADD pom.xml pom.xml
-RUN ["mvn", "package", "dependency:copy-dependencies", "-DincludeScope=runtime", "-DskipTests=true", "-Dmdep.prependGroupId=true", "-DoutputDirectory=target", "--fail-never"]
+RUN ["mvn", "package", "dependency:copy-dependencies", "-DincludeScope=runtime", "-DskipTests=true", "-Dmdep.prependGroupId=true", "-DoutputDirectory=target"]
 ADD src src
 RUN ["mvn", "package"]
 
