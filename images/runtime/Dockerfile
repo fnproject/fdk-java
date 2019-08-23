@@ -1,4 +1,4 @@
-FROM openjdk:8-jre-slim
+FROM openjdk:8-jre-slim@8489e5a8e8a144ae7c41cbc2b95de8a7618cc31c7ae3ecb9db8d4b667ee84ff1
 COPY target/runtime-*.jar target/dependency/*.jar /function/runtime/
 COPY src/main/c/libfnunixsocket.so /function/runtime/lib/
 

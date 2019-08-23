@@ -1,4 +1,4 @@
-FROM openjdk:8-jdk-slim as build
+FROM openjdk:8-jre-slim@8489e5a8e8a144ae7c41cbc2b95de8a7618cc31c7ae3ecb9db8d4b667ee84ff1 as build
 LABEL maintainer="tomas.zezula@oracle.com"
 
 RUN set -x \
@@ -31,7 +31,7 @@ RUN LONG_NAME=$(ls) \
     && SHORT_NAME=graalvm \
     && mv $LONG_NAME $SHORT_NAME
 
-FROM debian:stretch-slim as final
+FROM debian:stretch-slim@21bdee09aac385973b3568feaf91c12bac8a9852caa04067ba3707dcd68b70e6 as final
 LABEL maintainer="tomas.zezula@oracle.com"
 
 RUN set -x \

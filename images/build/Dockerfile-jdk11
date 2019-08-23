@@ -1,4 +1,4 @@
-FROM maven:3-jdk-11-slim
+FROM maven:3-jdk-11-slim@ca67b12d638fe1b8492fa4633200b83b118f2db915c1f75baf3b0d2ef32d7263
 
 ARG FN_REPO_URL
 
