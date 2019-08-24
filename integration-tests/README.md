@@ -14,30 +14,12 @@ They should _not_ be used for:
 
 # Running locally 
 
-
-(in top-level dir)
+Build the runtime: 
 ```bash
-export REPOSITORY_LOCATION=/tmp/staging-repository
-# on OSX: 
-export DOCKER_LOCALHOST=docker.for.mac.host.internal
-
-mvn deploy -DaltDeploymentRepository=localStagingDir::default::file://"$REPOSITORY_LOCATION"
+./build.sh 
 ```
 
-You may also want to/need build local copies of the build images: 
-```bash 
-cd build-image
-./docker-build.sh -t fnproject/fn-java-fdk-build .
-```
-
-and runtime images: 
-```
-cd runtime
-docker build -t fnproject/fn-java-fdk .
-docker build -f Dockerfile-jdk11 -t fnproject/fn-java-fdk:jdk11-latest .
-```
-
-Finally you can run the integration tests: 
+Run the integration tests: 
 
 ```bash
 ./integration-tests/run_tests_ci.sh

@@ -29,7 +29,7 @@ done
 
 # Start Fn
 fn stop || true
-fn start  --log-level=debug -d
+fn start  --log-level=debug -d --env-file fnserver.env
 
 until $(curl --output /dev/null --silent --fail http://localhost:8080/); do
     printf '.'
