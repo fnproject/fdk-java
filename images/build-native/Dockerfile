@@ -2,9 +2,8 @@ FROM openjdk:8-jdk-slim as build
 LABEL maintainer="tomas.zezula@oracle.com"
 
 RUN set -x \
-    && mkdir /usr/share/man/man1 \
     && apt-get -y update \
-    && apt-get -y install gcc g++ git make openjdk-8-doc openjdk-8-source python zlib1g-dev \
+    && apt-get -y install gcc g++ git make python zlib1g-dev \
     && rm -rf /var/lib/apt/lists/*
 
 ENV JVMCI_VERSION 19.2-b02
