@@ -214,6 +214,7 @@ $ fn inspect fn flows-examples primes
 
 Take note of the `fnproject.io/fn/invokeEndpoint` URL and invoke it (ex. using curl).
 
+```
 $ curl -X POST -d "10" http://localhost:8080/invoke/...
 The 10th prime number is 29
 ```
