@@ -94,7 +94,7 @@
             </dependency>
             <dependency>
                 <groupId>org.apache.httpcomponents</groupId>
-                <artifactId>httpmime</artifactId>
+                <artifactId>httpclient</artifactId>
                 <version>4.5.6</version>
             </dependency>
             <dependency>
