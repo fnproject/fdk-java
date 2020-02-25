@@ -75,6 +75,13 @@
     </dependencies>
 
     <build>
+        <resources>
+            <resource>
+                <directory>src/main/java-filtered</directory>
+                <targetPath>${build.directory}/version-sources</targetPath>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
         <plugins>
             <plugin>
                 <artifactId>maven-dependency-plugin</artifactId>
@@ -89,6 +96,23 @@
                             <outputDirectory>${project.build.directory}/dependency</outputDirectory>
                             <includeScope>runtime</includeScope>
                             <prependGroupId>true</prependGroupId>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>${project.build.directory}/version-sources</source>
+                            </sources>
                         </configuration>
                     </execution>
                 </executions>
