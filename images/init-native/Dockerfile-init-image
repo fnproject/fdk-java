@@ -5,7 +5,7 @@ WORKDIR /build
 COPY src src
 COPY pom.xml .
 COPY func.init.yaml .
-COPY Dockerfile .
+COPY Dockerfile.build Dockerfile
 
 RUN echo $'#!/bin/sh\n\
 if [ -n ${FN_FUNCTION_NAME} ]\n\
