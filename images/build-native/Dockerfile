@@ -1,5 +1,4 @@
 FROM debian:buster-slim as build
-LABEL maintainer="tomas.zezula@oracle.com"
 
 RUN set -x \
     && apt-get -y update \
@@ -10,12 +9,12 @@ WORKDIR /build
 
 RUN set -x \
     && git clone --depth 1 https://github.com/graalvm/mx.git \
-    && wget -q --output-document jvmcijdk.tar.gz https://github.com/graalvm/openjdk8-jvmci-builder/releases/download/jvmci-20.1-b01/openjdk-8u242-jvmci-20.1-b01-linux-amd64.tar.gz \
+    && wget -q --output-document jvmcijdk.tar.gz https://github.com/graalvm/openjdk8-jvmci-builder/releases/download/jvmci-20.1-b02/openjdk-8u252+09-jvmci-20.1-b02-linux-amd64.tar.gz \
     && mkdir jvmcijdk8 \
     && tar -xz --strip 1 -f jvmcijdk.tar.gz -C /build/jvmcijdk8 \
     && rm jvmcijdk.tar.gz
 
-RUN git clone --single-branch https://github.com/oracle/graal.git --branch release/graal-vm/20.0
+RUN git clone --depth 1 --single-branch https://github.com/oracle/graal.git --branch release/graal-vm/20.1
 WORKDIR /build/graal/vm
 RUN export JAVA_HOME=/build/jvmcijdk8 \
     && /build/mx/mx --dy /substratevm --force-bash-launchers=true --disable-polyglot --skip-libraries=true build
@@ -26,7 +25,6 @@ RUN LONG_NAME=$(ls) \
     && mv $LONG_NAME $SHORT_NAME
 
 FROM debian:stretch-slim as final
-LABEL maintainer="tomas.zezula@oracle.com"
 
 RUN set -x \
     && apt-get -y update \

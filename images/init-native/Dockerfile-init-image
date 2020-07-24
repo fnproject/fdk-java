@@ -1,5 +1,4 @@
 FROM alpine:latest
-LABEL maintainer="tomas.zezula@oracle.com"
 
 WORKDIR /build
 COPY src src
