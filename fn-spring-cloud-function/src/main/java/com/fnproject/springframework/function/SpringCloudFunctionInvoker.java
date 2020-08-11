@@ -39,7 +39,7 @@ public class SpringCloudFunctionInvoker implements FunctionInvoker, Closeable {
      */
     public SpringCloudFunctionInvoker(Class<?> configClass) {
         SpringApplicationBuilder builder = new SpringApplicationBuilder(configClass);
-        applicationContext = builder.web(WebApplicationType.SERVLET).run();
+        applicationContext = builder.web(WebApplicationType.NONE.run();
         loader = applicationContext.getAutowireCapableBeanFactory().createBean(SpringCloudFunctionLoader.class);
         loader.loadFunction();
     }
