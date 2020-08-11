@@ -12,7 +12,7 @@
     <artifactId>fn-spring-cloud-function</artifactId>
 
     <properties>
-        <spring.cloud.function.version>2.3.1.RELEASE</spring.cloud.function.version>
+        <spring.cloud.function.version>2.1.1.RELEASE</spring.cloud.function.version>
     </properties>
 
     <dependencies>
