@@ -27,14 +27,14 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-        <assertj-core.version>3.10.0</assertj-core.version>
+        <assertj-core.version>3.16.1</assertj-core.version>
         <commons-io.version>2.6</commons-io.version>
-        <httpcore.version>4.4.10</httpcore.version>
-        <jackson.version>2.9.9</jackson.version>
+        <httpcore.version>4.4.13</httpcore.version>
+        <jackson.version>2.11.0</jackson.version>
         <jacoco.version>0.8.1</jacoco.version>
         <jetty.version>9.4.12.v20180830</jetty.version>
         <junit.version>4.12</junit.version>
-        <mockito.version>2.21.0</mockito.version>
+        <mockito.version>3.3.3</mockito.version>
         <pitest.version>1.4.0</pitest.version>
         <slf4j.version>1.7.25</slf4j.version>
         <surefire.version>2.22.1</surefire.version>
@@ -94,8 +94,8 @@
             </dependency>
             <dependency>
                 <groupId>org.apache.httpcomponents</groupId>
-                <artifactId>httpmime</artifactId>
-                <version>4.5.6</version>
+                <artifactId>httpclient</artifactId>
+                <version>4.5.12</version>
             </dependency>
             <dependency>
                 <groupId>commons-io</groupId>
@@ -110,7 +110,7 @@
             <dependency>
                 <groupId>net.jodah</groupId>
                 <artifactId>typetools</artifactId>
-                <version>0.5.0</version>
+                <version>0.6.2</version>
             </dependency>
 
 
@@ -168,6 +168,11 @@
                     <artifactId>pitest-maven</artifactId>
                     <version>${pitest.version}</version>
                 </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-resources-plugin</artifactId>
+                    <version>3.1.0</version>
+                </plugin>
             </plugins>
         </pluginManagement>
         <plugins>
@@ -204,6 +209,31 @@
                         <goals>
                             <goal>jar</goal>
                         </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>copy-resources</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.basedir}/target/classes/META-INF/</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${user.dir}</directory>
+                                    <includes>
+                                        <include>THIRD_PARTY_LICENSES.txt</include>
+                                        <include>LICENSE</include>
+                                    </includes>
+                                </resource>
+                            </resources>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>

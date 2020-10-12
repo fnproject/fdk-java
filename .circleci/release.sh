@@ -82,12 +82,21 @@ git push origin "$release_version"
 )
 
 (
+   ## native jdk8 build image
    if [ -f images/build-native/native_build.image ] ; then
       native_build_image=$(cat images/build-native/native_build.image) 
       docker tag  ${native_build_image} ${USER}/${NATIVE_BUILD_IMAGE}:latest
       docker push ${USER}/${NATIVE_BUILD_IMAGE}:latest
       docker push ${native_build_image}
-   fi 
+   fi
+
+   ## native jdk11 build image
+   if [ -f images/build-native/native_build_11.image ] ; then
+      native_build_image=$(cat images/build-native/native_build_11.image)
+      docker tag  ${native_build_image} ${USER}/${NATIVE_BUILD_IMAGE}:jdk11-latest
+      docker push ${USER}/${NATIVE_BUILD_IMAGE}:jdk11-latest
+      docker push ${native_build_image}
+   fi
 )
 
 

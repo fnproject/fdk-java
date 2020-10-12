@@ -1,7 +1,23 @@
 package com.fnproject.fn.runtime;
 
 
-import com.fnproject.fn.api.*;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Pattern;
+
+import com.fnproject.fn.api.FnFeature;
+import com.fnproject.fn.api.FnFeatures;
+import com.fnproject.fn.api.InputEvent;
+import com.fnproject.fn.api.MethodWrapper;
+import com.fnproject.fn.api.OutputEvent;
+import com.fnproject.fn.api.RuntimeFeature;
 import com.fnproject.fn.api.exception.FunctionInputHandlingException;
 import com.fnproject.fn.api.exception.FunctionLoadException;
 import com.fnproject.fn.api.exception.FunctionOutputHandlingException;
@@ -9,27 +25,30 @@ import com.fnproject.fn.runtime.exception.FunctionInitializationException;
 import com.fnproject.fn.runtime.exception.InternalFunctionInvocationException;
 import com.fnproject.fn.runtime.exception.InvalidEntryPointException;
 
-import java.io.IOException;
-import java.io.PrintStream;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
-
 /**
  * Main entry point
  */
 public class EntryPoint {
 
 
-    public static void main(String... args) throws Exception {
+    // regex to sanitize version properties on the off chance they fall outside of acceptable header values
+    private static final Pattern safeVersion = Pattern.compile("[^\\w ()._-]+");
+
+    public static void main(String... args) {
         PrintStream originalSystemOut = System.out;
-        // Override stdout while the function is running, so that the function result can be serialized to stdout
-        // without interference from the user printing stuff to what they believe is stdout.
         System.setOut(System.err);
 
         String format = System.getenv("FN_FORMAT");
         EventCodec codec;
         if (format.equals(HTTPStreamCodec.HTTP_STREAM_FORMAT)) {
-            codec = new HTTPStreamCodec(System.getenv());
+            // reduce risk of confusion due to non-header like system properties
+            String jvmName = safeVersion.matcher(System.getProperty("java.vm.name")).replaceAll("");
+            String jvmVersion = safeVersion.matcher(System.getProperty("java.version")).replaceAll("");
+            String fdkVersion = "fdk-java/" + Version.FDK_VERSION +
+                " (jvm=" + (jvmName + ", jvmv=" +
+                jvmVersion + ")");
+
+            codec = new HTTPStreamCodec(System.getenv(), fdkVersion);
         } else {
             throw new FunctionInputHandlingException("Unsupported function format:" + format);
         }
@@ -77,7 +96,7 @@ public class EntryPoint {
             FnFeatures fs = method.getTargetClass().getAnnotation(FnFeatures.class);
             if (fs != null) {
                 for (FnFeature fnFeature : fs.value()) {
-                    enableFeature(runtimeContext,fnFeature);
+                    enableFeature(runtimeContext, fnFeature);
                 }
             }
 
@@ -182,14 +201,14 @@ public class EntryPoint {
             // This elides the FQCN of the exception class if it's from our runtime.
             sb.append(t.getMessage());
         } else {
-            sb.append("Caused by: " + t.toString());
+            sb.append("Caused by: ").append(t.toString());
         }
 
         for (StackTraceElement elem : t.getStackTrace()) {
             if (elem.getClassName().startsWith("com.fnproject.fn")) {
                 break;
             }
-            sb.append("\n    at " + elem.toString());
+            sb.append("\n    at ").append(elem.toString());
         }
 
         sb.append("\n");
@@ -202,7 +221,7 @@ public class EntryPoint {
      */
     private Map<String, String> excludeInternalConfigAndHeaders(Map<String, String> env) {
         Set<String> nonConfigEnvKeys = new HashSet<>(Arrays.asList("fn_app_name", "fn_path", "fn_method", "fn_request_url",
-          "fn_format", "content-length", "fn_call_id"));
+            "fn_format", "content-length", "fn_call_id"));
         Map<String, String> config = new HashMap<>();
         for (Map.Entry<String, String> entry : env.entrySet()) {
             String lowerCaseKey = entry.getKey().toLowerCase();

@@ -9,14 +9,14 @@ WORKDIR /build
 
 RUN set -x \
     && git clone --depth 1 https://github.com/graalvm/mx.git \
-    && wget -q --output-document jvmcijdk.tar.gz https://github.com/graalvm/openjdk8-jvmci-builder/releases/download/jvmci-20.1-b02/openjdk-8u252+09-jvmci-20.1-b02-linux-amd64.tar.gz \
-    && mkdir jvmcijdk8 \
-    && tar -xz --strip 1 -f jvmcijdk.tar.gz -C /build/jvmcijdk8 \
+    && wget -q --output-document jvmcijdk.tar.gz https://github.com/graalvm/labs-openjdk-11/releases/download/jvmci-20.1-b02/labsjdk-ce-11.0.7+10-jvmci-20.1-b02-linux-amd64.tar.gz \
+    && mkdir jvmcijdk11 \
+    && tar -xz --strip 1 -f jvmcijdk.tar.gz -C /build/jvmcijdk11 \
     && rm jvmcijdk.tar.gz
 
 RUN git clone --depth 1 --single-branch https://github.com/oracle/graal.git --branch release/graal-vm/20.1
 WORKDIR /build/graal/vm
-RUN export JAVA_HOME=/build/jvmcijdk8 \
+RUN export JAVA_HOME=/build/jvmcijdk11 \
     && /build/mx/mx --dy /substratevm --force-bash-launchers=true --disable-polyglot --skip-libraries=true build
 
 WORKDIR /build/graal/vm/latest_graalvm
