@@ -34,4 +34,4 @@ RUN addgroup --system --gid 1000 fn && adduser --uid 1000 --gid 1000 fn
 #
 # The max memory value obtained with these args seem to be okay for most memory limits. The exception is when the
 # memory limit is set to 128MiB, in which case maxMemory returns roughly half.
-ENTRYPOINT [ "java", "-XX:+UnlockExperimentalVMOptions", "-XX:+UseCGroupMemoryLimitForHeap", "-XX:-UsePerfData", "-XX:MaxRAMFraction=2", "-XX:+UseSerialGC", "-Xshare:on", "-Djava.library.path=/function/runtime/lib", "-cp", "/function/app/*:/function/runtime/*", "com.fnproject.fn.runtime.EntryPoint" ]
+ENTRYPOINT [ "java", "-XX:+UnlockExperimentalVMOptions", "-XX:+UseCGroupMemoryLimitForHeap", "-XX:-UsePerfData", "-XX:MaxRAMFraction=2", "-XX:+UseSerialGC", "-Xshare:on", "-Djava.library.path=/function/runtime/lib", "-cp", "/function/app/*:/function/runtime/*:/function/app:/function/app/resources", "com.fnproject.fn.runtime.EntryPoint" ]
