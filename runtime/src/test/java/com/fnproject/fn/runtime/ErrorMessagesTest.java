@@ -16,12 +16,14 @@
 
 package com.fnproject.fn.runtime;
 
+import com.fnproject.fn.api.OutputEvent;
 import com.fnproject.fn.runtime.testfns.ErrorMessages;
 import not.in.com.fnproject.fn.StacktraceFilteringTestFunctions;
+import org.assertj.core.api.Assertions;
 import org.junit.Rule;
 import org.junit.Test;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class ErrorMessagesTest {
 
@@ -30,12 +32,14 @@ public class ErrorMessagesTest {
 
     private void assertIsErrorWithoutStacktrace(String errorMessage) {
         assertThat(fn.exitStatus()).isEqualTo(2);
+        assertThat(fn.getOutputs()).hasSize(1).allSatisfy(testOutput -> Assertions.assertThat(testOutput.getStatus()).isEqualTo(OutputEvent.Status.FunctionError));
         assertThat(fn.getStdErrAsString()).contains(errorMessage);
         assertThat(fn.getStdErrAsString().split(System.getProperty("line.separator")).length).isEqualTo(1);
     }
 
     private void assertIsEntryPointErrorWithStacktrace(String errorMessage) {
         assertThat(fn.exitStatus()).isEqualTo(2);
+        assertThat(fn.getOutputs()).hasSize(1).allSatisfy(testOutput -> Assertions.assertThat(testOutput.getStatus()).isEqualTo(OutputEvent.Status.FunctionError));
         assertThat(fn.getStdErrAsString()).contains(errorMessage);
         assertThat(fn.getStdErrAsString().split(System.getProperty("line.separator")).length).isGreaterThan(1);
         assertThat(fn.getStdErrAsString()).doesNotContain("at com.fnproject.fn.runtime");
@@ -52,18 +56,21 @@ public class ErrorMessagesTest {
 
     @Test
     public void userSpecifiesNonExistentClass(){
+        fn.givenEvent().enqueue();
         fn.thenRun("NonExistentClass", "method");
         assertIsErrorWithoutStacktrace("Class 'NonExistentClass' not found in function jar. It's likely that the 'cmd' entry in func.yaml is incorrect.");
     }
 
     @Test
     public void userSpecifiesClassWithNoMethods(){
+        fn.givenEvent().enqueue();
         fn.thenRun(ErrorMessages.NoMethodsClass.class, "thisClassHasNoMethods");
         assertIsErrorWithoutStacktrace("Method 'thisClassHasNoMethods' was not found in class 'com.fnproject.fn.runtime.testfns.ErrorMessages.NoMethodsClass'. Available functions were: []");
     }
 
     @Test
     public void userSpecifiesMethodWhichDoesNotExist(){
+        fn.givenEvent().enqueue();
         fn.thenRun(ErrorMessages.OneMethodClass.class, "notTheMethod");
         assertIsErrorWithoutStacktrace("Method 'notTheMethod' was not found in class 'com.fnproject.fn.runtime.testfns.ErrorMessages.OneMethodClass'. Available functions were: [theMethod]");
     }

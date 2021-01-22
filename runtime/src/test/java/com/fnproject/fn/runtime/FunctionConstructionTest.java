@@ -16,7 +16,9 @@
 
 package com.fnproject.fn.runtime;
 
+import com.fnproject.fn.api.OutputEvent;
 import com.fnproject.fn.runtime.testfns.TestFnConstructors;
+import org.assertj.core.api.Assertions;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -59,6 +61,7 @@ public class FunctionConstructionTest {
         fn.givenEvent().enqueue();
         fn.thenRun(TestFnConstructors.BadConstructorNotAccessible.class, "invoke");
         assertThat(fn.exitStatus()).isEqualTo(2);
+        assertThat(fn.getOutputs()).hasSize(1).allSatisfy(testOutput -> Assertions.assertThat(testOutput.getStatus()).isEqualTo(OutputEvent.Status.FunctionError));
         assertThat(fn.getStdErrAsString()).contains("cannot be instantiated as it has no public constructors");
     }
 
@@ -67,6 +70,7 @@ public class FunctionConstructionTest {
         fn.givenEvent().enqueue();
         fn.thenRun(TestFnConstructors.BadConstructorTooManyArgs.class, "invoke");
         assertThat(fn.exitStatus()).isEqualTo(2);
+        assertThat(fn.getOutputs()).hasSize(1).allSatisfy(testOutput -> Assertions.assertThat(testOutput.getStatus()).isEqualTo(OutputEvent.Status.FunctionError));
         assertThat(fn.getStdErrAsString()).contains("cannot be instantiated as its constructor takes more than one argument");
     }
 
@@ -75,6 +79,7 @@ public class FunctionConstructionTest {
         fn.givenEvent().enqueue();
         fn.thenRun(TestFnConstructors.BadConstructorAmbiguousConstructors.class, "invoke");
         assertThat(fn.exitStatus()).isEqualTo(2);
+        assertThat(fn.getOutputs()).hasSize(1).allSatisfy(testOutput -> Assertions.assertThat(testOutput.getStatus()).isEqualTo(OutputEvent.Status.FunctionError));
         assertThat(fn.getStdErrAsString()).contains("cannot be instantiated as it has multiple public constructors");
     }
 
@@ -83,6 +88,7 @@ public class FunctionConstructionTest {
         fn.givenEvent().enqueue();
         fn.thenRun(TestFnConstructors.BadConstructorThrowsException.class, "invoke");
         assertThat(fn.exitStatus()).isEqualTo(2);
+        assertThat(fn.getOutputs()).hasSize(1).allSatisfy(testOutput -> Assertions.assertThat(testOutput.getStatus()).isEqualTo(OutputEvent.Status.FunctionError));
         assertThat(fn.getStdErrAsString()).contains("An error occurred in the function constructor while instantiating class");
     }
 
@@ -91,6 +97,7 @@ public class FunctionConstructionTest {
         fn.givenEvent().enqueue();
         fn.thenRun(TestFnConstructors.BadConstructorUnrecognisedArg.class, "invoke");
         assertThat(fn.exitStatus()).isEqualTo(2);
+        assertThat(fn.getOutputs()).hasSize(1).allSatisfy(testOutput -> Assertions.assertThat(testOutput.getStatus()).isEqualTo(OutputEvent.Status.FunctionError));
         assertThat(fn.getStdErrAsString()).contains("cannot be instantiated as its constructor takes an unrecognized argument of type int");
     }
 
@@ -100,6 +107,7 @@ public class FunctionConstructionTest {
         fn.givenEvent().enqueue();
         fn.thenRun(TestFnConstructors.NonStaticInnerClass.class, "invoke");
         assertThat(fn.exitStatus()).isEqualTo(2);
+        assertThat(fn.getOutputs()).hasSize(1).allSatisfy(testOutput -> Assertions.assertThat(testOutput.getStatus()).isEqualTo(OutputEvent.Status.FunctionError));
         assertThat(fn.getStdErrAsString()).contains("cannot be instantiated as it is a non-static inner class");
     }
 }

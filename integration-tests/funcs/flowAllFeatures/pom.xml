@@ -24,6 +24,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <fdk.version>1.0.0-SNAPSHOT</fdk.version>
+        <junit.version>4.13.1</junit.version>
     </properties>
     <groupId>com.fnproject.fn</groupId>
     <artifactId>integration-test-4</artifactId>
@@ -61,7 +62,7 @@
 		<dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.13.1</version>
+            <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
