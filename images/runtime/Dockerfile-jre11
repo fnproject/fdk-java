@@ -32,5 +32,5 @@ RUN addgroup --system --gid 1000 fn && adduser --uid 1000 --gid 1000 fn
 ENTRYPOINT [ "/usr/local/openjdk-11/bin/java", "-XX:-UsePerfData", "-XX:+UseSerialGC", "-Xshare:on", \
      "-Djava.awt.headless=true" , \
      "-Djava.library.path=/function/runtime/lib", \
-     "-cp", "/function/app/*:/function/runtime/*", \
+     "-cp", "/function/app/*:/function/runtime/*:/function/app:/function/app/resources", \
      "com.fnproject.fn.runtime.EntryPoint" ]
