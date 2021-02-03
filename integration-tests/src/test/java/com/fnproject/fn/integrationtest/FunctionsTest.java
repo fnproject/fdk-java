@@ -72,6 +72,22 @@ public class FunctionsTest {
         }
     }
 
+
+    @Test()
+    public void runNativeFunction() throws Exception {
+
+        int i = 0;
+        for(String version : new String[]{"jdk11-" + testRule.getFdkVersion(),testRule.getFdkVersion()}) {
+            IntegrationTestRule.TestContext tc = testRule.newTest();
+            String fnName = "graaltest" + i++;
+            tc.runFn("init", "--init-image", "fnproject/fn-java-native-init:" + version, "--name", fnName);
+            tc.rewritePOM();
+            tc.runFn("--verbose", "deploy", "--create-app", "--app", tc.appName(), "--local");
+            CmdResult rs = tc.runFnWithInput("wibble", "invoke", tc.appName(), fnName);
+            assertThat(rs.getStdout()).contains("Hello, wibble!");
+        }
+    }
+
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class InspectResponse {
 

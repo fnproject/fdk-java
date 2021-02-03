@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-FROM fnproject/fn-java-fdk-build:latest as build
+FROM fnproject/fn-java-fdk-build:##FN_FDK_VERSION## as build
 WORKDIR /function
 ENV MAVEN_OPTS=-Dmaven.repo.local=/usr/share/maven/ref/repository
 ADD pom.xml pom.xml
@@ -22,12 +22,12 @@ RUN ["mvn", "package", "dependency:copy-dependencies", "-DincludeScope=runtime",
 ADD src src
 RUN ["mvn", "package"]
 
-FROM fnproject/fn-java-native:latest as build-native-image
+FROM fnproject/fn-java-native:##FN_FDK_VERSION## as build-native-image
 WORKDIR /function
 COPY --from=build /function/target/*.jar target/
 COPY --from=build /function/src/main/conf/reflection.json reflection.json
 COPY --from=build /function/src/main/conf/jni.json jni.json
-RUN /usr/local/graalvm/bin/native-image \
+RUN /usr/bin/native-image \
     --static \
     --no-fallback \
     --initialize-at-build-time= \

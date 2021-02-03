@@ -20,32 +20,42 @@ then
     echo "Needs runtime folder as an argument"
     exit 1
 fi
-native_version=$(cat native.version)
-set -e
 
-workdir=${1}
+set -ex
+
+# If not defined, read the FDK and GraalVM versions
+BUILD_VERSION=${BUILD_VERSION:-1.0.0-SNAPSHOT}
+
+if [ -z "${GRAALVM_VERSION}" ];  then
+    GRAALVM_VERSION=$(cat ../../graalvm.version)
+fi
+
+# The path to the FDK runtime root folder
+fdk_runtime_root=${1}
+
 dockerfiledir=$(pwd)
 
+# Build the Dockerfiles in the runtime root--it pulls in needed libs
+cd ${fdk_runtime_root}
+
 # Build JDK 8
-native_image="fnproject/fn-java-native:${native_version}"
+native_image="fnproject/fn-java-native:${BUILD_VERSION}"
 if docker pull ${native_image} ; then
     echo ${native_image} already exists, skipping native build
 else
     (
-      cd ${workdir}
-      docker build -f ${dockerfiledir}/Dockerfile -t "${native_image}" .
+    docker build -f ${dockerfiledir}/Dockerfile --build-arg GRAALVM_VERSION="java8-${GRAALVM_VERSION}" -t "${native_image}" .
     )
     echo "${native_image}" > native_build.image
 fi
 
 # Build JDK 11
-native_image="fnproject/fn-java-native:jdk11-${native_version}"
+native_image="fnproject/fn-java-native:jdk11-${BUILD_VERSION}"
 if docker pull ${native_image} ; then
    echo ${native_image} already exists, skipping native build
 else
     (
-      cd ${workdir}
-      docker build -f ${dockerfiledir}/Dockerfile-jdk11 -t "${native_image}" .
+      docker build -f ${dockerfiledir}/Dockerfile --build-arg GRAALVM_VERSION="java11-${GRAALVM_VERSION}" -t "${native_image}" .
     )
     echo "${native_image}" > native_build_11.image
 fi

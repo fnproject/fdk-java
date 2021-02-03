@@ -35,6 +35,7 @@ jobs:
           name: Build and Test FDK
           command: |
                export FN_FDK_VERSION=$(cat ./release.version)
+               export GRAALVM_VERSION=$(cat ./graalvm.version)
                ./build.sh
       - run:
           name: Run integration tests
