@@ -18,12 +18,24 @@
 if [ -z "${FN_FDK_VERSION}" ];  then
     FN_FDK_VERSION=$(cat ../../release.version)
 fi
+
+set -e
+
+# Update pom.xml with current FDK version
 sed -i.bak -e "s|<fdk\\.version>.*</fdk\\.version>|<fdk.version>${FN_FDK_VERSION}</fdk.version>|" pom.xml && rm pom.xml.bak
+
+# Create Dockerfile with current FDK build tag (Java 8)
 cp Dockerfile Dockerfile.build
+sed -i.bak -e "s|##FN_FDK_VERSION##|${FN_FDK_VERSION}|" Dockerfile.build && rm Dockerfile.build.bak
+cat Dockerfile.build
+
+# Build init image packaging created Dockerfile (Java 8)
 docker build -t fnproject/fn-java-native-init:${FN_FDK_VERSION} -f Dockerfile-init-image .
 
+# Create Dockerfile with current FDK build tag (Java 11)
 cp Dockerfile Dockerfile.build
-sed -i.bak -e "s|fnproject/fn-java-fdk-build:latest|fnproject/fn-java-fdk-build:jdk11-latest|" Dockerfile.build && rm Dockerfile.build.bak
-sed -i.bak -e "s|fnproject/fn-java-native:latest|fnproject/fn-java-native:jdk11-latest|" Dockerfile.build && rm Dockerfile.build.bak
+sed -i.bak -e "s|##FN_FDK_VERSION##|jdk11-${FN_FDK_VERSION}|" Dockerfile.build && rm Dockerfile.build.bak
+
+# Build init image packaging created Dockerfile (Java 11)
 docker build -t fnproject/fn-java-native-init:jdk11-${FN_FDK_VERSION} -f Dockerfile-init-image .
 rm Dockerfile.build
