@@ -37,20 +37,16 @@ fdk_runtime_root=${1}
 
 dockerfiledir=$(pwd)
 
+# Build the Dockerfiles in the runtime root--it pulls in needed libs
+cd ${fdk_runtime_root}
+
 # Build JDK 8
 native_image="fnproject/fn-java-native:${FN_FDK_VERSION}"
 if docker pull ${native_image} ; then
     echo ${native_image} already exists, skipping native build
 else
     (
-      cd ${dockerfiledir}
-      # Make a copy of the Java 8 Dockerfile and update the GraalVM image tag
-      cp Dockerfile Dockerfile.build
-      sed -i.bak -e "s|##GRAALVM_VERSION##|${GRAALVM_VERSION}|" Dockerfile.build && rm Dockerfile.build.bak
-      # Build the Dockerfile in the runtime root--it pulls in needed libs
-      cd ${fdk_runtime_root}
-      docker build -f ${dockerfiledir}/Dockerfile.build -t "${native_image}" .
-      rm ${dockerfiledir}/Dockerfile.build
+    docker build -f ${dockerfiledir}/Dockerfile --build-arg GRAALVM_VERSION="java8-${GRAALVM_VERSION}" -t "${native_image}" .
     )
     echo "${native_image}" > native_build.image
 fi
@@ -61,14 +57,7 @@ if docker pull ${native_image} ; then
    echo ${native_image} already exists, skipping native build
 else
     (
-      cd ${dockerfiledir}
-      # Make a copy of the Java 11 Dockerfile and update the GraalVM image tag
-      cp Dockerfile-jdk11 Dockerfile-jdk11.build
-      sed -i.bak -e "s|##GRAALVM_VERSION##|${GRAALVM_VERSION}|" Dockerfile-jdk11.build && rm Dockerfile-jdk11.build.bak
-      # Build the Dockerfile in the runtime root--it pulls in needed libs
-      cd ${fdk_runtime_root}
-      docker build -f ${dockerfiledir}/Dockerfile-jdk11.build -t "${native_image}" .
-      rm ${dockerfiledir}/Dockerfile-jdk11.build
+      docker build -f ${dockerfiledir}/Dockerfile --build-arg GRAALVM_VERSION="java11-${GRAALVM_VERSION}" -t "${native_image}" .
     )
     echo "${native_image}" > native_build_11.image
 fi

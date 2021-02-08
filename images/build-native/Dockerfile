@@ -13,8 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
-FROM ghcr.io/graalvm/graalvm-ce:java8-##GRAALVM_VERSION##
+ARG GRAALVM_VERSION
+FROM ghcr.io/graalvm/graalvm-ce:${GRAALVM_VERSION}
 
 RUN gu install native-image
 COPY src/main/c/libfnunixsocket.so /function/runtime/lib/
