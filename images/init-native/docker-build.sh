@@ -27,7 +27,6 @@ sed -i.bak -e "s|<fdk\\.version>.*</fdk\\.version>|<fdk.version>${FN_FDK_VERSION
 # Create Dockerfile with current FDK build tag (Java 8)
 cp Dockerfile Dockerfile.build
 sed -i.bak -e "s|##FN_FDK_VERSION##|${FN_FDK_VERSION}|" Dockerfile.build && rm Dockerfile.build.bak
-cat Dockerfile.build
 
 # Build init image packaging created Dockerfile (Java 8)
 docker build -t fnproject/fn-java-native-init:${FN_FDK_VERSION} -f Dockerfile-init-image .
