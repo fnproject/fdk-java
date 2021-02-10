@@ -41,28 +41,28 @@ mvn  -B  deploy -DaltDeploymentRepository=localStagingDir::default::file://${REP
 
 (
   cd images/build
-  ./docker-build.sh --no-cache -t fnproject/fn-java-fdk-build:${BUILD_VERSION} .
+  ./docker-build.sh --squash --no-cache -t fnproject/fn-java-fdk-build:${BUILD_VERSION} .
 )
 
 (
   cd images/build
-  ./docker-build.sh --no-cache -f Dockerfile-jdk11 -t fnproject/fn-java-fdk-build:jdk11-${BUILD_VERSION} .
+  ./docker-build.sh --squash --no-cache -f Dockerfile-jdk11 -t fnproject/fn-java-fdk-build:jdk11-${BUILD_VERSION} .
 )
 
 (
    cd runtime
-   docker build --no-cache -t fnproject/fn-java-fdk:${BUILD_VERSION}  -f ../images/runtime/Dockerfile .
+   docker build --squash --no-cache -t fnproject/fn-java-fdk:${BUILD_VERSION}  -f ../images/runtime/Dockerfile .
 )
 
 (
    cd runtime
-   docker build --no-cache -f ../images/runtime/Dockerfile-jre11 -t fnproject/fn-java-fdk:jre11-${BUILD_VERSION} .
+   docker build --squash --no-cache -f ../images/runtime/Dockerfile-jre11 -t fnproject/fn-java-fdk:jre11-${BUILD_VERSION} .
 )
 
 (
     workdir=$(pwd)/runtime
     cd images/build-native
-    ./docker-build.sh ${workdir}
+    ./docker-build.sh  ${workdir}
 )
 
 (
