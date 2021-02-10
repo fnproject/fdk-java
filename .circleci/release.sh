@@ -6,8 +6,8 @@ USER=fnproject
 SERVICE=fn-java-fdk
 RUNTIME_IMAGE=${SERVICE}
 BUILD_IMAGE=${SERVICE}-build
-NATIVE_INIT_IMAGE=fn-java-native-init
 NATIVE_BUILD_IMAGE=fn-java-native
+NATIVE_INIT_IMAGE=${NATIVE_BUILD_IMAGE}-init
 
 release_version=$(cat release.version)
 if [[ ${release_version} =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] ; then
@@ -17,6 +17,7 @@ else
    exit 1
 fi
 
+graalvm_version=$(cat graalvm.version)
 
 # Calculate new version
 version_parts=(${release_version//./ })
@@ -72,31 +73,41 @@ git push origin "$release_version"
   docker push ${USER}/${BUILD_IMAGE}:jdk11-${release_version}
   docker push ${USER}/${BUILD_IMAGE}:jdk11-${moving_version}
 
-  ##  native init image
+  ## native jdk8 build image
+  docker tag ${USER}/${NATIVE_BUILD_IMAGE}:${release_version} ${USER}/${NATIVE_BUILD_IMAGE}:latest
+  docker tag ${USER}/${NATIVE_BUILD_IMAGE}:${release_version} ${USER}/${NATIVE_BUILD_IMAGE}:${moving_version}
+  docker tag ${USER}/${NATIVE_BUILD_IMAGE}:${release_version} ${USER}/${NATIVE_BUILD_IMAGE}:${release_version}-graalvm-ce-${graalvm_version}
+  docker push ${USER}/${NATIVE_BUILD_IMAGE}:latest
+  docker push ${USER}/${NATIVE_BUILD_IMAGE}:${release_version}
+  docker push ${USER}/${NATIVE_BUILD_IMAGE}:${moving_version}
+  docker push ${USER}/${NATIVE_BUILD_IMAGE}:${release_version}-graalvm-ce-${graalvm_version}
+
+  ## native jdk11 build image
+  docker tag ${USER}/${NATIVE_BUILD_IMAGE}:jdk11-${release_version} ${USER}/${NATIVE_BUILD_IMAGE}:jdk11-latest
+  docker tag ${USER}/${NATIVE_BUILD_IMAGE}:jdk11-${release_version} ${USER}/${NATIVE_BUILD_IMAGE}:jdk11-${moving_version}
+  docker tag ${USER}/${NATIVE_BUILD_IMAGE}:jdk11-${release_version} ${USER}/${NATIVE_BUILD_IMAGE}:jdk11-${release_version}-graalvm-ce-${graalvm_version}
+  docker push ${USER}/${NATIVE_BUILD_IMAGE}:jdk11-latest
+  docker push ${USER}/${NATIVE_BUILD_IMAGE}:jdk11-${release_version}
+  docker push ${USER}/${NATIVE_BUILD_IMAGE}:jdk11-${moving_version}
+  docker push ${USER}/${NATIVE_BUILD_IMAGE}:jdk11-${release_version}-graalvm-ce-${graalvm_version}
+
+  ## jdk8 native init image
   docker tag ${USER}/${NATIVE_INIT_IMAGE}:${release_version} ${USER}/${NATIVE_INIT_IMAGE}:latest
   docker tag ${USER}/${NATIVE_INIT_IMAGE}:${release_version} ${USER}/${NATIVE_INIT_IMAGE}:${moving_version}
+  docker tag ${USER}/${NATIVE_INIT_IMAGE}:${release_version} ${USER}/${NATIVE_INIT_IMAGE}:${release_version}-graalvm-ce-${graalvm_version}
   docker push ${USER}/${NATIVE_INIT_IMAGE}:latest
   docker push ${USER}/${NATIVE_INIT_IMAGE}:${release_version}
   docker push ${USER}/${NATIVE_INIT_IMAGE}:${moving_version}
+  docker push ${USER}/${NATIVE_INIT_IMAGE}:${release_version}-graalvm-ce-${graalvm_version}
 
-)
-
-(
-   ## native jdk8 build image
-   if [ -f images/build-native/native_build.image ] ; then
-      native_build_image=$(cat images/build-native/native_build.image) 
-      docker tag  ${native_build_image} ${USER}/${NATIVE_BUILD_IMAGE}:latest
-      docker push ${USER}/${NATIVE_BUILD_IMAGE}:latest
-      docker push ${native_build_image}
-   fi
-
-   ## native jdk11 build image
-   if [ -f images/build-native/native_build_11.image ] ; then
-      native_build_image=$(cat images/build-native/native_build_11.image)
-      docker tag  ${native_build_image} ${USER}/${NATIVE_BUILD_IMAGE}:jdk11-latest
-      docker push ${USER}/${NATIVE_BUILD_IMAGE}:jdk11-latest
-      docker push ${native_build_image}
-   fi
+  ## jdk11 native init image
+  docker tag ${USER}/${NATIVE_INIT_IMAGE}:jdk11-${release_version} ${USER}/${NATIVE_INIT_IMAGE}:jdk11-latest
+  docker tag ${USER}/${NATIVE_INIT_IMAGE}:jdk11-${release_version} ${USER}/${NATIVE_INIT_IMAGE}:jdk11-${moving_version}
+  docker tag ${USER}/${NATIVE_INIT_IMAGE}:jdk11-${release_version} ${USER}/${NATIVE_INIT_IMAGE}:jdk11-${release_version}-graalvm-ce-${graalvm_version}
+  docker push ${USER}/${NATIVE_INIT_IMAGE}:jdk11-latest
+  docker push ${USER}/${NATIVE_INIT_IMAGE}:jdk11-${release_version}
+  docker push ${USER}/${NATIVE_INIT_IMAGE}:jdk11-${moving_version}
+  docker push ${USER}/${NATIVE_INIT_IMAGE}:jdk11-${release_version}-graalvm-ce-${graalvm_version}   
 )
 
 

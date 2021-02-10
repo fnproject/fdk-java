@@ -23,16 +23,6 @@ rm -rf /tmp/staging_repo/*
 BUILD_VERSION=${FN_FDK_VERSION:-1.0.0-SNAPSHOT}
 export REPOSITORY_LOCATION=${REPOSITORY_LOCATION:-/tmp/staging_repo}
 
-while [ $# -ne 0 ]
-do
-  case "$1" in
-        --build-native-java)
-            BUILD_NATIVE_JAVA=true
-            ;;
-  esac
-  shift
-done
-
 (
     runtime/src/main/c/rebuild_so.sh
 )
