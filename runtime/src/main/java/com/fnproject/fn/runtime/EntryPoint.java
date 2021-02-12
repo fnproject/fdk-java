@@ -26,6 +26,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
 import com.fnproject.fn.api.FnFeature;
@@ -74,6 +75,31 @@ public class EntryPoint {
         System.exit(exitCode);
     }
 
+
+    /*
+     * If enabled, print the logging framing content otherwise do nothing
+     */
+    private Consumer<InputEvent> logFramer(Map<String, String> config) {
+        String framer = config.getOrDefault("FN_LOGFRAME_NAME", "");
+
+        if (!framer.isEmpty()) {
+            String valueSrc = config.getOrDefault("FN_LOGFRAME_HDR", "");
+
+            if (!valueSrc.isEmpty()) {
+                return (evt) -> {
+                    String id = evt.getHeaders().get(valueSrc).orElse("");
+                    if (!id.isEmpty()) {
+                        System.out.println("\n" + framer + "=" + id + "\n");
+                        System.err.println("\n" + framer + "=" + id + "\n");
+                    }
+
+                };
+            }
+        }
+        return (event) -> {
+        };
+    }
+
     /**
      * Entry point runner - this executes the whole lifecycle of the fn Java FDK runtime - including multiple invocations in the function for hot functions
      *
@@ -100,66 +126,83 @@ public class EntryPoint {
         final AtomicInteger lastStatus = new AtomicInteger();
         try {
             final Map<String, String> configFromEnvVars = Collections.unmodifiableMap(excludeInternalConfigAndHeaders(env));
+            Consumer<InputEvent> logFramer = logFramer(configFromEnvVars);
+            codec.runCodec(new EventCodec.Handler() {
+                FunctionRuntimeContext _runtimeContext;
 
-            FunctionLoader functionLoader = new FunctionLoader();
+                // Create runtime context within first call to ensure that init errors are propagated
+                private FunctionRuntimeContext getRuntimeContext() {
+                    if (_runtimeContext == null) {
+                        FunctionLoader functionLoader = new FunctionLoader();
 
-            MethodWrapper method = functionLoader.loadClass(cls, mth);
-            FunctionRuntimeContext runtimeContext = new FunctionRuntimeContext(method, configFromEnvVars);
-            FnFeature f = method.getTargetClass().getAnnotation(FnFeature.class);
-            if (f != null) {
-                enableFeature(runtimeContext, f);
-            }
-            FnFeatures fs = method.getTargetClass().getAnnotation(FnFeatures.class);
-            if (fs != null) {
-                for (FnFeature fnFeature : fs.value()) {
-                    enableFeature(runtimeContext, fnFeature);
-                }
-            }
-
-            FunctionConfigurer functionConfigurer = new FunctionConfigurer();
-            functionConfigurer.configure(runtimeContext);
-
-
-            codec.runCodec((evt) -> {
-                try {
-                    FunctionInvocationContext fic = runtimeContext.newInvocationContext(evt);
-                    try (InputEvent myEvt = evt) {
-                        OutputEvent output = runtimeContext.tryInvoke(evt, fic);
-                        if (output == null) {
-                            throw new FunctionInputHandlingException("No invoker found for input event");
+                        MethodWrapper method = functionLoader.loadClass(cls, mth);
+                        FunctionRuntimeContext runtimeContext = new FunctionRuntimeContext(method, configFromEnvVars);
+                        FnFeature f = method.getTargetClass().getAnnotation(FnFeature.class);
+                        if (f != null) {
+                            enableFeature(runtimeContext, f);
                         }
-                        if (output.isSuccess()) {
-                            lastStatus.set(0);
-                            fic.fireOnSuccessfulInvocation();
-                        } else {
-                            lastStatus.set(1);
-                            fic.fireOnFailedInvocation();
+                        FnFeatures fs = method.getTargetClass().getAnnotation(FnFeatures.class);
+                        if (fs != null) {
+                            for (FnFeature fnFeature : fs.value()) {
+                                enableFeature(runtimeContext, fnFeature);
+                            }
                         }
 
-                        return output.withHeaders(output.getHeaders().setHeaders(fic.getAdditionalResponseHeaders()));
-
-
-                    } catch (IOException err) {
-                        fic.fireOnFailedInvocation();
-                        throw new FunctionInputHandlingException("Error closing function input", err);
-                    } catch (Exception e) {
-                        // Make sure we commit any pending Flows, then rethrow
-                        fic.fireOnFailedInvocation();
-                        throw e;
+                        FunctionConfigurer functionConfigurer = new FunctionConfigurer();
+                        functionConfigurer.configure(runtimeContext);
+                        _runtimeContext = runtimeContext;
                     }
-                } catch (InternalFunctionInvocationException fie) {
-                    loggingOutput.println("An error occurred in function: " + filterStackTraceToOnlyIncludeUsersCode(fie));
-                    // Here: completer-invoked continuations are *always* reported as successful to the Fn platform;
-                    // the completer interprets the embedded HTTP-framed response.
-                    lastStatus.set(fie.toOutput().isSuccess() ? 0 : 1);
-                    return fie.toOutput();
+                    return _runtimeContext;
+                }
+
+                @Override
+                public OutputEvent handle(InputEvent evt) {
+                    try {
+                        // output log frame prior to any user code execution
+                        logFramer.accept(evt);
+                        FunctionRuntimeContext runtimeContext = getRuntimeContext();
+                        FunctionInvocationContext fic = runtimeContext.newInvocationContext(evt);
+                        try (InputEvent myEvt = evt) {
+                            OutputEvent output = runtimeContext.tryInvoke(evt, fic);
+                            if (output == null) {
+                                throw new FunctionInputHandlingException("No invoker found for input event");
+                            }
+                            if (output.isSuccess()) {
+                                lastStatus.set(0);
+                                fic.fireOnSuccessfulInvocation();
+                            } else {
+                                lastStatus.set(1);
+                                fic.fireOnFailedInvocation();
+                            }
+
+                            return output.withHeaders(output.getHeaders().setHeaders(fic.getAdditionalResponseHeaders()));
+
+
+                        } catch (IOException err) {
+                            fic.fireOnFailedInvocation();
+                            throw new FunctionInputHandlingException("Error closing function input", err);
+                        } catch (Exception e) {
+                            // Make sure we commit any pending Flows, then rethrow
+                            fic.fireOnFailedInvocation();
+                            throw e;
+                        }
+                    } catch (InternalFunctionInvocationException fie) {
+                        loggingOutput.println("An error occurred in function: " + filterStackTraceToOnlyIncludeUsersCode(fie));
+                        loggingOutput.flush();
+                        // Here: completer-invoked continuations are *always* reported as successful to the Fn platform;
+                        // the completer interprets the embedded HTTP-framed response.
+                        lastStatus.set(fie.toOutput().isSuccess() ? 0 : 1);
+                        return fie.toOutput();
+                    } catch (FunctionLoadException | FunctionInputHandlingException | FunctionOutputHandlingException e) {
+                        // catch all block;
+                        loggingOutput.println(filterStackTraceToOnlyIncludeUsersCode(e));
+                        loggingOutput.flush();
+                        lastStatus.set(2);
+                        return new InternalFunctionInvocationException("Error initializing function", e).toOutput();
+                    }
                 }
 
             });
-        } catch (FunctionLoadException | FunctionInputHandlingException | FunctionOutputHandlingException e) {
-            // catch all block;
-            loggingOutput.println(filterStackTraceToOnlyIncludeUsersCode(e));
-            return 2;
         } catch (Exception ee) {
             loggingOutput.println("An unexpected error occurred:");
             ee.printStackTrace(loggingOutput);

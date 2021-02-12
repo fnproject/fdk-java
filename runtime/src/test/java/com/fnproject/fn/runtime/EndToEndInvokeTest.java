@@ -16,15 +16,16 @@
 
 package com.fnproject.fn.runtime;
 
+import java.util.Arrays;
+import java.util.List;
+
 import com.fnproject.fn.api.InputEvent;
+import com.fnproject.fn.api.OutputEvent;
 import com.fnproject.fn.runtime.testfns.BadTestFnDuplicateMethods;
 import com.fnproject.fn.runtime.testfns.TestFn;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
-
-import java.util.Arrays;
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -149,20 +150,22 @@ public class EndToEndInvokeTest {
 
     @Test
     public void shouldPrintErrorOnUnknownMethod() throws Exception {
+        fn.givenEvent().enqueue();
         fn.thenRun(TestFn.class, "unknownMethod");
         assertThat(fn.exitStatus()).isEqualTo(2);
-        assertThat(fn.getOutputs()).isEmpty();
+        assertThat(fn.getOutputs()).hasSize(1).allSatisfy(testOutput -> assertThat(testOutput.getStatus()).isEqualTo(OutputEvent.Status.FunctionError));
         assertThat(fn.getStdErrAsString()).startsWith("Method 'unknownMethod' was not found in class 'com.fnproject.fn.runtime.testfns.TestFn'");
     }
 
 
     @Test
     public void shouldPrintErrorOnUnknownClass() throws Exception {
+        fn.givenEvent().enqueue();
 
 
         fn.thenRun("com.fnproject.unknown.Class", "unknownMethod");
         assertThat(fn.exitStatus()).isEqualTo(2);
-        assertThat(fn.getOutputs()).hasSize(0);
+        assertThat(fn.getOutputs()).hasSize(1).allSatisfy(testOutput -> assertThat(testOutput.getStatus()).isEqualTo(OutputEvent.Status.FunctionError));
         assertThat(fn.getStdErrAsString()).startsWith("Class 'com.fnproject.unknown.Class' not found in function jar");
 
     }
@@ -255,10 +258,11 @@ public class EndToEndInvokeTest {
 
     @Test
     public void shouldRejectDuplicateMethodsInFunctionClass() throws Exception {
+        fn.givenEvent().enqueue();
 
         fn.thenRun(BadTestFnDuplicateMethods.class, "fn");
-        assertThat(fn.getOutputs()).isEmpty();
         assertThat(fn.exitStatus()).isEqualTo(2);
+        assertThat(fn.getOutputs()).hasSize(1).allSatisfy(testOutput -> assertThat(testOutput.getStatus()).isEqualTo(OutputEvent.Status.FunctionError));
         assertThat(fn.getStdErrAsString()).startsWith("Multiple methods match");
     }
 

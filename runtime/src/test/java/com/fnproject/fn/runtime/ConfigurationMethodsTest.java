@@ -16,6 +16,7 @@
 
 package com.fnproject.fn.runtime;
 
+import com.fnproject.fn.api.OutputEvent;
 import com.fnproject.fn.runtime.testfns.TestFnWithConfigurationMethods;
 import org.junit.Rule;
 import org.junit.Test;
@@ -84,7 +85,7 @@ public class ConfigurationMethodsTest {
 
         fn.thenRun(TestFnWithConfigurationMethods.StaticTargetInstanceConfiguration.class, "echo");
 
-        assertThat(fn.getOutputs()).isEmpty();
+        assertThat(fn.getOutputs()).hasSize(1).allSatisfy(testOutput -> assertThat(testOutput.getStatus()).isEqualTo(OutputEvent.Status.FunctionError));
         assertThat(fn.getStdErrAsString()).startsWith(expectedMessage);
         assertThat(fn.exitStatus()).isEqualTo(2);
     }
@@ -143,7 +144,7 @@ public class ConfigurationMethodsTest {
     }
 
     @Test
-    public  void shouldReturnSetConfigParameterWhenProvided() {
+    public void shouldReturnSetConfigParameterWhenProvided() {
         String value = "value";
         fn.setConfig("PARAM", value);
         fn.givenEvent().enqueue();
@@ -163,7 +164,9 @@ public class ConfigurationMethodsTest {
                 "'config'" +
                 " does not have a void return type";
 
-        assertThat(fn.getOutputs()).isEmpty();
+        assertThat(fn.getOutputs()).hasSize(1).allSatisfy(testOutput -> {
+            assertThat(testOutput.getStatus()).isEqualTo(OutputEvent.Status.FunctionError);
+        });
         assertThat(fn.getStdErrAsString()).startsWith(expectedMessage);
         assertThat(fn.exitStatus()).isEqualTo(2);
     }

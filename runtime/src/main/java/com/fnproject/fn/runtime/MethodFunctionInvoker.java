@@ -17,13 +17,18 @@
 package com.fnproject.fn.runtime;
 
 
-import com.fnproject.fn.api.*;
+import java.lang.reflect.InvocationTargetException;
+import java.util.Optional;
+
+import com.fnproject.fn.api.FunctionInvoker;
+import com.fnproject.fn.api.InputEvent;
+import com.fnproject.fn.api.InvocationContext;
+import com.fnproject.fn.api.MethodWrapper;
+import com.fnproject.fn.api.OutputEvent;
+import com.fnproject.fn.api.RuntimeContext;
 import com.fnproject.fn.api.exception.FunctionInputHandlingException;
 import com.fnproject.fn.api.exception.FunctionOutputHandlingException;
 import com.fnproject.fn.runtime.exception.InternalFunctionInvocationException;
-
-import java.lang.reflect.InvocationTargetException;
-import java.util.Optional;
 
 /**
  * Method function invoker
@@ -32,25 +37,6 @@ import java.util.Optional;
  * This handles the binding and invocation of function calls via java methods.
  */
 public class MethodFunctionInvoker implements FunctionInvoker {
-
-    /*
-    * If enabled, print the logging framing content
-    */
-    public void logFramer(FunctionRuntimeContext rctx, InputEvent evt) {
-        String framer = rctx.getConfigurationByKey("FN_LOGFRAME_NAME").orElse("");
-
-        if (framer != "") {
-            String valueSrc = rctx.getConfigurationByKey("FN_LOGFRAME_HDR").orElse("");
-
-            if (valueSrc != "") {
-                String id = evt.getHeaders().get(valueSrc).orElse("");
-                if (id != "") {
-                    System.out.println("\n" + framer + "=" + id + "\n");
-                    System.err.println("\n" + framer + "=" + id + "\n");
-                }
-            }
-        }
-    }
 
 
     /**
@@ -69,7 +55,6 @@ public class MethodFunctionInvoker implements FunctionInvoker {
 
         Object rawResult;
 
-        logFramer(runtimeContext, evt);
 
         try {
             rawResult = method.getTargetMethod().invoke(ctx.getRuntimeContext().getInvokeInstance().orElse(null), userFunctionParams);
