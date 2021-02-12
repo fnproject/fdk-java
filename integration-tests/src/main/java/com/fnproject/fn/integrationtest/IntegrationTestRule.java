@@ -87,7 +87,11 @@ public class IntegrationTestRule implements TestRule {
     }
 
 
-    private String getProjectVersion() {
+    /**
+     * Returns the current FDK version for this build
+     * @return A the FDK version (e.g. 1.0.112 or 1.0.0-SNAPSHOT)
+     */
+    public String getFdkVersion() {
         String version = System.getenv("FN_JAVA_FDK_VERSION");
 
         if (version == null) {
@@ -266,7 +270,7 @@ public class IntegrationTestRule implements TestRule {
             String newPomContent = pomFileContent.replace(repoPlaceholder, "<url>" + getLocalFnRepo() + "</url>");
             Assertions.assertThat(newPomContent).withFailMessage("No placeholder found in POM").isNotEqualTo(pomFileContent);
 
-            String versionPomContent = newPomContent.replace(versionPlaceholder, "<fdk.version>" + getProjectVersion() + "</fdk.version>");
+            String versionPomContent = newPomContent.replace(versionPlaceholder, "<fdk.version>" + getFdkVersion() + "</fdk.version>");
 
             versionPomContent = versionPomContent.replaceFirst(snapshotPlaceholderRegex, "<snapshots><enabled>true</enabled></snapshots>");
 
