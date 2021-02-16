@@ -25,17 +25,17 @@ RUN ["mvn", "package"]
 FROM fnproject/fn-java-native:##FN_FDK_VERSION## as build-native-image
 WORKDIR /function
 COPY --from=build /function/target/*.jar target/
-COPY --from=build /function/src/main/conf/reflection.json reflection.json
-COPY --from=build /function/src/main/conf/jni.json jni.json
+
 RUN /usr/bin/native-image \
     --static \
     --no-fallback \
     --initialize-at-build-time= \
     --initialize-at-run-time=com.fnproject.fn.runtime.ntv.UnixSocketNative \
+    --allow-incomplete-classpath \
+    --enable-all-security-services \
+    --enable-url-protocols=https,http \
+    --report-unsupported-elements-at-runtime \
     -H:Name=func \
-    -H:+ReportUnsupportedElementsAtRuntime \
-    -H:ReflectionConfigurationFiles=reflection.json \
-    -H:JNIConfigurationFiles=jni.json \
     -classpath "target/*"\
     com.fnproject.fn.runtime.EntryPoint
 
