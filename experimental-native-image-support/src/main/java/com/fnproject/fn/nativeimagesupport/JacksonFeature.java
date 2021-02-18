@@ -21,6 +21,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.annotation.JacksonAnnotation;
@@ -30,19 +31,22 @@ import org.graalvm.nativeimage.hosted.Feature;
 import org.graalvm.nativeimage.impl.RuntimeReflectionSupport;
 
 /**
- * This is a graal-native feature that automatically includes any classes referenced as literals in Jackson Annotations
+ * This is a graal native-image feature that automatically includes any classes referenced as literals in Jackson Annotations
  * from included classes.
  * <p>
- * This is not likely to be complete and may skip annotations in some cases
- * Known gaps:
- * * Annotations on Jackson type super-classes
+ * The process assumes that the following classes require full reflective acceess (all fields/methods/constructors) :
+ * <ul>
+ *     <li>Classes with Jackson annotations (any jackson annotation on the class or in a member)</li>
+ *     <li>Any Class literals referenced from jackson annotations or their descendents (e.g. Serializers, dispatch types)</li>
+ * </ul>
+ * <p>
+ * This is not likely to be complete and may skip annotations in some cases, notably there are cases where super classes may not be correctly accounted for.
  */
 public class JacksonFeature implements Feature {
 
-    static {
-
-        System.err.println("FnProject experimental Jackson feature loaded");
-        System.err.println("Graal native image support is *experimental* it may not be stable and there may be cases where it does not work as expected");
+    public JacksonFeature() {
+        System.out.println("JacksonFeature: FnProject experimental Jackson feature loaded");
+        System.out.println("JacksonFeature: Graal native image support is *experimental* it may not be stable and there may be cases where it does not work as expected");
     }
 
     private static final String JACKSON_PACKAGE_PREFIX = "com.fasterxml.jackson";
@@ -57,17 +61,18 @@ public class JacksonFeature implements Feature {
         return a.annotationType().getAnnotation(JacksonAnnotation.class) != null;
     }
 
-    private static Stream<Class<?>> extractLiteralAnnotationRefs(Annotation a) {
+    protected static Stream<Class<?>> extractLiteralAnnotationRefs(Annotation a) {
         Class<? extends Annotation> aClass = a.annotationType();
         return Arrays.stream(aClass.getDeclaredMethods())
                 .flatMap(m -> {
                     Object val;
-                    // get annotation value
+                    // get annotation attribute value
                     try {
                         val = m.invoke(a);
                     } catch (IllegalAccessException | InvocationTargetException | IllegalArgumentException e) {
                         throw new IllegalStateException("Failed to retrieve annotation value from annotation" + a + " method " + m, e);
                     }
+
                     // technically annotations can't be null but just in case
                     if (val == null) {
                         return Stream.empty();
@@ -87,27 +92,34 @@ public class JacksonFeature implements Feature {
                         return Stream.of((Class<?>) val);
                     }
                     return Stream.empty();
-
-
                 });
     }
 
+
     // VisibleForTesting
-    protected static Stream<Class<?>> expandAnnotationReferencesForClass(Class<?> clazz) {
+    protected static Stream<Class<?>> expandClassesToMarkForReflection(Class<?> clazz) {
+        List<Annotation> jacksonAnnotations;
         try {
-            return Stream.concat(Stream.concat(
+            jacksonAnnotations = Stream.concat(Stream.concat(
                     Arrays.stream(clazz.getAnnotations()),
                     Arrays.stream(clazz.getDeclaredFields()).flatMap(f -> Arrays.stream(f.getAnnotations()))),
                     Arrays.stream(clazz.getDeclaredMethods()).flatMap(m -> Arrays.stream(m.getAnnotations()))
-            )
-                    .filter(JacksonFeature::isJacksonAnnotation)
-                    .flatMap(JacksonFeature::extractLiteralAnnotationRefs)
-                    .filter(JacksonFeature::shouldIncludeClass)
-                    .peek((clz) -> System.err.println("Extending search for Jackson-referenced class  " + clz + "  from " + clazz));
-        } catch (NoClassDefFoundError expected) {
-            System.err.println("WARNING: Found unknown class while expanding " + clazz + ":" + expected);
+            ).filter(JacksonFeature::isJacksonAnnotation).collect(Collectors.toList());
+        } catch (NoClassDefFoundError ignored) {
+            // we skip the whole class if any of its members are unresolvable  - this is assumed safe as jackson won't be able to load the class here anyway
             return Stream.empty();
         }
+
+        // if no jackson classes present, skip the whole class
+        if (jacksonAnnotations.isEmpty()) {
+            return Stream.empty();
+        }
+
+        // otherwise include the class and any descendent classes referenced within those annotations
+        return Stream.concat(Stream.of(clazz), jacksonAnnotations.stream()
+                .flatMap(JacksonFeature::extractLiteralAnnotationRefs)
+                .filter(JacksonFeature::shouldIncludeClass));
+
     }
 
     @Override
@@ -123,16 +135,18 @@ public class JacksonFeature implements Feature {
         ClassLoader cl = access.getApplicationClassLoader();
         RuntimeReflectionSupport rrs = ImageSingletons.lookup(RuntimeReflectionSupport.class);
 
-        access.registerSubtypeReachabilityHandler((acc, sourceClazz) ->
-                expandAnnotationReferencesForClass(sourceClazz)
-                        .forEach((referencedClazz) -> {
-                            System.err.println("adding extra Jackson annotated " + referencedClazz + " from " + sourceClazz);
-                            acc.registerAsUsed(referencedClazz);
-                            acc.registerAsInHeap(referencedClazz);
-                            rrs.register(referencedClazz);
-                            rrs.register(referencedClazz.getDeclaredConstructors());
-                            rrs.register(referencedClazz.getDeclaredMethods());
-                            Arrays.stream(referencedClazz.getDeclaredFields()).forEach(f -> rrs.register(false, false, f));
-                        }), Object.class);
+        access.registerSubtypeReachabilityHandler((acc, sourceClazz) -> {
+            expandClassesToMarkForReflection(sourceClazz)
+                    .forEach((referencedClazz) -> {
+                        System.out.println("JacksonFeature: adding extra Jackson annotated " + referencedClazz);
+                        acc.registerAsUsed(referencedClazz);
+                        acc.registerAsInHeap(referencedClazz);
+                        rrs.register(referencedClazz);
+                        rrs.register(referencedClazz.getDeclaredConstructors());
+                        rrs.register(referencedClazz.getDeclaredMethods());
+                        Arrays.stream(referencedClazz.getDeclaredFields()).forEach(f -> rrs.register(false, false, f));
+                    });
+        }, Object.class);
     }
+
 }
