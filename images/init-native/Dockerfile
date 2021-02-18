@@ -29,8 +29,6 @@ COPY --from=build /function/target/*.jar target/
 RUN /usr/bin/native-image \
     --static \
     --no-fallback \
-    --initialize-at-build-time= \
-    --initialize-at-run-time=com.fnproject.fn.runtime.ntv.UnixSocketNative \
     --allow-incomplete-classpath \
     --enable-all-security-services \
     --enable-url-protocols=https,http \

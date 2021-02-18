@@ -21,11 +21,11 @@ public class JacksonFeatureTest {
 
     @Test
     public void shouldWalkAnnotations() {
-        assertThat(JacksonFeature.expandAnnotationReferencesForClass(AbstractBase.class)).containsExactly(ConcreteSubType.class);
-        assertThat(JacksonFeature.expandAnnotationReferencesForClass(InterfaceBase.class)).containsExactly(InterfaceImpl.class);
-        assertThat(JacksonFeature.expandAnnotationReferencesForClass(UsesJacksonFeatures.class)).containsExactly(UsesJacksonFeatures.Builder.class);
-        assertThat(JacksonFeature.expandAnnotationReferencesForClass(AnnotationsOnFields.class)).containsExactly(BigInteger.class);
-        assertThat(JacksonFeature.expandAnnotationReferencesForClass(AnnotationsOnMethods.class)).containsExactly(BigInteger.class);
+        assertThat(JacksonFeature.expandClassesToMarkForReflection(AbstractBase.class)).containsExactly(AbstractBase.class,ConcreteSubType.class);
+        assertThat(JacksonFeature.expandClassesToMarkForReflection(InterfaceBase.class)).containsExactly(InterfaceBase.class,InterfaceImpl.class);
+        assertThat(JacksonFeature.expandClassesToMarkForReflection(UsesJacksonFeatures.class)).containsExactly(UsesJacksonFeatures.class,UsesJacksonFeatures.Builder.class);
+        assertThat(JacksonFeature.expandClassesToMarkForReflection(AnnotationsOnFields.class)).containsExactly(AnnotationsOnFields.class,BigInteger.class);
+        assertThat(JacksonFeature.expandClassesToMarkForReflection(AnnotationsOnMethods.class)).containsExactly(AnnotationsOnMethods.class,BigInteger.class);
     }
 
 
