@@ -9,7 +9,7 @@ Currently, this contains graal native-image configuration files which enable com
 
 * Oracle Cloud Infrastructure java client support in native images
 * Graal native reflection config for general Jersey client support (specifically tested for the OCI client use case, may work in other cases)
-* Graal native reflection config for  BouncyCastle crypto in native images 
+* Graal native reflection config for BouncyCastle crypto in native images 
 
 It also includes :
 
