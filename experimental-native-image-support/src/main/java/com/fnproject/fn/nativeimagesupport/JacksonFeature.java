@@ -53,7 +53,8 @@ public class JacksonFeature implements Feature {
 
 
     private static boolean shouldIncludeClass(Class<?> clz) {
-        return clz != Void.class
+        return !clz.isInterface() &&
+                clz != Void.class
                 && !clz.getPackage().getName().startsWith(JACKSON_PACKAGE_PREFIX);
     }
 
@@ -117,8 +118,8 @@ public class JacksonFeature implements Feature {
 
         // otherwise include the class and any descendent classes referenced within those annotations
         return Stream.concat(Stream.of(clazz), jacksonAnnotations.stream()
-                .flatMap(JacksonFeature::extractLiteralAnnotationRefs)
-                .filter(JacksonFeature::shouldIncludeClass));
+                .flatMap(JacksonFeature::extractLiteralAnnotationRefs))
+                .filter(JacksonFeature::shouldIncludeClass);
 
     }
 
