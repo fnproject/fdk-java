@@ -99,6 +99,14 @@
                 <targetPath>${build.directory}/version-sources</targetPath>
                 <filtering>true</filtering>
             </resource>
+            <resource>
+                <directory>src/main/c/</directory>
+                <includes>
+                    <include>*.so</include>
+                </includes>
+                <filtering>false</filtering>
+                <targetPath>${build.directory}/classes/META-INF/com.fnproject.fn/runtime/native/</targetPath>
+            </resource>
         </resources>
         <plugins>
             <plugin>
