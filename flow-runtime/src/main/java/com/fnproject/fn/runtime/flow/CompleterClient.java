@@ -29,12 +29,6 @@ import java.util.concurrent.TimeoutException;
  */
 public interface CompleterClient {
 
-    /**
-     * create a new flow against the flow service
-     *
-     * @param functionId
-     * @return
-     */
     FlowId createFlow(String functionId);
 
     CompletionId supply(FlowId flowID, Serializable code, CodeLocation codeLocation);

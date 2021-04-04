@@ -22,10 +22,51 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>fdk</artifactId>
+    <!--<artifactId>fdk</artifactId>
     <groupId>com.fnproject.fn</groupId>
+
+    <version>1.0.0-SNAPSHOT</version>-->
     <packaging>pom</packaging>
-    <version>1.0.0-SNAPSHOT</version>
+    <groupId>com.github.roneetshaw</groupId>
+    <artifactId>arithmetic-app</artifactId>
+    <version>1.0.3</version>
+    <name>Arthimetic library</name>
+    <description>A simple arthimetic library in Maven central</description>
+    <url>https://github.com/roneetshaw/arithmetic</url>
+
+    <licenses>
+        <license>
+            <name>The Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <name>Roneet Shaw</name>
+            <email>roneet@gmail.com</email>
+            <organization>com.github.roneetshaw</organization>
+            <organizationUrl>http://github.com/roneetshaw/</organizationUrl>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:git://github.com/roneetshaw/arithmetic.git</connection>
+        <developerConnection>scm:git:ssh://github.com:roneetshaw/arithmetic.git</developerConnection>
+        <url>https://github.com/roneetshaw/arithmetic</url>
+    </scm>
+
+    <distributionManagement>
+        <repository>
+            <id>ossrh</id>
+            <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+    </distributionManagement>
+
 
 
     <modules>
@@ -39,7 +80,7 @@
         <module>flow-testing</module>
         <module>fn-spring-cloud-function</module>
         <module>examples</module>
-        <module>experimental-native-image-support</module>
+        <!--<module>experimental-native-image-support</module>-->
     </modules>
 
     <properties>
@@ -292,6 +333,31 @@
                 <groupId>org.pitest</groupId>
                 <artifactId>pitest-maven</artifactId>
                 <version>${pitest.version}</version>
+            </plugin>
+            <plugin>
+                <groupId>org.sonatype.plugins</groupId>
+                <artifactId>nexus-staging-maven-plugin</artifactId>
+                <version>1.6.7</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <serverId>ossrh</serverId>
+                    <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>
+                    <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-gpg-plugin</artifactId>
+                <version>1.5</version>
+                <executions>
+                    <execution>
+                        <id>sign-artifacts</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>sign</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
 
         </plugins>

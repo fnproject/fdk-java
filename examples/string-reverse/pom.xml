@@ -27,9 +27,20 @@
     </properties>
     <groupId>com.example.fn</groupId>
     <artifactId>string-reverse</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.3</version>
 
-    <repositories>
+    <distributionManagement>
+        <repository>
+            <id>ossrh</id>
+            <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+    </distributionManagement>
+
+    <!--<repositories>
         <repository>
             <id>fn-release-repo</id>
             <url>https://dl.bintray.com/fnproject/fnproject</url>
@@ -40,24 +51,24 @@
                 <enabled>false</enabled>
             </snapshots>
         </repository>
-    </repositories>
+    </repositories> -->
 
     <dependencies>
         <dependency>
-            <groupId>com.fnproject.fn</groupId>
+            <groupId>com.github.roneetshaw</groupId>
             <artifactId>api</artifactId>
-            <version>${fdk.version}</version>
+            <version>1.0.3</version>
         </dependency>
         <dependency>
-            <groupId>com.fnproject.fn</groupId>
+            <groupId>com.github.roneetshaw</groupId>
             <artifactId>testing-core</artifactId>
-            <version>${fdk.version}</version>
+            <version>1.0.3</version>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>com.fnproject.fn</groupId>
+            <groupId>com.github.roneetshaw</groupId>
             <artifactId>testing-junit4</artifactId>
-            <version>${fdk.version}</version>
+            <version>1.0.3</version>
             <scope>test</scope>
         </dependency>
         <dependency>

@@ -22,6 +22,17 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
+    <distributionManagement>
+        <repository>
+            <id>ossrh</id>
+            <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+    </distributionManagement>
+
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -30,9 +41,9 @@
         <jackson.version>2.11.0</jackson.version>
     </properties>
 
-    <groupId>com.fnproject.fn.examples</groupId>
+    <groupId>com.github.roneetshaw.examples</groupId>
     <artifactId>regex-query</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.3</version>
 
     <dependencies>
         <dependency>
@@ -52,15 +63,15 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>com.fnproject.fn</groupId>
+            <groupId>com.github.roneetshaw</groupId>
             <artifactId>testing-core</artifactId>
-            <version>${fdk.version}</version>
+            <version>1.0.3</version>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>com.fnproject.fn</groupId>
+            <groupId>com.github.roneetshaw</groupId>
             <artifactId>testing-junit4</artifactId>
-            <version>${fdk.version}</version>
+            <version>1.0.3</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -93,10 +104,10 @@
         </plugins>
     </build>
 
-    <repositories>
+    <!--<repositories>
         <repository>
             <id>fn-maven-releases</id>
             <url>https://dl.bintray.com/fnproject/fnproject</url>
         </repository>
-    </repositories>
+    </repositories>-->
 </project>

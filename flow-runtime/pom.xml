@@ -21,51 +21,69 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <artifactId>fdk</artifactId>
-        <groupId>com.fnproject.fn</groupId>
-        <version>1.0.0-SNAPSHOT</version>
+        <artifactId>arithmetic-app</artifactId>
+        <groupId>com.github.roneetshaw</groupId>
+        <version>1.0.3</version>
     </parent>
+    <distributionManagement>
+        <repository>
+            <id>ossrh</id>
+            <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+    </distributionManagement>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>flow-runtime</artifactId>
 
     <dependencies>
         <dependency>
-            <groupId>com.fnproject.fn</groupId>
+            <groupId>com.github.roneetshaw</groupId>
             <artifactId>api</artifactId>
+            <version>1.0.3</version>
         </dependency>
         <dependency>
-            <groupId>com.fnproject.fn</groupId>
+            <groupId>com.github.roneetshaw</groupId>
             <artifactId>flow-api</artifactId>
+            <version>1.0.3</version>
         </dependency>
 
         <dependency>
-            <groupId>com.fnproject.fn</groupId>
+            <groupId>com.github.roneetshaw</groupId>
             <artifactId>runtime</artifactId>
+            <version>1.0.3</version>
         </dependency>
         <dependency>
-            <groupId>com.fnproject.fn</groupId>
+            <groupId>com.github.roneetshaw</groupId>
             <artifactId>testing-junit4</artifactId>
             <scope>test</scope>
+            <version>1.0.3</version>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
             <scope>test</scope>
+            <version>3.3.3</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
+            <version>4.13.1</version>
         </dependency>
         <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
             <scope>test</scope>
+            <version>3.16.1</version>
         </dependency>
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
             <scope>test</scope>
+            <version>4.5.12</version>
         </dependency>
 
     </dependencies>
@@ -89,6 +107,19 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
+
 </project>
