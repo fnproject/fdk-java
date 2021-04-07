@@ -23,39 +23,26 @@
     <modelVersion>4.0.0</modelVersion>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <fdk.version>1.0.87</fdk.version>
+        <fdk.version>99.99.999</fdk.version>
     </properties>
     <groupId>com.example.fn</groupId>
     <artifactId>string-reverse</artifactId>
     <version>1.0.0</version>
 
-    <repositories>
-        <repository>
-            <id>fn-release-repo</id>
-            <url>https://dl.bintray.com/fnproject/fnproject</url>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>
-    </repositories>
-
     <dependencies>
         <dependency>
-            <groupId>com.fnproject.fn</groupId>
+            <groupId>io.fnproject.fn</groupId>
             <artifactId>api</artifactId>
             <version>${fdk.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.fnproject.fn</groupId>
+            <groupId>io.fnproject.fn</groupId>
             <artifactId>testing-core</artifactId>
             <version>${fdk.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>com.fnproject.fn</groupId>
+            <groupId>io.fnproject.fn</groupId>
             <artifactId>testing-junit4</artifactId>
             <version>${fdk.version}</version>
             <scope>test</scope>

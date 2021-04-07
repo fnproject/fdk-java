@@ -80,7 +80,7 @@ public class FlowRuntimeGlobals {
     /**
      * return the current Fn Flow client factory;
      *
-     * @return
+     * @return a factory of CompleterClient
      */
     public static CompleterClientFactory getCompleterClientFactory() {
         return completerClientFactory;

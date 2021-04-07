@@ -32,8 +32,8 @@ public interface CompleterClient {
     /**
      * create a new flow against the flow service
      *
-     * @param functionId
-     * @return
+     * @param functionId Id of the function for which flow needs to be created
+     * @return a FlowId
      */
     FlowId createFlow(String functionId);
 
@@ -49,6 +49,10 @@ public interface CompleterClient {
      * Compose a function into the tree
      * The transmitted function is wrapped to convert th ElvisFuture into it's completion iD
      *
+     * @param flowId flowId for thenCompose
+     * @param completionId completionId for thenCompose
+     * @param fn fn for thenCompose
+     * @param codeLocation codeLocation for thenCompose
      * @return a completion ID that completes when the completion returned by the inner function completes
      */
     CompletionId thenCompose(FlowId flowId, CompletionId completionId, Serializable fn, CodeLocation codeLocation);

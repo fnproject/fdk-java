@@ -84,8 +84,8 @@ public abstract class SpringCloudMethod implements MethodWrapper {
     /**
      * Invoke the target function object
      *
-     * @param arg
-     * @return
+     * @param arg fuction invoke arguments
+     * @return Flux type object
      */
     public abstract Flux<?> invoke(Flux<?> arg);
 }

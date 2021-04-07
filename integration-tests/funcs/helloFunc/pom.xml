@@ -23,7 +23,7 @@
     <modelVersion>4.0.0</modelVersion>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <fdk.version>1.0.0-SNAPSHOT</fdk.version>
+        <fdk.version>99.99.999</fdk.version>
     </properties>
     <groupId>com.example.fn</groupId>
     <artifactId>hello-func</artifactId>

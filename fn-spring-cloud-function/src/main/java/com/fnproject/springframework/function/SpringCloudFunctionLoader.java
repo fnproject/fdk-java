@@ -34,7 +34,7 @@ import java.util.function.Supplier;
  * The Loader for Spring Cloud Functions
  * <p>
  * Looks up Functions from the {@link FunctionCatalog} (which is likely populated by your
- * function class, see {@link SpringCloudFunctionInvoker#SpringCloudFunctionInvoker(Class<?>)})
+ * function class, see {@link SpringCloudFunctionInvoker#SpringCloudFunctionInvoker(SpringCloudFunctionLoader)})
  * <p>
  * Lookup is in the following order:
  * <p>
