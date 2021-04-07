@@ -23,6 +23,6 @@ if [ -n "$FN_REPO_URL" ]; then
   REPO_DFN="-Dfn.repo.url=$FN_REPO_URL"
 fi
 
-
-cd /tmp/cache-deps && mvn test package dependency:copy-dependencies -Dmaven.repo.local=/usr/share/maven/ref/repository -Dmdep.prependGroupId=true -DoutputDirectory=target $REPO_DFN
+sed -i "s#<url>___FN_REPO_URL___#<url>${FN_REPO_URL}#g" /tmp/cache-deps/local-settings.xml
+cd /tmp/cache-deps && mvn -s /tmp/cache-deps/local-settings.xml test package dependency:copy-dependencies -Dmaven.repo.local=/usr/share/maven/ref/repository -Dmdep.prependGroupId=true -DoutputDirectory=target $REPO_DFN
 cd / && rm -fr /tmp/cache-deps

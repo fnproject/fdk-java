@@ -2,7 +2,8 @@ version: 2
 jobs:
   build:
     working_directory: ~/fn-java-fdk
-    machine: true
+    machine:
+      image: ubuntu-1604:202101-01
     environment:
       # store_artifacts doesn't shell substitute so the variable
       # definitions are duplicated in those steps too.
