@@ -19,6 +19,7 @@ name: httpgwfunc
 version: 0.0.1
 runtime: java
 cmd: com.example.fn.TriggerFunction::handleRequest
+timeout: 120
 format: http-stream
 triggers:
 - name: trig
