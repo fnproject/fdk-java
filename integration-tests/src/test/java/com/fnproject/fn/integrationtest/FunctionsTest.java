@@ -59,19 +59,27 @@ public class FunctionsTest {
 
     }
 
-    @Test()
-    public void checkBoilerPlate() throws Exception {
-        for (String runtime : new String[] {"java8", "java11"}) {
-            IntegrationTestRule.TestContext tc = testRule.newTest();
-            String fnName = "bp" + runtime;
-            tc.runFn("init", "--runtime", runtime, "--name", fnName);
-            tc.rewritePOM().rewriteDockerfile(runtime == "java11");
-            tc.runFn("--verbose", "deploy", "--create-app", "--app", tc.appName(), "--local");
-            CmdResult rs = tc.runFnWithInput("wibble", "invoke", tc.appName(), fnName);
-            assertThat(rs.getStdout()).contains("Hello, wibble!");
-        }
-    }
-
+    //
+    // AS OF 2021-04-07 WE ARE UNABLE TO TEST THE "OUT OF THE BOX" EXPERIENCE
+    // WITH A LOCAL FDK SERVED THROUGH AN HTTP SERVER BECAUSE MAVEN HAS DISABLED
+    // SUPPORT FOR HTTP REPOSITORIES BY DEFAULT DUE TO CVE-2021-26291.
+    // IF WE WERE TO PROVIDE A CUSTOM DOCKERFILE TO WORK AROUND MAVEN'S DEFAULT
+    // BEHAVIOUR, LIKE WE DO FOR THE TESTS AROUND THIS ONE, WE WOULD NOT BE
+    // TESTING THE "OUT OF THE BOX" EXPERIENCE ANYWAY, SO THIS TEST IS MOOT.
+    //
+    // @Test()
+    // public void checkBoilerPlate() throws Exception {
+    //    for (String runtime : new String[] {"java8", "java11"}) {
+    //        IntegrationTestRule.TestContext tc = testRule.newTest();
+    //        String fnName = "bp" + runtime;
+    //        tc.runFn("init", "--runtime", runtime, "--name", fnName);
+    //        tc.rewritePOM();
+    //        tc.runFn("--verbose", "deploy", "--create-app", "--app", tc.appName(), "--local");
+    //        CmdResult rs = tc.runFnWithInput("wibble", "invoke", tc.appName(), fnName);
+    //        assertThat(rs.getStdout()).contains("Hello, wibble!");
+    //    }
+    //}
+    //
 
     @Test()
     public void runNativeFunction() throws Exception {
@@ -81,7 +89,7 @@ public class FunctionsTest {
             IntegrationTestRule.TestContext tc = testRule.newTest();
             String fnName = "graaltest" + i++;
             tc.runFn("init", "--init-image", "fnproject/fn-java-native-init:" + version, "--name", fnName);
-            tc.rewriteDockerfile(version == "jdk11-");
+            tc.rewritePOM().rewriteDockerfile(version != testRule.getFdkVersion());
             tc.runFn("--verbose", "deploy", "--create-app", "--app", tc.appName(), "--local");
             CmdResult rs = tc.runFnWithInput("wibble", "invoke", tc.appName(), fnName);
             assertThat(rs.getStdout()).contains("Hello, wibble!");
