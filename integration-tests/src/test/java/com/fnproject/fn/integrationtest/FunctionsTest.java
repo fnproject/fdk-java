@@ -46,7 +46,7 @@ public class FunctionsTest {
     @Test
     public void shouldCallExistingFn() throws Exception {
         IntegrationTestRule.TestContext tc = testRule.newTest();
-        tc.withDirFrom("funcs/simpleFunc").rewritePOM();
+        tc.withDirFrom("funcs/simpleFunc").rewritePOM().rewriteDockerfile(true);
 
         tc.runFn("--verbose", "deploy", "--create-app", "--app", tc.appName(), "--local");
         tc.runFn("config", "app", tc.appName(), "GREETING", "Salutations");
@@ -65,7 +65,7 @@ public class FunctionsTest {
             IntegrationTestRule.TestContext tc = testRule.newTest();
             String fnName = "bp" + runtime;
             tc.runFn("init", "--runtime", runtime, "--name", fnName);
-            tc.rewritePOM();
+            tc.rewritePOM().rewriteDockerfile(runtime == "java11");
             tc.runFn("--verbose", "deploy", "--create-app", "--app", tc.appName(), "--local");
             CmdResult rs = tc.runFnWithInput("wibble", "invoke", tc.appName(), fnName);
             assertThat(rs.getStdout()).contains("Hello, wibble!");
@@ -81,7 +81,7 @@ public class FunctionsTest {
             IntegrationTestRule.TestContext tc = testRule.newTest();
             String fnName = "graaltest" + i++;
             tc.runFn("init", "--init-image", "fnproject/fn-java-native-init:" + version, "--name", fnName);
-            tc.rewritePOM();
+            tc.rewriteDockerfile(version == "jdk11-");
             tc.runFn("--verbose", "deploy", "--create-app", "--app", tc.appName(), "--local");
             CmdResult rs = tc.runFnWithInput("wibble", "invoke", tc.appName(), fnName);
             assertThat(rs.getStdout()).contains("Hello, wibble!");
@@ -97,7 +97,7 @@ public class FunctionsTest {
     @Test()
     public void shouldHandleTrigger() throws Exception {
         IntegrationTestRule.TestContext tc = testRule.newTest();
-        tc.withDirFrom("funcs/httpgwfunc").rewritePOM();
+        tc.withDirFrom("funcs/httpgwfunc").rewritePOM().rewriteDockerfile(true);
         tc.runFn("--verbose", "deploy", "--create-app", "--app", tc.appName(), "--local");
 
         // Get me the trigger URL
@@ -129,7 +129,7 @@ public class FunctionsTest {
     @Test
     public void shouldGetFDKVersion() throws Exception {
         IntegrationTestRule.TestContext tc = testRule.newTest();
-        tc.withDirFrom("funcs/simpleFunc").rewritePOM();
+        tc.withDirFrom("funcs/simpleFunc").rewritePOM().rewriteDockerfile(true);
 
         tc.runFn("--verbose", "deploy", "--create-app", "--app", tc.appName(), "--local");
         tc.runFn("config", "app", tc.appName(), "GREETING", "Salutations");
