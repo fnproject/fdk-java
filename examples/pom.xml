@@ -28,7 +28,7 @@
     <parent>
         <artifactId>fdk</artifactId>
         <groupId>io.fnproject.fn</groupId>
-        <version>99.99.999</version>
+        <version>1.0.124</version>
     </parent>
 
     <modules>

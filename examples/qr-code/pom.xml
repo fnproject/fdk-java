@@ -25,7 +25,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <fdk.version>99.99.999</fdk.version>
+        <fdk.version>1.0.124</fdk.version>
     </properties>
 
     <groupId>com.fnproject.fn.examples</groupId>

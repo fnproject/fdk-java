@@ -26,7 +26,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-        <fdk.version>99.99.999</fdk.version>
+        <fdk.version>1.0.124</fdk.version>
         <jackson.version>2.11.0</jackson.version>
     </properties>
 
