@@ -16,7 +16,7 @@ jobs:
          command: echo ${CIRCLE_BRANCH}
       - run:
          name: Update Docker to latest
-         command: gpg --version
+         command: cat ~/.m2/settings.xml
       - run:
           name: Install fn binary (as it is needed for the integration tests)
           command: ./.circleci/install-fn.sh
