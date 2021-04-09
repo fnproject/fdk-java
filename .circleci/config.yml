@@ -16,7 +16,10 @@ jobs:
          command: echo ${CIRCLE_BRANCH}
       - run:
          name: Update Docker to latest
-         command: cat ~/.m2/settings.xml
+         command: mvn --version
+      - run:
+         name: mvn details
+         command: find ~ -name settings.xml
       - run:
           name: Install fn binary (as it is needed for the integration tests)
           command: ./.circleci/install-fn.sh
