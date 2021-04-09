@@ -16,7 +16,7 @@ jobs:
          command: echo ${CIRCLE_BRANCH}
       - run:
          name: Update Docker to latest
-         command: ./.circleci/install-docker.sh
+         command: docker --version
       - run:
           name: Install fn binary (as it is needed for the integration tests)
           command: ./.circleci/install-fn.sh
