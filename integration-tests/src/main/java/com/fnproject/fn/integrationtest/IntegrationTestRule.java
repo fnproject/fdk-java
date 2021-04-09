@@ -281,6 +281,38 @@ public class IntegrationTestRule implements TestRule {
 
 
         /**
+         * Rewrites the Dockerfile to provide a settings file which works around
+         * problems with Maven HTTP repos.
+         */
+        public TestContext rewriteDockerfile(Boolean java11) throws Exception {
+            String jdkPrefix = java11 ? "jdk11-" : "";
+            String jrePrefix = java11 ? "jre11-" : "";
+
+            File dFile = new File(baseDir, "Dockerfile");
+            String dFileContent = FileUtils.readFileToString(dFile, StandardCharsets.UTF_8);
+
+            String buildImageStringToMatch = "FROM fnproject/fn-java-fdk-build:[^ ]+ as build";
+            String newContent = dFileContent.replaceFirst(buildImageStringToMatch, "FROM fnproject/fn-java-fdk-build:" + jdkPrefix + getFdkVersion() + " as build");
+
+            String runtimeImageStringToMatch = "FROM fnproject/fn-java-fdk:[^\n ]+";
+            String newContent2 = newContent.replaceFirst(runtimeImageStringToMatch, "FROM fnproject/fn-java-fdk:" + jrePrefix + getFdkVersion());
+
+            String mavenSettingsFileContent = generateMavenSettingsFileContent();
+            File mFile = new File(baseDir, "maven-settings.xml");
+            System.err.println(mavenSettingsFileContent);
+            FileUtils.writeStringToFile(mFile, mavenSettingsFileContent, StandardCharsets.UTF_8);
+
+            String runMavenLine = "RUN [\"mvn\", \"package\", \"dependency:copy-dependencies\"";
+            String runMavenLineAsRegex = "RUN \\[\\\"mvn\\\", \\\"package\\\", \\\"dependency:copy-dependencies\\\"";
+            String newContent3 = newContent2.replaceFirst(runMavenLineAsRegex, "ADD maven-settings.xml /usr/share/maven/conf/settings.xml" + System.getProperty("line.separator") + runMavenLine);
+
+            System.err.println(newContent3);
+            FileUtils.writeStringToFile(dFile, newContent3, StandardCharsets.UTF_8);
+            return this;
+        }
+
+
+        /**
          * Gets the app name you should use for tests.
          *
          * @return
@@ -297,6 +329,24 @@ public class IntegrationTestRule implements TestRule {
         public TestContext cd(String dir) {
             baseDir = new File(baseDir, dir);
             return this;
+        }
+
+        private String generateMavenSettingsFileContent() {
+            return String.join(System.getProperty("line.separator"),
+                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>",
+                "<settings xmlns=\"http://maven.apache.org/SETTINGS/1.2.0\"",
+                "          xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"",
+                "          xsi:schemaLocation=\"http://maven.apache.org/SETTINGS/1.2.0 http://maven.apache.org/xsd/settings-1.2.0.xsd\">",
+                "  <mirrors>",
+                "    <mirror>",
+                "      <id>override-maven-default-http-blocker</id>",
+                "      <mirrorOf>external:http:*</mirrorOf>",
+                "      <name>Pseudo repository to mirror external repositories initially using HTTP.</name>",
+                "      <url>" + getLocalFnRepo() + "</url>",
+                "      <blocked>false</blocked>",
+                "    </mirror>",
+                "  </mirrors>",
+                "</settings>");
         }
     }
 
