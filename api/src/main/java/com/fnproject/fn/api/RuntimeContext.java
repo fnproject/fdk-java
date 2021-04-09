@@ -44,6 +44,24 @@ public interface RuntimeContext {
     String getFunctionID();
 
     /**
+     * The user-friendly name of the application associated with this function,
+     * if present; defaulted to the application ID for backwards compatibility
+     * @return an application name
+     */
+    default public String getAppName() {
+        return getAppID();
+    }
+
+    /**
+     * The user-friendly name of the function, if present; defaulted to the
+     * function ID for backwards compatibility
+     * @return a function name
+     */
+    default public String getFunctionName() {
+        return getFunctionID();
+    }
+
+    /**
      * Create an instance of the user specified class on which the target function to invoke is declared.
      *
      * @return new instance of class containing the target function

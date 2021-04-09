@@ -134,6 +134,8 @@ meth public abstract <%0 extends java.lang.Object> java.util.Optional<{%%0}> get
 meth public abstract com.fnproject.fn.api.MethodWrapper getMethod()
 meth public abstract java.lang.String getAppID()
 meth public abstract java.lang.String getFunctionID()
+meth public java.lang.String getAppName()
+meth public java.lang.String getFunctionName()
 meth public abstract java.util.List<com.fnproject.fn.api.InputCoercion> getInputCoercions(com.fnproject.fn.api.MethodWrapper,int)
 meth public abstract java.util.List<com.fnproject.fn.api.OutputCoercion> getOutputCoercions(java.lang.reflect.Method)
 meth public abstract java.util.Map<java.lang.String,java.lang.String> getConfiguration()
@@ -181,6 +183,20 @@ meth public abstract QueryParameters getQueryParameters()
 meth public abstract void addResponseHeader(String key, String value)
 meth public abstract void setResponseHeader(String key, String v1, String... vs)
 meth public abstract void setStatusCode(int code)
+
+CLSS public abstract interface com.fnproject.fn.api.tracing.TracingContext
+meth public abstract InvocationContext getInvocationContext()
+meth public abstract RuntimeContext getRuntimeContext()
+meth public abstract java.lang.String getServiceName()
+meth public abstract java.lang.String getTraceCollectorURL()
+meth public abstract java.lang.String getTraceId()
+meth public abstract java.lang.String getSpanId()
+meth public abstract java.lang.String getParentSpanId()
+meth public abstract java.lang.Boolean isSampled()
+meth public abstract java.lang.String getFlags()
+meth public abstract java.lang.Boolean isTracingEnabled()
+meth public abstract java.lang.String getAppName()
+meth public abstract java.lang.String getFunctionName()
 
 CLSS public abstract interface java.io.Closeable
 intf java.lang.AutoCloseable

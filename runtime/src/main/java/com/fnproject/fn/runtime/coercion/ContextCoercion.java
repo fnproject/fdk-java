@@ -18,7 +18,9 @@ package com.fnproject.fn.runtime.coercion;
 
 import com.fnproject.fn.api.*;
 import com.fnproject.fn.api.httpgateway.HTTPGatewayContext;
+import com.fnproject.fn.api.tracing.TracingContext;
 import com.fnproject.fn.runtime.httpgateway.FunctionHTTPGatewayContext;
+import com.fnproject.fn.runtime.tracing.OCITracingContext;
 
 import java.util.Optional;
 
@@ -37,6 +39,8 @@ public class ContextCoercion implements InputCoercion<Object> {
             return Optional.of(currentContext);
         } else if (paramClass.equals(HTTPGatewayContext.class)) {
             return Optional.of(new FunctionHTTPGatewayContext(currentContext));
+        } else if (paramClass.equals(TracingContext.class)) {
+            return Optional.of(new OCITracingContext(currentContext, currentContext.getRuntimeContext()));
         } else {
             return Optional.empty();
         }

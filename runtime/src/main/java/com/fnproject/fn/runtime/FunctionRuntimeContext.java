@@ -62,6 +62,16 @@ public class FunctionRuntimeContext implements RuntimeContext {
     }
 
     @Override
+    public String getAppName() {
+        return config.getOrDefault("FN_APP_NAME", "");
+    }
+
+    @Override
+    public String getFunctionName() {
+        return config.getOrDefault("FN_FN_NAME", "");
+    }
+
+    @Override
     public Optional<Object> getInvokeInstance() {
         if (!Modifier.isStatic(getMethod().getTargetMethod().getModifiers())) {
             if (instance == null) {
