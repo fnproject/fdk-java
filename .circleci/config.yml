@@ -12,6 +12,9 @@ jobs:
     steps:
       - checkout
       - run:
+         name: checking
+         command: echo ${CIRCLE_BRANCH}
+      - run:
          name: Update Docker to latest
          command: ./.circleci/install-docker.sh
       - run:
