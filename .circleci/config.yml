@@ -18,8 +18,8 @@ jobs:
          name: Update Docker to latest
          command: mvn --version
       - run:
-         name: mvn details
-         command: cat /usr/local/apache-maven-3.2.5/conf/settings.xml
+         name: gpg details
+         command: gpg --verison 
       - run:
           name: Install fn binary (as it is needed for the integration tests)
           command: ./.circleci/install-fn.sh
