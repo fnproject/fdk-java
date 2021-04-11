@@ -49,4 +49,7 @@
             </properties>
         </profile>
     </profiles>
+    <activeProfiles>
+        <activeProfile>ossrh</activeProfile>
+    </activeProfiles>
 </settings>
