@@ -31,5 +31,22 @@
             <username>${fnproject-release-repo.username}</username>
             <password>${fnproject-release-repo.password}</password>
         </server>
+        <server>
+            <id>ossrh</id>
+            <username>fdkjava</username>
+            <password>C,bjI~6;dM-q</password>
+        </server>
     </servers>
+    <profiles>
+        <profile>
+            <id>ossrh</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <gpg.executable>gpg</gpg.executable>
+                <gpg.passphrase>welcome</gpg.passphrase>
+            </properties>
+        </profile>
+    </profiles>
 </settings>
