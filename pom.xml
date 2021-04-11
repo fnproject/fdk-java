@@ -23,9 +23,9 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>fdk</artifactId>
-    <groupId>io.fnproject.fn</groupId>
+    <groupId>com.github.roneetshaw</groupId>
     <packaging>pom</packaging>
-    <version>1.0.124</version>
+    <version>1.0.6</version>
     <name>fdk-java</name>
     <description>The Function Development Kit for Java makes it easy to build and deploy Java functions to Fn</description>
     <url>https://fnproject.io/tutorials/JavaFDKIntroduction/</url>
@@ -101,38 +101,38 @@
 
             <!--project modules-->
             <dependency>
-                <groupId>io.fnproject.fn</groupId>
+                <groupId>com.github.roneetshaw</groupId>
                 <artifactId>api</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
             <dependency>
-                <groupId>io.fnproject.fn</groupId>
+                <groupId>com.github.roneetshaw</groupId>
                 <artifactId>flow-api</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>io.fnproject.fn</groupId>
+                <groupId>com.github.roneetshaw</groupId>
                 <artifactId>flow-runtime</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>io.fnproject.fn</groupId>
+                <groupId>com.github.roneetshaw</groupId>
                 <artifactId>runtime</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>io.fnproject.fn</groupId>
+                <groupId>com.github.roneetshaw</groupId>
                 <artifactId>testing</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>io.fnproject.fn</groupId>
+                <groupId>com.github.roneetshaw</groupId>
                 <artifactId>testing-core</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>io.fnproject.fn</groupId>
+                <groupId>com.github.roneetshaw</groupId>
                 <artifactId>testing-junit4</artifactId>
                 <version>${project.version}</version>
             </dependency>

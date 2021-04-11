@@ -27,7 +27,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-        <fdk.version>1.0.124</fdk.version>
+        <fdk.version>1.0.6</fdk.version>
         <fn.repo.url>http://172.17.0.1:18080</fn.repo.url>
     </properties>
 

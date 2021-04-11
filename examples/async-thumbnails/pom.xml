@@ -26,7 +26,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-        <fdk.version>1.0.124</fdk.version>
+        <fdk.version>1.0.6</fdk.version>
         <mockito.version>3.3.3</mockito.version>
         <jackson.version>2.11.0</jackson.version>
     </properties>
@@ -38,12 +38,12 @@
     <dependencies>
 
         <dependency>
-            <groupId>io.fnproject.fn</groupId>
+            <groupId>com.github.roneetshaw</groupId>
             <artifactId>api</artifactId>
             <version>${fdk.version}</version>
         </dependency>
         <dependency>
-            <groupId>io.fnproject.fn</groupId>
+            <groupId>com.github.roneetshaw</groupId>
             <artifactId>flow-runtime</artifactId>
             <version>${fdk.version}</version>
         </dependency>
@@ -63,19 +63,19 @@
             <version>5.0.1</version>
         </dependency>
         <dependency>
-            <groupId>io.fnproject.fn</groupId>
+            <groupId>com.github.roneetshaw</groupId>
             <artifactId>testing-core</artifactId>
             <version>${fdk.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>io.fnproject.fn</groupId>
+            <groupId>com.github.roneetshaw</groupId>
             <artifactId>flow-testing</artifactId>
             <version>${fdk.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>io.fnproject.fn</groupId>
+            <groupId>com.github.roneetshaw</groupId>
             <artifactId>testing-junit4</artifactId>
             <version>${fdk.version}</version>
             <scope>test</scope>

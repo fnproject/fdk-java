@@ -33,8 +33,8 @@
         </server>
         <server>
             <id>ossrh</id>
-            <username>fdkjava</username>
-            <password>C,bjI~6;dM-q</password>
+            <username>roneet</username>
+            <password>Welcome@1234</password>
         </server>
     </servers>
     <profiles>
