@@ -41,9 +41,6 @@ git push
 git push origin "$release_version"
 
 
-# Regenerate runtime and build images and push them
-
-
 # Deploy to Maven Central OSSRH
 mvn -s ./settings-deploy.xml \
     -DskipTests \
