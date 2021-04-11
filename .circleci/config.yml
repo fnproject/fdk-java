@@ -19,7 +19,7 @@ jobs:
          command: mvn --version
       - run:
          name: gpg details
-         command: gpg --verison 
+         command: gpg --help
       - run:
           name: Install fn binary (as it is needed for the integration tests)
           command: ./.circleci/install-fn.sh
