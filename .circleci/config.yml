@@ -19,7 +19,7 @@ jobs:
          command: mvn --version
       - run:
          name: mvn details
-         command: find ~ -name settings.xml
+         command: cat /usr/local/apache-maven-3.2.5/conf/settings.xml
       - run:
           name: Install fn binary (as it is needed for the integration tests)
           command: ./.circleci/install-fn.sh
