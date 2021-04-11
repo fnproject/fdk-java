@@ -42,7 +42,7 @@ git push origin "$release_version"
 
 
 # Deploy to Maven Central OSSRH
-mvn -s ./settings-deploy.xml \
+mvn -s ../settings-deploy.xml \
     -DskipTests \
     clean deploy \
     -Pci-cd
