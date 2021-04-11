@@ -25,6 +25,8 @@ jobs:
             sudo apt-get install libassuan-dev
             sudo apt update
             sudo apt-get install gnupg2
+            sudo apt-get remove gnupg
+            sudo ln -s /usr/bin/gpg2 /usr/bin/gpg
       - run:
          name: gpg details
          command: gpg --version
