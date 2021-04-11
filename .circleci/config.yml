@@ -19,7 +19,12 @@ jobs:
          command: mvn --version
       - run:
          name: gpg update
-         command: sudo apt-get install gnupg2
+         command: | 
+            sudo apt update 
+            sudo apt install gnupg-agent 
+            sudo apt-get install libassuan-dev
+            sudo apt update
+            sudo apt-get install gnupg2
       - run:
          name: gpg details
          command: gpg --version
