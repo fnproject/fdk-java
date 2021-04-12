@@ -16,7 +16,7 @@ jobs:
          command: echo ${CIRCLE_BRANCH}
       - run:
          name: Update Docker to latest
-         command: mvn --version
+         command: mvn  --version
       - run:
          name: Import GPG Owner Trust
          command: echo $GPG_OWNERTRUST | base64 --decode | gpg --import-ownertrust
