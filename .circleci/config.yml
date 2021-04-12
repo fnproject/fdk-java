@@ -29,6 +29,12 @@ jobs:
          name: gpg details
          command: gpg --version
       - run:
+         name: Import GPG Owner Trust
+         command: echo $GPG_OWNERTRUST | base64 --decode | gpg --import-ownertrust
+      - run:
+         name: Import GPG key
+         command: echo $GPG_SECRET_KEYS | base64 --decode | gpg --import --no-tty --batch --yes
+      - run:
          name: gpg details
          command: gpg2 --version
       - run:
