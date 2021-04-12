@@ -279,7 +279,7 @@ public class EntryPoint {
      * any headers that were added to env. Headers are identified as being variables prepended with 'HEADER_'.
      */
     private Map<String, String> excludeInternalConfigAndHeaders(Map<String, String> env) {
-        Set<String> nonConfigEnvKeys = new HashSet<>(Arrays.asList("fn_app_name", "fn_path", "fn_method", "fn_request_url",
+        Set<String> nonConfigEnvKeys = new HashSet<>(Arrays.asList("fn_path", "fn_method", "fn_request_url",
             "fn_format", "content-length", "fn_call_id"));
         Map<String, String> config = new HashMap<>();
         for (Map.Entry<String, String> entry : env.entrySet()) {
