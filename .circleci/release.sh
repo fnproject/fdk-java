@@ -31,18 +31,8 @@ else
    exit 1
 fi
 
-# Push result to git
-
-echo ${new_version} > release.version
-git tag -a "$release_version" -m "version $release_version"
-git add release.version
-git commit -m "$SERVICE: post-$release_version version bump [skip ci]"
-git push
-git push origin "$release_version"
-
-
 # Deploy to Maven Central OSSRH
-mvn -s ../settings-deploy.xml \
+mvn -s ./settings-deploy.xml \
     -DskipTests \
     clean deploy \
     -Pci-cd
