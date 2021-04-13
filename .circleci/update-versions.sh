@@ -13,7 +13,7 @@ else
    exit 1
 fi
 
-mvn versions:set -D newVersion=${release_version} versions:update-child-modules
+mvn -s ./settings-deploy.xml versions:set -D newVersion=${release_version} versions:update-child-modules
 
 
 # We need to replace the example dependency versions also
