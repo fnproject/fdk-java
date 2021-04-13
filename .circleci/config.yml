@@ -2,7 +2,8 @@ version: 2
 jobs:
   build:
     working_directory: ~/fn-java-fdk
-    machine: true
+    machine:
+      image: ubuntu-1604:202101-01
     environment:
       # store_artifacts doesn't shell substitute so the variable
       # definitions are duplicated in those steps too.
@@ -12,11 +13,11 @@ jobs:
     steps:
       - checkout
       - run:
-         name: checking
-         command: echo ${CIRCLE_BRANCH}
-      - run:
          name: Update Docker to latest
-         command: mvn  --version
+         command: ./.circleci/install-docker.sh
+      - run:
+         name: GPG version check
+         command: gpg  --version
       - run:
          name: Import GPG Owner Trust
          command: echo $GPG_OWNERTRUST | base64 --decode | gpg --import-ownertrust
