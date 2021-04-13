@@ -12,14 +12,14 @@ jobs:
     steps:
       - checkout
       - run:
-         name: checking
-         command: echo ${CIRCLE_BRANCH}
+          name: Update Docker to latest
+          command: ./.circleci/install-docker.sh
       - run:
-         name: Update Docker to latest
-         command: mvn --version
+          name: Import GPG Owner Trust
+          command: echo $GPG_OWNERTRUST | base64 --decode | gpg --import-ownertrust
       - run:
-         name: mvn details
-         command: cat /usr/local/apache-maven-3.2.5/conf/settings.xml
+          name: Import GPG key
+          command: echo $GPG_SECRET_KEYS | base64 --decode | gpg --import --no-tty --batch --yes
       - run:
           name: Install fn binary (as it is needed for the integration tests)
           command: ./.circleci/install-fn.sh
