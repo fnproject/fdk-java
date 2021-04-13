@@ -13,7 +13,7 @@ jobs:
     steps:
       - checkout
       - run:
-         name: Update Docker to latest
+         name: Update Docker to  latest
          command: ./.circleci/install-docker.sh
       - run:
          name: GPG version check
