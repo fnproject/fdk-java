@@ -17,6 +17,7 @@
 FROM maven:3-jdk-8-slim
 ARG FN_REPO_URL
 ADD pom.xml /tmp/cache-deps/pom.xml
+ADD local-settings.xml /tmp/cache-deps/local-settings.xml
 ADD cache-deps.sh /tmp/cache-deps/cache-deps.sh
 ADD src /tmp/cache-deps/src
 
