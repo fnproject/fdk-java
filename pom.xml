@@ -23,7 +23,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>fdk</artifactId>
-    <groupId>io.fnproject.fn</groupId>
+    <groupId>com.fnproject.fn</groupId>
     <packaging>pom</packaging>
     <version>1.0.124</version>
     <name>fdk-java</name>
@@ -101,38 +101,38 @@
 
             <!--project modules-->
             <dependency>
-                <groupId>io.fnproject.fn</groupId>
+                <groupId>com.fnproject.fn</groupId>
                 <artifactId>api</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
             <dependency>
-                <groupId>io.fnproject.fn</groupId>
+                <groupId>com.fnproject.fn</groupId>
                 <artifactId>flow-api</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>io.fnproject.fn</groupId>
+                <groupId>com.fnproject.fn</groupId>
                 <artifactId>flow-runtime</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>io.fnproject.fn</groupId>
+                <groupId>com.fnproject.fn</groupId>
                 <artifactId>runtime</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>io.fnproject.fn</groupId>
+                <groupId>com.fnproject.fn</groupId>
                 <artifactId>testing</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>io.fnproject.fn</groupId>
+                <groupId>com.fnproject.fn</groupId>
                 <artifactId>testing-core</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>io.fnproject.fn</groupId>
+                <groupId>com.fnproject.fn</groupId>
                 <artifactId>testing-junit4</artifactId>
                 <version>${project.version}</version>
             </dependency>

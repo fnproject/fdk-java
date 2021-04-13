@@ -22,7 +22,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>fdk</artifactId>
-        <groupId>io.fnproject.fn</groupId>
+        <groupId>com.fnproject.fn</groupId>
         <version>1.0.124</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -30,19 +30,19 @@
     <artifactId>flow-testing</artifactId>
     <dependencies>
         <dependency>
-            <groupId>io.fnproject.fn</groupId>
+            <groupId>com.fnproject.fn</groupId>
             <artifactId>testing-junit4</artifactId>
         </dependency>
         <dependency>
-            <groupId>io.fnproject.fn</groupId>
+            <groupId>com.fnproject.fn</groupId>
             <artifactId>flow-api</artifactId>
         </dependency>
         <dependency>
-            <groupId>io.fnproject.fn</groupId>
+            <groupId>com.fnproject.fn</groupId>
             <artifactId>flow-runtime</artifactId>
         </dependency>
         <dependency>
-            <groupId>io.fnproject.fn</groupId>
+            <groupId>com.fnproject.fn</groupId>
             <artifactId>runtime</artifactId>
         </dependency>
         <dependency>

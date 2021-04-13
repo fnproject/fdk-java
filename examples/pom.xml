@@ -23,11 +23,11 @@
     <modelVersion>4.0.0</modelVersion>
     <packaging>pom</packaging>
     <artifactId>fdk-examples</artifactId>
-    <groupId>io.fnproject.fn.examples</groupId>
+    <groupId>com.fnproject.fn.examples</groupId>
 
     <parent>
         <artifactId>fdk</artifactId>
-        <groupId>io.fnproject.fn</groupId>
+        <groupId>com.fnproject.fn</groupId>
         <version>1.0.124</version>
     </parent>
 

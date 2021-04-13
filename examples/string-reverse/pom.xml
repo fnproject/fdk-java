@@ -31,18 +31,18 @@
 
     <dependencies>
         <dependency>
-            <groupId>io.fnproject.fn</groupId>
+            <groupId>com.fnproject.fn</groupId>
             <artifactId>api</artifactId>
             <version>${fdk.version}</version>
         </dependency>
         <dependency>
-            <groupId>io.fnproject.fn</groupId>
+            <groupId>com.fnproject.fn</groupId>
             <artifactId>testing-core</artifactId>
             <version>${fdk.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>io.fnproject.fn</groupId>
+            <groupId>com.fnproject.fn</groupId>
             <artifactId>testing-junit4</artifactId>
             <version>${fdk.version}</version>
             <scope>test</scope>
