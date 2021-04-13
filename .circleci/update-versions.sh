@@ -15,7 +15,6 @@ fi
 
 mvn -s ./settings-deploy.xml versions:set -D newVersion=${release_version} versions:update-child-modules
 
-
 # We need to replace the example dependency versions also
 # (sed syntax for portability between MacOS and gnu)
 find . -name pom.xml |
