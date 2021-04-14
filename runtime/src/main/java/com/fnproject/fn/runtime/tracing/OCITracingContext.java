@@ -8,10 +8,10 @@ import com.fnproject.fn.api.tracing.TracingContext;
 public class OCITracingContext implements TracingContext {
     private final InvocationContext invocationContext;
     private final RuntimeContext runtimeContext;
-    private String traceCollectorURL;
-    private String traceId;
-    private String spanId;
-    private String parentSpanId;
+    private String traceCollectorURL = "http://localhost:9411/api/v2/span";
+    private String traceId="1";
+    private String spanId="1";
+    private String parentSpanId="1";
     private Boolean sampled = true;
     private String flags;
     private Boolean tracingEnabled;
@@ -31,7 +31,10 @@ public class OCITracingContext implements TracingContext {
     private void configure(RuntimeContext runtimeContext) {
         if(runtimeContext != null && runtimeContext.getConfigurationByKey("OCI_TRACE_COLLECTOR_URL").get() != null
                 && runtimeContext.getConfigurationByKey("OCI_TRACING_ENABLED").get() != null) {
-            this.traceCollectorURL = runtimeContext.getConfigurationByKey("OCI_TRACE_COLLECTOR_URL").get();
+            this.traceCollectorURL =
+                    runtimeContext.getConfigurationByKey("OCI_TRACE_COLLECTOR_URL").get().isEmpty()
+                            ?traceCollectorURL
+                            :runtimeContext.getConfigurationByKey("OCI_TRACE_COLLECTOR_URL").get();
             try {
                 Integer tracingEnabledAsInt = Integer.parseInt(runtimeContext.getConfigurationByKey("OCI_TRACING_ENABLED").get());
                 this.tracingEnabled = tracingEnabledAsInt != 0;
@@ -50,9 +53,9 @@ public class OCITracingContext implements TracingContext {
             return;
         }
         this.sampled = true;
-        this.traceId = headers.get("x-b3-traceid").orElse("");
-        this.spanId = headers.get("x-b3-spanid").orElse("");
-        this.parentSpanId = headers.get("x-b3-parentspanid").orElse("");
+        this.traceId = headers.get("x-b3-traceid").orElse("1");
+        this.spanId = headers.get("x-b3-spanid").orElse("1");
+        this.parentSpanId = headers.get("x-b3-parentspanid").orElse("1");
     }
 
     @Override
