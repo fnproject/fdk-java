@@ -25,7 +25,7 @@
     <artifactId>fdk</artifactId>
     <groupId>io.fnproject.fn</groupId>
     <packaging>pom</packaging>
-    <version>1.0.124</version>
+    <version>1.0.0-SNAPSHOT</version>
     <name>fdk-java</name>
     <description>The Function Development Kit for Java makes it easy to build and deploy Java functions to Fn</description>
     <url>https://fnproject.io/tutorials/JavaFDKIntroduction/</url>
