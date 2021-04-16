@@ -8,24 +8,35 @@ import com.fnproject.fn.api.tracing.TracingContext;
 public class OCITracingContext implements TracingContext {
     private final InvocationContext invocationContext;
     private final RuntimeContext runtimeContext;
-    private String traceCollectorURL = "http://localhost:9411/api/v2/span";
-    private String traceId="1";
-    private String spanId="1";
-    private String parentSpanId="1";
+    private String traceCollectorURL;
+    private String traceId;
+    private String spanId;
+    private String parentSpanId;
     private Boolean sampled = true;
     private String flags;
     private Boolean tracingEnabled;
     private String appName;
     private String fnName;
+    private static final String PLACEHOLDER_TRACE_COLLECTOR_URL = "http://localhost:9411/api/v2/span";
+    private static final String PLACEHOLDER_TRACE_ID = "1";
+
 
     public OCITracingContext(InvocationContext invocationContext, RuntimeContext runtimeContext) {
         this.invocationContext = invocationContext;
         this.runtimeContext = runtimeContext;
 
+        configureDefaultValue();
         configure(runtimeContext);
 
         if(tracingEnabled)
             configure(invocationContext.getRequestHeaders());
+    }
+
+    private void configureDefaultValue() {
+        this.traceCollectorURL = PLACEHOLDER_TRACE_COLLECTOR_URL;
+        this.traceId = PLACEHOLDER_TRACE_ID;
+        this.spanId = PLACEHOLDER_TRACE_ID;
+        this.parentSpanId = PLACEHOLDER_TRACE_ID;
     }
 
     private void configure(RuntimeContext runtimeContext) {
@@ -33,7 +44,7 @@ public class OCITracingContext implements TracingContext {
                 && runtimeContext.getConfigurationByKey("OCI_TRACING_ENABLED").get() != null) {
             this.traceCollectorURL =
                     runtimeContext.getConfigurationByKey("OCI_TRACE_COLLECTOR_URL").get().isEmpty()
-                            ?traceCollectorURL
+                            ?PLACEHOLDER_TRACE_COLLECTOR_URL
                             :runtimeContext.getConfigurationByKey("OCI_TRACE_COLLECTOR_URL").get();
             try {
                 Integer tracingEnabledAsInt = Integer.parseInt(runtimeContext.getConfigurationByKey("OCI_TRACING_ENABLED").get());
@@ -53,9 +64,9 @@ public class OCITracingContext implements TracingContext {
             return;
         }
         this.sampled = true;
-        this.traceId = headers.get("x-b3-traceid").orElse("1");
-        this.spanId = headers.get("x-b3-spanid").orElse("1");
-        this.parentSpanId = headers.get("x-b3-parentspanid").orElse("1");
+        this.traceId = headers.get("x-b3-traceid").orElse(PLACEHOLDER_TRACE_ID);
+        this.spanId = headers.get("x-b3-spanid").orElse(PLACEHOLDER_TRACE_ID);
+        this.parentSpanId = headers.get("x-b3-parentspanid").orElse(PLACEHOLDER_TRACE_ID);
     }
 
     @Override
