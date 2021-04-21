@@ -9,6 +9,11 @@
   </proxies>
 
   <servers>
+    <server>
+      <id>ossrh</id>
+      <username>${env.SERVER_OSSRH_USERNAME}</username>
+      <password>${env.SERVER_OSSRH_PASSWORD}</password>
+    </server>
   </servers>
 
   <mirrors>
@@ -30,6 +35,16 @@
       <properties>
         <argLine>-Djdk.net.URLClassPath.disableClassPathURLCheck=true</argLine>
       </properties>
-   </profile>
+    </profile>
+    <profile>
+      <id>ossrh</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <properties>
+        <gpg.executable>gpg</gpg.executable>
+        <gpg.passphrase>${env.GPG_PASSPHRASE}</gpg.passphrase>
+      </properties>
+    </profile>
   </profiles>
 </settings>
