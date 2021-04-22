@@ -12,7 +12,7 @@
   <mirrors>
     <mirror>
       <id>override-maven-default-http-blocker</id>
-      <mirrorOf>external:http:*</mirrorOf>
+      <mirrorOf>*</mirrorOf>
       <name>Pseudo repository to mirror external repositories initially using HTTP.</name>
       <url>___FN_REPO_URL___</url>
       <blocked>false</blocked>
