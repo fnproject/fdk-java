@@ -45,17 +45,9 @@ jobs:
                export GRAALVM_VERSION=$(cat ./graalvm.version)
                ./build.sh
       - run:
-          name: Run integration tests
-          command: |
-              export FN_JAVA_FDK_VERSION=$(cat release.version)
-              ./integration-tests/run_tests_ci.sh
-          timeout: 1200
-      - run:
          name: Login to Docker
          command: |
-           if [[ "${CIRCLE_BRANCH}" == "master" && -z "${CIRCLE_PR_REPONAME}" ]]; then
-               docker login -u $DOCKER_USER -p $DOCKER_PASS
-           fi
+            docker login -u $DOCKER_USER -p $DOCKER_PASS
       - deploy:
           name: Release new version
           command: |
