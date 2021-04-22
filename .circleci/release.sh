@@ -112,4 +112,4 @@ git push origin "$release_version"
 
 
 # Deploy to Maven Central OSSRH
-mvn -DskipTests clean deploy -Pci-cd
+#mvn -DskipTests clean deploy -Pci-cd

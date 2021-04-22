@@ -38,33 +38,13 @@ jobs:
       - run:
            name: Determine the release version
            command: ./.circleci/update-versions.sh
-      - run:
-          name: Build and Test FDK
-          command: |
-               export FN_FDK_VERSION=$(cat ./release.version)
-               export GRAALVM_VERSION=$(cat ./graalvm.version)
-               ./build.sh
-      - run:
-          name: Run integration tests
-          command: |
-              export FN_JAVA_FDK_VERSION=$(cat release.version)
-              ./integration-tests/run_tests_ci.sh
-          timeout: 1200
-      - run:
-         name: Login to Docker
-         command: |
-           if [[ "${CIRCLE_BRANCH}" == "master" && -z "${CIRCLE_PR_REPONAME}" ]]; then
-               docker login -u $DOCKER_USER -p $DOCKER_PASS
-           fi
       - deploy:
           name: Release new version
           command: |
-            if [[ "${CIRCLE_BRANCH}" == "master" && -z "${CIRCLE_PR_REPONAME}" ]]; then
-              git config --global user.email "ci@fnproject.com"
-              git config --global user.name "CI"
-              git branch --set-upstream-to=origin/${CIRCLE_BRANCH} ${CIRCLE_BRANCH}
-              ./.circleci/release.sh
-            fi
+            git config --global user.email "ci@fnproject.com"
+            git config --global user.name "CI"
+            git branch --set-upstream-to=origin/${CIRCLE_BRANCH} ${CIRCLE_BRANCH}
+            ./.circleci/release.sh
       - run:
            name: Gather test results
            when: always
