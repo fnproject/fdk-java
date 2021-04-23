@@ -69,9 +69,9 @@ public class OCITracingContextTest {
 
         OCITracingContext tracingContext = new OCITracingContext(ctxMock, runtimeContextMock);
         assertThat(tracingContext.isSampled()).isEqualTo(true);
-        assertThat(tracingContext.getTraceId()).isEmpty();
-        assertThat(tracingContext.getSpanId()).isEmpty();
-        assertThat(tracingContext.getParentSpanId()).isEmpty();
+        assertThat(tracingContext.getTraceId()).isEqualTo("1");
+        assertThat(tracingContext.getSpanId()).isEqualTo("1");
+        assertThat(tracingContext.getParentSpanId()).isEqualTo("1");
     }
 
     @Test

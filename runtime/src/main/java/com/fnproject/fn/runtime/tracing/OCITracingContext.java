@@ -17,21 +17,35 @@ public class OCITracingContext implements TracingContext {
     private Boolean tracingEnabled;
     private String appName;
     private String fnName;
+    private static final String PLACEHOLDER_TRACE_COLLECTOR_URL = "http://localhost:9411/api/v2/span";
+    private static final String PLACEHOLDER_TRACE_ID = "1";
+
 
     public OCITracingContext(InvocationContext invocationContext, RuntimeContext runtimeContext) {
         this.invocationContext = invocationContext;
         this.runtimeContext = runtimeContext;
 
+        configureDefaultValue();
         configure(runtimeContext);
 
         if(tracingEnabled)
             configure(invocationContext.getRequestHeaders());
     }
 
+    private void configureDefaultValue() {
+        this.traceCollectorURL = PLACEHOLDER_TRACE_COLLECTOR_URL;
+        this.traceId = PLACEHOLDER_TRACE_ID;
+        this.spanId = PLACEHOLDER_TRACE_ID;
+        this.parentSpanId = PLACEHOLDER_TRACE_ID;
+    }
+
     private void configure(RuntimeContext runtimeContext) {
         if(runtimeContext != null && runtimeContext.getConfigurationByKey("OCI_TRACE_COLLECTOR_URL").get() != null
                 && runtimeContext.getConfigurationByKey("OCI_TRACING_ENABLED").get() != null) {
-            this.traceCollectorURL = runtimeContext.getConfigurationByKey("OCI_TRACE_COLLECTOR_URL").get();
+            this.traceCollectorURL =
+                    runtimeContext.getConfigurationByKey("OCI_TRACE_COLLECTOR_URL").get().isEmpty()
+                            ?PLACEHOLDER_TRACE_COLLECTOR_URL
+                            :runtimeContext.getConfigurationByKey("OCI_TRACE_COLLECTOR_URL").get();
             try {
                 Integer tracingEnabledAsInt = Integer.parseInt(runtimeContext.getConfigurationByKey("OCI_TRACING_ENABLED").get());
                 this.tracingEnabled = tracingEnabledAsInt != 0;
@@ -50,9 +64,9 @@ public class OCITracingContext implements TracingContext {
             return;
         }
         this.sampled = true;
-        this.traceId = headers.get("x-b3-traceid").orElse("");
-        this.spanId = headers.get("x-b3-spanid").orElse("");
-        this.parentSpanId = headers.get("x-b3-parentspanid").orElse("");
+        this.traceId = headers.get("x-b3-traceid").orElse(PLACEHOLDER_TRACE_ID);
+        this.spanId = headers.get("x-b3-spanid").orElse(PLACEHOLDER_TRACE_ID);
+        this.parentSpanId = headers.get("x-b3-parentspanid").orElse(PLACEHOLDER_TRACE_ID);
     }
 
     @Override
