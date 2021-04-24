@@ -94,6 +94,7 @@
         <surefire.version>2.22.1</surefire.version>
         <system-rules.version>1.16.0</system-rules.version>
         <graalvm.version>21.0.0.2</graalvm.version>
+        <auto.release>false</auto.release>
     </properties>
 
     <dependencyManagement>
@@ -344,7 +345,7 @@
                 <configuration>
                     <serverId>ossrh</serverId>
                     <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>
-                    <autoReleaseAfterClose>false</autoReleaseAfterClose>
+                    <autoReleaseAfterClose>${auto.release}</autoReleaseAfterClose>
                 </configuration>
             </plugin>
         </plugins>
