@@ -26,7 +26,42 @@
     <groupId>com.fnproject.fn</groupId>
     <packaging>pom</packaging>
     <version>1.0.0-SNAPSHOT</version>
+    <name>fdk-java</name>
+    <description>The Function Development Kit for Java makes it easy to build and deploy Java functions to Fn</description>
+    <url>https://fnproject.io/tutorials/JavaFDKIntroduction/</url>
 
+    <licenses>
+        <license>
+            <name>The Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <name>fnproject/core</name>
+            <email>roneet.shaw@oracle.com</email>
+            <organization>oracle</organization>
+            <organizationUrl>https://www.oracle.com/</organizationUrl>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:git://github.com/fnproject/fdk-java.git</connection>
+        <developerConnection>scm:git:ssh://github.com:fnproject/fdk-java.git</developerConnection>
+        <url>https://github.com/fnproject/fdk-java</url>
+    </scm>
+
+    <distributionManagement>
+        <repository>
+            <id>ossrh</id>
+            <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+    </distributionManagement>
 
     <modules>
         <module>api</module>
@@ -59,6 +94,7 @@
         <surefire.version>2.22.1</surefire.version>
         <system-rules.version>1.16.0</system-rules.version>
         <graalvm.version>21.0.0.2</graalvm.version>
+        <auto.release>false</auto.release>
     </properties>
 
     <dependencyManagement>
@@ -164,6 +200,14 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-javadoc-plugin</artifactId>
                     <version>3.0.1</version>
+                    <executions>
+                        <execution>
+                            <id>attach-javadocs</id>
+                            <goals>
+                                <goal>jar</goal>
+                            </goals>
+                        </execution>
+                    </executions>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -293,7 +337,6 @@
                 <artifactId>pitest-maven</artifactId>
                 <version>${pitest.version}</version>
             </plugin>
-
         </plugins>
         <extensions>
             <extension>
@@ -317,6 +360,38 @@
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>versions-maven-plugin</artifactId>
                         <version>2.5</version>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>ci-cd</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>1.6</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.sonatype.plugins</groupId>
+                        <artifactId>nexus-staging-maven-plugin</artifactId>
+                        <version>1.6.7</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <serverId>ossrh</serverId>
+                            <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>
+                            <autoReleaseAfterClose>${auto.release}</autoReleaseAfterClose>
+                        </configuration>
                     </plugin>
                 </plugins>
             </build>

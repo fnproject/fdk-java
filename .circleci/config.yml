@@ -13,8 +13,14 @@ jobs:
     steps:
       - checkout
       - run:
-         name: Update Docker to latest
-         command: ./.circleci/install-docker.sh
+          name: Update Docker to latest
+          command: ./.circleci/install-docker.sh
+      - run:
+          name: Import GPG Owner Trust
+          command: echo $GPG_OWNERTRUST | base64 --decode | gpg --import-ownertrust
+      - run:
+          name: Import GPG key
+          command: echo $GPG_SECRET_KEYS | base64 --decode | gpg --import --no-tty --batch --yes
       - run:
           name: Install fn binary (as it is needed for the integration tests)
           command: ./.circleci/install-fn.sh

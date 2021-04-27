@@ -29,7 +29,7 @@ import com.fnproject.fn.api.RuntimeFeature;
  * import com.fnproject.fn.api.FnFeature;
  * import com.fnproject.fn.runtime.flow.FlowFeature;
  *
- * @FnFeature(FlowFeature.class)
+ * {@literal @}FnFeature(FlowFeature.class)
  * public class MyFunction {
  *
  *

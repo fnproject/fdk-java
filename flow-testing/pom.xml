@@ -79,7 +79,7 @@
                 <!--<groupId>org.netbeans.tools</groupId>-->
                 <!--<artifactId>sigtest-maven-plugin</artifactId>-->
                 <!--<executions>-->
-                    <!--<execution>-->
+                <!--<execution>-->
                         <!--<goals>-->
                             <!--<goal>check</goal>-->
                         <!--</goals>-->

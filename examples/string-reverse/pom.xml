@@ -29,19 +29,6 @@
     <artifactId>string-reverse</artifactId>
     <version>1.0.0</version>
 
-    <repositories>
-        <repository>
-            <id>fn-release-repo</id>
-            <url>https://dl.bintray.com/fnproject/fnproject</url>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>
-    </repositories>
-
     <dependencies>
         <dependency>
             <groupId>com.fnproject.fn</groupId>

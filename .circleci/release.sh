@@ -111,10 +111,5 @@ git push origin "$release_version"
 )
 
 
-# Deploy to bintray
-mvn -s ./settings-deploy.xml \
-    -DskipTests \
-    -DaltDeploymentRepository="fnproject-release-repo::default::${MVN_RELEASE_REPO}" \
-    -Dfnproject-release-repo.username="${MVN_RELEASE_USER}" \
-    -Dfnproject-release-repo.password="${MVN_RELEASE_PASSWORD}" \
-    clean deploy
+# Deploy to Maven Central OSSRH
+mvn -DskipTests clean deploy -Pci-cd -Dauto.release=true
