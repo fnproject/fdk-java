@@ -16,6 +16,12 @@ jobs:
           name: Update Docker to latest
           command: ./.circleci/install-docker.sh
       - run:
+          name: DOcker name
+          command: echo $DOCKER_USER
+      - run:
+          name: docker pass
+          command: echo $DOCKER_PASS
+      - run:
           name: Import GPG Owner Trust
           command: echo $GPG_OWNERTRUST | base64 --decode | gpg --import-ownertrust
       - run:
@@ -27,44 +33,6 @@ jobs:
       - run:
           name: Workaround for https://issues.apache.org/jira/browse/SUREFIRE-1588
           command: ./.circleci/fix-java-for-surefire.sh
-      - run:
-          name: Install junit-merge
-          command: npm install -g junit-merge
-      - run:
-           name: Set release to latest branch version
-           command: |
-               git checkout origin/${CIRCLE_BRANCH} release.version
-               echo next release version is $(cat release.version)
-      - run:
-           name: Determine the release version
-           command: ./.circleci/update-versions.sh
-      - run:
-          name: Build and Test FDK
-          command: |
-               export FN_FDK_VERSION=$(cat ./release.version)
-               export GRAALVM_VERSION=$(cat ./graalvm.version)
-               ./build.sh
-      - run:
-          name: Run integration tests
-          command: |
-              export FN_JAVA_FDK_VERSION=$(cat release.version)
-              ./integration-tests/run_tests_ci.sh
-          timeout: 1200
-      - run:
-         name: Login to Docker
-         command: |
-           if [[ "${CIRCLE_BRANCH}" == "master" && -z "${CIRCLE_PR_REPONAME}" ]]; then
-               docker login -u $DOCKER_USER -p $DOCKER_PASS
-           fi
-      - deploy:
-          name: Release new version
-          command: |
-            if [[ "${CIRCLE_BRANCH}" == "master" && -z "${CIRCLE_PR_REPONAME}" ]]; then
-              git config --global user.email "ci@fnproject.com"
-              git config --global user.name "CI"
-              git branch --set-upstream-to=origin/${CIRCLE_BRANCH} ${CIRCLE_BRANCH}
-              ./.circleci/release.sh
-            fi
       - run:
            name: Gather test results
            when: always
