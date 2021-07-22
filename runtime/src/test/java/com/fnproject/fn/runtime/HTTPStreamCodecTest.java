@@ -81,10 +81,14 @@ public class HTTPStreamCodecTest {
     }
 
     static {
-        System.setProperty("com.fnproject.java.native.libdir", new File("src/main/c/").getAbsolutePath());
+        if (System.getenv("RUNTIME_BUILD_DIR") == null) {
+            System.setProperty("com.fnproject.java.native.libdir", new File("src/main/c/").getAbsolutePath());
+        }else{
+            System.setProperty("com.fnproject.java.native.libdir", new File(System.getenv("RUNTIME_BUILD_DIR")).getAbsolutePath());
+        }
+
         System.setProperty("org.eclipse.jetty.util.log.class", "org.eclipse.jetty.util.log.StdErrLog");
         System.setProperty("org.eclipse.jetty.LEVEL", "WARN");
-
 
         Map<String, String> env = new HashMap<>();
         env.put("FN_APP_NAME", "myapp");

@@ -36,7 +36,11 @@ public class UnixSocketTest {
 
     @BeforeClass
     public static void setup() {
-        System.setProperty("com.fnproject.java.native.libdir", new File("src/main/c/").getAbsolutePath());
+        if (System.getenv("RUNTIME_BUILD_DIR") == null) {
+            System.setProperty("com.fnproject.java.native.libdir", new File("src/main/c/").getAbsolutePath());
+        }else{
+            System.setProperty("com.fnproject.java.native.libdir", new File(System.getenv("RUNTIME_BUILD_DIR")).getAbsolutePath());
+        }
     }
 
     File createSocketFile() throws IOException {

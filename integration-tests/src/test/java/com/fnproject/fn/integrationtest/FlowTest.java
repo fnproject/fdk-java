@@ -37,38 +37,44 @@ public class FlowTest {
     @Rule
     public final IntegrationTestRule testRule = new IntegrationTestRule();
 
+    //These tests are Fn flow which never got productionized. Commenting these
+    //tests as we had to remove the infra/provision directory to eliminate
+    //security findings - https://jira-sd.mc1.oracleiaas.com/browse/FAAS-13105
 
-    @Test
-    public void shouldInvokeBasicFlow() throws Exception {
-        IntegrationTestRule.TestContext tc = testRule.newTest();
-        tc.withDirFrom("funcs/flowBasic").rewritePOM().rewriteDockerfile(true);
-        tc.runFn("--verbose", "deploy", "--create-app", "--app", tc.appName(), "--local");
-        tc.runFn("config", "app", tc.appName(), "COMPLETER_BASE_URL", testRule.getFlowURL());
-        CmdResult r = tc.runFnWithInput("1", "invoke", tc.appName(), "flowbasic");
-        assertThat(r.getStdout()).isEqualTo("4");
-    }
+    //We need to re-implement most of flow functionalities from scratch if
+    //we decide to productionize it.
 
-
-    @Test
-    public void shouldInvokeBasicFlowJDK8() throws Exception {
-        IntegrationTestRule.TestContext tc = testRule.newTest();
-        tc.withDirFrom("funcs/flowBasicJDK8").rewritePOM().rewriteDockerfile(false);
-        tc.runFn("--verbose", "deploy", "--create-app", "--app", tc.appName(), "--local");
-        tc.runFn("config", "app", tc.appName(), "COMPLETER_BASE_URL", testRule.getFlowURL());
-        CmdResult r = tc.runFnWithInput("1", "invoke", tc.appName(), "flowbasicj8");
-        assertThat(r.getStdout()).isEqualTo("4");
-    }
+    //@Test
+    //public void shouldInvokeBasicFlow() throws Exception {
+    //    IntegrationTestRule.TestContext tc = testRule.newTest();
+    //    tc.withDirFrom("funcs/flowBasic").rewritePOM().rewriteDockerfile(true);
+    //    tc.runFn("--verbose", "deploy", "--create-app", "--app", tc.appName(), "--local");
+    //    tc.runFn("config", "app", tc.appName(), "COMPLETER_BASE_URL", testRule.getFlowURL());
+    //    CmdResult r = tc.runFnWithInput("1", "invoke", tc.appName(), "flowbasic");
+    //    assertThat(r.getStdout()).isEqualTo("4");
+    //}
 
 
-    @Test
-    public void shouldExerciseAllFlow() throws Exception {
-        IntegrationTestRule.TestContext tc = testRule.newTest();
-        tc.withDirFrom("funcs/flowAllFeatures").rewritePOM().rewriteDockerfile(true);
-        tc.runFn("--verbose", "deploy", "--create-app", "--app", tc.appName(), "--local");
-        tc.runFn("config", "app", tc.appName(), "COMPLETER_BASE_URL", testRule.getFlowURL());
-        CmdResult r = tc.runFnWithInput("1", "invoke", tc.appName(), "flowallfeatures");
-        assertThat(r.getStdout()).contains("Everything worked");
-    }
+    //@Test
+    //public void shouldInvokeBasicFlowJDK8() throws Exception {
+    //    IntegrationTestRule.TestContext tc = testRule.newTest();
+    //    tc.withDirFrom("funcs/flowBasicJDK8").rewritePOM().rewriteDockerfile(false);
+    //    tc.runFn("--verbose", "deploy", "--create-app", "--app", tc.appName(), "--local");
+    //    tc.runFn("config", "app", tc.appName(), "COMPLETER_BASE_URL", testRule.getFlowURL());
+    //    CmdResult r = tc.runFnWithInput("1", "invoke", tc.appName(), "flowbasicj8");
+    //    assertThat(r.getStdout()).isEqualTo("4");
+    //}
+
+
+    //@Test
+    //public void shouldExerciseAllFlow() throws Exception {
+    //    IntegrationTestRule.TestContext tc = testRule.newTest();
+    //    tc.withDirFrom("funcs/flowAllFeatures").rewritePOM().rewriteDockerfile(true);
+    //    tc.runFn("--verbose", "deploy", "--create-app", "--app", tc.appName(), "--local");
+    //    tc.runFn("config", "app", tc.appName(), "COMPLETER_BASE_URL", testRule.getFlowURL());
+    //    CmdResult r = tc.runFnWithInput("1", "invoke", tc.appName(), "flowallfeatures");
+    //    assertThat(r.getStdout()).contains("Everything worked");
+    //}
 
 
     // THESE TESTS ARE FLAKEY AND SHOULD BE REVISITED.

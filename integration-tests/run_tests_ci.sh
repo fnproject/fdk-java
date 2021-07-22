@@ -60,21 +60,27 @@ FNSERVER_IP=$(docker inspect --type container -f '{{.NetworkSettings.IPAddress}}
 
 
 
-docker rm -f flowserver || true
-docker run --rm -d \
-      -p 8081:8081 \
-      -e API_URL="http://${FNSERVER_IP}:8080/invoke" \
-      -e no_proxy=${FNSERVER_IP} \
-      --name flowserver \
-      fnproject/flow:latest
+# These tests are Fn flow which never got productionized. Commenting these
+# tests as we had to remove the infra/provision directory to eliminate
+# security findings - https://jira-sd.mc1.oracleiaas.com/browse/FAAS-13105
+# We need to re-implement most of flow functionalities from scratch if
+# we decide to productionize it.
 
-until $(curl --output /dev/null --silent --fail http://localhost:8081/ping); do
-    printf '.'
-    sleep 1
-done
-export FLOW_LOG_FILE=/tmp/flow.log
+# docker rm -f flowserver || true
+# docker run --rm -d \
+#      -p 8081:8081 \
+#      -e API_URL="http://${FNSERVER_IP}:8080/invoke" \
+#      -e no_proxy=${FNSERVER_IP} \
+#      --name flowserver \
+#      fnproject/flow:latest
 
-docker logs -f flowserver >& ${FLOW_LOG_FILE} &
+# until $(curl --output /dev/null --silent --fail http://localhost:8081/ping); do
+#    printf '.'
+#    sleep 1
+# done
+# export FLOW_LOG_FILE=/tmp/flow.log
+
+# docker logs -f flowserver >& ${FLOW_LOG_FILE} &
 set +e
 
 
@@ -89,14 +95,11 @@ export DOCKER_LOCALHOST
 REPO_IP=$(docker inspect --type container -f '{{.NetworkSettings.IPAddress}}' fn_mvn_repo)
 MAVEN_REPOSITORY="http://${REPO_IP}:18080"
 export MAVEN_REPOSITORY
-COMPLETER_IP=$(docker inspect --type container -f '{{.NetworkSettings.IPAddress}}' flowserver)
-COMPLETER_BASE_URL="http://${COMPLETER_IP}:8081"
-export COMPLETER_BASE_URL
+# COMPLETER_IP=$(docker inspect --type container -f '{{.NetworkSettings.IPAddress}}' flowserver)
+# COMPLETER_BASE_URL="http://${COMPLETER_IP}:8081"
+# export COMPLETER_BASE_URL
 
-export no_proxy="${no_proxy},${DOCKER_LOCALHOST},${COMPLETER_IP},${REPO_IP}"
-
-
-
+export no_proxy="${no_proxy},${DOCKER_LOCALHOST},${REPO_IP}"
 
 echo "Running tests"
 mvn   test
@@ -104,7 +107,7 @@ result=$?
 
 
 
-docker rm -f flowserver
+# docker rm -f flowserver
 docker rm -f fnserver
 docker rm -rf fn_mvn_repo
 
