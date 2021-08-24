@@ -87,6 +87,7 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
     private static final Set<String> stripOutputHeaders;
     private final Map<String, String> env;
     private final String fdkVersion;
+    private final String runtimeVersion;
     private final AtomicBoolean stopping = new AtomicBoolean(false);
     private final File socketFile;
     private final CompletableFuture<Boolean> stopped = new CompletableFuture<>();
@@ -135,10 +136,12 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
      *
      * @param env        an env map
      * @param fdkVersion the version to report to the runtime
+     * @param runtimeVersion underlying JVM version to report to the runtime
      */
-    HTTPStreamCodec(Map<String, String> env, String fdkVersion) {
+    HTTPStreamCodec(Map<String, String> env, String fdkVersion, String runtimeVersion) {
         this.env = Objects.requireNonNull(env, "env");
         this.fdkVersion = Objects.requireNonNull(fdkVersion, "fdkVersion");
+        this.runtimeVersion = Objects.requireNonNull(runtimeVersion, "runtimeVersion");
         String listenerAddress = getRequiredEnv(FN_LISTENER);
 
         if (!listenerAddress.startsWith("unix:/")) {
@@ -360,6 +363,7 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
 
         response.setHeader("Content-Type", contentType.toString());
         response.setHeader("Fn-Fdk-Version", fdkVersion);
+        response.setHeader("Fn-Fdk-Runtime", runtimeVersion);
 
         response.setStatusLine(new BasicStatusLine(HttpVersion.HTTP_1_1, evt.getStatus().getCode(), evt.getStatus().name()));
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
