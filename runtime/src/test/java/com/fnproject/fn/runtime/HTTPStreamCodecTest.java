@@ -61,6 +61,7 @@ public class HTTPStreamCodecTest {
 
 
     private static final String VERSION = "FDK_TEST_VERSION";
+    private static final String RUNTIME_VERSION = "FDK_TEST_RUNTIME";
     @Rule
     public final Timeout to = Timeout.builder().withTimeout(60, TimeUnit.SECONDS).withLookingForStuckThread(true).build();
 
@@ -133,7 +134,7 @@ public class HTTPStreamCodecTest {
         File socket = generateSocketFile();
         newEnv.put("FN_LISTENER", "unix:" + socket.getAbsolutePath());
 
-        HTTPStreamCodec codec = new HTTPStreamCodec(newEnv, VERSION);
+        HTTPStreamCodec codec = new HTTPStreamCodec(newEnv, VERSION, RUNTIME_VERSION);
 
         Thread t = new Thread(() -> codec.runCodec(h));
         t.start();
@@ -170,6 +171,7 @@ public class HTTPStreamCodecTest {
         assertThat(resp.getContent()).isEqualTo("hello".getBytes());
         assertThat(resp.getHeaders().get("x-test")).isEqualTo("bar");
         assertThat(resp.getHeaders().get("fn-fdk-version")).isEqualTo(VERSION);
+        assertThat(resp.getHeaders().get("fn-fdk-runtime")).isEqualTo(RUNTIME_VERSION);
 
         InputEvent evt = lastEvent.get(1, TimeUnit.MILLISECONDS);
         assertThat(evt.getCallID()).isEqualTo("callID");
