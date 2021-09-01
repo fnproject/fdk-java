@@ -159,6 +159,9 @@ public class FunctionsTest {
             assertThat(val.get(0)).matches("fdk-java/\\d+\\.\\d+\\.\\d+(-SNAPSHOT)? \\(jvm=.*, jvmv=.*\\)");
         });
 
+        assertThat(headers).hasEntrySatisfying("Fn-Fdk-Runtime", (val) -> {
+            assertThat(val).isNotEmpty();
+            assertThat(val.get(0)).matches("java/.+\\ .+");
+        });
     }
-
 }

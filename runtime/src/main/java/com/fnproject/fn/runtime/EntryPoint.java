@@ -64,8 +64,9 @@ public class EntryPoint {
             String fdkVersion = "fdk-java/" + Version.FDK_VERSION +
                 " (jvm=" + (jvmName + ", jvmv=" +
                 jvmVersion + ")");
+            String runtimeVersion = "java/" + jvmName + " " + jvmVersion;
 
-            codec = new HTTPStreamCodec(System.getenv(), fdkVersion);
+            codec = new HTTPStreamCodec(System.getenv(), fdkVersion, runtimeVersion);
         } else {
             throw new FunctionInputHandlingException("Unsupported function format:" + format);
         }
