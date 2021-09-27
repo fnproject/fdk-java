@@ -1,6 +1,6 @@
 [![CircleCI](https://circleci.com/gh/fnproject/fdk-java.svg?style=svg&circle-token=348bec5610c34421f6c436ab8f6a18e153cb1c01)](https://circleci.com/gh/fnproject/fdk-java)
 
-# Function Development Kit for Java (FDK for Java)
+# Function Development Kit for Java (FDK for Java) 
 
 The Function Development Kit for Java makes it easy to build and deploy Java functions to Fn with full support for Java 11+ as the default out of the box.
 
