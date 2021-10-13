@@ -85,7 +85,7 @@
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-unixsocket</artifactId>
-            <version>${jetty.unixsocketversion}</version>
+            <version>${jetty.version}</version>
             <scope>test</scope>
         </dependency>
 

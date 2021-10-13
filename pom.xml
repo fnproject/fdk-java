@@ -86,8 +86,7 @@
         <httpcore.version>4.4.14</httpcore.version>
         <jackson.version>2.13.0</jackson.version>
         <jacoco.version>0.8.1</jacoco.version>
-        <jetty.version>9.4.44.v20210927</jetty.version>
-        <jetty.unixsocketversion>9.4.44.v20210927</jetty.unixsocketversion>
+        <jetty.version>9.4.12.v20180830</jetty.version>
         <junit.version>4.13.2</junit.version>
         <mockito.version>4.0.0</mockito.version>
         <pitest.version>1.4.0</pitest.version>
