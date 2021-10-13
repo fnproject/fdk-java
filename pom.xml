@@ -81,19 +81,20 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-        <assertj-core.version>3.16.1</assertj-core.version>
-        <commons-io.version>2.10.0</commons-io.version>
-        <httpcore.version>4.4.13</httpcore.version>
-        <jackson.version>2.11.0</jackson.version>
+        <assertj-core.version>3.21.0</assertj-core.version>
+        <commons-io.version>2.11.0</commons-io.version>
+        <httpcore.version>4.4.14</httpcore.version>
+        <jackson.version>2.13.0</jackson.version>
         <jacoco.version>0.8.1</jacoco.version>
-        <jetty.version>9.4.12.v20180830</jetty.version>
+        <jetty.version>9.4.44.v20210927</jetty.version>
+        <jetty.unixsocketversion>9.4.44.v20210927</jetty.unixsocketversion>
         <junit.version>4.13.2</junit.version>
-        <mockito.version>3.3.3</mockito.version>
+        <mockito.version>4.0.0</mockito.version>
         <pitest.version>1.4.0</pitest.version>
         <slf4j.version>1.7.25</slf4j.version>
         <surefire.version>2.22.1</surefire.version>
         <system-rules.version>1.16.0</system-rules.version>
-        <graalvm.version>21.0.0.2</graalvm.version>
+        <graalvm.version>21.2.0</graalvm.version>
         <auto.release>false</auto.release>
     </properties>
 

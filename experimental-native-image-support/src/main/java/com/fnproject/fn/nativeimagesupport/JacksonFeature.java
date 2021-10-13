@@ -145,7 +145,7 @@ public class JacksonFeature implements Feature {
                         rrs.register(referencedClazz);
                         rrs.register(referencedClazz.getDeclaredConstructors());
                         rrs.register(referencedClazz.getDeclaredMethods());
-                        Arrays.stream(referencedClazz.getDeclaredFields()).forEach(f -> rrs.register(false, false, f));
+                        Arrays.stream(referencedClazz.getDeclaredFields()).forEach(f -> rrs.register(false, f));
                     });
         }, Object.class);
     }
