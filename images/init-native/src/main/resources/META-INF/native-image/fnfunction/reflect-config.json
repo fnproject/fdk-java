@@ -1,9 +1,0 @@
-[
-  {
-    "name" : "com.example.fn.HelloFunction",
-    "methods" : [
-      { "name" : "handleRequest" },
-      { "name" : "<init>" }
-    ]
-  }
-]

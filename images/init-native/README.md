@@ -1,2 +1,0 @@
-# Native init image 
-
