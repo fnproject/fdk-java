@@ -23,7 +23,10 @@ import com.fnproject.fn.api.flow.Flow;
 import com.fnproject.fn.runtime.flow.FlowFeature;
 import com.fnproject.fn.api.flow.Flows;
 import com.fnproject.fn.api.flow.HttpMethod;
+import io.minio.BucketExistsArgs;
+import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
+import io.minio.PutObjectArgs;
 
 import java.io.ByteArrayInputStream;
 import java.io.Serializable;
@@ -85,15 +88,22 @@ public class ThumbnailsFunction implements Serializable {
      */
     private void objectUpload(byte[] imageBuffer, String objectName) {
         try {
-            MinioClient minioClient = new MinioClient(storageUrl, storageAccessKey, storageSecretKey);
+            MinioClient minioClient = MinioClient.builder()
+                    .endpoint(storageUrl).credentials(storageAccessKey, storageSecretKey).build();
 
             // Ensure the bucket exists.
-            if(!minioClient.bucketExists("alpha")) {
-                minioClient.makeBucket("alpha");
+            BucketExistsArgs bucketExistsArgs = BucketExistsArgs.builder().bucket("alpha").build();
+            MakeBucketArgs makeBucketArgs = MakeBucketArgs.builder().bucket("alpha").build();
+            if(!minioClient.bucketExists(bucketExistsArgs)) {
+                minioClient.makeBucket(makeBucketArgs);
             }
 
+            PutObjectArgs putObjectArgs = PutObjectArgs.builder()
+                    .bucket("alpha")
+                    .object(objectName)
+                    .stream(new ByteArrayInputStream(imageBuffer), imageBuffer.length, -1).build();
             // Upload the image to the bucket with putObject
-            minioClient.putObject("alpha", objectName, new ByteArrayInputStream(imageBuffer), imageBuffer.length, "application/octet-stream");
+            minioClient.putObject(putObjectArgs);
         } catch(Exception e) {
             System.err.println("Error occurred: " + e);
             e.printStackTrace();
