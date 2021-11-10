@@ -3,6 +3,7 @@
 .DS_Store
 */dependency-reduced-pom.xml
 target/
+rpm-package/
 *.log
 \#*
 .\#*
