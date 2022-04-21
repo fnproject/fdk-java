@@ -16,7 +16,7 @@
 
 package com.fnproject.springframework.function.functions;
 
-import org.springframework.cloud.function.context.catalog.FunctionInspector;
+import org.springframework.cloud.function.context.catalog.SimpleFunctionRegistry;
 import reactor.core.publisher.Flux;
 
 import java.util.function.Function;
@@ -27,8 +27,8 @@ import java.util.function.Function;
 public class SpringCloudFunction extends SpringCloudMethod {
     private Function<Flux<?>, Flux<?>> function;
 
-    public SpringCloudFunction(Function<Flux<?>, Flux<?>> function, FunctionInspector inspector) {
-        super(inspector);
+    public SpringCloudFunction(Function<Flux<?>, Flux<?>> function, SimpleFunctionRegistry registry) {
+        super(registry);
         this.function = function;
     }
 

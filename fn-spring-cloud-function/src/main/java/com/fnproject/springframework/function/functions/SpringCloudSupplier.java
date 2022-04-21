@@ -18,7 +18,7 @@ package com.fnproject.springframework.function.functions;
 
 import com.fnproject.fn.api.TypeWrapper;
 import com.fnproject.springframework.function.SimpleTypeWrapper;
-import org.springframework.cloud.function.context.catalog.FunctionInspector;
+import org.springframework.cloud.function.context.catalog.SimpleFunctionRegistry;
 import reactor.core.publisher.Flux;
 
 import java.util.function.Supplier;
@@ -29,8 +29,8 @@ import java.util.function.Supplier;
 public class SpringCloudSupplier extends SpringCloudMethod {
     private Supplier<Flux<?>> supplier;
 
-    public SpringCloudSupplier(Supplier<Flux<?>> supplier, FunctionInspector inspector) {
-        super(inspector);
+    public SpringCloudSupplier(Supplier<Flux<?>> supplier, SimpleFunctionRegistry registry) {
+        super(registry);
         this.supplier = supplier;
     }
 

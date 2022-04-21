@@ -21,13 +21,13 @@ import com.fnproject.fn.api.exception.FunctionInputHandlingException;
 import com.fnproject.fn.api.exception.FunctionOutputHandlingException;
 import com.fnproject.springframework.function.functions.SpringCloudMethod;
 
+import org.springframework.boot.Banner;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
 import reactor.core.publisher.Flux;
 
 import java.io.Closeable;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -55,7 +55,7 @@ public class SpringCloudFunctionInvoker implements FunctionInvoker, Closeable {
      */
     public SpringCloudFunctionInvoker(Class<?> configClass) {
         SpringApplicationBuilder builder = new SpringApplicationBuilder(configClass);
-        applicationContext = builder.web(WebApplicationType.NONE).run();
+        applicationContext = builder.web(WebApplicationType.NONE).bannerMode(Banner.Mode.OFF).run();
         loader = applicationContext.getAutowireCapableBeanFactory().createBean(SpringCloudFunctionLoader.class);
         loader.loadFunction();
     }

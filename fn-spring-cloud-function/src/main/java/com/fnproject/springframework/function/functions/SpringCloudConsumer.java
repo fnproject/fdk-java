@@ -18,7 +18,7 @@ package com.fnproject.springframework.function.functions;
 
 import com.fnproject.fn.api.TypeWrapper;
 import com.fnproject.springframework.function.SimpleTypeWrapper;
-import org.springframework.cloud.function.context.catalog.FunctionInspector;
+import org.springframework.cloud.function.context.catalog.SimpleFunctionRegistry;
 import reactor.core.publisher.Flux;
 
 import java.util.function.Consumer;
@@ -29,8 +29,8 @@ import java.util.function.Consumer;
 public class SpringCloudConsumer extends SpringCloudMethod {
     private Consumer<Flux<?>> consumer;
 
-    public SpringCloudConsumer(Consumer<Flux<?>> consumer, FunctionInspector inspector) {
-        super(inspector);
+    public SpringCloudConsumer(Consumer<Flux<?>> consumer, SimpleFunctionRegistry registry) {
+        super(registry);
         this.consumer = consumer;
     }
 

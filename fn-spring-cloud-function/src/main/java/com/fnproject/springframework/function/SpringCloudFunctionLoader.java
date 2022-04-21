@@ -23,7 +23,7 @@ import com.fnproject.springframework.function.functions.SpringCloudMethod;
 import com.fnproject.springframework.function.functions.SpringCloudSupplier;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.function.context.FunctionCatalog;
-import org.springframework.cloud.function.context.catalog.FunctionInspector;
+import org.springframework.cloud.function.context.catalog.SimpleFunctionRegistry;
 import reactor.core.publisher.Flux;
 
 import java.util.function.Consumer;
@@ -54,16 +54,14 @@ public class SpringCloudFunctionLoader {
     public static final String ENV_VAR_CONSUMER_NAME = "FN_SPRING_CONSUMER";
     public static final String ENV_VAR_SUPPLIER_NAME = "FN_SPRING_SUPPLIER";
 
-    private final FunctionCatalog catalog;
-    private final FunctionInspector inspector;
+    private final SimpleFunctionRegistry registry;
 
     private Function<Flux<?>, Flux<?>> function;
     private Consumer<Flux<?>> consumer;
     private Supplier<Flux<?>> supplier;
 
-    SpringCloudFunctionLoader(@Autowired FunctionCatalog catalog, @Autowired FunctionInspector inspector) {
-        this.catalog = catalog;
-        this.inspector = inspector;
+    SpringCloudFunctionLoader(@Autowired SimpleFunctionRegistry registry) {
+        this.registry = registry;
     }
 
     void loadFunction() {
@@ -83,24 +81,24 @@ public class SpringCloudFunctionLoader {
     private void loadSpringCloudFunctionFromEnvVars() {
         String functionName = System.getenv(ENV_VAR_FUNCTION_NAME);
         if (functionName != null) {
-            function = this.catalog.lookup(Function.class, functionName);
+            function = this.registry.lookup(Function.class, functionName);
         }
 
         String consumerName = System.getenv(ENV_VAR_CONSUMER_NAME);
         if (consumerName != null) {
-            consumer = this.catalog.lookup(Consumer.class, consumerName);
+            consumer = this.registry.lookup(Consumer.class, consumerName);
         }
 
         String supplierName = System.getenv(ENV_VAR_SUPPLIER_NAME);
         if (supplierName != null) {
-            supplier = this.catalog.lookup(Supplier.class, supplierName);
+            supplier = this.registry.lookup(Supplier.class, supplierName);
         }
     }
 
     private void loadSpringCloudFunctionFromDefaults() {
-        function = this.catalog.lookup(Function.class, DEFAULT_FUNCTION_BEAN);
-        consumer = this.catalog.lookup(Consumer.class, DEFAULT_CONSUMER_BEAN);
-        supplier = this.catalog.lookup(Supplier.class, DEFAULT_SUPPLIER_BEAN);
+        function = this.registry.lookup(Function.class, DEFAULT_FUNCTION_BEAN);
+        consumer = this.registry.lookup(Consumer.class, DEFAULT_CONSUMER_BEAN);
+        supplier = this.registry.lookup(Supplier.class, DEFAULT_SUPPLIER_BEAN);
     }
 
 
@@ -111,11 +109,11 @@ public class SpringCloudFunctionLoader {
 
     SpringCloudMethod getFunction() {
         if (function != null) {
-            return new SpringCloudFunction(function, inspector);
+            return new SpringCloudFunction(function, registry);
         } else if (consumer != null) {
-            return new SpringCloudConsumer(consumer, inspector);
+            return new SpringCloudConsumer(consumer, registry);
         } else {
-            return new SpringCloudSupplier(supplier, inspector);
+            return new SpringCloudSupplier(supplier, registry);
         }
     }
 }

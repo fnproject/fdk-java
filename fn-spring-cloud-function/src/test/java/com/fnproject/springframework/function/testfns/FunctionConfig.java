@@ -25,6 +25,7 @@ import org.springframework.cloud.function.context.config.ContextFunctionCatalogA
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import reactor.core.publisher.Flux;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -39,8 +40,9 @@ public class FunctionConfig {
     }
 
     @Bean
-    public Supplier<String> supplier() {
-        return () -> "Hello";
+    public Supplier<Flux<String>> supplier() {
+        String str = "Hello";
+        return () -> Flux.just(str);
     }
 
     @Bean

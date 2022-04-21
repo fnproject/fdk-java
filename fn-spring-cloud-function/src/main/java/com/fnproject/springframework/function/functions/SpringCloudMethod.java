@@ -19,7 +19,7 @@ package com.fnproject.springframework.function.functions;
 import com.fnproject.fn.api.MethodWrapper;
 import com.fnproject.fn.api.TypeWrapper;
 import com.fnproject.springframework.function.SimpleTypeWrapper;
-import org.springframework.cloud.function.context.catalog.FunctionInspector;
+import org.springframework.cloud.function.context.catalog.SimpleFunctionRegistry;
 import reactor.core.publisher.Flux;
 
 import java.lang.reflect.Method;
@@ -31,10 +31,10 @@ import java.util.Arrays;
  * Spring Cloud Functions
  */
 public abstract class SpringCloudMethod implements MethodWrapper {
-    private FunctionInspector inspector;
+    private SimpleFunctionRegistry registry;
 
-    SpringCloudMethod(FunctionInspector inspector) {
-        this.inspector = inspector;
+    SpringCloudMethod(SimpleFunctionRegistry registry) {
+        this.registry = registry;
     }
 
     @Override
@@ -73,12 +73,12 @@ public abstract class SpringCloudMethod implements MethodWrapper {
 
     @Override
     public TypeWrapper getParamType(int index) {
-        return new SimpleTypeWrapper(inspector.getInputType(getFunction()));
+        return new SimpleTypeWrapper(registry.getInputType(getFunction()));
     }
 
     @Override
     public TypeWrapper getReturnType() {
-        return new SimpleTypeWrapper(inspector.getOutputType(getFunction()));
+        return new SimpleTypeWrapper(registry.getOutputType(getFunction()));
     }
 
     /**

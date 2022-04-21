@@ -24,14 +24,13 @@ import org.junit.contrib.java.lang.system.EnvironmentVariables;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.springframework.cloud.function.context.catalog.InMemoryFunctionCatalog;
+import org.springframework.cloud.function.context.catalog.BeanFactoryAwareFunctionRegistry;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -42,16 +41,11 @@ public class SpringCloudFunctionLoaderTest {
     private SpringCloudFunctionLoader loader;
 
     @Mock
-    private InMemoryFunctionCatalog catalog;
+    private BeanFactoryAwareFunctionRegistry registry;
 
     @Before
     public void setUp() {
-        loader = new SpringCloudFunctionLoader(catalog, null);
-        setUpCatalogToReturnNullForLookupByDefault();
-    }
-
-    private void setUpCatalogToReturnNullForLookupByDefault() {
-        when(catalog.lookup(any(), any())).thenReturn(null);
+        loader = new SpringCloudFunctionLoader(registry);
     }
 
     @Test
@@ -121,15 +115,15 @@ public class SpringCloudFunctionLoaderTest {
     }
 
     private void stubCatalogToReturnFunction(String beanName, Function<Object, Object> function) {
-        when(catalog.lookup(Function.class, beanName)).thenReturn(function);
+        when(registry.lookup(Function.class, beanName)).thenReturn(function);
     }
 
     private void stubCatalogToReturnConsumer(String beanName, Consumer<Object> consumer) {
-        when(catalog.lookup(Consumer.class, beanName)).thenReturn(consumer);
+        when(registry.lookup(Consumer.class, beanName)).thenReturn(consumer);
     }
 
     private void stubCatalogToReturnSupplier(String beanName, Supplier<Object> supplier) {
-        when(catalog.lookup(Supplier.class, beanName)).thenReturn(supplier);
+        when(registry.lookup(Supplier.class, beanName)).thenReturn(supplier);
     }
 
     private void stubCatalogToReturnSupplier(Supplier<Object> supplier) {
