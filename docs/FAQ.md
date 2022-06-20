@@ -18,23 +18,11 @@ Yes - The FDK implements the IO/contract with the FN service and is required to 
 Fn Flow is a [Java API](https://github.com/fnproject/fn-java-fdk/blob/master/docs/FnFlowsUserGuide.md) and [corresponding service](https://github.com/fnproject/flow) that helps you create complex, long-running, fault-tolerant functions using a promises-style asynchronous API. Check out the [Fn Flow docs](https://github.com/fnproject/fn-java-fdk/blob/master/docs/FnFlowsUserGuide.md) for more information.
 
 ### How do I get the FDK?
-The FDK is automatically added to your project if you built your function using `fn init --runtime=java`. The `api` and `testing` JARs are published on [our bintray](https://bintray.com/fnproject/fnproject) and the `runtime` is published in our [Docker hub repository](https://hub.docker.com/r/fnproject/fn-java-fdk/).
+The FDK is automatically added to your project if you built your function using `fn init --runtime=java`. The `api` and `testing` JARs are published on [our maven central repository](https://search.maven.org/search?q=g:com.fnproject.fn) and the `runtime` is published in our [Docker hub repository](https://hub.docker.com/r/fnproject/fn-java-fdk/).
 
 ### How do I add the FDK to an existing project?
-   1. Find the latest release from the [releases page](https://github.com/fnproject/fn-java-fdk/releases). For example `1.0.32`.
-   1. The FDK JAR is published on [Bintray](https://bintray.com/fnproject/fnproject). Add the repository to your`pom.xml` `repositories` section:
-   ```xml
-        <repository>
-            <id>fn-release-repo</id>
-            <url>https://dl.bintray.com/fnproject/fnproject</url>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>
-   ```
+   1. Find the latest release from the [releases page](https://github.com/fnproject/fn-java-fdk/releases). For example `1.0.149`.
+   1. The FDK JAR is published on [Maven Central](https://search.maven.org/search?q=g:com.fnproject.fn). Add the repository to your`pom.xml` `repositories` section:
    1. Add the dependency to your `dependency` section. Make sure that the `version` tag matches the latest release that you looked up above.
    ```xml
         <dependency>
