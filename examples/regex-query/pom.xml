@@ -27,7 +27,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
         <fdk.version>1.0.0-SNAPSHOT</fdk.version>
-        <jackson.version>2.13.2.1</jackson.version>
+        <jackson.version>2.13.4</jackson.version>
     </properties>
 
     <groupId>com.fnproject.fn.examples</groupId>
@@ -43,7 +43,7 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-annotations</artifactId>
-            <version>2.13.0</version>
+            <version>2.13.4</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
