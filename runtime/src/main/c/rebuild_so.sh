@@ -19,6 +19,16 @@ mydir=$(cd "$(dirname "$0")"; pwd)
 cd ${mydir}
 
 set -e
+
 docker build -t fdk_c_build -f Dockerfile-buildimage .
 
 docker run  -v $(pwd):/build  fdk_c_build ./buildit.sh
+
+if [ $(uname -m) == "x86_64" ]
+then
+    mkdir amd64
+    cp libfnunixsocket.so amd64
+else
+    mkdir arm64
+    cp libfnunixsocket.so arm64
+fi

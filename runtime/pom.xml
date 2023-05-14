@@ -100,12 +100,28 @@
                 <filtering>true</filtering>
             </resource>
             <resource>
-                <directory>src/main/c/</directory>
+                <directory>src/main/c</directory>
                 <includes>
                     <include>*.so</include>
                 </includes>
                 <filtering>false</filtering>
-                <targetPath>${build.directory}/classes/META-INF/com.fnproject.fn/runtime/native/</targetPath>
+                <targetPath>${build.directory}/classes/META-INF/com.fnproject.fn/runtime/native</targetPath>
+            </resource>
+            <resource>
+                <directory>src/main/c/amd64</directory>
+                <includes>
+                    <include>*.so</include>
+                </includes>
+                <filtering>false</filtering>
+                <targetPath>${build.directory}/classes/META-INF/com.fnproject.fn/runtime/native/amd64</targetPath>
+            </resource>
+            <resource>
+                <directory>src/main/c/arm64</directory>
+                <includes>
+                    <include>*.so</include>
+                </includes>
+                <filtering>false</filtering>
+                <targetPath>${build.directory}/classes/META-INF/com.fnproject.fn/runtime/native/arm64</targetPath>
             </resource>
         </resources>
         <plugins>

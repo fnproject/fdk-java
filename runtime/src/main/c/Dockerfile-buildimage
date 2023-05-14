@@ -16,7 +16,6 @@
 
 FROM docker-remote.artifactory.oci.oraclecorp.com/oraclelinux:7.5
 
-
 RUN yum install -y gcc cmake java-1.8.0-openjdk-devel make
 RUN yum install -y  gcc-c++
 

@@ -19,7 +19,6 @@ set -e
 
 src_dir=$(pwd)
 build_dir=${src_dir}/build/$(uname -s| tr '[:upper:]' '[:lower:]')
-
 mkdir -p ${build_dir}
 (
     cd  ${build_dir}
