@@ -28,7 +28,7 @@
 
         <fdk.version>1.0.0-SNAPSHOT</fdk.version>
         <mockito.version>3.3.3</mockito.version>
-        <jackson.version>2.13.4.2</jackson.version>
+        <jackson.version>2.16.1</jackson.version>
     </properties>
 
     <groupId>com.fnproject.fn.examples</groupId>
