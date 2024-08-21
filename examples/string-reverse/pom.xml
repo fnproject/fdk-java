@@ -25,9 +25,9 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <fdk.version>1.0.0-SNAPSHOT</fdk.version>
     </properties>
-    <groupId>com.example.fn</groupId>
+    <groupId>com.fnproject.fn.examples</groupId>
     <artifactId>string-reverse</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.0-SNAPSHOT</version>
 
     <dependencies>
         <dependency>
