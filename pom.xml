@@ -82,7 +82,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
         <assertj-core.version>3.21.0</assertj-core.version>
-        <commons-io.version>2.11.0</commons-io.version>
+        <commons-io.version>2.14.0</commons-io.version>
         <httpcore.version>4.4.14</httpcore.version>
         <jackson.version>2.16.1</jackson.version>
         <jacoco.version>0.8.1</jacoco.version>
