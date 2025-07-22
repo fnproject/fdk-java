@@ -16,4 +16,5 @@ examples/gradle-build/build
 **/*.classpath
 **/*.project
 **/*.settings
+.oca/
 
