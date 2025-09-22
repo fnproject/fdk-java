@@ -26,7 +26,7 @@
         <version>1.0.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
-
+    <name>experimental-native-image-support</name>
     <artifactId>experimental-native-image-support</artifactId>
 
     <dependencies>

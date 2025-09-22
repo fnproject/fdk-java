@@ -29,14 +29,14 @@ POM_REPLACEMENT="<modelVersion>4.0.0</modelVersion>
          <url>https://github.com/fnproject/fdk-java</url>
    </scm>
   <distributionManagement>
-    <repository>
-        <id>ossrh</id>
-        <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-    </repository>
-    <snapshotRepository>
-        <id>ossrh</id>
-        <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
-    </snapshotRepository>
+      <repository>
+          <id>central</id>
+          <url>https://central.sonatype.com/api/v1/staging/deploy/maven2</url>
+      </repository>
+      <snapshotRepository>
+          <id>central</id>
+          <url>https://central.sonatype.com/repository/maven-snapshots/</url>
+      </snapshotRepository>
   </distributionManagement>
   <name>fdk-java</name>
   <description>The Function Development Kit for Java makes it easy to build and deploy Java functions to Fn</description>
@@ -44,8 +44,8 @@ POM_REPLACEMENT="<modelVersion>4.0.0</modelVersion>
   "
 
 # Constants
-MAVEN_CENTRAL_STAGINGURL="https://s01.oss.sonatype.org/service/local/staging/deploy/maven2"
-MAVEN_CENTRAL_REPOID="ossrh"
+MAVEN_CENTRAL_STAGINGURL="https://central.sonatype.com/api/v1/staging/deploy/maven2"
+MAVEN_CENTRAL_REPOID="central"
 OUTPUT_DIR="output"
 
 # TODO: add versions e.g. (1.0.0 1.0.1 1.0.2) 10*1+ 5+2+1
@@ -175,14 +175,15 @@ function prepare_pom() {
   SCM_PLUGIN="
     <plugins>
     <plugin>
-      <groupId>org.sonatype.plugins</groupId>
-      <artifactId>nexus-staging-maven-plugin</artifactId>
-      <version>1.6.7</version>
+      <groupId>org.sonatype.central</groupId>
+      <artifactId>central-publishing-maven-plugin</artifactId>
+      <version>0.8.0</version>
       <extensions>true</extensions>
       <configuration>
-          <serverId>ossrh</serverId>
-          <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>
-          <autoReleaseAfterClose>true</autoReleaseAfterClose>
+          <publishingServerId>central</publishingServerId>
+          <autoPublish>true</autoPublish>
+          <waitUntil>published</waitUntil>
+          <!-- Other configurations as needed -->
       </configuration>
   </plugin>
   "
@@ -230,14 +231,15 @@ function modify_group_id() {
   SCM_PLUGIN="
     <plugins>
     <plugin>
-      <groupId>org.sonatype.plugins</groupId>
-      <artifactId>nexus-staging-maven-plugin</artifactId>
-      <version>1.6.7</version>
+      <groupId>org.sonatype.central</groupId>
+      <artifactId>central-publishing-maven-plugin</artifactId>
+      <version>0.8.0</version>
       <extensions>true</extensions>
       <configuration>
-          <serverId>ossrh</serverId>
-          <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>
-          <autoReleaseAfterClose>true</autoReleaseAfterClose>
+          <publishingServerId>central</publishingServerId>
+          <autoPublish>true</autoPublish>
+          <waitUntil>published</waitUntil>
+          <!-- Other configurations as needed -->
       </configuration>
   </plugin>
   "
