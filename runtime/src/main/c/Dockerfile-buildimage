@@ -14,12 +14,11 @@
 # limitations under the License.
 #
 
-FROM iad.ocir.io/oraclefunctionsdevelopm/oraclelinux:7.5
-
-RUN rm -rf /var/cache/yum/*
-RUN yum install -y gcc cmake java-1.8.0-openjdk-devel make
-RUN yum install -y  gcc-c++
-
+FROM container-registry.oracle.com/os/oraclelinux:9-slim
+RUN microdnf install -y \
+        gcc gcc-c++ cmake make java-1.8.0-openjdk-devel && \
+    microdnf clean all \
 RUN mkdir  /build
 WORKDIR /build
+
 
