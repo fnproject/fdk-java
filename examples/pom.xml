@@ -39,6 +39,12 @@
         <module>qr-code</module>
 --> 
         <module>async-thumbnails</module>
+        <module>apigateway-event</module>
+        <module>connectorhub-monitoring</module>
+        <module>connectorhub-logging</module>
+        <module>connectorhub-streaming</module>
+        <module>connectorhub-queue</module>
+        <module>notifications</module>
     </modules>
 
     <build>

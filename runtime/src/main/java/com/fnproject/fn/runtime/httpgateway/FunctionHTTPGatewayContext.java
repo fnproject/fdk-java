@@ -102,6 +102,16 @@ public class FunctionHTTPGatewayContext implements HTTPGatewayContext {
 
     }
 
+    public void addResponseHeader(String key, List<String> values) {
+        if (values == null || values.isEmpty()) {
+            setResponseHeader(key, null);
+        } else {
+            for (String value : values) {
+                addResponseHeader(key, value);
+            }
+        }
+    }
+
     @Override
     public void setResponseHeader(String key, String value, String... vs) {
 

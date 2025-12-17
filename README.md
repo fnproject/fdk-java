@@ -19,6 +19,10 @@ New to Fn Project? If you want to learn more about using the Fn Project to power
 
 For detailed instructions on using the FDK to build and deploy Java functions to Fn, please see the official FDK developer guide in our docs repo here: https://github.com/fnproject/docs/blob/master/fdks/fdk-java/README.md.
 
+## Integrating with OCI Services
+
+Use the fn-events library to easily integrate your Function with OCI services; Connector Hub, API Gateway and Notifications. Start with the [README.md](fn-events/README.md)
+
 ## Contributing to the Function Development Kit for Java
 
 Please see [CONTRIBUTING.md](CONTRIBUTING.md).

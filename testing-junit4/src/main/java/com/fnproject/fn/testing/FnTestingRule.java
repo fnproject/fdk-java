@@ -167,6 +167,10 @@ public final class FnTestingRule implements TestRule {
         this.features.add(f);
     }
 
+    public void addInput(InputEvent input) {
+        pendingInput.add(input);
+    }
+
     /**
      * Create an instance of the testing {@link Rule}, with Flows support
      *

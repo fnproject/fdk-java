@@ -30,12 +30,12 @@ public class DefaultMethodWrapper implements MethodWrapper {
     private final Class<?> srcClass;
     private final Method srcMethod;
 
-    DefaultMethodWrapper(Class<?> srcClass, Method srcMethod) {
+    public DefaultMethodWrapper(Class<?> srcClass, Method srcMethod) {
         this.srcClass = srcClass;
         this.srcMethod = srcMethod;
     }
 
-    DefaultMethodWrapper(Class<?> srcClass, String srcMethod) {
+    public DefaultMethodWrapper(Class<?> srcClass, String srcMethod) {
         this(srcClass, Arrays.stream(srcClass.getMethods())
           .filter((m) -> m.getName().equals(srcMethod))
           .findFirst()

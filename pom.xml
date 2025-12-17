@@ -73,6 +73,8 @@
         <module>flow-runtime</module>
         <module>flow-testing</module>
         <module>fn-spring-cloud-function</module>
+        <module>fn-events</module>
+        <module>fn-events-testing</module>
         <module>examples</module>
         <module>experimental-native-image-support</module>
     </modules>
@@ -115,6 +117,11 @@
             <dependency>
                 <groupId>com.fnproject.fn</groupId>
                 <artifactId>flow-runtime</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fnproject.fn</groupId>
+                <artifactId>fn-events</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

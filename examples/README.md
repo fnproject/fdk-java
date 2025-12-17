@@ -37,3 +37,12 @@ thumbnails for it, then uploads them to an object storage.
 
 ## (5) Gradle build 
 This shows how to use Gradle to build functions using the Java FDK. 
+
+## (6) Fn Events
+This shows how to use fn-events library for:
+- OCI API Gateway Function - [README.md](../examples/apigateway-event/README.md)
+- OCI Service Connector Hub: Monitoring - [README.md](../examples/connectorhub-monitoring/README.md)
+- OCI Service Connector Hub: Logging - [README.md](../examples/connectorhub-logging/README.md)
+- OCI Service Connector Hub: Streaming - [README.md](../examples/connectorhub-streaming/README.md)
+- OCI Service Connector Hub: Queue - [connectorhub-queue](../examples/connectorhub-queue)
+- OCI Notifications - [README.md](../examples/notifications/README.md)
