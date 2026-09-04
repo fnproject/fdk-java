@@ -119,9 +119,17 @@ public class ThumbnailsFunctionTest {
               "    <IsTruncated>false</IsTruncated>\n" +
               "</ListBucketResult>")));
 
+        mockServer.stubFor(get(urlEqualTo("/alpha?location="))
+          .willReturn(aResponse().withBody(
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
+              "<LocationConstraint xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">" +
+              "us-east-1</LocationConstraint>")));
+
         mockServer.stubFor(WireMock.head(urlMatching("/alpha.*")).willReturn(aResponse().withStatus(200)));
 
-        mockServer.stubFor(WireMock.put(urlMatching(".*")).willReturn(aResponse().withStatus(200)));
+        mockServer.stubFor(WireMock.put(urlMatching(".*")).willReturn(aResponse()
+          .withStatus(200)
+          .withHeader("ETag", "\"test-etag\"")));
 
     }
 
