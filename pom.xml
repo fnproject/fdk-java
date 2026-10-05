@@ -14,7 +14,7 @@
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
-    
+
 -->
 
 <project xmlns="http://maven.apache.org/POM/4.0.0"
@@ -85,8 +85,8 @@
 
         <assertj-core.version>3.27.7</assertj-core.version>
         <commons-io.version>2.14.0</commons-io.version>
-        <httpcore.version>4.4.16</httpcore.version>
-        <jackson.version>2.22.2</jackson.version>
+        <httpcore.version>4.4.16.oci-2.0.1</httpcore.version>
+        <jackson.version>2.22.3</jackson.version>
         <jacoco.version>0.8.1</jacoco.version>
         <jetty.version>9.4.12.v20180830</jetty.version>
         <junit.version>4.13.2</junit.version>
