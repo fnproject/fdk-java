@@ -51,6 +51,20 @@ public class FunctionRuntimeContext implements RuntimeContext {
         configuredInvokers.add(new MethodFunctionInvoker());
     }
 
+    /** Create a context using a caller-owned function instance. */
+    public FunctionRuntimeContext(MethodWrapper method, Map<String, String> config, Object instance) {
+        this(method, config);
+        Objects.requireNonNull(instance, "function instance");
+        if (Modifier.isStatic(method.getTargetMethod().getModifiers())) {
+            throw new IllegalArgumentException("A supplied function instance requires a non-static handler method");
+        }
+        if (!method.getTargetClass().isInstance(instance)) {
+            throw new IllegalArgumentException("Function instance is not compatible with "
+                    + method.getTargetClass().getName() + "; check the instance type and classloader");
+        }
+        this.instance = instance;
+    }
+
     @Override
     public String getAppID() {
         return config.getOrDefault("FN_APP_ID", "");

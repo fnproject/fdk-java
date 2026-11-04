@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 import com.fnproject.fn.api.FnFeature;
@@ -123,6 +124,28 @@ public class EntryPoint {
         String cls = classMethod[0];
         String mth = classMethod[1];
 
+        // Keep class loading lazy: initialization errors must be handled with the first event.
+        return run(env, codec, loggingOutput, () -> new FunctionLoader().loadClass(cls, mth), null);
+    }
+
+    /**
+     * Run the normal runtime lifecycle with a caller-owned instance, for embedded
+     * callers such as the testing harness. The normal production entry point does
+     * not call this method. After successful initialization, the same instance
+     * handles all events in this run. Configuration is not skipped.
+     */
+    public int runWithInstance(Map<String, String> env, EventCodec codec, PrintStream loggingOutput,
+                               Object instance, String methodName) {
+        java.util.Objects.requireNonNull(instance, "function instance");
+        MethodWrapper method = new FunctionLoader().loadClass(instance.getClass(), methodName);
+        if (java.lang.reflect.Modifier.isStatic(method.getTargetMethod().getModifiers())) {
+            throw new IllegalArgumentException("A supplied function instance requires a non-static handler method");
+        }
+        return run(env, codec, loggingOutput, () -> method, instance);
+    }
+
+    private int run(Map<String, String> env, EventCodec codec, PrintStream loggingOutput,
+                    Supplier<MethodWrapper> methodSupplier, Object instance) {
         // TODO deprecate with default contract
         final AtomicInteger lastStatus = new AtomicInteger();
         try {
@@ -134,10 +157,10 @@ public class EntryPoint {
                 // Create runtime context within first call to ensure that init errors are propagated
                 private FunctionRuntimeContext getRuntimeContext() {
                     if (_runtimeContext == null) {
-                        FunctionLoader functionLoader = new FunctionLoader();
-
-                        MethodWrapper method = functionLoader.loadClass(cls, mth);
-                        FunctionRuntimeContext runtimeContext = new FunctionRuntimeContext(method, configFromEnvVars);
+                        MethodWrapper method = methodSupplier.get();
+                        FunctionRuntimeContext runtimeContext = instance == null
+                                ? new FunctionRuntimeContext(method, configFromEnvVars)
+                                : new FunctionRuntimeContext(method, configFromEnvVars, instance);
                         FnFeature f = method.getTargetClass().getAnnotation(FnFeature.class);
                         if (f != null) {
                             enableFeature(runtimeContext, f);

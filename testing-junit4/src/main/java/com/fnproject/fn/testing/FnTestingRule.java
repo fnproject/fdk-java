@@ -19,6 +19,8 @@ package com.fnproject.fn.testing;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fnproject.fn.api.*;
 import com.fnproject.fn.runtime.EventCodec;
+import com.fnproject.fn.runtime.EntryPoint;
+import com.fnproject.fn.runtime.FunctionLoader;
 import org.apache.commons.io.output.TeeOutputStream;
 import org.junit.Rule;
 import org.junit.rules.TestRule;
@@ -273,12 +275,39 @@ public final class FnTestingRule implements TestRule {
      * @param method the method name
      */
     public void thenRun(String cls, String method) {
+        thenRun(cls, method, null);
+    }
+
+    /**
+     * Run a prepared function instance, including normal configuration and data binding.
+     * The instance and its dependencies retain their classloader and static state.
+     * Rule features (including FlowTesting) are not supported in this mode.
+     *
+     * @param instance function prepared by the test
+     * @param method handler method name
+     */
+    public void thenRunWithInstance(Object instance, String method) {
+        Objects.requireNonNull(instance, "function instance");
+        if (!features.isEmpty()) {
+            throw new IllegalStateException("thenRunWithInstance does not support FnTestingRuleFeature "
+                    + "extensions, including FlowTesting; use class-based thenRun for those tests");
+        }
+        MethodWrapper target = new FunctionLoader().loadClass(instance.getClass(), method);
+        if (java.lang.reflect.Modifier.isStatic(target.getTargetMethod().getModifiers())) {
+            throw new IllegalArgumentException("thenRunWithInstance requires a non-static handler method");
+        }
+        thenRun(instance.getClass().getName(), method, instance);
+    }
+
+    private void thenRun(String cls, String method, Object instance) {
         final ClassLoader functionClassLoader;
-        Class c = null;
+        Class c = instance == null ? null : instance.getClass();
         try {
             // Trick to work around Maven class loader separation
             // if passed class is a valid class then set the classloader to the same as the class's loader
-            c = Class.forName(cls);
+            if (c == null) {
+                c = Class.forName(cls);
+            }
         } catch (Exception ignored) {
             // TODO don't fall through here
         }
@@ -288,6 +317,7 @@ public final class FnTestingRule implements TestRule {
             functionClassLoader = getClass().getClassLoader();
         }
 
+        ClassLoader oldContextClassLoader = Thread.currentThread().getContextClassLoader();
         PrintStream oldSystemOut = System.out;
         PrintStream oldSystemErr = System.err;
 
@@ -308,22 +338,26 @@ public final class FnTestingRule implements TestRule {
             mutableEnv.put("FN_FN_ID","myFnID");
             mutableEnv.put("FN_APP_ID","myAppID");
 
-            FnTestingClassLoader forked = new FnTestingClassLoader(functionClassLoader, sharedPrefixes);
-            if (forked.isShared(cls)) {
-                oldSystemErr.println("WARNING: The function class under test is shared with the test ClassLoader.");
-                oldSystemErr.println("         This may result in unexpected behaviour around function initialization and configuration.");
-            }
-            for (FnTestingRuleFeature f : features) {
-                f.prepareFunctionClassLoader(forked);
-            }
-
             TestCodec codec = new TestCodec(pendingInput, output);
+            if (instance != null) {
+                Thread.currentThread().setContextClassLoader(functionClassLoader);
+                lastExitCode = new EntryPoint().runWithInstance(mutableEnv, codec, functionErr, instance, method);
+            } else {
+                FnTestingClassLoader forked = new FnTestingClassLoader(functionClassLoader, sharedPrefixes);
+                if (forked.isShared(cls)) {
+                    oldSystemErr.println("WARNING: The function class under test is shared with the test ClassLoader.");
+                    oldSystemErr.println("         This may result in unexpected behaviour around function initialization and configuration.");
+                }
+                for (FnTestingRuleFeature f : features) {
+                    f.prepareFunctionClassLoader(forked);
+                }
 
-            lastExitCode = forked.run(
-              mutableEnv,
-              codec,
-              functionErr,
-              cls + "::" + method);
+                lastExitCode = forked.run(
+                  mutableEnv,
+                  codec,
+                  functionErr,
+                  cls + "::" + method);
+            }
 
             stdErr.flush();
 
@@ -337,6 +371,7 @@ public final class FnTestingRule implements TestRule {
             System.err.flush();
             System.setOut(oldSystemOut);
             System.setErr(oldSystemErr);
+            Thread.currentThread().setContextClassLoader(oldContextClassLoader);
 
         }
     }

@@ -35,9 +35,11 @@ public class FunctionLoader {
      * @return a new runtime context
      */
     public MethodWrapper loadClass(String className, String fnName) {
-        Class<?> targetClass = loadClass(className);
+        return loadClass(loadClass(className), fnName);
+    }
 
-
+    /** Resolve a method on an already loaded class without changing its classloader. */
+    public MethodWrapper loadClass(Class<?> targetClass, String fnName) {
         return new DefaultMethodWrapper(targetClass, getTargetMethod(targetClass, fnName));
     }
 

@@ -248,4 +248,51 @@ If you need to share objects or static data between your test classes and your f
     testing.addSharedPrefix("com.example.mysubpackage."); // Shares anything under a package
 ```
 
-While it is possible, it is not generally correct to share the function class itself with the test Class Loader - doing so may result in unexpected (not representative of the real fn platform) initialisation of static fields on the class. With Flows sharing the test class may also result in concurrent access to static data (via `@FnConfiguration` methods). 
+While it is possible, it is not generally correct to share the function class itself with the test Class Loader - doing so may result in unexpected (not representative of the real fn platform) initialisation of static fields on the class. With Flows sharing the test class may also result in concurrent access to static data (via `@FnConfiguration` methods).
+
+# Testing with injected dependencies
+
+Use `thenRunWithInstance(instance, method)` to run a function prepared with mocks
+or fakes, including FDK configuration and input/output binding.
+
+For example, suppose `UploadFunction` accepts a `StorageClient` in its constructor
+and its `handleRequest(String name)` method returns `storage.upload(name)`.
+With Mockito as a test dependency:
+
+```java
+@Test
+public void uploadsFile() {
+    StorageClient storage = mock(StorageClient.class);
+    when(storage.upload("report.csv")).thenReturn("uploaded");
+
+    testing.givenEvent().withBody("report.csv").enqueue();
+    testing.thenRunWithInstance(new UploadFunction(storage), "handleRequest");
+
+    assertEquals("uploaded", testing.getOnlyResult().getBodyAsString());
+    verify(storage).upload("report.csv");
+}
+
+@Test
+public void handlesStorageFailure() {
+    StorageClient storage = mock(StorageClient.class);
+    when(storage.upload("report.csv"))
+        .thenThrow(new IllegalStateException("storage unavailable"));
+
+    testing.givenEvent().withBody("report.csv").enqueue();
+    testing.thenRunWithInstance(new UploadFunction(storage), "handleRequest");
+
+    assertFalse(testing.getOnlyResult().isSuccess());
+    verify(storage).upload("report.csv");
+}
+```
+
+These examples use static imports from `org.mockito.Mockito` and `org.junit.Assert`.
+`StorageClient` is an application interface; deployed functions still need a
+supported production constructor.
+
+- Runtime features run before `@FnConfiguration`. Configuration can overwrite
+  injected dependencies; after successful initialization, queued events reuse the same instance.
+- Use a fresh rule and instance per test. The instance keeps its classloader and
+  static state; do not run harness invocations concurrently in the same JVM.
+- Static handlers and rule extensions such as `FlowTesting` require class-based
+  `thenRun`. Runtime `@FnFeature` annotations are supported.
