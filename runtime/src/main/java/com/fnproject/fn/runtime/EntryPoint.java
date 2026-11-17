@@ -67,7 +67,7 @@ public class EntryPoint {
                 jvmVersion + ")");
             String runtimeVersion = "java/" + jvmName + " " + jvmVersion;
 
-            codec = new HTTPStreamCodec(System.getenv(), fdkVersion, runtimeVersion);
+            codec = HttpServerProviders.create(System.getenv(), fdkVersion, runtimeVersion);
         } else {
             throw new FunctionInputHandlingException("Unsupported function format:" + format);
         }

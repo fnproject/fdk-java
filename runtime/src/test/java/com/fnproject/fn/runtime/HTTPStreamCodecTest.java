@@ -134,7 +134,9 @@ public class HTTPStreamCodecTest {
         File socket = generateSocketFile();
         newEnv.put("FN_LISTENER", "unix:" + socket.getAbsolutePath());
 
-        HTTPStreamCodec codec = new HTTPStreamCodec(newEnv, VERSION, RUNTIME_VERSION);
+        EventCodec selectedCodec = HttpServerProviders.create(newEnv, VERSION, RUNTIME_VERSION);
+        assertThat(selectedCodec).isInstanceOf(HTTPStreamCodec.class);
+        HTTPStreamCodec codec = (HTTPStreamCodec) selectedCodec;
 
         Thread t = new Thread(() -> codec.runCodec(h));
         t.start();
