@@ -17,6 +17,7 @@
 package com.fnproject.fn.runtime;
 
 import com.fnproject.fn.runtime.exception.FunctionInitializationException;
+import com.fnproject.fn.runtime.http.spi.HttpServer;
 import com.fnproject.fn.runtime.http.spi.HttpServerProvider;
 
 import java.util.Collections;
@@ -55,13 +56,12 @@ final class HttpServerProviders {
         }
 
         try {
-            EventCodec codec = provider.create(Collections.unmodifiableMap(new HashMap<>(environment)),
-                fdkVersion, runtimeVersion);
-            if (codec == null) {
+            HttpServer server = provider.create(Collections.unmodifiableMap(new HashMap<>(environment)));
+            if (server == null) {
                 throw new FunctionInitializationException("HttpServerProvider " + provider.getClass().getName()
-                    + " returned a null codec");
+                    + " returned a null server");
             }
-            return codec;
+            return new HttpServerCodec(server, fdkVersion, runtimeVersion);
         } catch (Exception | ServiceConfigurationError | LinkageError e) {
             throw new FunctionInitializationException("Unable to create HTTP server using "
                 + provider.getClass().getName(), e);

@@ -4,60 +4,76 @@ The standard FDK entry point discovers an optional
 `com.fnproject.fn.runtime.http.spi.HttpServerProvider` using Java `ServiceLoader`.
 This applies to `FN_FORMAT=http-stream`.
 
-* No provider registered: FDK constructs the existing `HTTPStreamCodec`, using
-  Apache HttpCore and the JNI with C-server on Unix Domain Socket implementation.
-* One provider registered: FDK calls that provider to create the codec.
-* Multiple providers, an invalid registration, or a failed provider: startup
-  fails. FDK does not silently fall back to the built-in server.
+* No provider registered: FDK uses `HTTPStreamCodec`, Apache HttpCore, and the
+  existing JNI/C Unix socket transport.
+* One provider registered: FDK creates its `HttpServer` and connects it to the
+  shared Fn protocol handler through `HttpServerCodec`.
+* Multiple providers, invalid registration, or provider failure: startup fails.
+  FDK does not silently fall back to the built-in server.
 
-## Implementing a provider
+`FN_FORMAT` and `FN_LISTENER` retain their existing meanings. No environment
+variable selects the provider. The built-in server is a direct fallback rather
+than a registered service.
 
-The provider must supply a complete Fn HTTP stream codec, including HTTP-to-event
-conversion. A server-neutral HTTP request API and shared Fn protocol adapter are
-not part of this change.
+## What FDK handles
+
+Both the built-in server and custom providers use `FnHttpHandler`. It owns:
+
+* `/call` routing, including the existing query-string handling. Unknown paths
+  return 501, matching the built-in server. The adapter adds no method restriction.
+* Required `Fn-Call-Id` and `Fn-Deadline` headers, deadline parsing, and conversion
+  to a read-once `InputEvent`.
+* Input and output header filtering, repeated values, output status mapping,
+  content type handling, and generated FDK version headers.
+* Existing JSON error responses for invalid input, invocation errors, and output
+  serialization errors.
+* Serial execution of request conversion, the function handler, and output
+  serialization. The complete output is buffered before the callback returns.
+
+Providers do not implement `EventCodec` or use Fn event types. The shared handler
+uses the existing runtime for lazy function initialization and invocation.
+
+## Implementing and registering a provider
+
+Implement the SPI with a public no-argument constructor:
 
 ```java
+import com.fnproject.fn.runtime.http.spi.HttpServer;
+import com.fnproject.fn.runtime.http.spi.HttpServerProvider;
+import java.util.Map;
+
 public final class CustomHttpServerProvider implements HttpServerProvider {
     public CustomHttpServerProvider() {
     }
 
     @Override
-    public EventCodec create(Map<String, String> environment,
-                             String fdkVersion,
-                             String runtimeVersion) throws Exception {
-        return new CustomHttpStreamCodec(environment, fdkVersion, runtimeVersion);
+    public HttpServer create(Map<String, String> environment) throws Exception {
+        return new CustomHttpServer(environment);
     }
 }
 ```
 
-`CustomHttpStreamCodec` is an application-supplied implementation of `EventCodec`.
-The environment is a read-only snapshot. The version arguments contain the
-values to report in `Fn-Fdk-Version` and `Fn-Fdk-Runtime`.
+`CustomHttpServer` is the integration you build for your chosen HTTP engine.
+The environment is a read-only snapshot. Return a non-null server and release
+any partial resources if creation fails. Do not handle requests until FDK calls
+`run(HttpHandler)`. The version strings stay inside FDK and are no longer passed
+to providers.
 
-Put the provider's fully qualified class name in this UTF-8 file in its JAR:
+The supplied `HttpHandler` uses `HttpServerRequest` and `HttpServerResponse`.
+Wrap your HTTP engine's request and response objects with these interfaces.
+
+Put this file in the provider JAR:
 
 ```text
 META-INF/services/com.fnproject.fn.runtime.http.spi.HttpServerProvider
 ```
 
-For example, the file contains:
+Its UTF-8 content is the provider class name, for example:
 
 ```text
 com.acme.fn.CustomHttpServerProvider
 ```
 
-The provider must have a public no-argument constructor. Discovery uses the
-thread context classloader, falling back to the SPI's classloader if the context
-classloader is null. Keep construction free of socket binding or thread startup;
-FDK checks for multiple providers before calling `create`.
-
-FDK calls `runCodec` with its existing function handler. The codec must invoke
-that handler serially, implement the Fn HTTP stream protocol over `FN_LISTENER`,
-and release its resources when its event loop exits. The existing entry point
-does not call `AutoCloseable.close` on codecs. No new shutdown contract is added.
-Function initialization stays lazy, and function APIs are unchanged.
-
-Provider dependencies and the service descriptor must be visible on the runtime
-classpath. Merge service descriptors when building a shaded JAR. Do not bundle
-a second copy of FDK runtime classes. Removing the service registration and
-restarting restores the built-in server.
+Discovery uses the thread context classloader, falling back to the SPI classloader
+when it is `null`. Keep the provider constructor free of socket binding and worker
+startup, because discovery checks for multiple providers before calling `create`.

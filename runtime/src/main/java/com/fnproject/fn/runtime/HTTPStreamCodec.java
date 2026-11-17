@@ -17,33 +17,27 @@
 package com.fnproject.fn.runtime;
 
 
-import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.attribute.PosixFilePermissions;
-import java.time.Instant;
-import java.time.format.DateTimeParseException;
-import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import com.fasterxml.jackson.core.io.CharTypes;
-import com.fnproject.fn.api.Headers;
-import com.fnproject.fn.api.InputEvent;
-import com.fnproject.fn.api.OutputEvent;
 import com.fnproject.fn.api.exception.FunctionInputHandlingException;
-import com.fnproject.fn.api.exception.FunctionOutputHandlingException;
 import com.fnproject.fn.runtime.exception.FunctionIOException;
 import com.fnproject.fn.runtime.exception.FunctionInitializationException;
+import com.fnproject.fn.runtime.http.spi.HttpHeader;
+import com.fnproject.fn.runtime.http.spi.HttpServerRequest;
+import com.fnproject.fn.runtime.http.spi.HttpServerResponse;
 import com.fnproject.fn.runtime.ntv.UnixServerSocket;
 import com.fnproject.fn.runtime.ntv.UnixSocket;
 import org.apache.http.Header;
@@ -54,13 +48,10 @@ import org.apache.http.HttpRequestInterceptor;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpResponseInterceptor;
 import org.apache.http.HttpVersion;
-import org.apache.http.ParseException;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.DefaultBHttpServerConnection;
 import org.apache.http.impl.io.EmptyInputStream;
-import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicStatusLine;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpService;
@@ -83,8 +74,6 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
 
     public static final String HTTP_STREAM_FORMAT = "http-stream";
     private static final String FN_LISTENER = "FN_LISTENER";
-    private static final Set<String> stripInputHeaders;
-    private static final Set<String> stripOutputHeaders;
     private final Map<String, String> env;
     private final String fdkVersion;
     private final String runtimeVersion;
@@ -93,27 +82,6 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
     private final CompletableFuture<Boolean> stopped = new CompletableFuture<>();
     private final UnixServerSocket socket;
     private final File tempFile;
-
-
-    static {
-        Set<String> hin = new HashSet<>();
-        hin.add("Host");
-        hin.add("Accept-Encoding");
-        hin.add("Transfer-Encoding");
-        hin.add("User-Agent");
-        hin.add("Connection");
-        hin.add("TE");
-
-        stripInputHeaders = Collections.unmodifiableSet(hin);
-
-        Set<String> hout = new HashSet<>();
-        hout.add("Content-Length");
-        hout.add("Transfer-Encoding");
-        hout.add("Connection");
-        hout.add("Fn-Fdk-Version");
-
-        stripOutputHeaders = Collections.unmodifiableSet(hout);
-    }
 
 
     private String randomString() {
@@ -178,59 +146,12 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
     }
 
 
-    private String jsonError(String message, String detail) {
-        if (message == null) {
-            message = "";
-        }
-
-        StringBuilder sb = new StringBuilder();
-        sb.append("{ \"message\":\"");
-        CharTypes.appendQuoted(sb, message);
-        sb.append("\"");
-
-        if (detail != null) {
-            sb.append(", \"detail\":\"");
-            CharTypes.appendQuoted(sb, detail);
-            sb.append("\"");
-        }
-
-        sb.append("}");
-        return sb.toString();
-    }
-
     @Override
     public void runCodec(Handler h) {
-
+        FnHttpHandler handler = new FnHttpHandler(h, fdkVersion, runtimeVersion);
         UriHttpRequestHandlerMapper mapper = new UriHttpRequestHandlerMapper();
-        mapper.register("/call", ((request, response, context) -> {
-            InputEvent evt;
-            try {
-                evt = readEvent(request);
-            } catch (FunctionInputHandlingException e) {
-                response.setStatusCode(500);
-                response.setEntity(new StringEntity(jsonError("Invalid input for function", e.getMessage()), ContentType.APPLICATION_JSON));
-                return;
-            }
-
-            OutputEvent outEvt;
-
-            try {
-                outEvt = h.handle(evt);
-            } catch (Exception e) {
-                response.setStatusCode(500);
-                response.setEntity(new StringEntity(jsonError("Unhandled internal error in FDK", e.getMessage()), ContentType.APPLICATION_JSON));
-                return;
-            }
-
-            try {
-                writeEvent(outEvt, response);
-            } catch (Exception e) {
-                // TODO strange edge cases might appear with headers where the response is half written here
-                response.setStatusCode(500);
-                response.setEntity(new StringEntity(jsonError("Unhandled internal error while writing FDK response", e.getMessage()), ContentType.APPLICATION_JSON));
-            }
-        }
-        ));
+        mapper.register("*", (request, response, context) ->
+            handler.handle(adaptRequest(request), adaptResponse(response)));
 
         ImmutableHttpProcessor requestProcess = new ImmutableHttpProcessor(new HttpRequestInterceptor[0], new HttpResponseInterceptor[0]);
         HttpService svc = new HttpService(requestProcess, mapper);
@@ -293,89 +214,60 @@ public final class HTTPStreamCodec implements EventCodec, Closeable {
         return val;
     }
 
-    private static String getRequiredHeader(HttpRequest request, String headerName) {
-        Header header = request.getFirstHeader(headerName);
-        if (header == null) {
-            throw new FunctionInputHandlingException("Required FDK header variable " + headerName + " is not set, check you are using the latest fn and FDK versions");
+    private HttpServerRequest adaptRequest(HttpRequest request) {
+        List<HttpHeader> headers = new ArrayList<>();
+        for (Header header : request.getAllHeaders()) {
+            headers.add(new HttpHeader(header.getName(), header.getValue()));
         }
-        return header.getValue();
+        List<HttpHeader> snapshot = Collections.unmodifiableList(headers);
+        return new HttpServerRequest() {
+            @Override
+            public String getMethod() {
+                return request.getRequestLine().getMethod();
+            }
+
+            @Override
+            public String getRequestTarget() {
+                return request.getRequestLine().getUri();
+            }
+
+            @Override
+            public List<HttpHeader> getHeaders() {
+                return snapshot;
+            }
+
+            @Override
+            public InputStream getBody() throws IOException {
+                if (request instanceof HttpEntityEnclosingRequest) {
+                    return ((HttpEntityEnclosingRequest) request).getEntity().getContent();
+                }
+                return EmptyInputStream.INSTANCE;
+            }
+        };
     }
 
-    private InputEvent readEvent(HttpRequest request) {
-
-        InputStream bodyStream;
-        if (request instanceof HttpEntityEnclosingRequest) {
-            HttpEntityEnclosingRequest entityEnclosingRequest = (HttpEntityEnclosingRequest) request;
-            try {
-                bodyStream = entityEnclosingRequest.getEntity().getContent();
-            } catch (IOException exception) {
-                throw new FunctionInputHandlingException("error handling input", exception);
+    private HttpServerResponse adaptResponse(HttpResponse response) {
+        return new HttpServerResponse() {
+            @Override
+            public void setStatus(int statusCode, String reasonPhrase) {
+                response.setStatusLine(new BasicStatusLine(HttpVersion.HTTP_1_1, statusCode, reasonPhrase));
             }
-        } else {
-            bodyStream = EmptyInputStream.INSTANCE;
-        }
 
-
-        String deadline = getRequiredHeader(request, "Fn-Deadline");
-        String callID = getRequiredHeader(request, "Fn-Call-Id");
-
-        if (callID == null) {
-            callID = "";
-        }
-        Instant deadlineDate = Instant.now().plus(1, ChronoUnit.HOURS);
-        if (deadline != null) {
-            try {
-                deadlineDate = Instant.parse(deadline);
-            } catch (DateTimeParseException e) {
-                throw new FunctionInputHandlingException("Invalid deadline date format", e);
+            @Override
+            public void addHeader(String name, String value) {
+                response.addHeader(name, value);
             }
-        }
-        Headers headersIn = Headers.emptyHeaders();
 
-
-        for (Header h : request.getAllHeaders()) {
-            if (stripInputHeaders.contains(Headers.canonicalKey(h.getName()))) {
-                continue;
+            @Override
+            public void setHeader(String name, String value) {
+                response.setHeader(name, value);
             }
-            headersIn = headersIn.addHeader(h.getName(), h.getValue());
-        }
 
-        return new ReadOnceInputEvent(bodyStream, headersIn, callID, deadlineDate);
-
-    }
-
-    private void writeEvent(OutputEvent evt, HttpResponse response) {
-
-        evt.getHeaders().asMap()
-            .entrySet()
-            .stream()
-            .filter(e -> !stripOutputHeaders.contains(e.getKey()))
-            .flatMap(e -> e.getValue().stream().map((v) -> new BasicHeader(e.getKey(), v)))
-            .forEachOrdered(response::addHeader);
-
-        ContentType contentType = evt.getContentType().map(c -> {
-            try {
-                return ContentType.parse(c);
-            } catch (ParseException e) {
-                return ContentType.DEFAULT_BINARY;
+            @Override
+            public void setBody(byte[] body, String contentType) {
+                response.setEntity(new ByteArrayEntity(body, ContentType.parse(contentType)));
             }
-        }).orElse(ContentType.DEFAULT_BINARY);
-
-        response.setHeader("Content-Type", contentType.toString());
-        response.setHeader("Fn-Fdk-Version", fdkVersion);
-        response.setHeader("Fn-Fdk-Runtime", runtimeVersion);
-
-        response.setStatusLine(new BasicStatusLine(HttpVersion.HTTP_1_1, evt.getStatus().getCode(), evt.getStatus().name()));
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        // TODO remove output buffering here - possibly change OutputEvent contract to support providing an InputStream?
-        try {
-            evt.writeToOutput(bos);
-        } catch (IOException e) {
-            throw new FunctionOutputHandlingException("Error writing output", e);
-        }
-        byte[] data = bos.toByteArray();
-        response.setEntity(new ByteArrayEntity(data, contentType));
-
+        };
     }
 
 

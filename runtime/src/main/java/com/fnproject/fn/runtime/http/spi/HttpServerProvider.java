@@ -16,21 +16,16 @@
 
 package com.fnproject.fn.runtime.http.spi;
 
-import com.fnproject.fn.runtime.EventCodec;
-
 import java.util.Map;
 
 public interface HttpServerProvider {
-
     /**
-     * Creates the codec before function initialization.
+     * Creates the server before function initialization. It must not start
+     * handling requests until {@link HttpServer#run(HttpHandler)} is called.
      *
-     * @param environment read-only snapshot of the runtime environment
-     * @param fdkVersion value for the {@code Fn-Fdk-Version} response header
-     * @param runtimeVersion value for the {@code Fn-Fdk-Runtime} response header
-     * @return a non-null codec; the runtime will call {@link EventCodec#runCodec}
-     * @throws Exception if the server cannot be created
+     * @param environment read-only snapshot containing FN_LISTENER and other settings
+     * @return a non-null server; FDK closes it when its run method exits
+     * @throws Exception if the server cannot be created; release partial resources
      */
-    EventCodec create(Map<String, String> environment, String fdkVersion,
-                      String runtimeVersion) throws Exception;
+    HttpServer create(Map<String, String> environment) throws Exception;
 }

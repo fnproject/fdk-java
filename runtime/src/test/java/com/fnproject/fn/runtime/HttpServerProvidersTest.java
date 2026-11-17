@@ -16,7 +16,10 @@
 
 package com.fnproject.fn.runtime;
 
+import com.fnproject.fn.api.OutputEvent;
 import com.fnproject.fn.runtime.exception.FunctionInitializationException;
+import com.fnproject.fn.runtime.http.spi.HttpHandler;
+import com.fnproject.fn.runtime.http.spi.HttpServer;
 import com.fnproject.fn.runtime.http.spi.HttpServerProvider;
 import org.junit.After;
 import org.junit.Before;
@@ -52,8 +55,8 @@ public class HttpServerProvidersTest {
     public void setUp() {
         originalLoader = Thread.currentThread().getContextClassLoader();
         TestProvider.environment = null;
-        TestProvider.fdkVersion = null;
-        TestProvider.runtimeVersion = null;
+        TestProvider.exchange = null;
+        TestProvider.closed = false;
     }
 
     @After
@@ -79,10 +82,17 @@ public class HttpServerProvidersTest {
         env.put("custom", "value");
         EventCodec codec = create(env);
 
-        assertThat(codec).isSameAs(TestProvider.CODEC);
+        codec.runCodec(event -> {
+            assertThat(event.getCallID()).isEqualTo("call-id");
+            return OutputEvent.fromBytes(new byte[] {0, 1, -1}, OutputEvent.Status.Success,
+                "application/octet-stream");
+        });
+        assertThat(TestProvider.exchange.statusCode).isEqualTo(200);
+        assertThat(TestProvider.exchange.body).containsExactly(0, 1, -1);
+        assertThat(TestProvider.exchange.header("Fn-Fdk-Version")).isEqualTo(FDK_VERSION);
+        assertThat(TestProvider.exchange.header("Fn-Fdk-Runtime")).isEqualTo(RUNTIME_VERSION);
+        assertThat(TestProvider.closed).isTrue();
         assertThat(TestProvider.environment).containsEntry("custom", "value");
-        assertThat(TestProvider.fdkVersion).isEqualTo(FDK_VERSION);
-        assertThat(TestProvider.runtimeVersion).isEqualTo(RUNTIME_VERSION);
         env.put("custom", "changed");
         assertThat(TestProvider.environment).containsEntry("custom", "value");
         assertThatThrownBy(() -> TestProvider.environment.put("custom", "changed"))
@@ -138,17 +148,25 @@ public class HttpServerProvidersTest {
     }
 
     public static class TestProvider implements HttpServerProvider {
-        static final EventCodec CODEC = handler -> { };
         static Map<String, String> environment;
-        static String fdkVersion;
-        static String runtimeVersion;
+        static HttpTestExchange exchange;
+        static boolean closed;
 
         @Override
-        public EventCodec create(Map<String, String> env, String fdk, String runtime) throws Exception {
+        public HttpServer create(Map<String, String> env) throws Exception {
             environment = env;
-            fdkVersion = fdk;
-            runtimeVersion = runtime;
-            return CODEC;
+            return new HttpServer() {
+                @Override
+                public void run(HttpHandler handler) {
+                    exchange = new HttpTestExchange();
+                    handler.handle(exchange, exchange);
+                }
+
+                @Override
+                public void close() {
+                    closed = true;
+                }
+            };
         }
     }
 
@@ -157,7 +175,7 @@ public class HttpServerProvidersTest {
 
     public static class FailingProvider extends TestProvider {
         @Override
-        public EventCodec create(Map<String, String> env, String fdk, String runtime) throws IOException {
+        public HttpServer create(Map<String, String> env) throws IOException {
             throw new IOException("cannot start server");
         }
     }
