@@ -3,7 +3,7 @@
 We welcome all contributions!
 
 ## How to contribute
-   * The contributor has signed the Oracle Contributor Agreement. See https://www.graalvm.org/community/contributors/ for more information.
+   * The contributor has signed the Oracle Contributor Agreement. See https://oca.opensource.oracle.com for more information.
    * Fork the repo.
    * Fix an issue. Or create an issue and fix it.
    * Create a pull request. Reference the issue that you are fixing.
